@@ -1,23 +1,26 @@
-# Gitit
+Gitit
+=====
 
-Gitit is a wiki program written in Haskell.  It uses [HAppS] for the web
-server and session state, [git] for storage, history, search, diffs,
-and merging, and [pandoc] for markup processing. Pages can be added,
+Gitit is a wiki program written in Haskell.  It uses [HAppS][] for the web
+server and session state, [git][] for storage, history, search, diffs,
+and merging, and [pandoc][] for markup processing. Pages can be added,
 changed, and removed either on the web or using git's command-line
-tools. Gitit uses [pandoc]'s extended version of markdown as its markup
+tools. Gitit uses [pandoc][]'s extended version of markdown as its markup
 language.
 
 [git]: http://git.or.cz  
 [pandoc]: http://johnmacfarlane.net/pandoc
 [HAppS]: http://happs.org
 
-# Getting started
+Getting started
+===============
 
-## Compiling and installing gitit
+Compiling and installing gitit
+------------------------------
 
-You'll need the [GHC] compiler and the [cabal-install] tool. GHC can
-be downloaded [here]. For [cabal-install] on *nix, follow the [quick
-install] instructions.
+You'll need the [GHC][] compiler and the [cabal-install][] tool. GHC can
+be downloaded [here][]. For [cabal-install][] on *nix, follow the [quick
+install][] instructions.
 
 [GHC]: http://www.haskell.org/ghc/
 [here]: http://www.haskell.org/ghc/
@@ -27,7 +30,7 @@ install] instructions.
 
 If you want the syntax highlighting feature, you need to make sure
 that pandoc is compiled with support for it.  First, make sure your system
-has the [pcre] library installed.  Then:
+has the [pcre][] library installed.  Then:
 
     cabal install pandoc -fhighlighting
 
@@ -54,9 +57,10 @@ If that doesn't work, check to see that `gitit` is in your local
 cabal-install executable directory (usually `~/.cabal/bin`). And make
 sure `~/.cabal/bin` is in your system path.
 
-## Running gitit
+Running gitit
+-------------
 
-To run gitit, you'll need [git] in your system path. Check this by doing
+To run gitit, you'll need [git][] in your system path. Check this by doing
 
     git --version
 
@@ -74,7 +78,8 @@ If all goes well, gitit will do the following:
 
 Check that it worked:  open a web browser and go to <http://localhost:5001>.
 
-## Configuration options
+Configuration options
+---------------------
 
 You can set some configuration options when starting gitit, using the
 option `-f [filename]`.  A configuration file takes the following form:
@@ -111,7 +116,11 @@ For the most part, these options should be self-explanatory.
   an `accessQuestion` with an easy and obvious answer.  Or one can use an
   `accessQuestion` to limit those who can edit a wiki to a trusted group.
 
-# The `static` directory
+Configuring gitit
+=================
+
+The `static` directory
+----------------------
 
 If there is no wiki page or uploaded file corresponding to a request, gitit
 always looks last in the `static` directory. So, for example, a file
@@ -120,14 +129,16 @@ accessible at the url `/images/foo.jpg`. Pandoc creates two subdirectories
 of `static`, `stylesheets` and `javascripts`, which include the CSS and
 scripts it uses.
 
-# Changing the theme
+Changing the theme
+------------------
 
 To change the look of the wiki, modify `gitit.css` in `static/stylesheets`.
 
-# Adding support for math
+Adding support for math
+-----------------------
 
-Gitit is designed to work with [jsMath] to display LaTeX math in HTML. 
-Download `jsMath` and `jsMath Image Fonts` from the [jsMath download page].
+Gitit is designed to work with [jsMath][] to display LaTeX math in HTML. 
+Download `jsMath` and `jsMath Image Fonts` from the [jsMath download page][].
 You'll have two `.zip` archives. Unzip them both in the
 `static/javascripts` directory (a new subdirectory, `jsMath`, will be
 created).  You can test to see if math is working properly by clicking
@@ -145,10 +156,11 @@ You can write display math by enclosing it in double dollar signs:
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 [jsMath]: http://www.math.union.edu/~dpvc/jsMath/
 
-# Highlighted source code
+Highlighted source code
+-----------------------
 
 If gitit was compiled against a version of pandoc that has highlighting support
-(see above), you can get highlighted source code by using [delimited code blocks]:
+(see above), you can get highlighted source code by using [delimited code blocks][]:
 
     ~~~ {.haskell .numberLines}
     qsort []     = []
@@ -162,7 +174,8 @@ To see what languages are available:
 
 [delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
 
-# Accessing the wiki via git
+Accessing the wiki via git
+==========================
 
 All the pages and uploaded files are stored in a git repository. By default, this
 lives in the `wikidata` directory (though this can be changed through configuration
@@ -177,12 +190,14 @@ options).  So you can interact with the wiki using git command line tools:
 If you now look at the Front Page on the wiki, you should see your changes
 reflected there.  Note that the pages all have the extension `.page`.
 
-# Reporting bugs
+Reporting bugs
+==============
 
 There is no bug tracker as yet, so report bugs directly to the author,
 jgm at berkeley . edu
 
-# Acknowledgements
+Acknowledgements
+================
 
 I borrowed some ideas about visual layout from Jeff Barczewski's fork
 of Simon Rozet's `git-wiki`.
