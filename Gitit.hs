@@ -125,9 +125,9 @@ initializeWiki :: FilePath -> FilePath -> IO ()
 initializeWiki repodir staticdir = do
   repoExists <- doesDirectoryExist repodir
   unless repoExists $ do
-    postupdatepath <- getDataFileName "post-update"
+    postupdatepath <- getDataFileName $ "data" </> "post-update"
     postupdatecontents <- B.readFile postupdatepath
-    welcomepath <- getDataFileName "FrontPage"
+    welcomepath <- getDataFileName $ "data" </> "FrontPage.page"
     welcomecontents <- B.readFile welcomepath
     createDirectory repodir
     oldDir <- getCurrentDirectory
@@ -322,7 +322,7 @@ withCommands meth commands page = withRequest $ \req -> do
 
 helpPage :: String -> Params -> Web Response
 helpPage _ params = do
-  helpText <- liftIO $ getDataFileName "Help" >>= readFile
+  helpText <- liftIO $ getDataFileName "Help.page" >>= readFile
   helpHtml <- convertToHtml helpText
   formattedPage [HidePageControls] ["jsMath/easy/load.js"] "Help" params  helpHtml
 

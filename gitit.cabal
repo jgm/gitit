@@ -25,8 +25,9 @@ data-files:          stylesheets/gitit.css, stylesheets/hk-pyg.css,
                      javascripts/jquery.min.js,
                      javascripts/jquery-ui-personalized-1.6rc2.min.js,
                      javascripts/preview.js, javascripts/search.js,
-                     javascripts/LaTeXMathML.packed.js, post-update,
-                     FrontPage, Help, README.markdown, config.hs
+                     javascripts/LaTeXMathML.packed.js, data/post-update,
+                     data/FrontPage.page, data/Help.page, README.markdown,
+                     data/SampleConfig.hs
 
 hs-source-dirs:      .
 executable:          gitit
