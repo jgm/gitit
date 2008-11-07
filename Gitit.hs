@@ -188,8 +188,8 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
                , handleCommand "update"  POST (unlessLocked updatePage)
-               , handleCommand "delete"  GET  (unlessLocked confirmDelete)
-               , handleCommand "delete"  POST (unlessLocked deletePage)
+               , handleCommand "delete"  GET  (unlessFrontPage $ unlessLocked confirmDelete)
+               , handleCommand "delete"  POST (unlessFrontPage $ unlessLocked deletePage)
                , handle GET showPage
                ]
 
@@ -293,6 +293,12 @@ unlessLocked responder =
                      if page `elem` lockedPages cfg
                         then showPage page (params { pMessages = ("Page is locked." : pMessages params) })
                         else responder page params
+
+unlessFrontPage :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+unlessFrontPage responder =
+  \page params ->  if page == "Front Page"
+                      then showPage page (params { pMessages = ("Operation not permitted on Front Page." : pMessages params) })
+                      else responder page params
 
 handle :: Method -> (String -> Params -> Web Response) -> Handler
 handle meth responder = uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
@@ -751,7 +757,7 @@ loginUser _ params = do
       addCookie (3600) (mkCookie "sid" (show key))
       seeOther ("/" ++ intercalate "%20" (words destination)) $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      formattedPage [HidePageControls] [] "Login" (params { pMessages = ["Authentication failed."] }) (loginForm params)
+      loginUserForm "Login" (params { pMessages = "Authentication failed." : pMessages params })
 
 logoutUser :: String -> Params -> Web Response
 logoutUser _ params = do
