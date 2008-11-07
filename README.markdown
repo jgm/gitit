@@ -76,7 +76,7 @@ If all goes well, gitit will do the following:
  2.  Create a `static` directory containing the scripts and CSS used by gitit.
  3.  Start a web server on port 5001.
 
-Check that it worked:  open a web browser and go to <http://localhost:5001>.
+Check that it worked:  open a web browser and go to http://localhost:5001.
 
 Configuration options
 ---------------------
