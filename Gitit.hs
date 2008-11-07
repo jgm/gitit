@@ -323,7 +323,7 @@ withCommands meth commands page = withRequest $ \req -> do
 
 helpPage :: String -> Params -> Web Response
 helpPage _ params = do
-  helpText <- liftIO $ getDataFileName "Help.page" >>= readFile
+  helpText <- liftIO $ getDataFileName ("data" </> "Help.page") >>= readFile
   helpHtml <- convertToHtml helpText
   formattedPage [HidePageControls] ["jsMath/easy/load.js"] "Help" params  helpHtml
 
