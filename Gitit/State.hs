@@ -47,6 +47,7 @@ data Config = Config {
   portNumber      :: Int,                      -- port number to serve content on
   passwordSalt    :: String,                   -- text to serve as salt in encrypting passwords
   debugMode       :: Bool,                     -- should debug info be printed to the console?
+  lockedPages     :: [String],                 -- pages that cannot be edited through the web interface
   accessQuestion  :: Maybe (String, [String])  -- if Nothing, then anyone can register for an account.
                                                -- if Just (prompt, answers), then a user will be given the prompt
                                                -- and must give one of the answers in order to register.
@@ -64,6 +65,7 @@ defaultConfig = Config {
   portNumber      = 5001,
   passwordSalt    = "l91snthoae8eou2340987",
   debugMode       = False,
+  lockedPages     = ["Help"],
   accessQuestion  = Nothing
   }
 
