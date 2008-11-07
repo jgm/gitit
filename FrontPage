@@ -1,0 +1,32 @@
+# Welcome to Gitit!
+
+Gitit is a [Wiki] written in [Haskell]. [HAppS] is used for the web
+server and session state. Pages and uploaded files are stored in a [git]
+repository and may be modified either by using git's command-line tools
+or through the wiki's web interface. [Pandoc]'s extended version of
+[markdown] is used as a markup language. Gitit can be configured to
+display TeX math and highlighted source code.
+
+You can edit this page by double-clicking on it, or by clicking on the
+"edit" button at the bottom of the screen.
+
+You can make a link to another wiki page like this:
+`[French Cheeses]()`.
+This will produce a link like this:  [French Cheeses]().  Note that
+the names of wiki pages need not be in CamelCase, and they may contain
+spaces.  Wiki pages may be organized into directories.  Use the
+slash ("/") character between directories and page names or
+subdirectories: `[Wines/Pinot Noir]()`.
+
+To create a new wiki page, just create a link to it and follow
+the link.
+
+Help is always available through the "help" link on the top bar.
+
+[Wiki]: http://en.wikipedia.org/wiki/Wiki
+[git]: http://git.or.cz/
+[HAppS]: http://happs.org
+[Haskell]:  http://www.haskell.org/
+[pandoc]: http://johnmacfarlane.net/pandoc/
+[markdown]: http://daringfireball.net/projects/markdown/
+

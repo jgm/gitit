@@ -1,0 +1,43 @@
+name:                gitit
+version:             0.1
+build-type:          Simple
+synopsis:            Wiki using HAppS, git, and pandoc.
+description:         Gitit is a wiki program. HAppS is used for the web
+                     server and session state. Pages and uploaded files
+                     are stored in a git repository and may be modified
+                     either by using git's command-line tools or through
+                     the wiki's web interface. Pandoc's extended version
+                     of markdown is used as a markup language. Gitit can
+                     be configured to display TeX math (using jsMath)
+                     and highlighted source code. Ajax is used in a
+                     few places, but all the basic functionality is
+                     available even in browsers that do not support
+                     javascript.
+
+category:            Network
+license:             GPL
+license-file:        LICENSE
+author:              John MacFarlane
+maintainer:          jgm@berkeley.edu
+data-files:          stylesheets/gitit.css, stylesheets/hk-pyg.css,
+                     stylesheets/folder.png, stylesheets/page.png,
+                     javascripts/dragdiff.js, javascripts/folding.js,
+                     javascripts/jquery.min.js,
+                     javascripts/jquery-ui-personalized-1.6rc2.min.js,
+                     javascripts/preview.js, javascripts/search.js,
+                     javascripts/LaTeXMathML.packed.js, post-update,
+                     FrontPage, Help, README.markdown, config.hs
+
+hs-source-dirs:      .
+executable:          gitit
+main-is:             Gitit.hs 
+other-modules:       Gitit.State, Gitit.Git
+build-depends:       base, parsec < 3, pretty, xhtml, containers, pandoc
+                     >= 1.1, process, filepath, directory, mtl, cgi,
+                     network, old-time, highlighting-kate, bytestring,
+                     utf8-string, HAppS-Server, HAppS-State, HAppS-Data,
+                     Crypto, HTTP
+
+ghc-options:         -Wall -threaded
+ghc-prof-options:    -auto-all
+
