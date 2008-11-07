@@ -51,7 +51,7 @@ import System.Console.GetOpt
 import System.Exit
 
 gititVersion :: String
-gititVersion = "0.1"
+gititVersion = "0.1.0.1"
 
 main :: IO ()
 main = do
