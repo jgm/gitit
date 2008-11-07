@@ -171,7 +171,7 @@ wikiHandlers :: [Handler]
 wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , dir "_activity" [ handle GET  showActivity ]
                , dir "_help"     [ handle GET  helpPage ]
-               , dir "_preview"  [ handle GET  preview ]
+               , dir "_preview"  [ handle POST preview ]
                , dir "_search"   [ handle POST searchResults ]
                , dir "_register" [ handle GET  registerUserForm,
                                    handle POST registerUser ]
