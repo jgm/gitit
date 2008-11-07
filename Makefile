@@ -1,5 +1,5 @@
 gitit: Gitit.hs Gitit/Git.hs Gitit/State.hs
-	ghc --make -Wall -o gitit Gitit.hs -threaded
+	ghc --make -Wall -o gitit Gitit.hs -threaded -idata
 
 .PHONY: static clean
 static:
