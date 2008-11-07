@@ -9,6 +9,7 @@ maxUploadSize   = 100000,
 portNumber      = 5001,
 passwordSalt    = "l91snthoae8eou2340987",
 debugMode       = True,
+lockedPages     = ["Help", "Front Page"],
 accessQuestion  = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"])
 }
 

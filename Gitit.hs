@@ -51,7 +51,7 @@ import System.Console.GetOpt
 import System.Exit
 
 gititVersion :: String
-gititVersion = "0.1.0.1"
+gititVersion = "0.1.1"
 
 main :: IO ()
 main = do
@@ -129,13 +129,16 @@ initializeWiki repodir staticdir = do
     postupdatecontents <- B.readFile postupdatepath
     welcomepath <- getDataFileName $ "data" </> "FrontPage.page"
     welcomecontents <- B.readFile welcomepath
+    helppath <- getDataFileName $ "data" </> "Help.page"
+    helpcontents <- B.readFile helppath
     createDirectory repodir
     oldDir <- getCurrentDirectory
     setCurrentDirectory repodir
     runCommand "git init" >>= waitForProcess
-    -- add welcome page
+    -- add front page and help page
     B.writeFile "Front Page.page" welcomecontents
-    runCommand "git add 'Front Page.page'; git commit -m 'Initial commit of front page.'" >>= waitForProcess
+    B.writeFile "Help.page" helpcontents
+    runCommand "git add 'Help.page' 'Front Page.page'; git commit -m 'Initial commit.'" >>= waitForProcess
     -- set post-update hook so working directory will be updated
     -- when changes are pushed to the repo
     let postupdate = ".git" </> "hooks" </> "post-update"
@@ -170,7 +173,6 @@ type Handler = ServerPart Response
 wikiHandlers :: [Handler]
 wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , dir "_activity" [ handle GET  showActivity ]
-               , dir "_help"     [ handle GET  helpPage ]
                , dir "_preview"  [ handle POST preview ]
                , dir "_search"   [ handle POST searchResults ]
                , dir "_register" [ handle GET  registerUserForm,
@@ -182,12 +184,12 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                                    handle POST uploadFile ]
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
-               , handleCommand "edit"    GET  editPage
+               , handleCommand "edit"    GET  (unlessLocked editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
-               , handleCommand "update"  POST updatePage
-               , handleCommand "delete"  GET  confirmDelete
-               , handleCommand "delete"  POST deletePage
+               , handleCommand "update"  POST (unlessLocked updatePage)
+               , handleCommand "delete"  GET  (unlessLocked confirmDelete)
+               , handleCommand "delete"  POST (unlessLocked deletePage)
                , handle GET showPage
                ]
 
@@ -285,6 +287,13 @@ instance FromData Command where
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
 
+unlessLocked :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+unlessLocked responder =
+  \page params -> do cfg <- query GetConfig
+                     if page `elem` lockedPages cfg
+                        then showPage page (params { pMessages = ("Page is locked." : pMessages params) })
+                        else responder page params
+
 handle :: Method -> (String -> Params -> Web Response) -> Handler
 handle meth responder = uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
                                           in  if isPage uriPath
@@ -320,12 +329,6 @@ withCommands meth commands page = withRequest $ \req -> do
      else if all (`elem` (map fst $ rqInputs req)) commands
              then page (intercalate "/" $ rqPaths req) req
              else noHandle
-
-helpPage :: String -> Params -> Web Response
-helpPage _ params = do
-  helpText <- liftIO $ getDataFileName ("data" </> "Help.page") >>= readFile
-  helpHtml <- convertToHtml helpText
-  formattedPage [HidePageControls] ["jsMath/easy/load.js"] "Help" params  helpHtml
 
 showRawPage :: String -> Params -> Web Response
 showRawPage page params = do
@@ -683,7 +686,7 @@ formattedPage opts scripts page params htmlContents = do
                         , primHtmlChar "bull"
                         , anchor ! [href "/_activity", theclass "nav_link"] << "activity"
                         , primHtmlChar "bull"
-                        , anchor ! [href "/_help", theclass "nav_link"] << "help"
+                        , anchor ! [href "/Help", theclass "nav_link"] << "help"
                         , primHtmlChar "nbsp"
                         , textfield "patterns" ! [theclass "search_field search_term"]
                         , submit "search" "Search" ]

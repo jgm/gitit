@@ -94,7 +94,8 @@ option `-f [filename]`.  A configuration file takes the following form:
     maxUploadSize   = 100000,
     portNumber      = 5001,
     passwordSalt    = "l91snthoae8eou2340987",
-    debugMode       = True
+    debugMode       = True,
+    lockedPages     = ["Help"],
     accessQuestion  = Just ("Enter the access code (to request a code, contact me@foo.bar.com):", ["abcd"])
     }
 
@@ -109,6 +110,8 @@ For the most part, these options should be self-explanatory.
 - The `passwordSalt` is used to encrypt passwords and should be
    changed for every new site.
 - `debugMode` causes diagnostic information to be printed to the console.
+- `lockedPages` is a list of pages that cannot be edited from the web interface.
+  (They may still be edited via git, by those with access to the repository.)
 - The `accessQuestion` is either `Nothing` (in which case anyone will be
   allowed to register for an account) or `Just (question, [ans1, ans2, ...])`
   (in which case anyone who registers must first answer the `question` with
