@@ -268,9 +268,10 @@ instance FromData Params where
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
   mbSd <- maybe (return Nothing) ( query . GetSession ) $ pSessionKey params
-  return $ do
-    sd <- mbSd
-    Just . sessionUser $ sd
+  let user = case mbSd of
+       Nothing    -> Nothing
+       Just sd    -> Just $ sessionUser sd
+  return $! user
 
 data Command = Command (Maybe String)
 
