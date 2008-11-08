@@ -184,7 +184,7 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                                    handle POST uploadFile ]
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
-               , handleCommand "edit"    GET  (unlessNoEdit editPage)
+               , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "edit" editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
                , handleCommand "update"  POST (unlessNoEdit updatePage)
@@ -215,6 +215,7 @@ data Params = Params { pUsername     :: String
                      , pOverwrite    :: Bool
                      , pFilename     :: String
                      , pFileContents :: B.ByteString
+                     , pUser         :: String
                      , pSessionKey   :: Maybe SessionKey
                      }  deriving Show
 
@@ -265,6 +266,7 @@ instance FromData Params where
                          , pFilename     = fn
                          , pFileContents = fc
                          , pAccessCode   = ac
+                         , pUser         = ""  -- this gets set by ifLoggedIn...
                          , pSessionKey   = sk }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -300,6 +302,14 @@ unlessNoDelete responder =
                       if page `elem` noDelete cfg
                          then showPage page (params { pMessages = ("Page cannot be deleted." : pMessages params) })
                          else responder page params
+
+ifLoggedIn :: String -> (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+ifLoggedIn command responder =
+  \page params -> do user <- getLoggedInUser params
+                     case user of
+                          Nothing  -> seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ "?" ++ command)]) $ 
+                                        toResponse $ p << "You must be logged in to edit a page."
+                          Just u   -> responder page (params { pUser = u })
 
 handle :: Method -> (String -> Params -> Web Response) -> Handler
 handle meth responder = uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
@@ -506,36 +516,31 @@ showDiff page params = do
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
-  user <- getLoggedInUser params
-  if isJust user
-     then do
-       let revision = pRevision params
-       let messages = pMessages params
-       rawContents <- case pEditedText params of
-                           Nothing -> gitCatFile revision (pathForPage page)
-                           Just t  -> return $ Just t
-       let (new, contents) = case rawContents of
-                                  Nothing -> (True, "# Title goes here\n\nContent goes here")
-                                  Just c  -> (False, c)
-       let messages' = if new
-                          then ("This page does not yet exist.  You may create it by editing the text below." : messages)
-                          else messages
-       sha1 <- case (pSHA1 params) of
-                    ""  -> gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
-                    s   -> return s
-       let logMsg = pLogMsg params
-       let sha1Box = textfield "sha1" ! [thestyle "display: none", value sha1]
-       let editForm = gui (urlForPage page) ! [identifier "editform"] <<
-                        [sha1Box,
-                         textarea ! [cols "80", name "editedText", identifier "editedText"] << contents,
-                         label << "Description of changes:", br,
-                         textfield "logMsg" ! [size "76", value logMsg],
-                         submit "update" "Save", primHtmlChar "nbsp",
-                         submit "cancel" "Discard", br,
-                         thediv ! [ identifier "previewpane" ] << noHtml ]
-       formattedPage [HidePageControls, HideNavbar] ["preview.js"] page (params {pMessages = messages'}) editForm
-     else do
-       seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ "?edit")]) $ toResponse $ p << "You must be logged in to edit a page."
+  let revision = pRevision params
+  let messages = pMessages params
+  rawContents <- case pEditedText params of
+                      Nothing -> gitCatFile revision (pathForPage page)
+                      Just t  -> return $ Just t
+  let (new, contents) = case rawContents of
+                             Nothing -> (True, "# Title goes here\n\nContent goes here")
+                             Just c  -> (False, c)
+  let messages' = if new
+                     then ("This page does not yet exist.  You may create it by editing the text below." : messages)
+                     else messages
+  sha1 <- case (pSHA1 params) of
+               ""  -> gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
+               s   -> return s
+  let logMsg = pLogMsg params
+  let sha1Box = textfield "sha1" ! [thestyle "display: none", value sha1]
+  let editForm = gui (urlForPage page) ! [identifier "editform"] <<
+                   [sha1Box,
+                    textarea ! [cols "80", name "editedText", identifier "editedText"] << contents,
+                    label << "Description of changes:", br,
+                    textfield "logMsg" ! [size "76", value logMsg],
+                    submit "update" "Save", primHtmlChar "nbsp",
+                    submit "cancel" "Discard", br,
+                    thediv ! [ identifier "previewpane" ] << noHtml ]
+  formattedPage [HidePageControls, HideNavbar] ["preview.js"] page (params {pMessages = messages'}) editForm
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
