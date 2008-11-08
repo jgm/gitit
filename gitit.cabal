@@ -22,7 +22,7 @@ maintainer:          jgm@berkeley.edu
 data-files:          stylesheets/gitit.css, stylesheets/hk-pyg.css,
                      stylesheets/folder.png, stylesheets/page.png,
                      javascripts/dragdiff.js, javascripts/folding.js,
-                     javascripts/jquery.min.js,
+                     javascripts/jquery.min.js, javascripts/uploadForm.js,
                      javascripts/jquery-ui-personalized-1.6rc2.min.js,
                      javascripts/preview.js, javascripts/search.js,
                      data/post-update, data/FrontPage.page, data/Help.page,
