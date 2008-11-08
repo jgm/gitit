@@ -184,12 +184,12 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                                    handle POST uploadFile ]
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
-               , handleCommand "edit"    GET  (unlessLocked editPage)
+               , handleCommand "edit"    GET  (unlessNoEdit editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
-               , handleCommand "update"  POST (unlessLocked updatePage)
-               , handleCommand "delete"  GET  (unlessFrontPage $ unlessLocked confirmDelete)
-               , handleCommand "delete"  POST (unlessFrontPage $ unlessLocked deletePage)
+               , handleCommand "update"  POST (unlessNoEdit updatePage)
+               , handleCommand "delete"  GET  (unlessNoDelete confirmDelete)
+               , handleCommand "delete"  POST (unlessNoDelete deletePage)
                , handle GET showPage
                ]
 
@@ -287,18 +287,19 @@ instance FromData Command where
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
 
-unlessLocked :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
-unlessLocked responder =
+unlessNoEdit :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+unlessNoEdit responder =
   \page params -> do cfg <- query GetConfig
-                     if page `elem` lockedPages cfg
+                     if page `elem` noEdit cfg
                         then showPage page (params { pMessages = ("Page is locked." : pMessages params) })
                         else responder page params
 
-unlessFrontPage :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
-unlessFrontPage responder =
-  \page params ->  if page == "Front Page"
-                      then showPage page (params { pMessages = ("Operation not permitted on Front Page." : pMessages params) })
-                      else responder page params
+unlessNoDelete :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+unlessNoDelete responder =
+  \page params ->  do cfg <- query GetConfig
+                      if page `elem` noDelete cfg
+                         then showPage page (params { pMessages = ("Page cannot be deleted." : pMessages params) })
+                         else responder page params
 
 handle :: Method -> (String -> Params -> Web Response) -> Handler
 handle meth responder = uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
