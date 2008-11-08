@@ -10,3 +10,5 @@ _ add a drag and drop interface to the index -- when you drag a file onto
   a "Create folder" button?  Or would git-ls-tree ignore it without a file
   inside?
 
+_ perhaps search should not use the "whole word" feature...
+
