@@ -1,6 +1,12 @@
 _ diffs don't work for pages that have been deleted
+
 _ from index page, try clicking "upload" when you have to login -
   you won't be returned to the upload page.
   Perhaps we should address this by dispatching _upload, etc. on the page rather
   than using "dir _".
+
+_ add a drag and drop interface to the index -- when you drag a file onto
+  a folder, it will 'git mv' the file into that folder.  Also perhaps add
+  a "Create folder" button?  Or would git-ls-tree ignore it without a file
+  inside?
 
