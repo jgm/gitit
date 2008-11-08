@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.1.2
+version:             0.2
 build-type:          Simple
 synopsis:            Wiki using HAppS, git, and pandoc.
 description:         Gitit is a wiki program. HAppS is used for the web
