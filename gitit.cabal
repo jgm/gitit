@@ -35,7 +35,8 @@ other-modules:       Gitit.State, Gitit.Git, Paths_gitit
 build-depends:       base, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
-                     utf8-string, HAppS-Server, HAppS-State, HAppS-Data,
+                     utf8-string, HAppS-Server == 0.9.2.1,
+                     HAppS-State == 0.9.2.1, HAppS-Data == 0.9.2.1,
                      Crypto, HTTP
 
 ghc-options:         -Wall -threaded
