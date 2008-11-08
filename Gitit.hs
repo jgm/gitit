@@ -34,7 +34,7 @@ import Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
-import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing, isJust)
+import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Data.Ord (comparing)
 import qualified Data.Digest.SHA512 as SHA512 (hash)
 import Paths_gitit
@@ -180,8 +180,8 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , dir "_login"    [ handle GET  loginUserForm,
                                    handle POST loginUser ]
                , dir "_logout"   [ handle GET  logoutUser ]
-               , dir "_upload"   [ handle GET  uploadForm,
-                                   handle POST uploadFile ]
+               , dir "_upload"   [ handle GET  $ ifLoggedIn "" uploadForm,
+                                   handle POST $ ifLoggedIn "" uploadFile ]
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
@@ -381,6 +381,7 @@ validate = foldl go []
 
 uploadForm :: String -> Params -> Web Response
 uploadForm _ params = do
+  let page = "_upload"
   let origPath = pFilename params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
@@ -390,51 +391,47 @@ uploadForm _ params = do
                 primHtmlChar "nbsp", checkbox "overwrite" "yes", label << "Overwrite existing file"]
         , p << [label << "Description of content or changes:", br, textfield "logMsg" ! [size "60", value logMsg],
                 submit "upload" "Upload"] ]
-  user <- getLoggedInUser params
-  if isJust user
-     then formattedPage [HidePageControls] [] "File upload" params upForm
-     else seeOther ("/_login?" ++ urlEncodeVars [("destination", "_upload")]) $ toResponse $ p << "You must be logged in to upload a file."
+  formattedPage [HidePageControls] [] page params upForm
 
 uploadFile :: String -> Params -> Web Response
 uploadFile _ params = do
+  let page = "_upload"
   let origPath = pFilename params
   let fileContents = pFileContents params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
-  user <- getLoggedInUser params
-  if isJust user
+  cfg <- query GetConfig
+  let author = pUser params
+  when (null author) $ fail "User must be logged in to upload a file."
+  let email = ""
+  let overwrite = pOverwrite params
+  exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
+  let errors = validate [ (null logMsg, "Description cannot be empty.")
+                        , (null origPath, "File not found.")
+                        , (not overwrite && exists, "A file named '" ++ wikiname ++
+                           "' already exists in the repository: choose a new name " ++
+                           "or check the box to overwrite the existing file existing file.")
+                        , (B.length fileContents > fromIntegral (maxUploadSize cfg),
+                           "File exceeds maximum upload size.")
+                        , (isPage wikiname,
+                           "Uploaded file name must have an appropriate extension.")
+                        ]
+  if null errors
      then do
-       cfg <- query GetConfig
-       let author = fromJust user
-       let email = ""
-       let overwrite = pOverwrite params
-       exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
-       let errors = validate [ (null logMsg, "Description cannot be empty.")
-                             , (null origPath, "File not found.")
-                             , (not overwrite && exists, "A file named '" ++ wikiname ++
-                                "' already exists in the repository: choose a new name " ++
-                                "or check the box to overwrite the existing file existing file.")
-                             , (B.length fileContents > fromIntegral (maxUploadSize cfg),
-                                "File exceeds maximum upload size.")
-                             , (isPage wikiname,
-                                "Uploaded file name must have an appropriate extension.")
-                             ]
-       if null errors
-           then do
-             if B.length fileContents > fromIntegral (maxUploadSize cfg)
-                then error "File exceeds maximum upload size"
-                else return ()
-             let dir' = takeDirectory wikiname
-             liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-             liftIO $ B.writeFile ((repositoryPath cfg) </> wikiname) fileContents
-             gitCommit wikiname (author, email) logMsg
-             formattedPage [HidePageControls] [] "File upload" params $
-                           p << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
-           else uploadForm "File upload" (params { pMessages = errors })
-     else seeOther ("/_login?" ++ urlEncodeVars [("destination", "_upload")]) $ toResponse $ p << "You must be logged in to upload a file."
+       if B.length fileContents > fromIntegral (maxUploadSize cfg)
+          then error "File exceeds maximum upload size"
+          else return ()
+       let dir' = takeDirectory wikiname
+       liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
+       liftIO $ B.writeFile ((repositoryPath cfg) </> wikiname) fileContents
+       gitCommit wikiname (author, email) logMsg
+       formattedPage [HidePageControls] [] page params $
+                     p << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
+     else uploadForm page (params { pMessages = errors })
 
 searchResults :: String -> Params -> Web Response
 searchResults _ params = do
+  let page = "_seach"
   let patterns = pPatterns params
   let limit = pLimit params
   if null patterns
@@ -452,7 +449,7 @@ searchResults _ params = do
                            stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
                            pre ! [theclass "matches"] << unlines contents])
                            (reverse  $ sortBy (comparing (length . snd)) matches)
-       formattedPage [HidePageControls] ["search.js"] "Search Results" params htmlMatches
+       formattedPage [HidePageControls] ["search.js"] page params htmlMatches
 
 -- Auxiliary function for searchResults
 parseMatchLine :: String -> (String, String)
@@ -489,12 +486,14 @@ showPageHistory page params =  do
 
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
+  let page = "_activity"
   let since = pSince params `orIfNull` "1 month ago"
   let forUser = pForUser params
   hist <- gitLog since forUser []
   let filesFor files  = intersperse (primHtmlChar "nbsp") $ map
                            (\file -> anchor ! [href $ urlForPage file ++ "?history"] << file) $ map
                            (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) files
+  let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
   let contents = ulist ! [theclass "history"] << map (\entry -> li <<
                            [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
                             thespan ! [theclass "author"] << anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
@@ -502,7 +501,7 @@ showActivity _ params = do
                             thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
                             thespan ! [theclass "files"] << filesFor (logFiles entry),
                             stringToHtml ")"]) hist
-  formattedPage [HidePageControls] [] ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser)) params contents
+  formattedPage [HidePageControls] [] page params (heading +++ contents)
 
 showDiff :: String -> Params -> Web Response
 showDiff page params = do
@@ -613,10 +612,11 @@ updatePage page params = do
 
 indexPage :: String -> Params -> Web Response
 indexPage _ params = do
+  let page = "_index"
   let revision = pRevision params
   files <- gitLsTree revision >>= return . map (unwords . drop 3 . words) . lines
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort files
-  formattedPage [HidePageControls] ["folding.js"] "index" params htmlIndex
+  formattedPage [HidePageControls] ["folding.js"] page params htmlIndex
 
 -- | Map a list of nonempty lists onto a list of pairs of list heads and list of tails.
 -- e.g. [[1,2],[1],[2,1]] -> [(1,[[2],[]]), (2,[[1]])]
@@ -723,7 +723,9 @@ formattedPage opts scripts page params htmlContents = do
   let body' = body << thediv ! [identifier "container"] <<
                         [ thediv ! [identifier "banner"] << primHtml (wikiBanner cfg)
                         , thediv ! [identifier "navbar", thestyle $ "visibility: " ++ sitenavVis] << [userbox, sitenav]
-                        , thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
+                        , case page of
+                               '_':_   -> noHtml
+                               _       -> thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
                         , thediv ! [identifier "content"] << [htmlMessages, htmlContents]
                         , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls", thestyle $ "visibility: " ++ sidebarVis] << buttons
                                                               , thediv ! [theclass "details"] << revision ]
@@ -744,7 +746,7 @@ loginForm params =
                     , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", destination)])] << "click here to register." ]]
 
 loginUserForm :: String -> Params -> Web Response
-loginUserForm _ params = formattedPage [HidePageControls] [] "Login" params $ loginForm params
+loginUserForm _ params = formattedPage [HidePageControls] [] "_login" params $ loginForm params
 
 loginUser :: String -> Params -> Web Response
 loginUser _ params = do
@@ -760,7 +762,7 @@ loginUser _ params = do
       addCookie (3600) (mkCookie "sid" (show key))
       seeOther ("/" ++ intercalate "%20" (words destination)) $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      loginUserForm "Login" (params { pMessages = "Authentication failed." : pMessages params })
+      loginUserForm "_login" (params { pMessages = "Authentication failed." : pMessages params })
 
 logoutUser :: String -> Params -> Web Response
 logoutUser _ params = do
@@ -790,11 +792,13 @@ registerForm = do
 
 registerUserForm :: String -> Params -> Web Response
 registerUserForm _ params = do
+  let page = "_register"
   regForm <- registerForm
-  formattedPage [HidePageControls] [] "Register" params regForm
+  formattedPage [HidePageControls] [] page params regForm
 
 registerUser :: String -> Params -> Web Response
 registerUser _ params = do
+  let page = "_register"
   regForm <- registerForm
   let isValidUsername u = length u >= 3 && all isAlphaNum u
   let isValidPassword pw = length pw >= 6 && not (all isAlpha pw)
@@ -819,6 +823,6 @@ registerUser _ params = do
        let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
        update $ AddUser uname (User { username = uname, password = passwordHash })
        loginUser "Front Page" (params { pUsername = uname, pPassword = pword, pDestination = "Front Page" })
-     else formattedPage [HidePageControls] [] "Register" (params { pMessages = errors }) regForm
+     else formattedPage [HidePageControls] [] page (params { pMessages = errors }) regForm
 
 
