@@ -5,10 +5,5 @@ _ from index page, try clicking "upload" when you have to login -
   Perhaps we should address this by dispatching _upload, etc. on the page rather
   than using "dir _".
 
-_ add a drag and drop interface to the index -- when you drag a file onto
-  a folder, it will 'git mv' the file into that folder.  Also perhaps add
-  a "Create folder" button?  Or would git-ls-tree ignore it without a file
-  inside?
-
 _ perhaps search should not use the "whole word" feature...
 
