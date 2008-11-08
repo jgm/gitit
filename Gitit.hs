@@ -158,7 +158,7 @@ initializeWiki repodir staticdir = do
     zipWithM copyFile stylesheetpaths (map (staticdir </>) stylesheets)
     createDirectoryIfMissing True $ staticdir </> "javascripts"
     let javascripts = ["jquery.min.js", "jquery-ui-personalized-1.6rc2.min.js",
-                       "folding.js", "dragdiff.js", "preview.js", "search.js"]
+                       "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     javascriptpaths <- mapM getDataFileName $ map ("javascripts" </>) javascripts
     zipWithM copyFile javascriptpaths $ map ((staticdir </> "javascripts") </>) javascripts
     hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
@@ -417,12 +417,14 @@ uploadForm _ params = do
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   let upForm = form ! [X.method "post", enctype "multipart/form-data"] <<
-        [ p << [label << "File to upload:", br, afile "file" ! [value origPath]]
-        , p << [label << "Name on wiki, including extension:", br, textfield "wikiname" ! [value wikiname],
+        [ p << [label << "File to upload:", br, afile "file" ! [value origPath] ]
+        , p << [label << "Name on wiki, including extension",
+                noscript << " (leave blank to use the same filename)", stringToHtml ":", br,
+                textfield "wikiname" ! [value wikiname],
                 primHtmlChar "nbsp", checkbox "overwrite" "yes", label << "Overwrite existing file"]
         , p << [label << "Description of content or changes:", br, textfield "logMsg" ! [size "60", value logMsg],
                 submit "upload" "Upload"] ]
-  formattedPage [HidePageControls] [] page params upForm
+  formattedPage [HidePageControls] ["uploadForm.js"] page params upForm
 
 uploadFile :: String -> Params -> Web Response
 uploadFile _ params = do
