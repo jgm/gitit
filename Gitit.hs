@@ -604,12 +604,14 @@ updatePage page params = do
           then error "Page exceeds maximum size."
           else return ()
        currentSHA1 <- gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
+       -- ensure that every file has a newline at the end, to avoid "No newline at eof" messages in diffs
+       let editedText' = if null editedText || last editedText == '\n' then editedText else editedText ++ "\n"
        -- check SHA1 in case page has been modified, merge
        if currentSHA1 == oldSHA1
           then do
             let dir' = takeDirectory page
             liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-            liftIO $ writeFile ((repositoryPath cfg) </> pathForPage page) editedText
+            liftIO $ writeFile ((repositoryPath cfg) </> pathForPage page) editedText'
             gitCommit (pathForPage page) (author, email) logMsg
             seeOther (urlForPage page) $ toResponse $ p << "Page updated"
           else do -- there have been conflicting changes
@@ -617,7 +619,6 @@ updatePage page params = do
             latest <- gitCatFile currentSHA1 (pathForPage page) >>= return . fromJust
             let pagePath = repositoryPath cfg </> pathForPage page
             let [textTmp, originalTmp, latestTmp] = map (pagePath ++) [".edited",".original",".latest"]
-            let editedText' = if null editedText || last editedText == '\n' then editedText else editedText ++ "\n"
             liftIO $ writeFile textTmp editedText'
             liftIO $ writeFile originalTmp original
             liftIO $ writeFile latestTmp latest
