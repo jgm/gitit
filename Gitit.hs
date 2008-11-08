@@ -187,7 +187,7 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "edit" editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
-               , handleCommand "update"  POST (unlessNoEdit updatePage)
+               , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "edit" updatePage)
                , handleCommand "delete"  GET  (unlessNoDelete confirmDelete)
                , handleCommand "delete"  POST (unlessNoDelete deletePage)
                , handle GET showPage
@@ -568,14 +568,11 @@ deletePage page params = do
 
 updatePage :: String -> Params -> Web Response
 updatePage page params = do
-  user <- getLoggedInUser params
-  if isNothing user
-     then fail "User must be logged in to update page."
-     else return ()
+  let author = pUser params
+  when (null author) $ fail "User must be logged in to update page."
   let editedText = case pEditedText params of
                       Nothing -> error "No body text in POST request"
                       Just b  -> b
-  let author = fromJust user
   let email = ""
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
