@@ -451,25 +451,26 @@ uploadFile _ params = do
 
 searchResults :: String -> Params -> Web Response
 searchResults _ params = do
-  let page = "_seach"
+  let page = "_search"
   let patterns = pPatterns params
   let limit = pLimit params
-  if null patterns
-     then noHandle
-     else do
-       matchLines <- gitGrep patterns >>= return . map parseMatchLine . take limit . lines
-       let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map fst matchLines
-       let matches = map (\f -> (f, mapMaybe (\(a,b) -> if a == f then Just b else Nothing) matchLines)) matchedFiles
-       let preamble = if null matches
-                         then h3 << ["No matches found for '", unwords patterns, "':"]
-                         else h3 << [(show $ length matches), " matches found for '", unwords patterns, "':"]
-       let htmlMatches = preamble +++ olist << map
-                           (\(file, contents) -> li << [anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file,
-                           stringToHtml (" (" ++ show (length contents) ++ " matching lines)"),
-                           stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
-                           pre ! [theclass "matches"] << unlines contents])
-                           (reverse  $ sortBy (comparing (length . snd)) matches)
-       formattedPage [HidePageControls] ["search.js"] page params htmlMatches
+  matchLines <- if null patterns
+                   then return []
+                   else gitGrep patterns >>= return . map parseMatchLine . take limit . lines
+  let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map fst matchLines
+  let matches = map (\f -> (f, mapMaybe (\(a,b) -> if a == f then Just b else Nothing) matchLines)) matchedFiles
+  let preamble = if null matches
+                    then h3 << if null patterns
+                                  then ["Please enter a search term."]
+                                  else ["No matches found for '", unwords patterns, "':"]
+                    else h3 << [(show $ length matches), " matches found for '", unwords patterns, "':"]
+  let htmlMatches = preamble +++ olist << map
+                      (\(file, contents) -> li << [anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file,
+                      stringToHtml (" (" ++ show (length contents) ++ " matching lines)"),
+                      stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
+                      pre ! [theclass "matches"] << unlines contents])
+                      (reverse  $ sortBy (comparing (length . snd)) matches)
+  formattedPage [HidePageControls] ["search.js"] page params htmlMatches
 
 -- Auxiliary function for searchResults
 parseMatchLine :: String -> (String, String)
