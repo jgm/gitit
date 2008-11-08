@@ -35,6 +35,8 @@ import Text.XHtml hiding ( (</>), dir, method, password )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
+import Data.ByteString.UTF8 (fromString)
+import qualified Data.Map as M
 import Data.Ord (comparing)
 import qualified Data.Digest.SHA512 as SHA512 (hash)
 import Paths_gitit
@@ -49,6 +51,7 @@ import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars, urlEncode)
 import System.Console.GetOpt
 import System.Exit
+import Text.Highlighting.Kate
 
 gititVersion :: String
 gititVersion = "0.1.2"
@@ -171,18 +174,18 @@ type Handler = ServerPart Response
 
 
 wikiHandlers :: [Handler]
-wikiHandlers = [ handlePath "_index"    GET  indexPage
-               , handlePath "_activity" GET  showActivity
-               , handlePath "_preview"  POST preview
-               , handlePath "_search"   POST searchResults
-               , handlePath "_search"   GET  searchResults
-               , handlePath "_register" GET  registerUserForm
-               , handlePath "_register" POST registerUser
-               , handlePath "_login"    GET  loginUserForm
-               , handlePath "_login"    POST loginUser
-               , handlePath "_logout"   GET  logoutUser
-               , handlePath "_upload"   GET  (ifLoggedIn "" uploadForm)
-               , handlePath "_upload"   POST (ifLoggedIn "" uploadFile)
+wikiHandlers = [ handlePath "_index"     GET  indexPage
+               , handlePath "_activity"  GET  showActivity
+               , handlePath "_preview"   POST preview
+               , handlePath "_search"    POST searchResults
+               , handlePath "_search"    GET  searchResults
+               , handlePath "_register"  GET  registerUserForm
+               , handlePath "_register"  POST registerUser
+               , handlePath "_login"     GET  loginUserForm
+               , handlePath "_login"     POST loginUser
+               , handlePath "_logout"    GET  logoutUser
+               , handlePath "_upload"    GET  (ifLoggedIn "" uploadForm)
+               , handlePath "_upload"    POST (ifLoggedIn "" uploadFile)
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
@@ -192,6 +195,7 @@ wikiHandlers = [ handlePath "_index"    GET  indexPage
                , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
                , handleCommand "delete"  POST (unlessNoDelete $ ifLoggedIn "?delete" deletePage)
                , handlePage GET showPage
+               , handleSourceCode
                ]
 
 data Params = Params { pUsername     :: String
@@ -337,12 +341,21 @@ handleCommand command meth responder =
                           Command (Just c) | c == command -> [ handlePage meth responder ]
                           _                               -> []
 
+handleSourceCode :: Handler
+handleSourceCode = withData $ \com ->
+  case com of
+       Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
+       _                        -> [ handle isSourceCode GET showHighlightedSource ]
+
 orIfNull :: String -> String -> String
 orIfNull str backup = if null str then backup else str
 
 isPage :: String -> Bool
 isPage ('_':_) = False
 isPage s = '.' `notElem` s
+
+isSourceCode :: String -> Bool
+isSourceCode = not . null . languagesByExtension . takeExtension
 
 urlForPage :: String -> String
 urlForPage page = "/" ++ urlEncode page
@@ -358,12 +371,22 @@ withCommands meth commands page = withRequest $ \req -> do
              then page (intercalate "/" $ rqPaths req) req
              else noHandle
 
+setContentType :: String -> Response -> Response
+setContentType contentType res =
+  let respHeaders = rsHeaders res
+      newContentType = HeaderPair { hName = fromString "Content-Type",
+                                    hValue = [ fromString contentType ] }
+  in  res { rsHeaders = M.insert (fromString "content-type") newContentType respHeaders }  
+
 showRawPage :: String -> Params -> Web Response
-showRawPage page params = do
+showRawPage page = showFileAsText (pathForPage page)
+
+showFileAsText :: String -> Params -> Web Response
+showFileAsText file params = do
   let revision = pRevision params
-  rawContents <- gitCatFile revision (pathForPage page)
+  rawContents <- gitCatFile revision file
   case rawContents of
-       Just c -> ok $ toResponse c
+       Just c -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
        _      -> noHandle
 
 showPage :: String -> Params -> Web Response
@@ -416,7 +439,6 @@ uploadFile _ params = do
   exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
   -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap.
   -- this list should be updated if mimeMap changes:
-  let bannedExtensions = [".html", ".xml", ".js"]
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate [ (null logMsg, "Description cannot be empty.")
                         , (null origPath, "File not found.")
@@ -427,9 +449,6 @@ uploadFile _ params = do
                            "File exceeds maximum upload size.")
                         , (isPage wikiname,
                            "Uploaded file name must have an appropriate extension.")
-                        , (takeExtension wikiname `elem` bannedExtensions,
-                           "For security reasons, the extension '" ++ takeExtension wikiname ++
-                           "' is not allowed.  Please choose another extension.")
                         ]
   if null errors
      then do
@@ -847,4 +866,14 @@ registerUser _ params = do
        loginUser "Front Page" (params { pUsername = uname, pPassword = pword, pDestination = "Front Page" })
      else formattedPage [HidePageControls] [] page (params { pMessages = errors }) regForm
 
+showHighlightedSource :: String -> Params -> Web Response
+showHighlightedSource file params = do
+  let revision = pRevision params
+  catResult <- liftIO $ gitCatFile revision file
+  case catResult of
+      Just source -> let lang' = head $ languagesByExtension $ takeExtension file
+                     in case highlightAs lang' (filter (/='\r') source) of
+                              Left _       -> noHandle
+                              Right res    -> formattedPage [] [] file params $ formatAsXHtml [OptNumberLines] lang' res
+      Nothing     -> noHandle
 
