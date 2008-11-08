@@ -171,17 +171,18 @@ type Handler = ServerPart Response
 
 
 wikiHandlers :: [Handler]
-wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
-               , dir "_activity" [ handle GET  showActivity ]
-               , dir "_preview"  [ handle POST preview ]
-               , dir "_search"   [ handle POST searchResults ]
-               , dir "_register" [ handle GET  registerUserForm,
-                                   handle POST registerUser ]
-               , dir "_login"    [ handle GET  loginUserForm,
-                                   handle POST loginUser ]
-               , dir "_logout"   [ handle GET  logoutUser ]
-               , dir "_upload"   [ handle GET  $ ifLoggedIn "" uploadForm,
-                                   handle POST $ ifLoggedIn "" uploadFile ]
+wikiHandlers = [ handlePath "_index"    GET  indexPage
+               , handlePath "_activity" GET  showActivity
+               , handlePath "_preview"  POST preview
+               , handlePath "_search"   POST searchResults
+               , handlePath "_search"   GET  searchResults
+               , handlePath "_register" GET  registerUserForm
+               , handlePath "_register" POST registerUser
+               , handlePath "_login"    GET  loginUserForm
+               , handlePath "_login"    POST loginUser
+               , handlePath "_logout"   GET  logoutUser
+               , handlePath "_upload"   GET  (ifLoggedIn "" uploadForm)
+               , handlePath "_upload"   POST (ifLoggedIn "" uploadFile)
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
@@ -190,7 +191,7 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "?edit" updatePage)
                , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
                , handleCommand "delete"  POST (unlessNoDelete $ ifLoggedIn "?delete" deletePage)
-               , handle GET showPage
+               , handlePage GET showPage
                ]
 
 data Params = Params { pUsername     :: String
@@ -314,19 +315,26 @@ ifLoggedIn fallback responder =
                                         toResponse $ p << "You must be logged in to perform this action."
                           Just u   -> responder page (params { pUser = u })
 
-handle :: Method -> (String -> Params -> Web Response) -> Handler
-handle meth responder = uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
-                                          in  if isPage uriPath
-                                                 then withData $ \params ->
-                                                          [ withRequest $ \req -> if rqMethod req == meth
-                                                                                     then responder uriPath params
-                                                                                     else noHandle ]
-                                                 else anyRequest noHandle
+handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
+handle uritest meth responder =
+  uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
+                    in  if uritest uriPath
+                           then withData $ \params ->
+                                    [ withRequest $ \req -> if rqMethod req == meth
+                                                               then responder uriPath params
+                                                               else noHandle ]
+                           else anyRequest noHandle
+
+handlePage :: Method -> (String -> Params -> Web Response) -> Handler
+handlePage = handle isPage
+
+handlePath :: String -> Method -> (String -> Params -> Web Response) -> Handler
+handlePath path' = handle (== path')
 
 handleCommand :: String -> Method -> (String -> Params -> Web Response) -> Handler
 handleCommand command meth responder =
   withData $ \com -> case com of
-                          Command (Just c) | c == command -> [ handle meth responder ]
+                          Command (Just c) | c == command -> [ handlePage meth responder ]
                           _                               -> []
 
 orIfNull :: String -> String -> String
