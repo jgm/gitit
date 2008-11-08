@@ -406,8 +406,10 @@ uploadFile _ params = do
   let email = ""
   let overwrite = pOverwrite params
   exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
-  -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap:
+  -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap.
+  -- this list should be updated if mimeMap changes:
   let bannedExtensions = [".html", ".xml", ".js"]
+  let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate [ (null logMsg, "Description cannot be empty.")
                         , (null origPath, "File not found.")
                         , (not overwrite && exists, "A file named '" ++ wikiname ++
@@ -431,7 +433,12 @@ uploadFile _ params = do
        liftIO $ B.writeFile ((repositoryPath cfg) </> wikiname) fileContents
        gitCommit wikiname (author, email) logMsg
        formattedPage [HidePageControls] [] page params $
-                     p << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
+                     thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
+                               , if takeExtension wikiname `elem` imageExtensions
+                                    then p << "To add this image to a page, use:" +++
+                                         pre << ("![alt text](" ++ wikiname ++ ")")
+                                    else p << "To link to this resource from a page, use:" +++
+                                         pre << ("[link label](" ++ wikiname ++ ")") ]
      else uploadForm page (params { pMessages = errors })
 
 searchResults :: String -> Params -> Web Response
