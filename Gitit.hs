@@ -406,6 +406,8 @@ uploadFile _ params = do
   let email = ""
   let overwrite = pOverwrite params
   exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
+  -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap:
+  let bannedExtensions = [".html", ".xml", ".js"]
   let errors = validate [ (null logMsg, "Description cannot be empty.")
                         , (null origPath, "File not found.")
                         , (not overwrite && exists, "A file named '" ++ wikiname ++
@@ -415,6 +417,9 @@ uploadFile _ params = do
                            "File exceeds maximum upload size.")
                         , (isPage wikiname,
                            "Uploaded file name must have an appropriate extension.")
+                        , (takeExtension wikiname `elem` bannedExtensions,
+                           "For security reasons, the extension '" ++ takeExtension wikiname ++
+                           "' is not allowed.  Please choose another extension.")
                         ]
   if null errors
      then do
