@@ -118,11 +118,17 @@ gitDiff :: MonadIO m
         -> m String  -- ^ String
 gitDiff file from to = do
   repo <- (query GetConfig) >>= return . repositoryPath
-  (status, errOut, output) <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
-                                        "git" ["diff", from, to,  file]
+  (status, _, output) <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
+                                    "git" ["diff", from, to, file]
   if status == ExitSuccess
      then return output
-     else error $ "git diff returned error: " ++ errOut
+     else do
+       -- try it without the path, since the error might be "not in working tree" for a deleted file
+       (status', errOut', output') <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
+                                         "git" ["diff", from, to]
+       if status' == ExitSuccess
+          then return output'
+          else error $ "git diff returned error: " ++ errOut'
 
 -- | Add and then commit file, raising errors if either step fails.
 gitCommit :: MonadIO m => FilePath -> (String, String) -> String -> m ()
