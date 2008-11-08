@@ -184,12 +184,12 @@ wikiHandlers = [ dir "_index"    [ handle GET  indexPage ]
                                    handle POST uploadFile ]
                , handleCommand "showraw" GET  showRawPage
                , handleCommand "history" GET  showPageHistory
-               , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "edit" editPage)
+               , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "cancel"  POST showPage
-               , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "edit" updatePage)
-               , handleCommand "delete"  GET  (unlessNoDelete confirmDelete)
-               , handleCommand "delete"  POST (unlessNoDelete deletePage)
+               , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "?edit" updatePage)
+               , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
+               , handleCommand "delete"  POST (unlessNoDelete $ ifLoggedIn "?delete" deletePage)
                , handle GET showPage
                ]
 
@@ -216,6 +216,7 @@ data Params = Params { pUsername     :: String
                      , pFilename     :: String
                      , pFileContents :: B.ByteString
                      , pUser         :: String
+                     , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
                      }  deriving Show
 
@@ -243,6 +244,7 @@ instance FromData Params where
          fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
          fc <- (lookInput "file" >>= return . inputValue) `mplus` return B.empty
          ac <- look "accessCode"     `mplus` return ""
+         cn <- (look "confirm" >> return True) `mplus` return False
          sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
          return $ Params { pUsername     = un
                          , pPassword     = pw
@@ -267,6 +269,7 @@ instance FromData Params where
                          , pFileContents = fc
                          , pAccessCode   = ac
                          , pUser         = ""  -- this gets set by ifLoggedIn...
+                         , pConfirm      = cn
                          , pSessionKey   = sk }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -304,11 +307,11 @@ unlessNoDelete responder =
                          else responder page params
 
 ifLoggedIn :: String -> (String -> Params -> Web Response) -> (String -> Params -> Web Response)
-ifLoggedIn command responder =
+ifLoggedIn fallback responder =
   \page params -> do user <- getLoggedInUser params
                      case user of
-                          Nothing  -> seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ "?" ++ command)]) $ 
-                                        toResponse $ p << "You must be logged in to edit a page."
+                          Nothing  -> seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ fallback)]) $ 
+                                        toResponse $ p << "You must be logged in to perform this action."
                           Just u   -> responder page (params { pUser = u })
 
 handle :: Method -> (String -> Params -> Web Response) -> Handler
@@ -550,21 +553,18 @@ confirmDelete page params = do
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  user <- getLoggedInUser params
-  if isJust user
-     then formattedPage [HidePageControls] [] page params confirmForm
-     else seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ "?delete")]) $ toResponse $ p << "You must be logged in to delete a page."
+  formattedPage [HidePageControls] [] page params confirmForm
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
-  user <- getLoggedInUser params
-  if isNothing user
-     then fail "User must be logged in to delete page."
-     else return ()
-  let author = fromJust user
-  let email = ""
-  gitRemove (pathForPage page) (author, email) "Deleted from web."
-  seeOther "/" $ toResponse $ p << "Page deleted"
+  if pConfirm params
+     then do
+       let author = pUser params
+       when (null author) $ fail "User must be logged in to delete page."
+       let email = ""
+       gitRemove (pathForPage page) (author, email) "Deleted from web."
+       seeOther "/" $ toResponse $ p << "Page deleted"
+     else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
 
 updatePage :: String -> Params -> Web Response
 updatePage page params = do
