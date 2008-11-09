@@ -68,7 +68,7 @@ main = do
   update $ SetConfig conf
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if (debugMode conf) then debugFilter else id
-  tid <- forkIO $ simpleHTTP (Conf { port = portNumber conf }) $ debugger $
+  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
           [ dir "stylesheets" [ fileServe [] $ (staticDir conf) </> "stylesheets" ]
           , dir "images"      [ fileServe [] $ (staticDir conf) </> "images" ]
           , dir "javascripts" [ fileServe [] $ (staticDir conf) </> "javascripts" ]
