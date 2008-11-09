@@ -1,5 +1,6 @@
 name:                gitit
 version:             0.2
+Cabal-version:       >= 1.2
 build-type:          Simple
 synopsis:            Wiki using HAppS, git, and pandoc.
 description:         Gitit is a wiki program. HAppS is used for the web
@@ -28,17 +29,18 @@ data-files:          stylesheets/gitit.css, stylesheets/hk-pyg.css,
                      data/post-update, data/FrontPage.page, data/Help.page,
                      README.markdown, data/SampleConfig.hs
 
-hs-source-dirs:      .
-executable:          gitit
-main-is:             Gitit.hs 
-other-modules:       Gitit.State, Gitit.Git, Paths_gitit
-build-depends:       base, parsec < 3, pretty, xhtml, containers, pandoc
+Executable           gitit
+  hs-source-dirs:    .
+  main-is:           Gitit.hs 
+  other-modules:     Gitit.State, Gitit.Git, Paths_gitit
+  build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
-                     utf8-string, HAppS-Server == 0.9.2.1,
-                     HAppS-State == 0.9.2.1, HAppS-Data == 0.9.2.1,
-                     Crypto, HTTP
-
-ghc-options:         -Wall -threaded
-ghc-prof-options:    -auto-all
+                     utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
+                     HAppS-State >= 0.9.3 && < 0.9.4,
+                     HAppS-Data >= 0.9.3 && < 0.9.4, Crypto, HTTP
+  if impl(ghc >= 6.10)
+    build-depends:   base >= 4, syb
+  ghc-options:         -Wall -threaded
+  ghc-prof-options:    -auto-all
 
