@@ -398,8 +398,11 @@ showPage page params = do
        Just c -> do
                  cont <- convertToHtml c
                  let cont' = thediv ! [identifier "wikipage",
-                                       strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ "?edit&revision=" ++ revision ++
-                                       (if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
+                                       strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ 
+                                         "?edit&revision=" ++ revision ++
+                                         (if revision == "HEAD"
+                                             then ""
+                                             else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
                  formattedPage [] ["jsMath/easy/load.js"] page params cont'
        _      -> if revision == "HEAD"
                     then editPage page params
@@ -509,8 +512,9 @@ showPageHistory page params =  do
   hist <- gitLog since "" [pathForPage page]
   let versionToHtml entry pos = li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ logRevision entry] <<
                                       [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
-                                       thespan ! [theclass "author"] << anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                                         (logAuthor entry), stringToHtml ")", stringToHtml ": ",
+                                       thespan ! [theclass "author"] <<
+                                               anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
+                                                          (logAuthor entry), stringToHtml ")", stringToHtml ": ",
                                        anchor ! [href (urlForPage page ++ "?revision=" ++ logRevision entry)] <<
                                        thespan ! [theclass "subject"] <<  logSubject entry,
                                        noscript << ([stringToHtml " [compare with ",
@@ -538,8 +542,9 @@ showActivity _ params = do
   let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
   let contents = ulist ! [theclass "history"] << map (\entry -> li <<
                            [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
-                            thespan ! [theclass "author"] << anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                                         (logAuthor entry), stringToHtml "):",
+                            thespan ! [theclass "author"] <<
+                                    anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
+                                               (logAuthor entry), stringToHtml "):",
                             thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
                             thespan ! [theclass "files"] << filesFor (logFiles entry),
                             stringToHtml ")"]) hist
@@ -753,10 +758,12 @@ formattedPage opts scripts page params htmlContents = do
                                theclass "nav_link"] << if revision == "HEAD" then "edit" else "revert" ]
   let userbox =    thediv ! [identifier "userbox"] <<
                         case user of
-                             Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << ("logout " ++ u)
-                             Nothing  -> (anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << "login") +++
-                                         primHtmlChar "bull" +++
-                                         anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << "register"
+                             Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << 
+                                         ("logout " ++ u)
+                             Nothing  -> (anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] <<
+                                          "login") +++ primHtmlChar "bull" +++
+                                         anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] <<
+                                          "register"
   let sitenavVis = if HideNavbar `elem` opts then "hidden" else "visible"
   let sidebarVis = if HidePageControls `elem` opts then "hidden" else "visible"
   let messages = pMessages params
@@ -770,7 +777,8 @@ formattedPage opts scripts page params htmlContents = do
                                '_':_   -> noHtml
                                _       -> thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
                         , thediv ! [identifier "content"] << [htmlMessages, htmlContents]
-                        , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls", thestyle $ "visibility: " ++ sidebarVis] << buttons
+                        , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls",
+                                                                          thestyle $ "visibility: " ++ sidebarVis] << buttons
                                                               , thediv ! [theclass "details"] << revision ]
                         , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg)
                         ]
