@@ -918,13 +918,17 @@ respondMan :: String -> Pandoc -> Web Response
 respondMan _ = ok . setContentType "text/plain" . toResponse .
                writeMan (defaultRespOptions {writerHeader = ""})
 
+respondS5 :: String -> Pandoc -> Web Response
+respondS5 _ = ok . toResponse .  writeS5 (defaultRespOptions {writerHeader = defaultS5Header, 
+                                            writerS5 = True, writerIncremental = True})
+
 respondTexinfo :: String -> Pandoc -> Web Response
 respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse .
                       writeTexinfo (defaultRespOptions {writerHeader = ""})
 
 respondDocbook :: String -> Pandoc -> Web Response
 respondDocbook page = ok . setContentType "application/docbook+xml" . setFilename (page ++ ".xml") . toResponse .
-                      writeDocbook (defaultRespOptions {writerHeader = ""})
+                      writeDocbook (defaultRespOptions {writerHeader = defaultDocbookHeader})
 
 respondMediaWiki :: String -> Pandoc -> Web Response
 respondMediaWiki _ = ok . setContentType "text/plain" . toResponse .
@@ -946,8 +950,9 @@ exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
                 , ("MediaWiki", respondMediaWiki)
-                , ("DocBook",   respondDocbook)
                 , ("man",       respondMan)
+                , ("DocBook",   respondDocbook)
+                , ("S5",        respondS5)
                 , ("ODT",       respondODT)
                 , ("RTF",       respondRTF) ]
 
