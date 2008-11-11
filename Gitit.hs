@@ -190,6 +190,7 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handleCommand "history" GET  showPageHistory
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
                , handleCommand "diff"    GET  showDiff
+               , handleCommand "export"  POST exportPage
                , handleCommand "cancel"  POST showPage
                , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "?edit" updatePage)
                , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
@@ -212,6 +213,7 @@ data Params = Params { pUsername     :: String
                      , pMessages     :: [String]
                      , pFrom         :: String
                      , pTo           :: String
+                     , pFormat       :: String
                      , pSHA1         :: String
                      , pLogMsg       :: String
                      , pEmail        :: String
@@ -241,6 +243,7 @@ instance FromData Params where
          fm <- look "from"           `mplus` return "HEAD"
          to <- look "to"             `mplus` return "HEAD"
          et <- (look "editedText" >>= return . Just . filter (/= '\r')) `mplus` return Nothing
+         fo <- look "format"         `mplus` return ""
          sh <- look "sha1"           `mplus` return ""
          lm <- look "logMsg"         `mplus` return ""
          em <- look "email"          `mplus` return ""
@@ -265,6 +268,7 @@ instance FromData Params where
                          , pFrom         = fm
                          , pTo           = to
                          , pEditedText   = et
+                         , pFormat       = fo 
                          , pSHA1         = sh
                          , pLogMsg       = lm
                          , pEmail        = em
@@ -288,7 +292,7 @@ getLoggedInUser params = do
 data Command = Command (Maybe String)
 
 commandList :: [String]
-commandList = ["edit", "showraw", "history", "diff", "cancel", "update", "delete"]
+commandList = ["edit", "showraw", "history", "export", "diff", "cancel", "update", "delete"]
 
 instance FromData Command where
      fromData = do
@@ -386,8 +390,8 @@ showFileAsText file params = do
   let revision = pRevision params
   rawContents <- gitCatFile revision file
   case rawContents of
-       Just c -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
-       _      -> noHandle
+       Just c  -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
+       Nothing -> error "Unable to get file contents."
 
 showPage :: String -> Params -> Web Response
 showPage "" params = showPage "Front Page" params >>= seeOther "/Front%20Page"
@@ -778,8 +782,9 @@ formattedPage opts scripts page params htmlContents = do
                                _       -> thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
                         , thediv ! [identifier "content"] << [htmlMessages, htmlContents]
                         , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls",
-                                                                          thestyle $ "visibility: " ++ sidebarVis] << buttons
-                                                              , thediv ! [theclass "details"] << revision ]
+                                                                          thestyle $ "visibility: " ++ sidebarVis] <<
+                                                                            ((thespan ! [theclass "details"] << revision) : buttons)
+                                                              , exportBox page ]
                         , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg)
                         ]
   ok $ toResponse $ head' +++ body'
@@ -886,4 +891,34 @@ showHighlightedSource file params = do
                               Left _       -> noHandle
                               Right res    -> formattedPage [] [] file params $ formatAsXHtml [OptNumberLines] lang' res
       Nothing     -> noHandle
+
+defaultRespOptions :: WriterOptions
+defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
+
+respondLaTeX :: Pandoc -> Response
+respondLaTeX = setContentType "text/latex" . toResponse .
+               writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
+
+exportFormats :: [(String, Pandoc -> Response)]   -- (description, mime type, writer)
+exportFormats = [ ("LaTeX",     respondLaTeX)
+                ]
+
+exportBox :: String -> Html
+exportBox page =
+   gui (urlForPage page) ! [identifier "exportbox"] << 
+     [ submit "export" "Export"
+     , select ! [name "format"] <<
+         map ((\f -> option ! [value f] << ("as " ++ f)) . fst) exportFormats ]
+
+exportPage :: String -> Params -> Web Response
+exportPage page params = do
+  let format = pFormat params
+  let reader = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
+                filter (/= '\r') . decodeString
+  rawContents <- gitCatFile "HEAD" (pathForPage page)
+  case rawContents of
+       Nothing -> error "Unable to get file contents."
+       Just c  -> case lookup format exportFormats of
+                       Nothing     -> error $ "Unknown export format: " ++ format
+                       Just writer -> ok $ writer $ reader c
 
