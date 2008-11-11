@@ -23,8 +23,9 @@ import HAppS.Server
 import HAppS.State hiding (Method)
 import System.Environment
 import System.IO.UTF8
-import System.IO (stderr, openTempFile, Handle, hClose)
-import Control.Exception (finally)
+import System.IO (stderr)
+import System.IO.Error (isAlreadyExistsError)
+import Control.Exception (bracket)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr)
 import System.Process
 import System.Directory
@@ -921,18 +922,11 @@ respondODT :: String -> Pandoc -> Web Response
 respondODT page doc = do
   cfg <- query GetConfig
   let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
-  contents <- liftIO $
-              withTempFile "gitit-temp.odt" $ \tempPath h -> do
-                  hClose h
-                  saveOpenDocumentAsODT (tempPath) (repositoryPath cfg) openDoc 
-                  B.readFile tempPath
+  contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
+                let tempfile = tempdir </> page <.> "odt"
+                saveOpenDocumentAsODT tempfile (repositoryPath cfg) openDoc
+                B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $ setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
-
-withTempFile :: String -> (FilePath -> Handle -> IO a) -> IO a
-withTempFile pattern func = do -- borrowed from Real World Haskell
-  tempdir <- catch (getTemporaryDirectory) (\_ -> return ".")
-  (tempfile, temph) <- openTempFile tempdir pattern 
-  finally (func tempfile temph) (hClose temph >> removeFile tempfile)
 
 exportFormats :: [(String, String -> Pandoc -> Web Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
@@ -975,4 +969,18 @@ exportPage page params = do
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
                         Just writer -> writer page doc
+
+-- | Perform a function in a temporary directory and clean up.
+withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
+withTempDir baseName = bracket (createTempDir 0 baseName) (removeDirectoryRecursive)
+
+-- | Create a temporary directory with a unique name.
+createTempDir :: Integer -> FilePath -> IO FilePath
+createTempDir num baseName = do
+  sysTempDir <- catch getTemporaryDirectory (\_ -> return ".")
+  let dirName = sysTempDir </> baseName <.> show num
+  catch (createDirectory dirName >> return dirName) $
+      \e -> if isAlreadyExistsError e
+               then createTempDir (num + 1) baseName
+               else ioError e
 
