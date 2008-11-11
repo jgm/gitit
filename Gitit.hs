@@ -191,6 +191,7 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
                , handleCommand "diff"    GET  showDiff
                , handleCommand "export"  POST exportPage
+               , handleCommand "export"  GET  exportPage
                , handleCommand "cancel"  POST showPage
                , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "?edit" updatePage)
                , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
@@ -382,25 +383,31 @@ setContentType contentType res =
                                     hValue = [ fromString contentType ] }
   in  res { rsHeaders = M.insert (fromString "content-type") newContentType respHeaders }  
 
+setFilename :: String -> Response -> Response
+setFilename fname res =
+  let respHeaders = rsHeaders res
+      newContentType = HeaderPair { hName = fromString "Content-Disposition",
+                                    hValue = [ fromString $ "attachment; " ++ urlEncodeVars [("filename", fname)] ] }
+  in  res { rsHeaders = M.insert (fromString "content-disposition") newContentType respHeaders }  
+
 showRawPage :: String -> Params -> Web Response
-showRawPage page = showFileAsText (pathForPage page)
+showRawPage page = showFileAsText $ pathForPage page
 
 showFileAsText :: String -> Params -> Web Response
 showFileAsText file params = do
-  let revision = pRevision params
-  rawContents <- gitCatFile revision file
-  case rawContents of
-       Just c  -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
-       Nothing -> error "Unable to get file contents."
+  mContents <- rawContents file params
+  case mContents of
+       Nothing   -> error "Unable to retrieve page contents."
+       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
 
 showPage :: String -> Params -> Web Response
 showPage "" params = showPage "Front Page" params >>= seeOther "/Front%20Page"
 showPage page params = do
   let revision = pRevision params
-  rawContents <- gitCatFile revision (pathForPage page)
-  case rawContents of
-       Just c -> do
-                 cont <- convertToHtml c
+  mDoc <- pageAsPandoc page params
+  case mDoc of
+       Just d -> do
+                 cont <- pandocToHtml d
                  let cont' = thediv ! [identifier "wikipage",
                                        strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ 
                                          "?edit&revision=" ++ revision ++
@@ -508,7 +515,7 @@ parseMatchLine matchLine =
   in  (file, contents)
 
 preview :: String -> Params -> Web Response
-preview _ params = convertToHtml (pRaw params) >>= ok . toResponse
+preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params =  do
@@ -571,10 +578,10 @@ editPage :: String -> Params -> Web Response
 editPage page params = do
   let revision = pRevision params
   let messages = pMessages params
-  rawContents <- case pEditedText params of
-                      Nothing -> gitCatFile revision (pathForPage page)
-                      Just t  -> return $ Just t
-  let (new, contents) = case rawContents of
+  raw <- case pEditedText params of
+              Nothing -> gitCatFile revision (pathForPage page)
+              Just t  -> return $ Just t
+  let (new, contents) = case raw of
                              Nothing -> (True, "# Title goes here\n\nContent goes here")
                              Just c  -> (False, c)
   let messages' = if new
@@ -704,17 +711,14 @@ refToUrl (Space:xs)   = "%20" ++ refToUrl xs
 refToUrl (_:_)        = error "Encountered an inline other than Str or Space"
 refToUrl []           = ""
 
--- | Converts markdown string to HTML.
-convertToHtml :: MonadIO m => String -> m Html
-convertToHtml text' = do
+-- | Converts pandoc document to HTML.
+pandocToHtml :: MonadIO m => Pandoc -> m Html
+pandocToHtml pandocContents = do
   cfg <- query GetConfig
-  let pandocContents = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) $
-                                    filter (/= '\r') $ decodeString $ text'
-  let htmlContents   = writeHtml (defaultWriterOptions { writerStandalone = False
-                                                       , writerHTMLMathMethod = JsMath (Just "/javascripts/jsMath/easy/load.js")
-                                                       , writerTableOfContents = tableOfContents cfg
-                                                       }) $ processPandoc convertWikiLinks pandocContents
-  return htmlContents
+  return $ writeHtml (defaultWriterOptions { writerStandalone = False
+                                           , writerHTMLMathMethod = JsMath (Just "/javascripts/jsMath/easy/load.js")
+                                           , writerTableOfContents = tableOfContents cfg
+                                           }) $ processPandoc convertWikiLinks pandocContents
 
 data PageOption = HidePageControls | HideNavbar deriving (Eq, Show)
 
@@ -735,31 +739,28 @@ formattedPage opts scripts page params htmlContents = do
                            else concatHtml $ map
                                   (\x -> script ! [src ("/javascripts/" ++ x), thetype "text/javascript"] << noHtml)
                                   (["jquery.min.js", "jquery-ui-personalized-1.6rc2.min.js"] ++ scripts)
-  let title' = thetitle << (wikiTitle cfg ++ " - " ++ page)
+  let title' = thetitle << (wikiTitle cfg ++ " - " ++ dropWhile (=='_') page)
   let head' = header << [title', stylesheetlinks, javascriptlinks]
   let sitenav = thediv ! [theclass "sitenav"] <<
                         gui ("/_search") ! [identifier "searchform"] <<
-                        [ anchor ! [href "/Front%20Page", theclass "nav_link"] << "front"
-                        , primHtmlChar "bull"
-                        , anchor ! [href "/_index", theclass "nav_link"] << "index"
-                        , primHtmlChar "bull"
-                        , anchor ! [href "/_upload", theclass "nav_link"] << "upload"
-                        , primHtmlChar "bull"
-                        , anchor ! [href "/_activity", theclass "nav_link"] << "activity"
-                        , primHtmlChar "bull"
-                        , anchor ! [href "/Help", theclass "nav_link"] << "help"
-                        , primHtmlChar "nbsp"
-                        , textfield "patterns" ! [theclass "search_field search_term"]
-                        , submit "search" "Search" ]
-  let buttons =    [ anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw", theclass "nav_link"] << "raw"
-                   , primHtmlChar "bull"
-                   , anchor ! [href $ urlForPage page ++ "?delete", theclass "nav_link"] << "delete"
-                   , primHtmlChar "bull"
-                   , anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history", theclass "nav_link"] << "history"
-                   , primHtmlChar "bull"
-                   , anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
-                                      if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)],
-                               theclass "nav_link"] << if revision == "HEAD" then "edit" else "revert" ]
+                          (intersperse (primHtmlChar "bull")
+                             [ anchor ! [href "/Front%20Page", theclass "nav_link"] << "front"
+                             , anchor ! [href "/_index", theclass "nav_link"] << "index"
+                             , anchor ! [href "/_upload", theclass "nav_link"] << "upload"
+                             , anchor ! [href "/_activity", theclass "nav_link"] << "activity"
+                             , anchor ! [href "/Help", theclass "nav_link"] << "help" ] ++
+                          [ primHtmlChar "nbsp"
+                          , textfield "patterns" ! [theclass "search_field search_term"]
+                          , submit "search" "Search" ])
+  let rawButton  = anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw", theclass "nav_link"] << "raw"
+  let delButton  = anchor ! [href $ urlForPage page ++ "?delete", theclass "nav_link"] << "delete"
+  let histButton = anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history", theclass "nav_link"] << "history"
+  let editButton = anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
+                              if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)],
+                              theclass "nav_link"] << if revision == "HEAD" then "edit" else "revert"
+  let buttons    = intersperse (primHtmlChar "bull") $ 
+                      (if isPage page then [rawButton] else []) ++ [delButton, histButton] ++
+                      (if isPage page then [editButton] else [])
   let userbox =    thediv ! [identifier "userbox"] <<
                         case user of
                              Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << 
@@ -784,7 +785,7 @@ formattedPage opts scripts page params htmlContents = do
                         , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls",
                                                                           thestyle $ "visibility: " ++ sidebarVis] <<
                                                                             ((thespan ! [theclass "details"] << revision) : buttons)
-                                                              , exportBox page ]
+                                                              , if isPage page then exportBox page params else noHtml]
                         , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg)
                         ]
   ok $ toResponse $ head' +++ body'
@@ -883,9 +884,8 @@ registerUser _ params = do
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
-  let revision = pRevision params
-  catResult <- liftIO $ gitCatFile revision file
-  case catResult of
+  contents <- rawContents file params
+  case contents of
       Just source -> let lang' = head $ languagesByExtension $ takeExtension file
                      in case highlightAs lang' (filter (/='\r') source) of
                               Left _       -> noHandle
@@ -895,34 +895,54 @@ showHighlightedSource file params = do
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
 
-respondLaTeX :: Pandoc -> Response
-respondLaTeX = setContentType "text/latex" . toResponse .
-               writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
+respondLaTeX :: String -> Pandoc -> Response
+respondLaTeX page = setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse .
+                    writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
-respondConTeXt :: Pandoc -> Response
-respondConTeXt = setContentType "text/context" . toResponse .
-                 writeLaTeX (defaultRespOptions {writerHeader = defaultConTeXtHeader})
+respondConTeXt :: String -> Pandoc -> Response
+respondConTeXt page = setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse .
+                      writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
 
-exportFormats :: [(String, Pandoc -> Response)]   -- (description, mime type, writer)
+respondRTF :: String -> Pandoc -> Response
+respondRTF page = setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse .
+                  writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
+
+exportFormats :: [(String, String -> Pandoc -> Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
-                , ("ConTeXt",   respondConTeXt) ]
+                , ("ConTeXt",   respondConTeXt)
+                , ("RTF",       respondRTF) ]
 
-exportBox :: String -> Html
-exportBox page =
+exportBox :: String -> Params -> Html
+exportBox page params =
    gui (urlForPage page) ! [identifier "exportbox"] << 
      [ submit "export" "Export"
+     , textfield "revision" ! [thestyle "display: none;", value (pRevision params)]
      , select ! [name "format"] <<
          map ((\f -> option ! [value f] << ("as " ++ f)) . fst) exportFormats ]
+
+rawContents :: String -> Params -> Web (Maybe String)
+rawContents page params = do
+  let revision = pRevision params
+  gitCatFile revision (pathForPage page)
+
+textToPandoc :: String -> Pandoc
+textToPandoc = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
+               filter (/= '\r') .  decodeString
+
+pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
+pageAsPandoc page params = do
+  mDoc <- rawContents page params >>= (return . liftM textToPandoc)
+  return $ case mDoc of
+           Nothing                -> Nothing
+           Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
 
 exportPage :: String -> Params -> Web Response
 exportPage page params = do
   let format = pFormat params
-  let reader = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
-                filter (/= '\r') . decodeString
-  rawContents <- gitCatFile "HEAD" (pathForPage page)
-  case rawContents of
-       Nothing -> error "Unable to get file contents."
-       Just c  -> case lookup format exportFormats of
-                       Nothing     -> error $ "Unknown export format: " ++ format
-                       Just writer -> ok $ writer $ reader c
+  mDoc <- pageAsPandoc page params
+  case mDoc of
+       Nothing  -> error $ "Unable to retrieve page contents."
+       Just doc -> case lookup format exportFormats of
+                        Nothing     -> error $ "Unknown export format: " ++ format
+                        Just writer -> ok $ writer page doc
 
