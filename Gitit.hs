@@ -918,6 +918,10 @@ respondMan :: String -> Pandoc -> Web Response
 respondMan _ = ok . setContentType "text/plain" . toResponse .
                writeMan (defaultRespOptions {writerHeader = ""})
 
+respondTexinfo :: String -> Pandoc -> Web Response
+respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse .
+                      writeTexinfo (defaultRespOptions {writerHeader = ""})
+
 respondMediaWiki :: String -> Pandoc -> Web Response
 respondMediaWiki _ = ok . setContentType "text/plain" . toResponse .
                      writeMediaWiki (defaultRespOptions {writerHeader = ""})
@@ -935,6 +939,7 @@ respondODT page doc = do
 exportFormats :: [(String, String -> Pandoc -> Web Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("ConTeXt",   respondConTeXt)
+                , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
