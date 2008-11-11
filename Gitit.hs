@@ -899,9 +899,13 @@ respondLaTeX :: Pandoc -> Response
 respondLaTeX = setContentType "text/latex" . toResponse .
                writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
+respondConTeXt :: Pandoc -> Response
+respondConTeXt = setContentType "text/context" . toResponse .
+                 writeLaTeX (defaultRespOptions {writerHeader = defaultConTeXtHeader})
+
 exportFormats :: [(String, Pandoc -> Response)]   -- (description, mime type, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
-                ]
+                , ("ConTeXt",   respondConTeXt) ]
 
 exportBox :: String -> Html
 exportBox page =
