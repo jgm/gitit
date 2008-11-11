@@ -467,7 +467,7 @@ uploadFile _ params = do
                         , (B.length fileContents > fromIntegral (maxUploadSize cfg),
                            "File exceeds maximum upload size.")
                         , (isPage wikiname,
-                           "Uploaded file name must have an appropriate extension.")
+                           "This file extension is reserved for wiki pages.")
                         ]
   if null errors
      then do
@@ -945,9 +945,9 @@ exportBox page params =
          map ((\f -> option ! [value f] << ("as " ++ f)) . fst) exportFormats ]
 
 rawContents :: String -> Params -> Web (Maybe String)
-rawContents page params = do
-  let revision = pRevision params
-  gitCatFile revision (pathForPage page)
+rawContents file params = do
+  let revision = pRevision params `orIfNull` "HEAD"
+  gitCatFile revision file
 
 textToPandoc :: String -> Pandoc
 textToPandoc = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
@@ -955,7 +955,7 @@ textToPandoc = readMarkdown (defaultParserState { stateSanitizeHTML = True, stat
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
-  mDoc <- rawContents page params >>= (return . liftM textToPandoc)
+  mDoc <- rawContents (pathForPage page) params >>= (return . liftM textToPandoc)
   return $ case mDoc of
            Nothing                -> Nothing
            Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
