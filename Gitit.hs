@@ -23,7 +23,8 @@ import HAppS.Server
 import HAppS.State hiding (Method)
 import System.Environment
 import System.IO.UTF8
-import System.IO (stderr)
+import System.IO (stderr, openTempFile, Handle, hClose)
+import Control.Exception (finally)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr)
 import System.Process
 import System.Directory
@@ -41,6 +42,7 @@ import Data.Ord (comparing)
 import qualified Data.Digest.SHA512 as SHA512 (hash)
 import Paths_gitit
 import Text.Pandoc
+import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import Data.ByteString.Internal (c2w)
@@ -895,31 +897,49 @@ showHighlightedSource file params = do
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
 
-respondLaTeX :: String -> Pandoc -> Response
-respondLaTeX page = setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse .
+respondLaTeX :: String -> Pandoc -> Web Response
+respondLaTeX page = ok . setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse .
                     writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
-respondConTeXt :: String -> Pandoc -> Response
-respondConTeXt page = setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse .
+respondConTeXt :: String -> Pandoc -> Web Response
+respondConTeXt page = ok . setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse .
                       writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
 
-respondRTF :: String -> Pandoc -> Response
-respondRTF page = setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse .
+respondRTF :: String -> Pandoc -> Web Response
+respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse .
                   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
-respondRST :: String -> Pandoc -> Response
-respondRST page = setContentType "text/plain" . setFilename (page ++ ".txt") . toResponse .
+respondRST :: String -> Pandoc -> Web Response
+respondRST page = ok . setContentType "text/plain" . setFilename (page ++ ".txt") . toResponse .
                   writeRST (defaultRespOptions {writerHeader = ""})
 
-respondMediaWiki :: String -> Pandoc -> Response
-respondMediaWiki page = setContentType "text/plain" . setFilename (page ++ ".wiki") . toResponse .
+respondMediaWiki :: String -> Pandoc -> Web Response
+respondMediaWiki page = ok . setContentType "text/plain" . setFilename (page ++ ".wiki") . toResponse .
                         writeMediaWiki (defaultRespOptions {writerHeader = ""})
 
-exportFormats :: [(String, String -> Pandoc -> Response)]   -- (description, writer)
+respondODT :: String -> Pandoc -> Web Response
+respondODT page doc = do
+  cfg <- query GetConfig
+  let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
+  contents <- liftIO $
+              withTempFile "gitit-temp.odt" $ \tempPath h -> do
+                  hClose h
+                  saveOpenDocumentAsODT (tempPath) (repositoryPath cfg) openDoc 
+                  B.readFile tempPath
+  ok $ setContentType "application/vnd.oasis.opendocument.text" $ setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
+
+withTempFile :: String -> (FilePath -> Handle -> IO a) -> IO a
+withTempFile pattern func = do -- borrowed from Real World Haskell
+  tempdir <- catch (getTemporaryDirectory) (\_ -> return ".")
+  (tempfile, temph) <- openTempFile tempdir pattern 
+  finally (func tempfile temph) (hClose temph >> removeFile tempfile)
+
+exportFormats :: [(String, String -> Pandoc -> Web Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("ConTeXt",   respondConTeXt)
                 , ("reST",      respondRST)
                 , ("MediaWiki", respondMediaWiki)
+                , ("ODT",       respondODT)
                 , ("RTF",       respondRTF) ]
 
 exportBox :: String -> Params -> Html
@@ -954,5 +974,5 @@ exportPage page params = do
        Nothing  -> error $ "Unable to retrieve page contents."
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
-                        Just writer -> ok $ writer page doc
+                        Just writer -> writer page doc
 
