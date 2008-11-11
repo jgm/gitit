@@ -907,9 +907,14 @@ respondRTF :: String -> Pandoc -> Response
 respondRTF page = setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse .
                   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
+respondRST :: String -> Pandoc -> Response
+respondRST page = setContentType "text/plain" . setFilename (page ++ ".txt") . toResponse .
+                  writeRST (defaultRespOptions {writerHeader = ""})
+
 exportFormats :: [(String, String -> Pandoc -> Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("ConTeXt",   respondConTeXt)
+                , ("reST",      respondRST)
                 , ("RTF",       respondRTF) ]
 
 exportBox :: String -> Params -> Html
