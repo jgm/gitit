@@ -911,10 +911,15 @@ respondRST :: String -> Pandoc -> Response
 respondRST page = setContentType "text/plain" . setFilename (page ++ ".txt") . toResponse .
                   writeRST (defaultRespOptions {writerHeader = ""})
 
+respondMediaWiki :: String -> Pandoc -> Response
+respondMediaWiki page = setContentType "text/plain" . setFilename (page ++ ".wiki") . toResponse .
+                        writeMediaWiki (defaultRespOptions {writerHeader = ""})
+
 exportFormats :: [(String, String -> Pandoc -> Response)]   -- (description, writer)
 exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("ConTeXt",   respondConTeXt)
                 , ("reST",      respondRST)
+                , ("MediaWiki", respondMediaWiki)
                 , ("RTF",       respondRTF) ]
 
 exportBox :: String -> Params -> Html
