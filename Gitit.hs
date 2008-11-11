@@ -911,12 +911,16 @@ respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ "
                   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
 respondRST :: String -> Pandoc -> Web Response
-respondRST page = ok . setContentType "text/plain" . setFilename (page ++ ".txt") . toResponse .
-                  writeRST (defaultRespOptions {writerHeader = ""})
+respondRST _ = ok . setContentType "text/plain" . toResponse .
+               writeRST (defaultRespOptions {writerHeader = "", writerReferenceLinks = True})
+
+respondMan :: String -> Pandoc -> Web Response
+respondMan _ = ok . setContentType "text/plain" . toResponse .
+               writeMan (defaultRespOptions {writerHeader = ""})
 
 respondMediaWiki :: String -> Pandoc -> Web Response
-respondMediaWiki page = ok . setContentType "text/plain" . setFilename (page ++ ".wiki") . toResponse .
-                        writeMediaWiki (defaultRespOptions {writerHeader = ""})
+respondMediaWiki _ = ok . setContentType "text/plain" . toResponse .
+                     writeMediaWiki (defaultRespOptions {writerHeader = ""})
 
 respondODT :: String -> Pandoc -> Web Response
 respondODT page doc = do
@@ -933,6 +937,7 @@ exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("ConTeXt",   respondConTeXt)
                 , ("reST",      respondRST)
                 , ("MediaWiki", respondMediaWiki)
+                , ("man",       respondMan)
                 , ("ODT",       respondODT)
                 , ("RTF",       respondRTF) ]
 
