@@ -190,7 +190,8 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_upload"    GET  (ifLoggedIn "" uploadForm)
                , handlePath "_upload"    POST (ifLoggedIn "" uploadFile)
                , withCommand "showraw" [ handlePage GET showRawPage ]
-               , withCommand "history" [ handlePage GET showPageHistory ]
+               , withCommand "history" [ handlePage GET showPageHistory,
+                                         handle (not . isPage) GET showFileHistory ]
                , withCommand "edit"    [ handlePage GET $ unlessNoEdit $ ifLoggedIn "?edit" editPage ]
                , withCommand "diff"    [ handlePage GET  showDiff ]
                , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
@@ -534,9 +535,15 @@ preview :: String -> Params -> Web Response
 preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse
 
 showPageHistory :: String -> Params -> Web Response
-showPageHistory page params =  do
+showPageHistory page params = showHistory (pathForPage page) page params
+
+showFileHistory :: String -> Params -> Web Response
+showFileHistory file params = showHistory file file params
+
+showHistory :: String -> String -> Params -> Web Response
+showHistory file page params =  do
   let since = pSince params `orIfNull` "1 year ago"
-  hist <- gitLog since "" [pathForPage page]
+  hist <- gitLog since "" [file]
   let versionToHtml entry pos = li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ logRevision entry] <<
                                       [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
                                        thespan ! [theclass "author"] <<
