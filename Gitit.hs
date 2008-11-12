@@ -75,7 +75,7 @@ main = do
           [ dir "stylesheets" [ fileServe [] $ (staticDir conf) </> "stylesheets" ]
           , dir "images"      [ fileServe [] $ (staticDir conf) </> "images" ]
           , dir "javascripts" [ fileServe [] $ (staticDir conf) </> "javascripts" ]
-          ] ++ wikiHandlers ++ [ fileServe [] (repositoryPath conf) ]
+          ] ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
   killThread tid
@@ -189,18 +189,18 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_logout"    GET  logoutUser
                , handlePath "_upload"    GET  (ifLoggedIn "" uploadForm)
                , handlePath "_upload"    POST (ifLoggedIn "" uploadFile)
-               , handleCommand "showraw" GET  showRawPage
-               , handleCommand "history" GET  showPageHistory
-               , handleCommand "edit"    GET  (unlessNoEdit $ ifLoggedIn "?edit" editPage)
-               , handleCommand "diff"    GET  showDiff
-               , handleCommand "export"  POST exportPage
-               , handleCommand "export"  GET  exportPage
-               , handleCommand "cancel"  POST showPage
-               , handleCommand "update"  POST (unlessNoEdit $ ifLoggedIn "?edit" updatePage)
-               , handleCommand "delete"  GET  (unlessNoDelete $ ifLoggedIn "?delete" confirmDelete)
-               , handleCommand "delete"  POST (unlessNoDelete $ ifLoggedIn "?delete" deletePage)
-               , handlePage GET showPage
+               , withCommand "showraw" [ handlePage GET showRawPage ]
+               , withCommand "history" [ handlePage GET showPageHistory ]
+               , withCommand "edit"    [ handlePage GET $ unlessNoEdit $ ifLoggedIn "?edit" editPage ]
+               , withCommand "diff"    [ handlePage GET  showDiff ]
+               , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
+               , withCommand "cancel"  [ handlePage POST showPage ]
+               , withCommand "update"  [ handlePage POST  $ unlessNoEdit $ ifLoggedIn "?edit" updatePage ]
+               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete $ ifLoggedIn "?delete" confirmDelete,
+                                         handlePage POST $ unlessNoDelete $ ifLoggedIn "?delete" deletePage ]
                , handleSourceCode
+               , handleAny
+               , handlePage GET showPage
                ]
 
 data Params = Params { pUsername     :: String
@@ -340,13 +340,16 @@ handle uritest meth responder =
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
 handlePage = handle isPage
 
+handleText :: Method -> (String -> Params -> Web Response) -> Handler
+handleText = handle (\x -> isPage x || isSourceCode x)
+
 handlePath :: String -> Method -> (String -> Params -> Web Response) -> Handler
 handlePath path' = handle (== path')
 
-handleCommand :: String -> Method -> (String -> Params -> Web Response) -> Handler
-handleCommand command meth responder =
+withCommand :: String -> [Handler] -> Handler
+withCommand command handlers =
   withData $ \com -> case com of
-                          Command (Just c) | c == command -> [ handlePage meth responder ]
+                          Command (Just c) | c == command -> handlers
                           _                               -> []
 
 handleSourceCode :: Handler
@@ -354,6 +357,16 @@ handleSourceCode = withData $ \com ->
   case com of
        Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
        _                        -> [ handle isSourceCode GET showHighlightedSource ]
+
+handleAny :: Handler
+handleAny = 
+  uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
+                    in  do cfg <- query GetConfig
+                           let file = repositoryPath cfg </> uriPath
+                           exists <- liftIO $ doesFileExist file
+                           if exists
+                              then fileServe [uriPath] (repositoryPath cfg)
+                              else anyRequest noHandle
 
 orIfNull :: String -> String -> String
 orIfNull str backup = if null str then backup else str
