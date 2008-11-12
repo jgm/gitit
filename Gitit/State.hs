@@ -47,6 +47,7 @@ data Config = Config {
   portNumber      :: Int,                      -- port number to serve content on
   passwordSalt    :: String,                   -- text to serve as salt in encrypting passwords
   debugMode       :: Bool,                     -- should debug info be printed to the console?
+  frontPage       :: String,                   -- the front page of the wiki
   noEdit          :: [String],                 -- pages that cannot be edited through the web interface
   noDelete        :: [String],                 -- pages that cannot be deleted through the web interface
   accessQuestion  :: Maybe (String, [String])  -- if Nothing, then anyone can register for an account.
@@ -66,6 +67,7 @@ defaultConfig = Config {
   portNumber      = 5001,
   passwordSalt    = "l91snthoae8eou2340987",
   debugMode       = False,
+  frontPage       = "Front Page",
   noEdit          = ["Help"],
   noDelete        = ["Help", "Front Page"],
   accessQuestion  = Nothing

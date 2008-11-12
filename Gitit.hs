@@ -66,7 +66,7 @@ main = do
   conf <- foldM handleFlag defaultConfig options
   gitPath <- findExecutable "git"
   when (isNothing gitPath) $ error "'git' program not found in system path."
-  initializeWiki (repositoryPath conf) (staticDir conf)
+  initializeWiki conf
   control <- startSystemState entryPoint
   update $ SetConfig conf
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
@@ -127,8 +127,11 @@ entryPoint :: Proxy AppState
 entryPoint = Proxy
 
 -- | Create repository and public directories, unless they already exist.
-initializeWiki :: FilePath -> FilePath -> IO ()
-initializeWiki repodir staticdir = do
+initializeWiki :: Config -> IO ()
+initializeWiki conf = do
+  let repodir = repositoryPath conf
+  let frontpage = frontPage conf <.> "page"
+  let staticdir = staticDir conf
   repoExists <- doesDirectoryExist repodir
   unless repoExists $ do
     postupdatepath <- getDataFileName $ "data" </> "post-update"
@@ -142,9 +145,9 @@ initializeWiki repodir staticdir = do
     setCurrentDirectory repodir
     runCommand "git init" >>= waitForProcess
     -- add front page and help page
-    B.writeFile "Front Page.page" welcomecontents
+    B.writeFile frontpage welcomecontents
     B.writeFile "Help.page" helpcontents
-    runCommand "git add 'Help.page' 'Front Page.page'; git commit -m 'Initial commit.'" >>= waitForProcess
+    runCommand ("git add 'Help.page' '" ++ frontpage ++ "'; git commit -m 'Initial commit.'") >>= waitForProcess
     -- set post-update hook so working directory will be updated
     -- when changes are pushed to the repo
     let postupdate = ".git" </> "hooks" </> "post-update"
@@ -419,7 +422,9 @@ showFileAsText file params = do
        Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
 
 showPage :: String -> Params -> Web Response
-showPage "" params = showPage "Front Page" params >>= seeOther "/Front%20Page"
+showPage "" params = do
+  cfg <- query GetConfig
+  showPage (frontPage cfg) params
 showPage page params = do
   let revision = pRevision params
   mDoc <- pageAsPandoc page params
@@ -778,7 +783,7 @@ formattedPage opts scripts page params htmlContents = do
   let sitenav = thediv ! [theclass "sitenav"] <<
                         gui ("/_search") ! [identifier "searchform"] <<
                           (intersperse (primHtmlChar "bull")
-                             [ anchor ! [href "/Front%20Page", theclass "nav_link"] << "front"
+                             [ anchor ! [href "/", theclass "nav_link"] << "front"
                              , anchor ! [href "/_index", theclass "nav_link"] << "index"
                              , anchor ! [href "/_upload", theclass "nav_link"] << "upload"
                              , anchor ! [href "/_activity", theclass "nav_link"] << "activity"
@@ -913,7 +918,7 @@ registerUser _ params = do
      then do
        let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
        update $ AddUser uname (User { username = uname, password = passwordHash })
-       loginUser "Front Page" (params { pUsername = uname, pPassword = pword, pDestination = "Front Page" })
+       loginUser "/" (params { pUsername = uname, pPassword = pword })
      else formattedPage [HidePageControls] [] page (params { pMessages = errors }) regForm
 
 showHighlightedSource :: String -> Params -> Web Response
