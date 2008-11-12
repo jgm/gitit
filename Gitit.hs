@@ -26,6 +26,7 @@ import System.IO.UTF8
 import System.IO (stderr)
 import System.IO.Error (isAlreadyExistsError)
 import Control.Exception (bracket)
+import Network.URI (unEscapeString)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr)
 import System.Process
 import System.Directory
@@ -333,14 +334,18 @@ ifLoggedIn fallback responder =
                           Just u   -> responder page (params { pUser = u })
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
-handle uritest meth responder =
-  uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
-                    in  if uritest uriPath
+handle pathtest meth responder =
+  uriRest $ \uri -> let path' = uriPath uri
+                    in  if pathtest path'
                            then withData $ \params ->
                                     [ withRequest $ \req -> if rqMethod req == meth
-                                                               then responder uriPath params
+                                                               then responder path' params
                                                                else noHandle ]
                            else anyRequest noHandle
+
+-- | Returns path portion of URI in unescaped form, and without initial /.
+uriPath :: String -> String
+uriPath = unEscapeString . drop 1 . takeWhile (/='?')
 
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
 handlePage = handle isPage
@@ -365,12 +370,12 @@ handleSourceCode = withData $ \com ->
 
 handleAny :: Handler
 handleAny = 
-  uriRest $ \uri -> let uriPath = drop 1 $ takeWhile (/='?') uri
+  uriRest $ \uri -> let path' = uriPath uri
                     in  do cfg <- query GetConfig
-                           let file = repositoryPath cfg </> uriPath
+                           let file = repositoryPath cfg </> path'
                            exists <- liftIO $ doesFileExist file
                            if exists
-                              then fileServe [uriPath] (repositoryPath cfg)
+                              then fileServe [path'] (repositoryPath cfg)
                               else anyRequest noHandle
 
 orIfNull :: String -> String -> String
