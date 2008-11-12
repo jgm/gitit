@@ -545,25 +545,29 @@ showHistory :: String -> String -> Params -> Web Response
 showHistory file page params =  do
   let since = pSince params `orIfNull` "1 year ago"
   hist <- gitLog since "" [file]
-  let versionToHtml entry pos = li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ logRevision entry] <<
-                                      [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
-                                       thespan ! [theclass "author"] <<
-                                               anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                                          (logAuthor entry), stringToHtml ")", stringToHtml ": ",
-                                       anchor ! [href (urlForPage page ++ "?revision=" ++ logRevision entry)] <<
-                                       thespan ! [theclass "subject"] <<  logSubject entry,
-                                       noscript << ([stringToHtml " [compare with ",
-                                       anchor ! [href $ urlForPage page ++ "?diff&from=" ++ logRevision entry ++
-                                                 "^&to=" ++ logRevision entry] << "previous"] ++
-                                                    (if pos /= 1
-                                                        then [primHtmlChar "nbsp", primHtmlChar "bull",
-                                                              primHtmlChar "nbsp",
-                                                              anchor ! [href $ urlForPage page ++ "?diff&from=" ++
-                                                                        logRevision entry ++ "&to=HEAD"] << "current" ]
-                                                        else []) ++
-                                                    [stringToHtml "]"])]
-  let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
-  formattedPage [] ["dragdiff.js"] page params contents
+  if null hist
+     then noHandle
+     else do
+       let versionToHtml entry pos = 
+              li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ logRevision entry] <<
+                   [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
+                    thespan ! [theclass "author"] <<
+                            anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
+                                       (logAuthor entry), stringToHtml ")", stringToHtml ": ",
+                    anchor ! [href (urlForPage page ++ "?revision=" ++ logRevision entry)] <<
+                    thespan ! [theclass "subject"] <<  logSubject entry,
+                    noscript << ([stringToHtml " [compare with ",
+                    anchor ! [href $ urlForPage page ++ "?diff&from=" ++ logRevision entry ++
+                              "^&to=" ++ logRevision entry] << "previous"] ++
+                                 (if pos /= 1
+                                     then [primHtmlChar "nbsp", primHtmlChar "bull",
+                                           primHtmlChar "nbsp",
+                                           anchor ! [href $ urlForPage page ++ "?diff&from=" ++
+                                                     logRevision entry ++ "&to=HEAD"] << "current" ]
+                                     else []) ++
+                                 [stringToHtml "]"])]
+       let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
+       formattedPage [] ["dragdiff.js"] page params contents
 
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
