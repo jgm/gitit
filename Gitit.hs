@@ -57,7 +57,7 @@ import System.Exit
 import Text.Highlighting.Kate
 
 gititVersion :: String
-gititVersion = "0.2.1"
+gititVersion = "0.2.2"
 
 main :: IO ()
 main = do
