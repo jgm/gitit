@@ -1,5 +1,3 @@
-- "history" currently only works for pages.  Shouldn't it work for
-  all files?
 - "diff" only works for pages. SHould it work for source as well?
 - make frontPage a configuration option.
 
