@@ -193,7 +193,8 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , withCommand "history" [ handlePage GET showPageHistory,
                                          handle (not . isPage) GET showFileHistory ]
                , withCommand "edit"    [ handlePage GET $ unlessNoEdit $ ifLoggedIn "?edit" editPage ]
-               , withCommand "diff"    [ handlePage GET  showDiff ]
+               , withCommand "diff"    [ handlePage GET  showPageDiff,
+                                         handle isSourceCode GET showFileDiff ]
                , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
                , withCommand "cancel"  [ handlePage POST showPage ]
                , withCommand "update"  [ handlePage POST  $ unlessNoEdit $ ifLoggedIn "?edit" updatePage ]
@@ -584,11 +585,17 @@ showActivity _ params = do
                             stringToHtml ")"]) hist
   formattedPage [HidePageControls] [] page params (heading +++ contents)
 
-showDiff :: String -> Params -> Web Response
-showDiff page params = do
+showPageDiff :: String -> Params -> Web Response
+showPageDiff page params = showDiff (pathForPage page) page params
+
+showFileDiff :: String -> Params -> Web Response
+showFileDiff page params = showDiff page page params
+
+showDiff :: String -> String -> Params -> Web Response
+showDiff file page params = do
   let from = pFrom params
   let to = pTo params
-  rawDiff <- gitDiff (pathForPage page) from to
+  rawDiff <- gitDiff file from to
   let diffLineToHtml l = case head l of
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
