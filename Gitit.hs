@@ -45,7 +45,7 @@ import Paths_gitit
 import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
-import Text.Pandoc.Shared (HTMLMathMethod(..))
+import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.ByteString.Internal (c2w)
 import Data.Char (isAlphaNum, isAlpha)
 import Codec.Binary.UTF8.String (decodeString)
@@ -389,7 +389,8 @@ isSourceCode :: String -> Bool
 isSourceCode = not . null . languagesByExtension . takeExtension
 
 urlForPage :: String -> String
-urlForPage page = "/" ++ urlEncode page
+urlForPage page = "/" ++ (substitute "%2f" "/" $ urlEncode page)
+-- this is needed so that browsers recognize relative URLs correctly
 
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
@@ -861,7 +862,7 @@ loginUser _ params = do
     then do
       key <- update $ NewSession (SessionData uname)
       addCookie (3600) (mkCookie "sid" (show key))
-      seeOther ("/" ++ intercalate "%20" (words destination)) $ toResponse $ p << ("Welcome, " ++ uname)
+      seeOther ("/" ++ substitute " " "%20" destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
       loginUserForm "_login" (params { pMessages = "Authentication failed." : pMessages params })
 
@@ -872,7 +873,7 @@ logoutUser _ params = do
   case key of
        Just k  -> update $ DelSession k
        Nothing -> return ()
-  seeOther ("/" ++ intercalate "%20" (words destination)) $ toResponse $ p << "You have been logged out."
+  seeOther ("/" ++ substitute " " "%20" destination) $ toResponse $ p << "You have been logged out."
 
 registerForm :: Web Html
 registerForm = do
