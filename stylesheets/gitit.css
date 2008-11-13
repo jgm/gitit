@@ -102,11 +102,12 @@ ul.messages > li {
 #pageinfo {
   padding: 4px;
   border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
 }
 
 #footer {
   clear: both;
+  border-top: 1px solid #ccc;
+  margin-top: 2px;
   text-align: center;
   font-size: 80%;
   padding: 4px;
