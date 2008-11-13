@@ -26,7 +26,6 @@ import System.IO.UTF8
 import System.IO (stderr)
 import System.IO.Error (isAlreadyExistsError)
 import Control.Exception (bracket)
-import Network.URI (unEscapeString)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr)
 import System.Process
 import System.Directory
@@ -343,9 +342,10 @@ handle pathtest meth responder =
                                                                else noHandle ]
                            else anyRequest noHandle
 
--- | Returns path portion of URI in unescaped form, and without initial /.
+-- | Returns path portion of URI, without initial /.
+-- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
 uriPath :: String -> String
-uriPath = unEscapeString . drop 1 . takeWhile (/='?')
+uriPath = unwords . words . drop 1 . takeWhile (/='?')
 
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
 handlePage = handle isPage
