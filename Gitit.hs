@@ -413,7 +413,7 @@ setFilename :: String -> Response -> Response
 setFilename fname res =
   let respHeaders = rsHeaders res
       newContentType = HeaderPair { hName = fromString "Content-Disposition",
-                                    hValue = [ fromString $ "attachment; " ++ urlEncodeVars [("filename", fname)] ] }
+                                    hValue = [ fromString $ "attachment; filename=\"" ++ fname ++ "\"" ] }
   in  res { rsHeaders = M.insert (fromString "content-disposition") newContentType respHeaders }  
 
 showRawPage :: String -> Params -> Web Response
