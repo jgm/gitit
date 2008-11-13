@@ -445,7 +445,7 @@ showPage page params = do
                                              else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
                  formattedPage [] ["jsMath/easy/load.js"] page params cont'
        _      -> if revision == "HEAD"
-                    then editPage page params
+                    then (unlessNoEdit $ ifLoggedIn "" $ editPage) page params
                     else error $ "Invalid revision: " ++ revision
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
