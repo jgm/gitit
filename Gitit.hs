@@ -814,7 +814,7 @@ formattedPage opts scripts page params htmlContents = do
                                          anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] <<
                                           "register"
   let sitenavVis = if HideNavbar `elem` opts then "hidden" else "visible"
-  let sidebarVis = if HidePageControls `elem` opts then "hidden" else "visible"
+  let pageinfoVis = if HidePageControls `elem` opts then "none" else "show"
   let messages = pMessages params
   let htmlMessages = if null messages
                         then noHtml
@@ -826,8 +826,8 @@ formattedPage opts scripts page params htmlContents = do
                                '_':_   -> noHtml
                                _       -> thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
                         , thediv ! [identifier "content"] << [htmlMessages, htmlContents]
-                        , thediv ! [identifier "pageinfo"] << [ thediv ! [theclass "pageControls",
-                                                                          thestyle $ "visibility: " ++ sidebarVis] <<
+                        , thediv ! [identifier "pageinfo", thestyle $ "display: " ++ pageinfoVis] <<
+                                        [ thediv ! [theclass "pageControls"] <<
                                                                             ((thespan ! [theclass "details"] << revision) : buttons)
                                                               , if isPage page then exportBox page params else noHtml]
                         , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg)
