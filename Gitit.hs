@@ -508,9 +508,9 @@ uploadFile _ params = do
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
                                , if takeExtension wikiname `elem` imageExtensions
                                     then p << "To add this image to a page, use:" +++
-                                         pre << ("![alt text](" ++ wikiname ++ ")")
+                                         pre << ("![alt text](/" ++ wikiname ++ ")")
                                     else p << "To link to this resource from a page, use:" +++
-                                         pre << ("[link label](" ++ wikiname ++ ")") ]
+                                         pre << ("[link label](/" ++ wikiname ++ ")") ]
      else uploadForm page (params { pMessages = errors })
 
 searchResults :: String -> Params -> Web Response
