@@ -199,6 +199,11 @@ several pages on wine, you may wish to organize them like so:
     Wine/Burgundy
     Wine/Cabernet Sauvignon
 
+Note that a wiki link `[Burgundy]()` that occurs inside the `Wine`
+directory will link to `Wine/Burgundy`, and not to `Burgundy`.
+To link to a top-level page called `Burgundy`, you'd have to use
+`[Burgundy](/Burgundy)`.
+
 # Creating and modifying pages
 
 ## Registering for an account
