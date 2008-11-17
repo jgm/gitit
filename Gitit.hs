@@ -226,6 +226,7 @@ data Params = Params { pUsername     :: String
                      , pSHA1         :: String
                      , pLogMsg       :: String
                      , pEmail        :: String
+                     , pFullName     :: String
                      , pAccessCode   :: String
                      , pWikiname     :: String
                      , pOverwrite    :: Bool
@@ -256,6 +257,7 @@ instance FromData Params where
          sh <- look "sha1"           `mplus` return ""
          lm <- look "logMsg"         `mplus` return ""
          em <- look "email"          `mplus` return ""
+         na <- look "fullname"       `mplus` return ""
          wn <- look "wikiname"       `mplus` return ""
          ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
          fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
@@ -281,6 +283,7 @@ instance FromData Params where
                          , pSHA1         = sh
                          , pLogMsg       = lm
                          , pEmail        = em
+                         , pFullName     = na 
                          , pWikiname     = wn
                          , pOverwrite    = ow
                          , pFilename     = fn
@@ -330,7 +333,12 @@ ifLoggedIn fallback responder =
                      case user of
                           Nothing  -> seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ fallback)]) $ 
                                         toResponse $ p << "You must be logged in to perform this action."
-                          Just u   -> responder page (params { pUser = u })
+                          Just u   -> do
+                             usrs <- query AskUsers
+                             let e = case M.lookup u usrs of
+                                           Just usr    -> uEmail usr
+                                           Nothing     -> error $ "User '" ++ u ++ "' not found."
+                             responder page (params { pUser = u, pEmail = e })
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder =
@@ -479,7 +487,7 @@ uploadFile _ params = do
   cfg <- query GetConfig
   let author = pUser params
   when (null author) $ fail "User must be logged in to upload a file."
-  let email = ""
+  let email = pEmail params
   let overwrite = pOverwrite params
   exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
   -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap.
@@ -663,7 +671,7 @@ deletePage page params = do
      then do
        let author = pUser params
        when (null author) $ fail "User must be logged in to delete page."
-       let email = ""
+       let email = pEmail params
        gitRemove (pathForPage page) (author, email) "Deleted from web."
        seeOther "/" $ toResponse $ p << "Page deleted"
      else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
@@ -675,7 +683,7 @@ updatePage page params = do
   let editedText = case pEditedText params of
                       Nothing -> error "No body text in POST request"
                       Just b  -> b
-  let email = ""
+  let email = pEmail params
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
   if null logMsg
@@ -885,11 +893,13 @@ registerForm = do
   return $ gui "" ! [identifier "loginForm"] <<
             [ accessQ,
               label << "Username (at least 3 letters or digits):", br,
-              textfield "username" ! [size "15"], stringToHtml " ", br,
-              textfield "email" ! [size "15", theclass "req"],
+              textfield "username" ! [size "20"], stringToHtml " ", br,
+              label << "Email (optional, will not be displayed on the Wiki):", br,
+              textfield "email" ! [size "20"], br,
+              textfield "fullname" ! [size "20", theclass "req"],
               label << "Password (at least 6 characters, including at least one non-letter):", br,
-              X.password "password" ! [size "15"], stringToHtml " ", br,
-              label << "Confirm Password:", br, X.password "password2" ! [size "15"], stringToHtml " ", br,
+              X.password "password" ! [size "20"], stringToHtml " ", br,
+              label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br,
               submit "register" "Register" ]
 
 registerUserForm :: String -> Params -> Web Response
@@ -908,22 +918,25 @@ registerUser _ params = do
   let uname = pUsername params
   let pword = pPassword params
   let pword2 = pPassword2 params
-  let fakeField = pEmail params
+  let email = pEmail params
+  let fakeField = pFullName params
   taken <- query $ IsUser uname
   cfg <- query GetConfig
   let isValidAccessCode = case accessQuestion cfg of
         Nothing           -> True
         Just (_, answers) -> accessCode `elem` answers
+  let isValidEmail e = length (filter (=='@') e) == 1
   let errors = validate [ (taken, "Sorry, that username is already taken.")
                         , (not isValidAccessCode, "Incorrect response to access prompt.")
                         , (not (isValidUsername uname), "Username must be at least 3 charcaters, all letters or digits.")
                         , (not (isValidPassword pword), "Password must be at least 6 characters, with at least one non-letter.")
+                        , (not (isValidEmail email), "Email address appears invalid.")
                         , (pword /= pword2, "Password does not match confirmation.")
                         , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
      then do
        let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
-       update $ AddUser uname (User { username = uname, password = passwordHash })
+       update $ AddUser uname (User { uUsername = uname, uPassword = passwordHash, uEmail = email })
        loginUser "/" (params { pUsername = uname, pPassword = pword })
      else formattedPage [HidePageControls] [] page (params { pMessages = errors }) regForm
 
