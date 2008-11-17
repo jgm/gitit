@@ -83,14 +83,15 @@ data Sessions a = Sessions {unsession::M.Map SessionKey a}
   deriving (Read,Show,Eq,Typeable,Data)
 
 data User = User {
-  username :: String,
-  password :: [Octet]  -- password stored as MD5 hash
+  uUsername :: String,
+  uPassword :: [Octet],  -- password stored as MD5 hash
+  uEmail    :: String
 } deriving (Show,Read,Typeable,Data)
 
 data AppState = AppState {
   sessions :: Sessions SessionData,
-  users :: M.Map String User,
-  config :: Config
+  users    :: M.Map String User,
+  config   :: Config
 } deriving (Show,Read,Typeable,Data)
 
 instance Version SessionData
@@ -136,7 +137,7 @@ authUser :: MonadReader AppState m => String -> [Octet] -> m Bool
 authUser name pass = do
   users' <- askUsers
   case M.lookup name users' of
-       Just u  -> return $ pass == password u
+       Just u  -> return $ pass == uPassword u
        Nothing -> return False 
 
 listUsers :: MonadReader AppState m => m [String]
@@ -177,7 +178,7 @@ setConfig conf = modify $ \s -> s {config = conf}
 numSessions:: Proxy AppState -> Query AppState Int
 numSessions = proxyQuery $ liftM (M.size . unsession) askSessions
 
-$(mkMethods ''AppState ['addUser, 'delUser, 'authUser, 'isUser, 'listUsers, 'numUsers,
+$(mkMethods ''AppState ['askUsers, 'addUser, 'delUser, 'authUser, 'isUser, 'listUsers, 'numUsers,
              'isSession, 'setSession, 'getSession, 'newSession, 'delSession, 'numSessions,
              'setConfig, 'getConfig])
 
