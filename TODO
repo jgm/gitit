@@ -5,6 +5,8 @@
   - add talk pages
   - use tabs for edit, history, discuss, etc.
   - left sidebar:  search, export, upload, activity, index, help, front, etc.
+  - wikipedia-style banner:
+    <a style="background-image: url(http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png);" href="/wiki/Main_Page">
   - add:  random page?  popular pages?  pages last visited?
   - banner picture is just upper-left corner
   - login/register on top right
