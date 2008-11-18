@@ -163,7 +163,7 @@ initializeWiki conf = do
     stylesheetpaths <- mapM getDataFileName stylesheets
     zipWithM copyFile stylesheetpaths (map (staticdir </>) stylesheets)
     createDirectoryIfMissing True $ staticdir </> "javascripts"
-    let javascripts = ["jquery.min.js", "jquery-ui-personalized-1.6rc2.min.js",
+    let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
                        "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     javascriptpaths <- mapM getDataFileName $ map ("javascripts" </>) javascripts
     zipWithM copyFile javascriptpaths $ map ((staticdir </> "javascripts") </>) javascripts
@@ -791,7 +791,7 @@ formattedPage opts scripts page params htmlContents = do
                            then noHtml
                            else concatHtml $ map
                                   (\x -> script ! [src ("/javascripts/" ++ x), thetype "text/javascript"] << noHtml)
-                                  (["jquery.min.js", "jquery-ui-personalized-1.6rc2.min.js"] ++ scripts)
+                                  (["jquery.min.js", "jquery-ui.packed.js"] ++ scripts)
   let title' = thetitle << (wikiTitle cfg ++ " - " ++ dropWhile (=='_') page)
   let head' = header << [title', stylesheetlinks, javascriptlinks]
   let sitenav = thediv ! [theclass "sitenav"] <<
