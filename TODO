@@ -1,26 +1,26 @@
-- look at Wikipedia for formatting ideas:
+- add talk pages
 
-  - page names:  change spaces to underscores
-  - change wikilink generator so that the underscores are inserted
-  - add talk pages
-  - use tabs for edit, history, discuss, etc.
-  - left sidebar:  search, export, upload, activity, index, help, front, etc.
-  - wikipedia-style banner:
-    <a style="background-image: url(http://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png);" href="/wiki/Main_Page">
-  - add:  random page?  popular pages?  pages last visited?
-  - banner picture is just upper-left corner
-  - login/register on top right
-  - add print css
-  - add "permanent link" (link to this revision)
-  - add "related changes" to history page (like activity, but looks at
-    only pages linked from this one)
-  - store email with user info, and provide a lost password email
-  - paging for long histories, activity lists
+- add:  popular pages?  pages last visited?
+
+- add "permanent link" (link to this revision)
+
+- add "related changes" to history page (like activity, but looks at
+  only pages linked from this one)
+
+- recover lost email link?
+
+- paging for long histories, activity lists
+
+- handle logging: see http://groups.google.com/group/HAppS/browse_thread/thread/2b412f24c53f5aa/4ef39b57c6062a87?lnk=gst&q=logging#4ef39b57c6062a87
+
+- ?? change wikilinks so that they are NOT relative (and change note
+  in Help about relative links).  That is: insert a leading /
+  in the URL.
+
+- think about using a custom wikilink syntax, say {{Front Page}}.
+  could implement this with generics and a function: [Inline] -> [Inline].
 
 - add literate haskell support to pandoc, and to gitit
-
-- a pandoc change:  table of contents should come right before
-  the first header, after any introductory text.
 
 - smoother way to migrate when state format is changed?
   one approach would be to save user information in a file.

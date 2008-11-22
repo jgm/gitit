@@ -29,6 +29,7 @@ import Control.Exception (bracket)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr)
 import System.Process
 import System.Directory
+import System.Time
 import Control.Concurrent
 import System.FilePath
 import Gitit.Git
@@ -72,9 +73,9 @@ main = do
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if (debugMode conf) then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
-          [ dir "stylesheets" [ fileServe [] $ (staticDir conf) </> "stylesheets" ]
-          , dir "images"      [ fileServe [] $ (staticDir conf) </> "images" ]
-          , dir "javascripts" [ fileServe [] $ (staticDir conf) </> "javascripts" ]
+          [ dir "css" [ fileServe [] $ (staticDir conf) </> "css" ]
+          , dir "img" [ fileServe [] $ (staticDir conf) </> "img" ]
+          , dir "js" [ fileServe [] $ (staticDir conf) </> "js" ]
           ] ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
@@ -158,21 +159,29 @@ initializeWiki conf = do
     setCurrentDirectory oldDir
   staticExists <- doesDirectoryExist staticdir
   unless staticExists $ do
-    createDirectoryIfMissing True $ staticdir </> "stylesheets"
-    let stylesheets = map ("stylesheets" </>) ["gitit.css", "hk-pyg.css", "folder.png", "page.png"]
+    createDirectoryIfMissing True $ staticdir </> "css"
+    let stylesheets = map ("css" </>) ["screen.css", "print.css", "ie.css", "hk-pyg.css"]
     stylesheetpaths <- mapM getDataFileName stylesheets
     zipWithM copyFile stylesheetpaths (map (staticdir </>) stylesheets)
-    createDirectoryIfMissing True $ staticdir </> "javascripts"
+    createDirectoryIfMissing True $ staticdir </> "img" </> "icons"
+    let imgs = map ("img" </>) $ map ("icons" </>)
+                                 ["cross.png", "doc.png", "email.png", "external.png", "feed.png", "folder.png",
+                                  "im.png", "key.png", "page.png", "pdf.png", "tick.png", "xls.png"]
+    imgpaths <- mapM getDataFileName imgs
+    zipWithM copyFile imgpaths (map (staticdir </>) imgs)
+    logopath <- getDataFileName $ "img" </> "gitit-dog.png"
+    copyFile logopath (staticdir </> "img" </> "logo.png")
+    createDirectoryIfMissing True $ staticdir </> "js"
     let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
                        "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
-    javascriptpaths <- mapM getDataFileName $ map ("javascripts" </>) javascripts
-    zipWithM copyFile javascriptpaths $ map ((staticdir </> "javascripts") </>) javascripts
+    javascriptpaths <- mapM getDataFileName $ map ("js" </>) javascripts
+    zipWithM copyFile javascriptpaths $ map ((staticdir </> "js") </>) javascripts
     hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
-  jsMathExists <- doesDirectoryExist (staticdir </> "javascripts" </> "jsMath")
+  jsMathExists <- doesDirectoryExist (staticdir </> "js" </> "jsMath")
   unless jsMathExists $ do
     hPutStrLn stderr $ replicate 80 '*' ++
                        "\nWarning:  jsMath not found.\n" ++
-                       "If you want support for math, copy the jsMath directory into " ++ staticdir ++ "/javascripts/\n" ++
+                       "If you want support for math, copy the jsMath directory into " ++ staticdir ++ "/js/\n" ++
                        "jsMath can be obtained from http://www.math.union.edu/~dpvc/jsMath/\n" ++
                        replicate 80 '*'
 
@@ -192,6 +201,7 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_logout"    GET  logoutUser
                , handlePath "_upload"    GET  (ifLoggedIn "" uploadForm)
                , handlePath "_upload"    POST (ifLoggedIn "" uploadFile)
+               , handlePath "_random"    GET  randomPage
                , withCommand "showraw" [ handlePage GET showRawPage ]
                , withCommand "history" [ handlePage GET showPageHistory,
                                          handle (not . isPage) GET showFileHistory ]
@@ -229,6 +239,7 @@ data Params = Params { pUsername     :: String
                      , pFullName     :: String
                      , pAccessCode   :: String
                      , pWikiname     :: String
+                     , pPrintable    :: Bool
                      , pOverwrite    :: Bool
                      , pFilename     :: String
                      , pFileContents :: B.ByteString
@@ -259,6 +270,7 @@ instance FromData Params where
          em <- look "email"          `mplus` return ""
          na <- look "fullname"       `mplus` return ""
          wn <- look "wikiname"       `mplus` return ""
+         pr <- (look "printable" >> return True) `mplus` return False
          ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
          fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
          fc <- (lookInput "file" >>= return . inputValue) `mplus` return B.empty
@@ -285,6 +297,7 @@ instance FromData Params where
                          , pEmail        = em
                          , pFullName     = na 
                          , pWikiname     = wn
+                         , pPrintable    = pr 
                          , pOverwrite    = ow
                          , pFilename     = fn
                          , pFileContents = fc
@@ -435,6 +448,17 @@ showFileAsText file params = do
        Nothing   -> error "Unable to retrieve page contents."
        Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
 
+randomPage :: String -> Params -> Web Response
+randomPage _ _ = do
+  files <- gitLsTree "HEAD" >>= return . map (unwords . drop 3 . words) . lines
+  let pages = map dropExtension $ filter (\f -> takeExtension f == ".page") files
+  if null pages
+     then error "No pages found!"
+     else do
+       TOD _ picosecs <- liftIO getClockTime
+       let newPage = pages !! ((fromIntegral picosecs `div` 1000000) `mod` length pages)
+       seeOther (urlForPage newPage) $ toResponse $ p << "Redirecting to a random page"
+
 showPage :: String -> Params -> Web Response
 showPage "" params = do
   cfg <- query GetConfig
@@ -451,7 +475,7 @@ showPage page params = do
                                          (if revision == "HEAD"
                                              then ""
                                              else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
-                 formattedPage [] ["jsMath/easy/load.js"] page params cont'
+                 formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
        _      -> if revision == "HEAD"
                     then (unlessNoEdit $ ifLoggedIn "" $ editPage) page params
                     else error $ "Invalid revision: " ++ revision
@@ -467,7 +491,7 @@ uploadForm _ params = do
   let origPath = pFilename params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
-  let upForm = form ! [X.method "post", enctype "multipart/form-data"] <<
+  let upForm = form ! [X.method "post", enctype "multipart/form-data"] << fieldset <<
         [ p << [label << "File to upload:", br, afile "file" ! [value origPath] ]
         , p << [label << "Name on wiki, including extension",
                 noscript << " (leave blank to use the same filename)", stringToHtml ":", br,
@@ -475,7 +499,7 @@ uploadForm _ params = do
                 primHtmlChar "nbsp", checkbox "overwrite" "yes", label << "Overwrite existing file"]
         , p << [label << "Description of content or changes:", br, textfield "logMsg" ! [size "60", value logMsg],
                 submit "upload" "Upload"] ]
-  formattedPage [HidePageControls] ["uploadForm.js"] page params upForm
+  formattedPage (defaultPageLayout { pgScripts = ["uploadForm.js"], pgShowPageTools = False, pgTabs = [], pgTitle = "Upload a file"} ) page params upForm
 
 uploadFile :: String -> Params -> Web Response
 uploadFile _ params = do
@@ -490,8 +514,6 @@ uploadFile _ params = do
   let email = pEmail params
   let overwrite = pOverwrite params
   exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
-  -- these are the dangerous extensions in HAppS-Server.Server.HTTP.FileServe.mimeMap.
-  -- this list should be updated if mimeMap changes:
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate [ (null logMsg, "Description cannot be empty.")
                         , (null origPath, "File not found.")
@@ -512,7 +534,7 @@ uploadFile _ params = do
        liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
        liftIO $ B.writeFile ((repositoryPath cfg) </> wikiname) fileContents
        gitCommit wikiname (author, email) logMsg
-       formattedPage [HidePageControls] [] page params $
+       formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
                                , if takeExtension wikiname `elem` imageExtensions
                                     then p << "To add this image to a page, use:" +++
@@ -542,7 +564,7 @@ searchResults _ params = do
                       stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
                       pre ! [theclass "matches"] << unlines contents])
                       (reverse  $ sortBy (comparing (length . snd)) matches)
-  formattedPage [HidePageControls] ["search.js"] page params htmlMatches
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
 
 -- Auxiliary function for searchResults
 parseMatchLine :: String -> (String, String)
@@ -586,7 +608,7 @@ showHistory file page params =  do
                                      else []) ++
                                  [stringToHtml "]"])]
        let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
-       formattedPage [] ["dragdiff.js"] page params contents
+       formattedPage (defaultPageLayout { pgScripts = ["dragdiff.js"], pgSelectedTab = HistoryTab, pgTitle = ("Changes to " ++ page) }) page params contents
 
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
@@ -606,7 +628,7 @@ showActivity _ params = do
                             thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
                             thespan ! [theclass "files"] << filesFor (logFiles entry),
                             stringToHtml ")"]) hist
-  formattedPage [HidePageControls] [] page params (heading +++ contents)
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
 
 showPageDiff :: String -> Params -> Web Response
 showPageDiff page params = showDiff (pathForPage page) page params
@@ -625,7 +647,7 @@ showDiff file page params = do
                                 _     -> thespan << [tail l, "\n"]
   let formattedDiff = thespan ! [theclass "detail"] << ("Changes from " ++ from) +++
                       pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
-  formattedPage [] [] page (params { pRevision = to }) formattedDiff
+  formattedPage defaultPageLayout page (params { pRevision = to }) formattedDiff
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
@@ -647,13 +669,14 @@ editPage page params = do
   let sha1Box = textfield "sha1" ! [thestyle "display: none", value sha1]
   let editForm = gui (urlForPage page) ! [identifier "editform"] <<
                    [sha1Box,
-                    textarea ! [cols "80", name "editedText", identifier "editedText"] << contents,
+                    textarea ! [cols "80", name "editedText", identifier "editedText"] << contents, br,
                     label << "Description of changes:", br,
                     textfield "logMsg" ! [size "76", value logMsg],
                     submit "update" "Save", primHtmlChar "nbsp",
                     submit "cancel" "Discard", br,
                     thediv ! [ identifier "previewpane" ] << noHtml ]
-  formattedPage [HidePageControls, HideNavbar] ["preview.js"] page (params {pMessages = messages'}) editForm
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab, 
+                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) }) page (params {pMessages = messages'}) editForm
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
@@ -663,7 +686,7 @@ confirmDelete page params = do
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  formattedPage [HidePageControls] [] page params confirmForm
+  formattedPage defaultPageLayout page params confirmForm
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
@@ -728,7 +751,7 @@ indexPage _ params = do
   let revision = pRevision params
   files <- gitLsTree revision >>= return . map (unwords . drop 3 . words) . lines
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort files
-  formattedPage [HidePageControls] ["folding.js"] page params htmlIndex
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 
 -- | Map a list of nonempty lists onto a list of pairs of list heads and list of tails.
 -- e.g. [[1,2],[1],[2,1]] -> [(1,[[2],[]]), (2,[[1]])]
@@ -769,77 +792,122 @@ pandocToHtml :: MonadIO m => Pandoc -> m Html
 pandocToHtml pandocContents = do
   cfg <- query GetConfig
   return $ writeHtml (defaultWriterOptions { writerStandalone = False
-                                           , writerHTMLMathMethod = JsMath (Just "/javascripts/jsMath/easy/load.js")
+                                           , writerHTMLMathMethod = JsMath (Just "/js/jsMath/easy/load.js")
                                            , writerTableOfContents = tableOfContents cfg
                                            }) $ processPandoc convertWikiLinks pandocContents
 
-data PageOption = HidePageControls | HideNavbar deriving (Eq, Show)
+-- | Abstract representation of page layout (tabs, scripts, etc.)
+data PageLayout = PageLayout
+  { pgTitle          :: String
+  , pgScripts        :: [String]
+  , pgShowPageTools  :: Bool
+  , pgTabs           :: [Tab]
+  , pgSelectedTab    :: Tab
+  }
+
+data Tab = ViewTab | EditTab | HistoryTab deriving (Eq, Show)
+
+defaultPageLayout :: PageLayout
+defaultPageLayout = PageLayout
+  { pgTitle          = ""
+  , pgScripts        = []
+  , pgShowPageTools  = True
+  , pgTabs           = [ViewTab, EditTab, HistoryTab]
+  , pgSelectedTab    = ViewTab
+  }
 
 -- | Returns formatted page
-formattedPage :: [PageOption] -> [String] -> String -> Params -> Html -> Web Response
-formattedPage opts scripts page params htmlContents = do
+formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
+formattedPage layout page params htmlContents = do
   let revision = pRevision params
   user <- getLoggedInUser params
   cfg <- (query GetConfig)
-  let stylesheetlinks = thelink ! [href "/stylesheets/gitit.css", rel "stylesheet",
-                                   strAttr "media" "screen", thetype "text/css"] << noHtml +++
-                        thelink ! [href "/stylesheets/hk-pyg.css", rel "stylesheet",
-                                   strAttr "media" "screen", thetype "text/css"] << noHtml +++
-                        thelink ! [href "/stylesheets/gitit-print.css", rel "stylesheet",
-                                   strAttr "media" "print", thetype "text/css"] << noHtml
-  let javascriptlinks = if null scripts
+  let stylesheetlinks = 
+        if pPrintable params
+           then thelink ! [href "/css/print.css", rel "stylesheet", strAttr "media" "all", thetype "text/css"] << noHtml
+           else thelink ! [href "/css/screen.css", rel "stylesheet",
+                             strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
+                primHtml "<!--[if IE]>" +++
+                thelink ! [href "/css/ie.css", rel "stylesheet",
+                          strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
+                primHtml "<![endif]-->" +++
+                thelink ! [href "/css/hk-pyg.css", rel "stylesheet",
+                           strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
+                thelink ! [href "/css/print.css", rel "stylesheet", strAttr "media" "print", thetype "text/css"] << noHtml
+  let javascriptlinks = if null (pgScripts layout)
                            then noHtml
                            else concatHtml $ map
-                                  (\x -> script ! [src ("/javascripts/" ++ x), thetype "text/javascript"] << noHtml)
-                                  (["jquery.min.js", "jquery-ui.packed.js"] ++ scripts)
-  let title' = thetitle << (wikiTitle cfg ++ " - " ++ dropWhile (=='_') page)
+                                  (\x -> script ! [src ("/js/" ++ x), thetype "text/javascript"] << noHtml)
+                                  (["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout)
+  let pageTitle' = pgTitle layout `orIfNull` page
+  let title' = thetitle << (wikiTitle cfg ++ " - " ++ pageTitle')
   let head' = header << [title', stylesheetlinks, javascriptlinks]
+  let searchbox = gui ("/_search") ! [identifier "searchform"] <<
+                          [ textfield "patterns"
+                          , submit "search" "Search" ]
   let sitenav = thediv ! [theclass "sitenav"] <<
-                        gui ("/_search") ! [identifier "searchform"] <<
-                          (intersperse (primHtmlChar "bull")
-                             [ anchor ! [href "/", theclass "nav_link"] << "front"
-                             , anchor ! [href "/_index", theclass "nav_link"] << "index"
-                             , anchor ! [href "/_upload", theclass "nav_link"] << "upload"
-                             , anchor ! [href "/_activity", theclass "nav_link"] << "activity"
-                             , anchor ! [href "/Help", theclass "nav_link"] << "help" ] ++
-                          [ primHtmlChar "nbsp"
-                          , textfield "patterns" ! [theclass "search_field search_term"]
-                          , submit "search" "Search" ])
-  let rawButton  = anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw", theclass "nav_link"] << "raw"
-  let delButton  = anchor ! [href $ urlForPage page ++ "?delete", theclass "nav_link"] << "delete"
-  let histButton = anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history", theclass "nav_link"] << "history"
-  let editButton = anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
-                              if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)],
-                              theclass "nav_link"] << if revision == "HEAD" then "edit" else "revert"
-  let buttons    = intersperse (primHtmlChar "bull") $ 
-                      (if isPage page then [rawButton] else []) ++ [delButton, histButton] ++
-                      (if isPage page then [editButton] else [])
-  let userbox =    thediv ! [identifier "userbox"] <<
-                        case user of
-                             Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] << 
-                                         ("logout " ++ u)
-                             Nothing  -> (anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] <<
-                                          "login") +++ primHtmlChar "bull" +++
-                                         anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)]), theclass "nav_link"] <<
-                                          "register"
-  let sitenavVis = if HideNavbar `elem` opts then "hidden" else "visible"
-  let pageinfoVis = if HidePageControls `elem` opts then "none" else "show"
+                  fieldset <<
+                        [ legend << "Navigation"
+                        , ulist << (map li
+                             [ anchor ! [href "/"] << "Front page"
+                             , anchor ! [href "/_index"] << "All pages"
+                             , anchor ! [href "/_random"] << "Random page"
+                             , anchor ! [href "/_activity"] << "Recent activity"
+                             , anchor ! [href "/_upload"] << "Upload a file"
+                             , anchor ! [href "/Help"] << "Help" ])
+                        , searchbox ]
+  let tools = if pgShowPageTools layout
+                 then thediv ! [theclass "pageTools"] <<
+                        fieldset <<
+                        [ legend << "Actions"
+                        , ulist << (map li
+                             [ anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw"] << "View page source"
+                             , anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&printable"] << "Printable version"
+                             , anchor ! [href $ urlForPage page ++ "?delete"] << "Delete this page" ])
+                        , exportBox page params ]
+                 else noHtml
+  let tabli tab = if tab == pgSelectedTab layout
+                     then li ! [theclass "selected"]
+                     else li
+  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history"] << "history"
+      linkForTab ViewTab    = Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
+      linkForTab EditTab    = if isPage page
+                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
+                                              if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]] <<
+                                                if revision == "HEAD" then "edit" else "revert"
+                                 else Nothing
+  let buttons    = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
+  let userbox    = case user of
+                        Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)])] << 
+                                    ("Logout " ++ u)
+                        Nothing  -> (anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)])] <<
+                                     "Login") +++ primHtml "&nbsp;&bull;&nbsp;" +++
+                                    anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)])] <<
+                                     "Get an account"
   let messages = pMessages params
   let htmlMessages = if null messages
                         then noHtml
                         else ulist ! [theclass "messages"] << map (li <<) messages
   let body' = body << thediv ! [identifier "container"] <<
-                        [ thediv ! [identifier "banner"] << primHtml (wikiBanner cfg)
-                        , thediv ! [identifier "navbar", thestyle $ "visibility: " ++ sitenavVis] << [userbox, sitenav]
-                        , case page of
-                               '_':_   -> noHtml
-                               _       -> thediv ! [identifier "pageTitle"] << [ anchor ! [href $ urlForPage page] << (h1 << page) ]
-                        , thediv ! [identifier "content"] << [htmlMessages, htmlContents]
-                        , thediv ! [identifier "pageinfo", thestyle $ "display: " ++ pageinfoVis] <<
-                                        [ thediv ! [theclass "pageControls"] <<
-                                                                            ((thespan ! [theclass "details"] << revision) : buttons)
-                                                              , if isPage page then exportBox page params else noHtml]
-                        , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg)
+                        [ thediv ! [identifier "userbox"] << userbox
+                        , thediv ! [identifier "sidebar"] <<
+                          [ thediv ! [identifier "logo"] << 
+                              anchor ! [href "/", title "Go to top page"] <<
+                                case wikiLogo cfg of
+                                     Nothing -> noHtml
+                                     Just f  -> image ! [src $ "/" ++ f]
+                          , sitenav
+                          , tools ]
+                        , thediv ! [identifier "maincol"] <<
+                          [ thediv ! [theclass "pageControls"] << buttons
+                          , thediv ! [identifier "content"] << 
+                              [ anchor ! [href $ urlForPage page] << (h1 ! [theclass "pageTitle"] << pageTitle')
+                              , if revision == "HEAD"
+                                   then noHtml
+                                   else h2 ! [theclass "revision"] << ("Revision " ++ revision)
+                              , htmlMessages
+                              , htmlContents ]
+                          , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg) ]
                         ]
   ok $ toResponse $ head' +++ body'
 
@@ -847,16 +915,16 @@ formattedPage opts scripts page params htmlContents = do
 loginForm :: Params -> Html
 loginForm params =
   let destination = pDestination params
-  in  gui "" ! [identifier "loginForm"] <<
+  in  gui "" ! [identifier "loginForm"] << fieldset <<
              [ textfield "sha1" ! [thestyle "display: none", value destination]
              , label << "Username ", textfield "username" ! [size "15"], stringToHtml " "
              , label << "Password ", X.password "password" ! [size "15"], stringToHtml " "
-             , submit "login" "Login"
-             , p << [ stringToHtml "If you do not have an account, "
-                    , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", destination)])] << "click here to register." ]]
+             , submit "login" "Login"] +++
+      p << [ stringToHtml "If you do not have an account, "
+             , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", destination)])] << "click here to get one." ]
 
 loginUserForm :: String -> Params -> Web Response
-loginUserForm _ params = formattedPage [HidePageControls] [] "_login" params $ loginForm params
+loginUserForm _ params = formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Login" }) "_login" params $ loginForm params
 
 loginUser :: String -> Params -> Web Response
 loginUser _ params = do
@@ -890,23 +958,23 @@ registerForm = do
         Nothing          -> noHtml
         Just (prompt, _) -> label << prompt +++ br +++
                             X.password "accessCode" ! [size "15"] +++ br
-  return $ gui "" ! [identifier "loginForm"] <<
-            [ accessQ,
-              label << "Username (at least 3 letters or digits):", br,
-              textfield "username" ! [size "20"], stringToHtml " ", br,
-              label << "Email (optional, will not be displayed on the Wiki):", br,
-              textfield "email" ! [size "20"], br,
-              textfield "fullname" ! [size "20", theclass "req"],
-              label << "Password (at least 6 characters, including at least one non-letter):", br,
-              X.password "password" ! [size "20"], stringToHtml " ", br,
-              label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br,
-              submit "register" "Register" ]
+  return $ gui "" ! [identifier "loginForm"] << fieldset <<
+            [ accessQ
+            , label << "Username (at least 3 letters or digits):", br
+            , textfield "username" ! [size "20"], stringToHtml " ", br
+            , label << "Email (optional, will not be displayed on the Wiki):", br
+            , textfield "email" ! [size "20"], br
+            , textfield "fullname" ! [size "20", theclass "req"]
+            , label << "Password (at least 6 characters, including at least one non-letter):", br
+            , X.password "password" ! [size "20"], stringToHtml " ", br
+            , label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br
+            , submit "register" "Register" ]
 
 registerUserForm :: String -> Params -> Web Response
 registerUserForm _ params = do
   let page = "_register"
   regForm <- registerForm
-  formattedPage [HidePageControls] [] page params regForm
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) page params regForm
 
 registerUser :: String -> Params -> Web Response
 registerUser _ params = do
@@ -930,7 +998,7 @@ registerUser _ params = do
                         , (not isValidAccessCode, "Incorrect response to access prompt.")
                         , (not (isValidUsername uname), "Username must be at least 3 charcaters, all letters or digits.")
                         , (not (isValidPassword pword), "Password must be at least 6 characters, with at least one non-letter.")
-                        , (not (isValidEmail email), "Email address appears invalid.")
+                        , (not (null email) && not (isValidEmail email), "Email address appears invalid.")
                         , (pword /= pword2, "Password does not match confirmation.")
                         , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
@@ -938,7 +1006,8 @@ registerUser _ params = do
        let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
        update $ AddUser uname (User { uUsername = uname, uPassword = passwordHash, uEmail = email })
        loginUser "/" (params { pUsername = uname, pPassword = pword })
-     else formattedPage [HidePageControls] [] page (params { pMessages = errors }) regForm
+     else formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) 
+                    page (params { pMessages = errors }) regForm
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
@@ -947,7 +1016,7 @@ showHighlightedSource file params = do
       Just source -> let lang' = head $ languagesByExtension $ takeExtension file
                      in case highlightAs lang' (filter (/='\r') source) of
                               Left _       -> noHandle
-                              Right res    -> formattedPage [] [] file params $ formatAsXHtml [OptNumberLines] lang' res
+                              Right res    -> formattedPage defaultPageLayout file params $ formatAsXHtml [OptNumberLines] lang' res
       Nothing     -> noHandle
 
 defaultRespOptions :: WriterOptions
@@ -1012,12 +1081,13 @@ exportFormats = [ ("LaTeX",     respondLaTeX)
                 , ("RTF",       respondRTF) ]
 
 exportBox :: String -> Params -> Html
-exportBox page params =
+exportBox page params | isPage page =
    gui (urlForPage page) ! [identifier "exportbox"] << 
-     [ submit "export" "Export"
-     , textfield "revision" ! [thestyle "display: none;", value (pRevision params)]
+     [ textfield "revision" ! [thestyle "display: none;", value (pRevision params)]
      , select ! [name "format"] <<
-         map ((\f -> option ! [value f] << ("as " ++ f)) . fst) exportFormats ]
+         map ((\f -> option ! [value f] << f) . fst) exportFormats
+     , submit "export" "Export" ]
+exportBox _ _ = noHtml
 
 rawContents :: String -> Params -> Web (Maybe String)
 rawContents file params = do
