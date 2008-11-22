@@ -848,7 +848,7 @@ formattedPage layout page params htmlContents = do
                           , submit "search" "Search" ]
   let sitenav = thediv ! [theclass "sitenav"] <<
                   fieldset <<
-                        [ legend << "Wiki"
+                        [ legend << "Site"
                         , ulist << (map li
                              [ anchor ! [href "/"] << "Front page"
                              , anchor ! [href "/_index"] << "All pages"
