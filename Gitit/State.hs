@@ -39,7 +39,7 @@ import Codec.Utils (Octet)
 data Config = Config {
   repositoryPath  :: FilePath,                 -- path of git repository for pages
   staticDir       :: FilePath,                 -- path of static directory
-  wikiBanner      :: String,                   -- HTML to be included at top of pages
+  wikiLogo        :: Maybe String,             -- Nothing, or Just path to an image to be displayed at top left
   wikiTitle       :: String,                   -- title of wiki 
   wikiFooter      :: String,                   -- HTML to be included at bottom of pages
   tableOfContents :: Bool,                     -- should each page have an automatic table of contents?
@@ -59,9 +59,9 @@ defaultConfig :: Config
 defaultConfig = Config {
   repositoryPath  = "wikidata",
   staticDir       = "static",
-  wikiBanner      = "",
+  wikiLogo        = Just "/img/logo.png",
   wikiTitle       = "Wiki",
-  wikiFooter      = "Powered by Gitit",
+  wikiFooter      = "powered by <a href=\"http://github.com/jgm/gitit/tree/master/\">gitit</a>",
   tableOfContents = True,
   maxUploadSize   = 100000,
   portNumber      = 5001,

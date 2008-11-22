@@ -1,0 +1,53 @@
+/* -------------------------------------------------------------- 
+   gitit print css
+   borrows heavily from Mike Crittenden's BlueTripCSS framework (GPL)
+   and from Wikipedia's CSS.
+-------------------------------------------------------------- */
+
+body { 
+width:100% !important;
+margin:0 !important;
+padding:0 !important;
+line-height: 1.4;
+word-spacing:1.1pt;
+letter-spacing:0.2pt; font-family: "Times New Roman", serif; color: #000; background: none; font-size: 12pt; }
+
+/*Headings */
+h1,h2,h3,h4,h5,h6 { font-family: Helvetica, Arial, sans-serif; }
+h1{font-size:19pt;}
+h2{font-size:17pt;}
+h3{font-size:15pt;}
+h4,h5,h6{font-size:12pt;}
+
+code { font: 10pt Courier, monospace; } 
+blockquote { margin: 1.3em; padding: 1em;  font-size: 10pt; }
+hr { background-color: #ccc; }
+
+/* Images */
+img { float: left; margin: 1em 1.5em 1.5em 0; }
+a img { border: none; }
+
+/* Links */
+a:link, a:visited { background: transparent; font-weight: 700; text-decoration: underline;color:#333; }
+a:link[href^="http://"]:after, a[href^="http://"]:visited:after { content: " (" attr(href) ") "; font-size: 90%; }
+a[href^="http://"] {color:#000; }
+
+/* Table */
+table { margin: 1px; text-align:left; }
+th { border-bottom: 1px solid #333;  font-weight: bold; }
+td { border-bottom: 1px solid #333; }
+th,td { padding: 4px 10px 4px 0; }
+tfoot { font-style: italic; }
+caption { background: #fff; margin-bottom:2em; text-align:left; }
+thead {display: table-header-group;}
+tr {page-break-inside: avoid;} 
+
+/*hide various parts from the site*/
+
+#maincol { margin-left: 1em; margin-right: 1em; border: none; }
+#content { border: none; }
+#sidebar, div.pageControls, #userbox {display:none;}
+#toc { display: none; }
+h1 a:link, h2 a:link, h3 a:link, h4 a:link, h5 a:link, h6 a:link { text-decoration: none; }
+h1.pageTitle { font-size: 220%; }
+#footer { border-top: 1px solid black; margin-top: 1em; padding-top: 1em; }

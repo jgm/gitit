@@ -3,10 +3,12 @@ gitit: Gitit.hs Gitit/Git.hs Gitit/State.hs
 
 .PHONY: static clean
 static:
-	mkdir -p static/javascripts
-	mkdir -p static/stylesheets
-	cp javascripts/*.js static/javascripts/
-	cp stylesheets/*.css static/stylesheets/
+	mkdir -p static/js
+	mkdir -p static/css
+	mkdir -p static/img
+	cp js/*.js static/js/
+	cp css/*.css static/css/
+	cp -r img/* static/img/
 
 clean: 
 	rm Gitit.hi Gitit.o Gitit/*.hi Gitit/*.o gitit
