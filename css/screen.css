@@ -253,7 +253,7 @@ body {
 #sidebar  { width: 12em; float: left; margin-right: 10px; }
 #sidebar fieldset {
   background-color: white;
-  margin-bottom: 0.3em;
+  margin-bottom: 1em;
   padding: 0;
 }
 #sidebar fieldset, #sidebar fieldset legend {
