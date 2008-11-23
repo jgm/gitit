@@ -837,7 +837,10 @@ defaultPageLayout = PageLayout
 formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
 formattedPage layout page params htmlContents = do
   let revision = pRevision params
-  sha1 <- gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
+  let path' = if isPage page then pathForPage page else page 
+  sha1 <- if revision == "HEAD"
+             then gitGetSHA1 path' >>= return . fromMaybe ""
+             else return revision
   user <- getLoggedInUser params
   cfg <- (query GetConfig)
   let stylesheetlinks = 
@@ -879,7 +882,7 @@ formattedPage layout page params htmlContents = do
                         fieldset <<
                         [ legend << "This page"
                         , ulist << (map li
-                             [ anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw"] << "Markdown source"
+                             [ anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw"] << "Raw page source"
                              , anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&printable"] << "Printable version"
                              , anchor ! [href $ urlForPage page ++ "?revision=" ++ sha1] << "Permanent link"
                              , anchor ! [href $ urlForPage page ++ "?delete"] << "Delete this page" ])
