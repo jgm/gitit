@@ -899,20 +899,21 @@ formattedPage layout page params htmlContents = do
                                                 if revision == "HEAD" then "edit" else "revert"
                                  else Nothing
   let buttons    = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
-  let userbox    = case user of
-                        Just u   -> anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)])] << 
-                                    ("Logout " ++ u)
-                        Nothing  -> (anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)])] <<
-                                     "Login") +++ primHtml "&nbsp;&bull;&nbsp;" +++
-                                    anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)])] <<
-                                     "Get an account"
+  let userbox    = thediv ! [identifier "userbox"] <<
+                   case user of
+                        Just u   -> [ anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)])] << 
+                                    ("Logout " ++ u) ]
+                        Nothing  -> [ anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)])] <<
+                                     "Login"
+                                    , primHtml "&nbsp;&bull;&nbsp;"
+                                    , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)])] <<
+                                      "Get an account" ]
   let messages = pMessages params
   let htmlMessages = if null messages
                         then noHtml
                         else ulist ! [theclass "messages"] << map (li <<) messages
   let body' = body << thediv ! [identifier "container"] <<
-                        [ thediv ! [identifier "userbox"] << userbox
-                        , thediv ! [identifier "sidebar"] <<
+                        [ thediv ! [identifier "sidebar"] <<
                           [ thediv ! [identifier "logo"] << 
                               anchor ! [href "/", title "Go to top page"] <<
                                 case wikiLogo cfg of
@@ -920,6 +921,7 @@ formattedPage layout page params htmlContents = do
                                      Just f  -> image ! [src f]
                           , sitenav
                           , tools ]
+                        , userbox
                         , thediv ! [identifier "maincol"] <<
                           [ thediv ! [theclass "pageControls"] << buttons
                           , thediv ! [identifier "content"] << 
