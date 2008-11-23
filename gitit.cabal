@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.3
+version:             0.3.1
 Cabal-version:       >= 1.2
 build-type:          Simple
 synopsis:            Wiki using HAppS, git, and pandoc.
@@ -46,7 +46,7 @@ Executable           gitit
                      network, old-time, highlighting-kate, bytestring,
                      utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
                      HAppS-State >= 0.9.3 && < 0.9.4,
-                     HAppS-Data >= 0.9.3 && < 0.9.4, Crypto, HTTP
+                     HAppS-Data >= 0.9.3 && < 0.9.4, SHA > 1, HTTP
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   ghc-options:       -Wall -threaded
