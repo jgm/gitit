@@ -70,6 +70,12 @@ main = do
   initializeWiki conf
   control <- startSystemState entryPoint
   update $ SetConfig conf
+  -- read user file and update state
+  userFileExists <- doesFileExist $ userFile conf
+  users' <- if userFileExists
+               then readFile (userFile conf) >>= (return . M.fromList . read)
+               else return M.empty
+  update $ SetUsers users'
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if (debugMode conf) then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
@@ -79,6 +85,9 @@ main = do
           ] ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
+  -- write user file
+  users'' <- query AskUsers
+  liftIO $ writeFile (userFile conf) (showPrettyList $ M.toList users'')
   killThread tid
   createCheckpoint control
   shutdownSystem control
@@ -126,6 +135,11 @@ handleFlag _ opt = do
 
 entryPoint :: Proxy AppState
 entryPoint = Proxy
+
+showPrettyList :: Show a => [a] -> String
+showPrettyList lst = "[\n" ++
+  concat (intersperse ",\n" $ map show lst) ++ "\n]"
+
 
 -- | Create repository and public directories, unless they already exist.
 initializeWiki :: Config -> IO ()
