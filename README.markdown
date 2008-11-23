@@ -123,6 +123,7 @@ option `-f [filename]`.  A configuration file takes the following form:
 - `wikiLogo` is either `Nothing` (no logo) or `Just "/url/of/logo"`.
   By default, the logo is set to `/img/logo.png`, so the easiest way to
   change the logo is just to copy a new file to `static/img/logo.png`.
+  Be sure to use an absolute URL.
 
 - `wikiTitle` is the title that will be shown on the browser's title bar,
   together with the name of the page being viewed.
