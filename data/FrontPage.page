@@ -8,7 +8,7 @@ or through the wiki's web interface. [Pandoc]'s extended version of
 display TeX math and highlighted source code.
 
 You can edit this page by double-clicking on it, or by clicking on the
-"edit" button at the bottom of the screen.
+"edit" tab at the top of the screen.
 
 You can make a link to another wiki page like this:
 `[French Cheeses]()`.
@@ -21,7 +21,7 @@ subdirectories: `[Wines/Pinot Noir]()`.
 To create a new wiki page, just create a link to it and follow
 the link.
 
-Help is always available through the "help" link on the top bar.
+Help is always available through the "Help" link in the sidebar.
 
 [Wiki]: http://en.wikipedia.org/wiki/Wiki
 [git]: http://git.or.cz/
