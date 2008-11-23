@@ -38,6 +38,7 @@ import Codec.Utils (Octet)
 -- | Data structure for information read from config file.
 data Config = Config {
   repositoryPath  :: FilePath,                 -- path of git repository for pages
+  userFile        :: FilePath,                 -- path of users database 
   staticDir       :: FilePath,                 -- path of static directory
   wikiLogo        :: Maybe String,             -- Nothing, or Just path to an image to be displayed at top left
   wikiTitle       :: String,                   -- title of wiki 
@@ -58,6 +59,7 @@ data Config = Config {
 defaultConfig :: Config
 defaultConfig = Config {
   repositoryPath  = "wikidata",
+  userFile        = "gitit-users",
   staticDir       = "static",
   wikiLogo        = Just "/img/logo.png",
   wikiTitle       = "Wiki",
@@ -117,6 +119,9 @@ askUsers = return . users =<< ask
 
 askSessions::MonadReader AppState m => m (Sessions SessionData)
 askSessions = return . sessions =<< ask
+
+setUsers :: MonadState AppState m => M.Map String User -> m ()
+setUsers newusers = modify $ \s -> s {users = newusers}
 
 modUsers :: MonadState AppState m => (M.Map String User -> M.Map String User) -> m ()
 modUsers f = modify $ \s -> s {users = f $ users s}
@@ -178,7 +183,7 @@ setConfig conf = modify $ \s -> s {config = conf}
 numSessions:: Proxy AppState -> Query AppState Int
 numSessions = proxyQuery $ liftM (M.size . unsession) askSessions
 
-$(mkMethods ''AppState ['askUsers, 'addUser, 'delUser, 'authUser, 'isUser, 'listUsers, 'numUsers,
+$(mkMethods ''AppState ['askUsers, 'setUsers, 'addUser, 'delUser, 'authUser, 'isUser, 'listUsers, 'numUsers,
              'isSession, 'setSession, 'getSession, 'newSession, 'delSession, 'numSessions,
              'setConfig, 'getConfig])
 

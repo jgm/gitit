@@ -1,5 +1,6 @@
 Config {
 repositoryPath  = "wikidata",
+userFile        = "gitit-users",
 staticDir       = "static",
 wikiLogo        = Just "/img/logo.png",
 wikiTitle       = "Wiki",

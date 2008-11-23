@@ -20,10 +20,11 @@
 
 - add literate haskell support to pandoc, and to gitit
 
-- smoother way to migrate when state format is changed?
-  one approach would be to save user information in a file.
-  so if you restarted, session info would be lost, but nothing
-  important.
-
 - updated README
+
+- put note in README about _local.  users and config are stored
+  and reloaded separately, so you can blow away _local when you upgrade.
+  otherwise migration is difficult. 
+
+- does debugFilter still work?
 
