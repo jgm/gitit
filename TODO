@@ -20,11 +20,5 @@
 
 - add literate haskell support to pandoc, and to gitit
 
-- updated README
-
-- put note in README about _local.  users and config are stored
-  and reloaded separately, so you can blow away _local when you upgrade.
-  otherwise migration is difficult. 
-
 - does debugFilter still work?
 
