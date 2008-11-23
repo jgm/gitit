@@ -917,7 +917,7 @@ formattedPage layout page params htmlContents = do
                               anchor ! [href "/", title "Go to top page"] <<
                                 case wikiLogo cfg of
                                      Nothing -> noHtml
-                                     Just f  -> image ! [src $ "/" ++ f]
+                                     Just f  -> image ! [src f]
                           , sitenav
                           , tools ]
                         , thediv ! [identifier "maincol"] <<
