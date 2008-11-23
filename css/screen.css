@@ -248,7 +248,7 @@ body {
 	padding: 0;
 }
 
-#userbox  { float: right; font-weight: bold; margin: 1em; }
+#userbox  { text-align: right; font-weight: bold; margin: 1em 1em 0 0; }
 #logo { min-height: 50px; }
 #sidebar  { width: 12em; float: left; margin-right: 10px; }
 #sidebar fieldset {
@@ -267,7 +267,7 @@ body {
   line-height: 1.5em;
 }
 #sidebar ul li { color: #888; }
-#maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 2em; margin-right: 0; }
+#maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; }
 #content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 110%; line-height: 150%; }
 #pageControls { }
 div#toc {
