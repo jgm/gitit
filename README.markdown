@@ -65,8 +65,8 @@ To run gitit, you'll need [git][] in your system path. Check this by doing
     git --version
 
 Switch to the directory where you want to run gitit.  This should be a directory
-where you have write access, since two directories, `static` and `wikidata`, will be
-created here.  To start gitit, just type:
+where you have write access, since two directories, `static` and `wikidata`, and
+a file, `gitit-users`, will be created here.  To start gitit, just type:
 
     gitit
 
@@ -86,43 +86,70 @@ option `-f [filename]`.  A configuration file takes the following form:
 
     Config {
     repositoryPath  = "wikidata",
+    userFile        = "gitit-users",
     staticDir       = "static",
-    wikiBanner      = "<img src=\"/images/bann.png\" alt=\"banner\"",
+    wikiLogo        = Just "/img/logo.png",
     wikiTitle       = "Wiki",
-    wikiFooter      = "Powered by Gitit",
+    wikiFooter      = "Powered by Gitit\n<!-- Logo courtesy of http://flickr.com/photos/wolfhound/127936545/, licensed under Creative Commons Attribution license -->",
     tableOfContents = False,
     maxUploadSize   = 100000,
     portNumber      = 5001,
     passwordSalt    = "l91snthoae8eou2340987",
     debugMode       = True,
-    frontPage       = ["Front Page"],
-    noEdit          = ["Help"],
+    frontPage       = "Front Page",
+    noEdit          = ["Help", "Front Page"],
     noDelete        = ["Help", "Front Page"],
-    accessQuestion  = Just ("Enter the access code (to request a code, contact me@foo.bar.com):", ["abcd"])
+    accessQuestion  = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"])
     }
 
-For the most part, these options should be self-explanatory.
+- `repositoryPath` is the (relative) path of the git repository in which
+  the wiki's pages will be stored.  If it does not exist, gitit will create
+  it on startup.
 
-- The `wikiBanner` will be inserted before the top navigation bar on pages,
-  and can be used to include a banner or wiki title.  It is raw HTML. Similarly,
-  the `wikiFooter` is raw HTML that will be inserted at the bottom of the page.
-- The `tableOfContents` boolean determines whether a table of contents,
-  derived from the page's headers, will be included for every page.
-- `maxUploadSize` (in bytes) limits the size of pages and uploads.
-- The `passwordSalt` is used to encrypt passwords and should be
-   changed for every new site.
-- `debugMode` causes diagnostic information to be printed to the console.
-- `noEdit` is a list of pages that cannot be edited using the web interface.
-  (They may still be edited via git, by those with access to the repository.)
-- `noDelete` is a list of pages that cannot be deleted using the web interface.
-- `frontPage` specifies the front page of the wiki (which will be displayed at
-  the root URL).
-- The `accessQuestion` is either `Nothing` (in which case anyone will be
-  allowed to register for an account) or `Just (question, [ans1, ans2, ...])`
-  (in which case anyone who registers must first answer the `question` with
-  one of the provided answers).  One can deter automated spammers by using
-  an `accessQuestion` with an easy and obvious answer.  Or one can use an
-  `accessQuestion` to limit those who can edit a wiki to a trusted group.
+- `gitit-users` is a file containing user login information (with hashed
+  passwords).  If it does not exist, gitit will start with an empty list
+  of users.  Gitit will write a new `gitit-users` file on shutdown.
+
+- `staticDir` is the (relative) path of a directory in which static content
+  (javascript, CSS, images) is stored.  If it does not exist, gitit will
+  create it on startup.
+
+- `wikiLogo` is either `Nothing` (no logo) or `Just "/url/of/logo"`.
+  By default, the logo is set to `/img/logo.png`, so the easiest way to
+  change the logo is just to copy a new file to `static/img/logo.png`.
+
+- `wikiTitle` is the title that will be shown on the browser's title bar,
+  together with the name of the page being viewed.
+
+- `wikiFooter` is raw HTML that will be inserted in the footer of every page.
+
+- `tableOfContents` is either `False` or `True`.  If it is `True`, a table
+  of contents (derived from the page's headers) will appear on each page.
+
+- `maxUploadSize` (in bytes) sets a limit to the size of file uploads.
+
+- `portNumber` is the number of the port on which the wiki will be served.
+
+- `passwordSalt` is used to hash the passwords in the user database;
+  you should change this to something unique if you use gitit in a
+  production setting.
+
+- `debugMode` is either `True` or `False`. If it is `True`, debug information
+  will be printed to the console when gitit is running.
+
+- `frontPage` is the name of the page that is designated as the "front" or
+  "entrance" page of the wiki.  Any page may be designated.
+
+- `noEdit` is a list of pages that cannot be edited.
+
+- `noDelete` is a list of pages that cannot be deleted.
+
+- `accessQuestion` provides primitive access control.  It is either `Nothing`,
+  in which case anyone will be allowed to create an account and edit wiki pages,
+  or `Just (question, [answer1, answer2, ...])`, where question is a prompt
+  that will be displayed when a user tries to create an account, and
+  `answer1, answer2, ...` are the valid responses. The user must provide a
+  valid response in order to create an account. 
 
 Configuring gitit
 =================
@@ -132,15 +159,16 @@ The `static` directory
 
 If there is no wiki page or uploaded file corresponding to a request, gitit
 always looks last in the `static` directory. So, for example, a file
-`foo.jpg` in the `images` subdirectory of the `static` directory will be
-accessible at the url `/images/foo.jpg`. Pandoc creates two subdirectories
-of `static`, `stylesheets` and `javascripts`, which include the CSS and
-scripts it uses.
+`foo.jpg` in the `img` subdirectory of the `static` directory will be
+accessible at the url `/img/foo.jpg`. Pandoc creates three subdirectories
+of `static`, `css`, `img`, and `js`, which include the icons, stylesheets,
+and javascripts it uses.
 
 Changing the theme
 ------------------
 
-To change the look of the wiki, modify `gitit.css` in `static/stylesheets`.
+To change the look of the wiki, modify `screen.css` in `static/css`.
+To change the look of printed pages, modify `print.css`.
 
 Adding support for math
 -----------------------
@@ -148,7 +176,7 @@ Adding support for math
 Gitit is designed to work with [jsMath][] to display LaTeX math in HTML. 
 Download `jsMath` and `jsMath Image Fonts` from the [jsMath download page][].
 You'll have two `.zip` archives. Unzip them both in the
-`static/javascripts` directory (a new subdirectory, `jsMath`, will be
+`static/js` directory (a new subdirectory, `jsMath`, will be
 created).  You can test to see if math is working properly by clicking
 "help" on the top navigation bar and looking for the math example
 (the quadratic formula).
@@ -198,6 +226,21 @@ options).  So you can interact with the wiki using git command line tools:
 If you now look at the Front Page on the wiki, you should see your changes
 reflected there.  Note that the pages all have the extension `.page`.
 
+Wiki links and formatting
+=========================
+
+For instructions on editing pages and creating links, see the "Help" page.
+
+Upgrading and `_local`
+======================
+
+HAppS uses the `_local` subdirectory to make state persistent.
+Gitit does not rely on this persistence; the configuration and user database
+are read from files on startup.  So, it is okay to delete the `_local`
+subdirectory.  You may need to do this after you have upgraded to a new
+version of gitit, with a different `AppState` data structure, because the
+new gitit will not be able to read the old gitit's state.
+
 Reporting bugs
 ==============
 
@@ -207,9 +250,12 @@ jgm at berkeley . edu
 Acknowledgements
 ================
 
-I borrowed some ideas about visual layout from Jeff Barczewski's fork
-of Simon Rozet's `git-wiki`.
+The visual layout is shamelessly borrowed from Wikipedia.
 
 The code in `Gitit/State.hs` is based on http://hpaste.org/5957 by mightybyte,
 as revised by dbpatterson.
+
+The stylesheets are influenced by Wikipedia's stylesheets and by the
+bluetrip CSS framework (see BLUETRIP-LICENSE). Some of the icons in
+`img/icons` come from bluetrip as well.
 
