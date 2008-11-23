@@ -33,7 +33,6 @@ import Data.Generics hiding ((:+:))
 import HAppS.State
 import HAppS.Data
 import GHC.Conc (STM)
-import Codec.Utils (Octet)
 
 -- | Data structure for information read from config file.
 data Config = Config {
@@ -86,7 +85,7 @@ data Sessions a = Sessions {unsession::M.Map SessionKey a}
 
 data User = User {
   uUsername :: String,
-  uPassword :: [Octet],  -- password stored as MD5 hash
+  uPassword :: String,    -- password stored as SHA512 hash
   uEmail    :: String
 } deriving (Show,Read,Typeable,Data)
 
@@ -138,7 +137,7 @@ addUser name u = modUsers $ M.insert name u
 delUser :: MonadState AppState m => String -> m ()
 delUser name = modUsers $ M.delete name
 
-authUser :: MonadReader AppState m => String -> [Octet] -> m Bool
+authUser :: MonadReader AppState m => String -> String -> m Bool
 authUser name pass = do
   users' <- askUsers
   case M.lookup name users' of
