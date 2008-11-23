@@ -1,16 +1,22 @@
 Gitit
 =====
 
-Gitit is a wiki program written in Haskell.  It uses [HAppS][] for the web
-server and session state, [git][] for storage, history, search, diffs,
-and merging, and [pandoc][] for markup processing. Pages can be added,
-changed, and removed either on the web or using git's command-line
-tools. Gitit uses [pandoc][]'s extended version of markdown as its markup
-language.
+Gitit is a wiki program written in Haskell. It uses [HAppS][] for the
+web server and session state, [git][] for storage, history, search,
+diffs, and merging, and [pandoc][] for markup processing. Pages and
+uploaded files are stored in a git repository and may be modified either
+by using git's command-line tools or through the wiki's web interface.
+Pandoc's extended version of markdown is used as a markup language.
+Pages can be exported in a number of different formats, including LaTeX,
+RTF, OpenOffice ODT, and MediaWiki markup. Gitit can be configured to
+display TeX math (using [jsMath][]) and highlighted source code (using
+[highlighting-kate][]).
 
 [git]: http://git.or.cz  
 [pandoc]: http://johnmacfarlane.net/pandoc
 [HAppS]: http://happs.org
+[jsMath]: http://www.math.union.edu/~dpvc/jsMath/
+[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/  
 
 Getting started
 ===============
@@ -190,7 +196,6 @@ You can write display math by enclosing it in double dollar signs:
     $$\frac{1}{\sqrt{c^2}}$$
 
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
-[jsMath]: http://www.math.union.edu/~dpvc/jsMath/
 
 Highlighted source code
 -----------------------
