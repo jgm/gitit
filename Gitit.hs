@@ -39,15 +39,15 @@ import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Data.ByteString.UTF8 (fromString)
+import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
-import qualified Data.Digest.SHA512 as SHA512 (hash)
+import Data.Digest.Pure.SHA (sha512, showDigest)
 import Paths_gitit
 import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
 import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
-import Data.ByteString.Internal (c2w)
 import Data.Char (isAlphaNum, isAlpha)
 import Codec.Binary.UTF8.String (decodeString)
 import Control.Monad.Reader
@@ -956,7 +956,7 @@ loginUser _ params = do
   let pword = pPassword params
   let destination = pDestination params
   cfg <- query GetConfig
-  let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
+  let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
   allowed <- query $ AuthUser uname passwordHash
   if allowed
     then do
@@ -1027,7 +1027,7 @@ registerUser _ params = do
                         , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
      then do
-       let passwordHash = SHA512.hash $ map c2w $ passwordSalt cfg ++ pword
+       let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
        update $ AddUser uname (User { uUsername = uname, uPassword = passwordHash, uEmail = email })
        loginUser "/" (params { pUsername = uname, pPassword = pword })
      else formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) 
