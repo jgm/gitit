@@ -491,8 +491,14 @@ showPage page params = do
                                              else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
        _      -> if revision == "HEAD"
-                    then (unlessNoEdit $ ifLoggedIn "" $ editPage) page params
+                    then createPage page params
                     else error $ "Invalid revision: " ++ revision
+
+createPage :: String -> Params -> Web Response
+createPage page params =
+  formattedPage (defaultPageLayout { pgTabs = [] }) page params $
+     p << [ stringToHtml ("There is no page '" ++ page ++ "'.  You may create the page by ")
+          , anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ] 
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages
@@ -670,12 +676,9 @@ editPage page params = do
   raw <- case pEditedText params of
               Nothing -> gitCatFile revision (pathForPage page)
               Just t  -> return $ Just t
-  let (new, contents) = case raw of
-                             Nothing -> (True, "# Title goes here\n\nContent goes here")
-                             Just c  -> (False, c)
-  let messages' = if new
-                     then ("This page does not yet exist.  You may create it by editing the text below." : messages)
-                     else messages
+  let contents = case raw of
+                      Nothing -> "# Title goes here\n\nContent goes here"
+                      Just c  -> c
   sha1 <- case (pSHA1 params) of
                ""  -> gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
                s   -> return s
@@ -690,7 +693,7 @@ editPage page params = do
                     submit "cancel" "Discard", br,
                     thediv ! [ identifier "previewpane" ] << noHtml ]
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab, 
-                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) }) page (params {pMessages = messages'}) editForm
+                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) }) page (params {pMessages = messages}) editForm
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
