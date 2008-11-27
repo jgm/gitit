@@ -796,9 +796,9 @@ consolidateHeads lst =
 -- | Create a hierarchical ordered list (with links) for a list of files
 fileListToHtml :: String -> [[FilePath]] -> Html
 fileListToHtml prefix lst = ulist ! [identifier "index", theclass "folding"] <<
-  (map (\(h, l) -> let h' = if ".page" `isSuffixOf` h then dropExtension h else h
+  (map (\(h, l) -> let h' = if takeExtension h == ".page" then dropExtension h else h
                    in if [] `elem` l
-                         then li ! [theclass $ if isPage h' then "page" else "upload"] << anchor ! [href $ prefix ++ h'] << h'
+                         then li ! [theclass $ if takeExtension h == ".page" then "page" else "upload"] << anchor ! [href $ prefix ++ h'] << h'
                          else li ! [theclass "folder"] << [stringToHtml h', fileListToHtml (prefix ++ h') l]) $
   consolidateHeads lst)
 
