@@ -1,10 +1,8 @@
 Config {
 repositoryPath  = "wikidata",
 userFile        = "gitit-users",
+templateFile    = "template.html",
 staticDir       = "static",
-wikiLogo        = Just "/img/logo.png",
-wikiTitle       = "Wiki",
-wikiFooter      = "Powered by Gitit\n<!-- Logo courtesy of http://flickr.com/photos/wolfhound/127936545/, licensed under Creative Commons Attribution license -->",
 tableOfContents = False,
 maxUploadSize   = 100000,
 portNumber      = 5001,

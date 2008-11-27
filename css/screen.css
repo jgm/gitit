@@ -269,7 +269,6 @@ body {
 #sidebar ul li { color: #888; }
 #maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; }
 #content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 110%; line-height: 150%; }
-#pageControls { }
 div#toc {
   float: right; 
   background-color: #f9f9f9;
@@ -311,7 +310,7 @@ ul.tabs li {
     line-height: 1.2em;
 }
 ul.tabs li.selected {
-    border-bottom: 1px solid white;
+    border-bottom: 3px solid white;
 }
 ul.tabs li a {
     text-decoration: none;

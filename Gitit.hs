@@ -56,9 +56,15 @@ import Network.HTTP (urlEncodeVars, urlEncode)
 import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
+import Text.StringTemplate as T
+import Data.IORef
+import System.IO.Unsafe (unsafePerformIO)
 
 gititVersion :: String
 gititVersion = "0.3.1"
+
+template :: IORef (StringTemplate String)
+template = unsafePerformIO $ newIORef $ newSTMP ""  -- initialize template to empty string
 
 main :: IO ()
 main = do
@@ -68,6 +74,9 @@ main = do
   gitPath <- findExecutable "git"
   when (isNothing gitPath) $ error "'git' program not found in system path."
   initializeWiki conf
+  -- initialize template
+  templ <- liftIO $ readFile (templateFile conf)
+  writeIORef template (newSTMP templ)
   control <- startSystemState entryPoint
   update $ SetConfig conf
   -- read user file and update state
@@ -147,6 +156,7 @@ initializeWiki conf = do
   let repodir = repositoryPath conf
   let frontpage = frontPage conf <.> "page"
   let staticdir = staticDir conf
+  let templatefile = templateFile conf
   repoExists <- doesDirectoryExist repodir
   unless repoExists $ do
     postupdatepath <- getDataFileName $ "data" </> "post-update"
@@ -198,6 +208,11 @@ initializeWiki conf = do
                        "If you want support for math, copy the jsMath directory into " ++ staticdir ++ "/js/\n" ++
                        "jsMath can be obtained from http://www.math.union.edu/~dpvc/jsMath/\n" ++
                        replicate 80 '*'
+  templateExists <- doesFileExist templatefile
+  unless templateExists $ do
+    templatePath <- getDataFileName $ "data" </> "template.html"
+    copyFile templatePath templatefile
+    hPutStrLn stderr $ "Created " ++ templatefile
 
 type Handler = ServerPart Response
 
@@ -842,52 +857,12 @@ formattedPage layout page params htmlContents = do
              then gitGetSHA1 path' >>= return . fromMaybe ""
              else return revision
   user <- getLoggedInUser params
-  cfg <- (query GetConfig)
-  let stylesheetlinks = 
-        if pPrintable params
-           then thelink ! [href "/css/print.css", rel "stylesheet", strAttr "media" "all", thetype "text/css"] << noHtml
-           else thelink ! [href "/css/screen.css", rel "stylesheet",
-                             strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
-                primHtml "<!--[if IE]>" +++
-                thelink ! [href "/css/ie.css", rel "stylesheet",
-                          strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
-                primHtml "<![endif]-->" +++
-                thelink ! [href "/css/hk-pyg.css", rel "stylesheet",
-                           strAttr "media" "screen, projection", thetype "text/css"] << noHtml +++
-                thelink ! [href "/css/print.css", rel "stylesheet", strAttr "media" "print", thetype "text/css"] << noHtml
   let javascriptlinks = if null (pgScripts layout)
-                           then noHtml
-                           else concatHtml $ map
+                           then ""
+                           else renderHtmlFragment $ concatHtml $ map
                                   (\x -> script ! [src ("/js/" ++ x), thetype "text/javascript"] << noHtml)
                                   (["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout)
-  let pageTitle' = pgTitle layout `orIfNull` page
-  let title' = thetitle << (wikiTitle cfg ++ " - " ++ pageTitle')
-  let head' = header << [title', stylesheetlinks, javascriptlinks]
-  let searchbox = gui ("/_search") ! [identifier "searchform"] <<
-                          [ textfield "patterns"
-                          , submit "search" "Search" ]
-  let sitenav = thediv ! [theclass "sitenav"] <<
-                  fieldset <<
-                        [ legend << "Site"
-                        , ulist << (map li
-                             [ anchor ! [href "/"] << "Front page"
-                             , anchor ! [href "/_index"] << "All pages"
-                             , anchor ! [href "/_random"] << "Random page"
-                             , anchor ! [href "/_activity"] << "Recent activity"
-                             , anchor ! [href "/_upload"] << "Upload a file"
-                             , anchor ! [href "/Help"] << "Help" ])
-                        , searchbox ]
-  let tools = if pgShowPageTools layout
-                 then thediv ! [theclass "pageTools"] <<
-                        fieldset <<
-                        [ legend << "This page"
-                        , ulist << (map li
-                             [ anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&showraw"] << "Raw page source"
-                             , anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&printable"] << "Printable version"
-                             , anchor ! [href $ urlForPage page ++ "?revision=" ++ sha1] << "Permanent link"
-                             , anchor ! [href $ urlForPage page ++ "?delete"] << "Delete this page" ])
-                        , exportBox page params ]
-                 else noHtml
+  let pageTitle = pgTitle layout `orIfNull` page
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
@@ -898,42 +873,34 @@ formattedPage layout page params htmlContents = do
                                               if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]] <<
                                                 if revision == "HEAD" then "edit" else "revert"
                                  else Nothing
-  let buttons    = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
-  let userbox    = thediv ! [identifier "userbox"] <<
-                   case user of
-                        Just u   -> [ anchor ! [href ("/_logout?" ++ urlEncodeVars [("destination", page)])] << 
-                                    ("Logout " ++ u) ]
-                        Nothing  -> [ anchor ! [href ("/_login?" ++ urlEncodeVars [("destination", page)])] <<
-                                     "Login"
-                                    , primHtml "&nbsp;&bull;&nbsp;"
-                                    , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", page)])] <<
-                                      "Get an account" ]
+  let tabs = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
+  let searchbox = gui ("/_search") ! [identifier "searchform"] <<
+                         [ textfield "patterns"
+                         , submit "search" "Search" ]
   let messages = pMessages params
   let htmlMessages = if null messages
                         then noHtml
                         else ulist ! [theclass "messages"] << map (li <<) messages
-  let body' = body << thediv ! [identifier "container"] <<
-                        [ thediv ! [identifier "sidebar"] <<
-                          [ thediv ! [identifier "logo"] << 
-                              anchor ! [href "/", title "Go to top page"] <<
-                                case wikiLogo cfg of
-                                     Nothing -> noHtml
-                                     Just f  -> image ! [src f]
-                          , sitenav
-                          , tools ]
-                        , userbox
-                        , thediv ! [identifier "maincol"] <<
-                          [ thediv ! [theclass "pageControls"] << buttons
-                          , thediv ! [identifier "content"] << 
-                              [ anchor ! [href $ urlForPage page] << (h1 ! [theclass "pageTitle"] << pageTitle')
-                              , if revision == "HEAD"
-                                   then noHtml
-                                   else h2 ! [theclass "revision"] << ("Revision " ++ revision)
-                              , htmlMessages
-                              , htmlContents ]
-                          , thediv ! [identifier "footer"] << primHtml (wikiFooter cfg) ]
-                        ]
-  ok $ toResponse $ head' +++ body'
+  templ <- liftIO $ readIORef template
+  let filledTemp = T.render $
+                   setAttribute "pagetitle" pageTitle $
+                   setAttribute "javascripts" javascriptlinks $
+                   setAttribute "pagename" page $
+                   (case user of
+                         Just u     -> setAttribute "user" u
+                         Nothing    -> id) $
+                   (if isPage page then setAttribute "ispage" "true" else id) $
+                   (if pgShowPageTools layout then setAttribute "pagetools" "true" else id) $
+                   (if pPrintable params then setAttribute "printable" "true" else id) $
+                   setAttribute "revision" revision $
+                   setAttribute "sha1" sha1 $
+                   setAttribute "searchbox" (renderHtmlFragment searchbox) $
+                   setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
+                   setAttribute "tabs" (renderHtmlFragment tabs) $
+                   setAttribute "messages" (renderHtmlFragment htmlMessages) $
+                   setAttribute "content" (renderHtmlFragment htmlContents) $
+                   templ
+  ok $ setContentType "text/html" $ toResponse filledTemp
 
 -- user authentication
 loginForm :: Params -> Html

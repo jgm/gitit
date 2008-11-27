@@ -19,7 +19,7 @@ h2{font-size:17pt;}
 h3{font-size:15pt;}
 h4,h5,h6{font-size:12pt;}
 
-code { font: 10pt Courier, monospace; } 
+code { font: 11pt Courier, monospace; } 
 blockquote { margin: 1.3em; padding: 1em;  font-size: 10pt; }
 hr { background-color: #ccc; }
 
@@ -46,8 +46,9 @@ tr {page-break-inside: avoid;}
 
 #maincol { margin-left: 1em; margin-right: 1em; border: none; }
 #content { border: none; }
-#sidebar, div.pageControls, #userbox, #footer {display:none;}
+#sidebar, #userbox, #footer {display:none;}
 #toc { display: none; }
 h1 a:link, h2 a:link, h3 a:link, h4 a:link, h5 a:link, h6 a:link { text-decoration: none; }
 h1.pageTitle { font-size: 220%; }
 td.lineNumbers { display: none; }
+ul.tabs { display: none; }
