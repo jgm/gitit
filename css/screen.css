@@ -391,7 +391,7 @@ pre.matches {
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision {
   font-size: 100%;
-  color: #ccc;
+  color: #888;
   font-style: italic;
   border: none;
   margin: 0 0 0.5em 0;

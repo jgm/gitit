@@ -892,6 +892,7 @@ formattedPage layout page params htmlContents = do
                    (if isPage page then setAttribute "ispage" "true" else id) $
                    (if pgShowPageTools layout then setAttribute "pagetools" "true" else id) $
                    (if pPrintable params then setAttribute "printable" "true" else id) $
+                   (if pRevision params == "HEAD" then id else setAttribute "nothead" "true") $
                    setAttribute "revision" revision $
                    setAttribute "sha1" sha1 $
                    setAttribute "searchbox" (renderHtmlFragment searchbox) $
