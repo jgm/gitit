@@ -38,10 +38,8 @@ import GHC.Conc (STM)
 data Config = Config {
   repositoryPath  :: FilePath,                 -- path of git repository for pages
   userFile        :: FilePath,                 -- path of users database 
+  templateFile    :: FilePath,                 -- path of page template file
   staticDir       :: FilePath,                 -- path of static directory
-  wikiLogo        :: Maybe String,             -- Nothing, or Just path to an image to be displayed at top left
-  wikiTitle       :: String,                   -- title of wiki 
-  wikiFooter      :: String,                   -- HTML to be included at bottom of pages
   tableOfContents :: Bool,                     -- should each page have an automatic table of contents?
   maxUploadSize   :: Integer,                  -- maximum size of pages and file uploads
   portNumber      :: Int,                      -- port number to serve content on
@@ -59,10 +57,8 @@ defaultConfig :: Config
 defaultConfig = Config {
   repositoryPath  = "wikidata",
   userFile        = "gitit-users",
+  templateFile    = "template.html",
   staticDir       = "static",
-  wikiLogo        = Just "/img/logo.png",
-  wikiTitle       = "Wiki",
-  wikiFooter      = "powered by <a href=\"http://github.com/jgm/gitit/tree/master/\">gitit</a>",
   tableOfContents = True,
   maxUploadSize   = 100000,
   portNumber      = 5001,

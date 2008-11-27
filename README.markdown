@@ -72,7 +72,8 @@ To run gitit, you'll need [git][] in your system path. Check this by doing
 
 Switch to the directory where you want to run gitit.  This should be a directory
 where you have write access, since two directories, `static` and `wikidata`, and
-a file, `gitit-users`, will be created here.  To start gitit, just type:
+two files, `gitit-users` and `template.html`, will be created here. To
+start gitit, just type:
 
     gitit
 
@@ -80,7 +81,9 @@ If all goes well, gitit will do the following:
 
  1.  Create a git repository, `wikidata`, and add a default front page.
  2.  Create a `static` directory containing the scripts and CSS used by gitit.
- 3.  Start a web server on port 5001.
+ 3.  Create a `template.html` file containing an (HStringTemplate) template
+     for wiki pages.
+ 4.  Start a web server on port 5001.
 
 Check that it worked:  open a web browser and go to http://localhost:5001.
 
@@ -93,10 +96,8 @@ option `-f [filename]`.  A configuration file takes the following form:
     Config {
     repositoryPath  = "wikidata",
     userFile        = "gitit-users",
+    templateFile    = "template.html",
     staticDir       = "static",
-    wikiLogo        = Just "/img/logo.png",
-    wikiTitle       = "Wiki",
-    wikiFooter      = "Powered by Gitit\n<!-- Logo courtesy of http://flickr.com/photos/wolfhound/127936545/, licensed under Creative Commons Attribution license -->",
     tableOfContents = False,
     maxUploadSize   = 100000,
     portNumber      = 5001,
@@ -112,23 +113,19 @@ option `-f [filename]`.  A configuration file takes the following form:
   the wiki's pages will be stored.  If it does not exist, gitit will create
   it on startup.
 
-- `gitit-users` is a file containing user login information (with hashed
+- `userFile` is a file containing user login information (with hashed
   passwords).  If it does not exist, gitit will start with an empty list
-  of users.  Gitit will write a new `gitit-users` file on shutdown.
+  of users.  Gitit will write a new `userFile` on shutdown.
+
+- `templateFile` is a file containing an HTML template for the wiki pages.
+  If it does not exist, gitit will create a default template.  (For most
+  purposes, this can be used just as it is, but some users may wish to
+  customize the look of their wiki.)  `templateFile` is an
+  `HStringTemplate` template.
 
 - `staticDir` is the (relative) path of a directory in which static content
   (javascript, CSS, images) is stored.  If it does not exist, gitit will
   create it on startup.
-
-- `wikiLogo` is either `Nothing` (no logo) or `Just "/url/of/logo"`.
-  By default, the logo is set to `/img/logo.png`, so the easiest way to
-  change the logo is just to copy a new file to `static/img/logo.png`.
-  Be sure to use an absolute URL.
-
-- `wikiTitle` is the title that will be shown on the browser's title bar,
-  together with the name of the page being viewed.
-
-- `wikiFooter` is raw HTML that will be inserted in the footer of every page.
 
 - `tableOfContents` is either `False` or `True`.  If it is `True`, a table
   of contents (derived from the page's headers) will appear on each page.
@@ -176,6 +173,9 @@ Changing the theme
 
 To change the look of the wiki, modify `screen.css` in `static/css`.
 To change the look of printed pages, modify `print.css`.
+The logo picture can be changed by copying a new PNG file to
+`static/img/logo.png`. For more radical changes, one can modify
+`template.html`.
 
 Adding support for math
 -----------------------

@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Wiki - $pagetitle$</title>
+    <link href="/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
+    <link href="/css/hk-pyg.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="/css/print.css" rel="stylesheet" media="print" type= "text/css" />
+    $if(printable)$
+    <link href="/css/print.css" rel="stylesheet" media="all" type= "text/css" />
+    $endif$
+    $javascripts$
+  </head>
+  <body>
+    <div id="container">
+      <div id="sidebar">
+        <div id="logo">
+          <a href="/" title="Go to top page"><img src="/img/logo.png" /></a>
+        </div>
+        <div class="sitenav">
+          <fieldset>
+            <legend>Site</legend>
+            <ul>
+              <li><a href="/">Front page</a></li>
+              <li><a href="/_index">All pages</a></li>
+              <li><a href="/_random">Random page</a></li>
+              <li><a href="/_activity">Recent activity</a></li>
+              <li><a href="/_upload">Upload a file</a></li>
+              <li><a href="/Help">Help</a></li>
+            </ul>
+            $searchbox$
+          </fieldset>
+        </div>
+        $if(pagetools)$
+        <div class="pageTools">
+          <fieldset>
+            <legend>This page</legend>
+            <ul>
+              <li><a href="/$pagename$?revision=$revision$&amp;showraw">Raw page source</a></li>
+              <li><a href="/$pagename$?revision=$revision$&amp;printable">Printable version</a></li>
+              <li><a href="/$pagename$?revision=$sha1$">Permanent link</a></li>
+              <li><a href="/$pagename$?delete">Delete this page</a></li>
+            </ul>
+            $exportbox$
+          </fieldset>
+        </div>
+        $endif$
+      </div>
+      <div id="userbox">
+        $if(user)$
+        <a href="/_logout?destination=$pagename$">Logout $user$</a>
+        $else$
+        <a href="/_login?destination=$pagename$">Login</a> &bull; <a href="/_register?destination=$pagename$">Get an account</a>
+        $endif$
+      </div>
+      <div id="maincol">
+        $tabs$ 
+        <div id="content">
+          <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
+          $messages$
+          <div id="wikipage" ondblclick="window.location='/$pagename$?edit">
+            $content$
+          </div>
+        </div>
+        <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">gitit</a></div>
+      </div>
+    </div>
+  </body>
+</html>
