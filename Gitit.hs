@@ -659,7 +659,7 @@ showActivity _ params = do
                            [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
                             thespan ! [theclass "author"] <<
                                     anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                               (logAuthor entry), stringToHtml "):",
+                                               (logAuthor entry), stringToHtml "): ",
                             thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
                             thespan ! [theclass "files"] << filesFor (logFiles entry),
                             stringToHtml ")"]) hist
