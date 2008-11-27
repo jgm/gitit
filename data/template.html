@@ -57,6 +57,9 @@
       <div id="maincol">
         $tabs$ 
         <div id="content">
+          $if(nothead)$
+          <h2 class="revision">Revision $revision$</h2>
+          $endif$
           <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
           $messages$
           <div id="wikipage" ondblclick="window.location='/$pagename$?edit">
