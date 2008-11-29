@@ -239,6 +239,7 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                                          handle isSourceCode GET showFileDiff ]
                , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
                , withCommand "cancel"  [ handlePage POST showPage ]
+               , withCommand "discuss" [ handlePage GET discussPage ]
                , withCommand "update"  [ handlePage POST  $ unlessNoEdit $ ifLoggedIn "?edit" updatePage ]
                , withCommand "delete"  [ handlePage GET  $ unlessNoDelete $ ifLoggedIn "?delete" confirmDelete,
                                          handlePage POST $ unlessNoDelete $ ifLoggedIn "?delete" deletePage ]
@@ -346,7 +347,7 @@ getLoggedInUser params = do
 data Command = Command (Maybe String)
 
 commandList :: [String]
-commandList = ["edit", "showraw", "history", "export", "diff", "cancel", "update", "delete"]
+commandList = ["edit", "showraw", "history", "export", "diff", "cancel", "update", "delete", "discuss"]
 
 instance FromData Command where
      fromData = do
@@ -435,6 +436,9 @@ isPage :: String -> Bool
 isPage ('_':_) = False
 isPage s = '.' `notElem` s
 
+isDiscussPage :: String -> Bool
+isDiscussPage s = isPage s && ":discuss" `isSuffixOf` s
+
 isSourceCode :: String -> Bool
 isSourceCode = not . null . languagesByExtension . takeExtension
 
@@ -480,7 +484,7 @@ showFileAsText file params = do
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
   files <- gitLsTree "HEAD" >>= return . map (unwords . drop 3 . words) . lines
-  let pages = map dropExtension $ filter (\f -> takeExtension f == ".page") files
+  let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
   if null pages
      then error "No pages found!"
      else do
@@ -508,6 +512,12 @@ showPage page params = do
        _      -> if revision == "HEAD"
                     then createPage page params
                     else error $ "Invalid revision: " ++ revision
+
+discussPage :: String -> Params -> Web Response
+discussPage page params = do
+  if isDiscussPage page
+     then showPage page params
+     else showPage (page ++ ":discuss") params
 
 createPage :: String -> Params -> Web Response
 createPage page params =
@@ -692,7 +702,7 @@ editPage page params = do
               Nothing -> gitCatFile revision (pathForPage page)
               Just t  -> return $ Just t
   let contents = case raw of
-                      Nothing -> "# Title goes here\n\nContent goes here"
+                      Nothing -> ""
                       Just c  -> c
   sha1 <- case (pSHA1 params) of
                ""  -> gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
@@ -782,7 +792,7 @@ indexPage _ params = do
   let page = "_index"
   let revision = pRevision params
   files <- gitLsTree revision >>= return . map (unwords . drop 3 . words) . lines
-  let htmlIndex = fileListToHtml "/" $ map splitPath $ sort files
+  let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 
 -- | Map a list of nonempty lists onto a list of pairs of list heads and list of tails.
@@ -837,14 +847,14 @@ data PageLayout = PageLayout
   , pgSelectedTab    :: Tab
   }
 
-data Tab = ViewTab | EditTab | HistoryTab deriving (Eq, Show)
+data Tab = ViewTab | EditTab | HistoryTab | DiscussTab deriving (Eq, Show)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
   { pgTitle          = ""
   , pgScripts        = []
   , pgShowPageTools  = True
-  , pgTabs           = [ViewTab, EditTab, HistoryTab]
+  , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   }
 
@@ -866,8 +876,14 @@ formattedPage layout page params htmlContents = do
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
+  let origPage s = if ":discuss" `isSuffixOf` s then take (length s - 8) s else s
   let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history"] << "history"
-      linkForTab ViewTab    = Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
+      linkForTab ViewTab    = if isDiscussPage page
+                                 then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
+                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
+      linkForTab DiscussTab = if isDiscussPage page
+                                 then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
+                                 else Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
       linkForTab EditTab    = if isPage page
                                  then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
                                               if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]] <<
