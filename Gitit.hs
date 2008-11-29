@@ -49,7 +49,6 @@ import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
 import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha)
-import Codec.Binary.UTF8.String (decodeString)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars, urlEncode)
@@ -1104,7 +1103,7 @@ rawContents file params = do
 
 textToPandoc :: String -> Pandoc
 textToPandoc = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
-               filter (/= '\r') .  decodeString
+               filter (/= '\r')
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
