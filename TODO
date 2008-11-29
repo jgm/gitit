@@ -1,5 +1,3 @@
-- add talk pages
-
 - add:  popular pages?  pages last visited?
 
 - add "related changes" to history page (like activity, but looks at
@@ -10,13 +8,6 @@
 - paging for long histories, activity lists
 
 - handle logging: see http://groups.google.com/group/HAppS/browse_thread/thread/2b412f24c53f5aa/4ef39b57c6062a87?lnk=gst&q=logging#4ef39b57c6062a87
-
-- ?? change wikilinks so that they are NOT relative (and change note
-  in Help about relative links).  That is: insert a leading /
-  in the URL.
-
-- think about using a custom wikilink syntax, say {{Front Page}}.
-  could implement this with generics and a function: [Inline] -> [Inline].
 
 - add literate haskell support to pandoc, and to gitit
 
