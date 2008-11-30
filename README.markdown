@@ -38,15 +38,14 @@ If you want the syntax highlighting feature, you need to make sure
 that pandoc is compiled with support for it.  First, make sure your system
 has the [pcre][] library installed.  Then:
 
-    cabal install pandoc -fhighlighting
-
-You can skip this step if you don't care about highlighting support.
-
-You can now install the latest release of gitit:
-
     cabal update
+    cabal install -fhighlighting pandoc gitit
+
+If you don't care about highlighting support, you can just do:
+
     cabal install gitit
 
+These commands will install the latest released version of gitit.
 To install a version of gitit checked out from the repository,
 change to the gitit directory and type:
 
