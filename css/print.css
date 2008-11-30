@@ -19,7 +19,7 @@ h2{font-size:17pt;}
 h3{font-size:15pt;}
 h4,h5,h6{font-size:12pt;}
 
-code { font: 11pt Courier, monospace; } 
+pre, code { font: 10pt Courier, monospace; } 
 blockquote { margin: 1.3em; padding: 1em;  font-size: 10pt; }
 hr { background-color: #ccc; }
 
@@ -28,14 +28,13 @@ img { float: left; margin: 1em 1.5em 1.5em 0; }
 a img { border: none; }
 
 /* Links */
-a:link, a:visited { background: transparent; font-weight: 700; text-decoration: underline;color:#333; }
-a:link[href^="http://"]:after, a[href^="http://"]:visited:after { content: " (" attr(href) ") "; font-size: 90%; }
+a:link, a:visited { background: transparent; font-weight: normal; text-decoration: underline; color:#333; }
+a:link[href^="http://"]:after, a[href^="http://"]:visited:after { content: " (" attr(href) ")"; font-size: 90%; }
 a[href^="http://"] {color:#000; }
 
 /* Table */
 table { margin: 1px; text-align:left; }
-th { border-bottom: 1px solid #333;  font-weight: bold; }
-td { border-bottom: 1px solid #333; }
+th { font-weight: bold; }
 th,td { padding: 4px 10px 4px 0; }
 tfoot { font-style: italic; }
 caption { background: #fff; margin-bottom:2em; text-align:left; }
