@@ -3,7 +3,8 @@
 - add "related changes" to history page (like activity, but looks at
   only pages linked from this one)
 
-- recover lost email link?
+- page for users to recover password (by getting an email), change email address,
+  change password.
 
 - paging for long histories, activity lists
 
@@ -12,33 +13,4 @@
 - add literate haskell support to pandoc, and to gitit
 
 - does debugFilter still work?
-
-- use HStringTemplate so user can construct template for the Wiki.
-  only bits of content should be generated programmatically.
-
-    -- temp.html:
-    <html>
-      <body>
-        $mybody$
-      </body>
-    </html>
-   
-    GHCI> t <- readFile "temp.html"
-    GHCI> let (mytemp :: StringTemplate ByteString) = newSTMP t
-    GHCI> Data.ByteString.Lazy.putStrLn $ render $ setAttribute "mybody" (renderHtmlFragment (ulist << [li << p << "hi", li << p << "lo"])) mytemp 
-    <html>
-      <body>
-        <ul
-    ><li
-      ><p
-        >hi</p
-        ></li
-      ><li
-      ><p
-        >lo</p
-        ></li
-      ></ul
-    >
-      </body>
-    </html>
 
