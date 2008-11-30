@@ -3,13 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <title>Wiki - $pagetitle$</title>
-    <link href="/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
-    <link href="/css/hk-pyg.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="/css/print.css" rel="stylesheet" media="print" type= "text/css" />
     $if(printable)$
     <link href="/css/print.css" rel="stylesheet" media="all" type= "text/css" />
+    $else$
+    <link href="/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="/css/hk-pyg.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="/css/print.css" rel="stylesheet" media="print" type= "text/css" />
     $endif$
+    <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
     $javascripts$
   </head>
   <body>
