@@ -60,7 +60,7 @@ import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 
 gititVersion :: String
-gititVersion = "0.3.1"
+gititVersion = "0.3.2"
 
 template :: IORef (StringTemplate String)
 template = unsafePerformIO $ newIORef $ newSTMP ""  -- initialize template to empty string
