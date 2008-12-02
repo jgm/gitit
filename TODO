@@ -22,3 +22,11 @@
 
 - rss feed for all page changes?  see the rss library (Text.RSS) on HackageDB
 
+- add signature? (-- ~~~~)
+
+- diff with to but not from should use git-log -p
+
+- links in activity should go directory to diff/to.
+
+- need some way of indicating that a file is lhs... perhaps a leading <!-- lhs -->?
+
