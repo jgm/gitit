@@ -660,9 +660,9 @@ showActivity _ params = do
   let since = pSince params `orIfNull` "1 month ago"
   let forUser = pForUser params
   hist <- gitLog since forUser []
-  let filesFor files  = intersperse (primHtmlChar "nbsp") $ map
-                           (\file -> anchor ! [href $ urlForPage file ++ "?history"] << file) $ map
-                           (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) files
+  let filesFor files revis = intersperse (primHtmlChar "nbsp") $ map
+                             (\file -> anchor ! [href $ urlForPage file ++ "?diff&from=" ++ revis ++ "^" ++ "&to=" ++ revis] << file) $ map
+                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) files
   let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
   let contents = ulist ! [theclass "history"] << map (\entry -> li <<
                            [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
@@ -670,7 +670,7 @@ showActivity _ params = do
                                     anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
                                                (logAuthor entry), stringToHtml "): ",
                             thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
-                            thespan ! [theclass "files"] << filesFor (logFiles entry),
+                            thespan ! [theclass "files"] << filesFor (logFiles entry) (logRevision entry),
                             stringToHtml ")"]) hist
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
 
