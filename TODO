@@ -30,3 +30,10 @@
 
 - need some way of indicating that a file is lhs... perhaps a leading <!-- lhs -->?
 
+-  bug report from Hugo Pacheco hpacheco@gmail.com:
+   At some point when logged in, the session expires and the wiki prompts
+   again for the login information. However, the cookies still assume we are
+   logged in and do not allow me to log in again.
+   The solution is to remove the cookies for the wiki server.
+   I think this is some kind of bug with the session state.
+
