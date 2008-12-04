@@ -691,7 +691,8 @@ showDiff file page params = do
                                 _     -> thespan << [tail l, "\n"]
   let formattedDiff = thespan ! [theclass "detail"] << ("Changes from " ++ from) +++
                       pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
-  formattedPage defaultPageLayout page (params { pRevision = to }) formattedDiff
+  formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
+                page (params { pRevision = to }) formattedDiff
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
@@ -846,7 +847,7 @@ data PageLayout = PageLayout
   , pgSelectedTab    :: Tab
   }
 
-data Tab = ViewTab | EditTab | HistoryTab | DiscussTab deriving (Eq, Show)
+data Tab = ViewTab | EditTab | HistoryTab | DiscussTab | DiffTab deriving (Eq, Show)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -877,6 +878,7 @@ formattedPage layout page params htmlContents = do
                      else li
   let origPage s = if ":discuss" `isSuffixOf` s then take (length s - 8) s else s
   let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history"] << "history"
+      linkForTab DiffTab    = Just $ tabli DiffTab << anchor ! [href ""] << "diff"
       linkForTab ViewTab    = if isDiscussPage page
                                  then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
                                  else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
