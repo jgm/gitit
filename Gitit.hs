@@ -689,7 +689,7 @@ showDiff file page params = do
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
                                 _     -> thespan << [tail l, "\n"]
-  let formattedDiff = thespan ! [theclass "detail"] << ("Changes from " ++ from) +++
+  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ from) +++
                       pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
   formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
                 page (params { pRevision = to }) formattedDiff
