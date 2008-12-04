@@ -882,7 +882,9 @@ formattedPage layout page params htmlContents = do
                                  else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
       linkForTab DiscussTab = if isDiscussPage page
                                  then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
-                                 else Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
+                                 else if isPage page
+                                      then Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
+                                      else Nothing
       linkForTab EditTab    = if isPage page
                                  then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
                                               if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]] <<
