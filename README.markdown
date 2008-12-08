@@ -249,8 +249,8 @@ new gitit will not be able to read the old gitit's state.
 Reporting bugs
 ==============
 
-There is no bug tracker as yet, so report bugs directly to the author,
-jgm at berkeley . edu
+Bugs may be reported (and feature requests filed) at
+<http://code.google.com/p/gitit/issues/list>.
 
 Acknowledgements
 ================
