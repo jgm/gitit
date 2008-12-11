@@ -37,3 +37,6 @@
    The solution is to remove the cookies for the wiki server.
    I think this is some kind of bug with the session state.
 
+- improve use of string templates:  different components of pages should
+  have their own templates.
+  see http://www.happstutorial.com/tutorial/stringtemplate-basics
