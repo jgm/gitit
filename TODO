@@ -33,3 +33,6 @@
 - improve use of string templates:  different components of pages should
   have their own templates.
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
+
+- maybe use http://captchas.net/ to provide captcha service?
+
