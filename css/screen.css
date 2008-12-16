@@ -364,6 +364,11 @@ pre.matches {
   height: 25em;
   width: 98%;
 }
+#editform #logMsg {
+  width: 98%;
+  margin-right: 1em;
+  margin-bottom: 0.3em;
+}
 .added { background-color: yellow; }
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision {

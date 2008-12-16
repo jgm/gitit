@@ -713,11 +713,13 @@ editPage page params = do
                    [sha1Box,
                     textarea ! [cols "80", name "editedText", identifier "editedText"] << contents, br,
                     label << "Description of changes:", br,
-                    textfield "logMsg" ! [size "76", value logMsg],
+                    textfield "logMsg" ! [value logMsg],
                     submit "update" "Save", primHtmlChar "nbsp",
-                    submit "cancel" "Discard", br,
+                    submit "cancel" "Discard", primHtmlChar "nbsp",
+                    input ! [thetype "button", theclass "editButton", identifier "previewButton",
+                             strAttr "onClick" "updatePreviewPane();", strAttr "style" "display: none;", value "Preview" ],
                     thediv ! [ identifier "previewpane" ] << noHtml ]
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab, 
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab,
                                      pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) }) page (params {pMessages = messages}) editForm
 
 confirmDelete :: String -> Params -> Web Response
