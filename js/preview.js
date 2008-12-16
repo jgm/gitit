@@ -4,5 +4,6 @@ function updatePreviewPane() {
     $("#previewpane").fadeIn(1000);
 };
 $(document).ready(function(){
-    $("#previewpane").before("<a onClick=\"updatePreviewPane();\">Preview</a>");
-});
+    $("#previewButton").show();
+  });
+
