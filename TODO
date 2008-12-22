@@ -24,10 +24,6 @@
 
 - add signature? (-- ~~~~)
 
-- diff with to but not from should use git-log -p
-
-- links in activity should go directory to diff/to.
-
 - need some way of indicating that a file is lhs... perhaps a leading <!-- lhs -->?
 
 - improve use of string templates:  different components of pages should
@@ -35,4 +31,14 @@
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
 
 - maybe use http://captchas.net/ to provide captcha service?
+
+- add support for categories:
+  an example of a category:
+  http://haskell.org/haskellwiki/Category:XMonad
+  Note the subcategories as well. For general technical information 
+  and usage of MediaWiki categories, see
+  https://secure.wikimedia.org/wikipedia/en/wiki/Help:Category &
+  https://secure.wikimedia.org/wikipedia/en/wiki/Wikipedia:Categorization
+  Categories can form a tree structure.
+  Articles can be in multiple categories.
 
