@@ -960,7 +960,9 @@ logoutUser _ params = do
   let key = pSessionKey params
   let destination = pDestination params
   case key of
-       Just k  -> update $ DelSession k
+       Just k  -> do
+         update $ DelSession k
+         addCookie 0 (mkCookie "sid" "")  -- make cookie expire immediately, effectively deleting it
        Nothing -> return ()
   seeOther ("/" ++ substitute " " "%20" destination) $ toResponse $ p << "You have been logged out."
 
