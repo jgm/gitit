@@ -38,7 +38,7 @@ import Text.XHtml hiding ( (</>), dir, method, password )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
-import Data.ByteString.UTF8 (fromString)
+import Data.ByteString.UTF8 (fromString, toString)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
@@ -55,15 +55,18 @@ import Network.HTTP (urlEncodeVars, urlEncode)
 import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
-import Text.StringTemplate as T
+import qualified Text.StringTemplate as T
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 
 gititVersion :: String
 gititVersion = "0.3.2"
 
-template :: IORef (StringTemplate String)
-template = unsafePerformIO $ newIORef $ newSTMP ""  -- initialize template to empty string
+sessionTime :: Int
+sessionTime = 60 * 60     -- session will expire 1 hour after page request
+
+template :: IORef (T.StringTemplate String)
+template = unsafePerformIO $ newIORef $ T.newSTMP ""  -- initialize template to empty string
 
 main :: IO ()
 main = do
@@ -75,7 +78,7 @@ main = do
   initializeWiki conf
   -- initialize template
   templ <- liftIO $ readFile (templateFile conf)
-  writeIORef template (newSTMP templ)
+  writeIORef template (T.newSTMP templ)
   control <- startSystemState entryPoint
   update $ SetConfig conf
   -- read user file and update state
@@ -227,21 +230,21 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_login"     GET  loginUserForm
                , handlePath "_login"     POST loginUser
                , handlePath "_logout"    GET  logoutUser
-               , handlePath "_upload"    GET  (ifLoggedIn "" uploadForm)
-               , handlePath "_upload"    POST (ifLoggedIn "" uploadFile)
+               , handlePath "_upload"    GET  (ifLoggedIn uploadForm)
+               , handlePath "_upload"    POST (ifLoggedIn uploadFile)
                , handlePath "_random"    GET  randomPage
                , withCommand "showraw" [ handlePage GET showRawPage ]
                , withCommand "history" [ handlePage GET showPageHistory,
                                          handle (not . isPage) GET showFileHistory ]
-               , withCommand "edit"    [ handlePage GET $ unlessNoEdit $ ifLoggedIn "?edit" editPage ]
+               , withCommand "edit"    [ handlePage GET $ unlessNoEdit $ ifLoggedIn editPage ]
                , withCommand "diff"    [ handlePage GET  showPageDiff,
                                          handle isSourceCode GET showFileDiff ]
                , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
                , withCommand "cancel"  [ handlePage POST showPage ]
                , withCommand "discuss" [ handlePage GET discussPage ]
-               , withCommand "update"  [ handlePage POST  $ unlessNoEdit $ ifLoggedIn "?edit" updatePage ]
-               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete $ ifLoggedIn "?delete" confirmDelete,
-                                         handlePage POST $ unlessNoDelete $ ifLoggedIn "?delete" deletePage ]
+               , withCommand "update"  [ handlePage POST $ unlessNoEdit $ ifLoggedIn updatePage ]
+               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete $ ifLoggedIn confirmDelete,
+                                         handlePage POST $ unlessNoDelete $ ifLoggedIn deletePage ]
                , handleSourceCode
                , handleAny
                , handlePage GET showPage
@@ -252,6 +255,8 @@ data Params = Params { pUsername     :: String
                      , pPassword2    :: String
                      , pRevision     :: String
                      , pDestination  :: String
+                     , pReferer      :: Maybe String
+                     , pUri          :: String
                      , pForUser      :: String
                      , pSince        :: String
                      , pRaw          :: String
@@ -285,7 +290,7 @@ instance FromData Params where
          rv <- look "revision"       `mplus` return "HEAD"
          fu <- look "forUser"        `mplus` return ""
          si <- look "since"          `mplus` return ""
-         ds <- look "destination"    `mplus` return ""
+         ds <- (lookCookieValue "destination") `mplus` return "/"
          ra <- look "raw"            `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
@@ -313,6 +318,8 @@ instance FromData Params where
                          , pForUser      = fu
                          , pSince        = si
                          , pDestination  = ds
+                         , pReferer      = Nothing  -- this gets set by handle...
+                         , pUri          = ""       -- this gets set by handle...
                          , pRaw          = ra
                          , pLimit        = read lt
                          , pPatterns     = words pa
@@ -333,7 +340,8 @@ instance FromData Params where
                          , pAccessCode   = ac
                          , pUser         = ""  -- this gets set by ifLoggedIn...
                          , pConfirm      = cn
-                         , pSessionKey   = sk }
+                         , pSessionKey   = sk
+                         }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
@@ -369,12 +377,12 @@ unlessNoDelete responder =
                          then showPage page (params { pMessages = ("Page cannot be deleted." : pMessages params) })
                          else responder page params
 
-ifLoggedIn :: String -> (String -> Params -> Web Response) -> (String -> Params -> Web Response)
-ifLoggedIn fallback responder =
+ifLoggedIn :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
+ifLoggedIn responder =
   \page params -> do user <- getLoggedInUser params
                      case user of
-                          Nothing  -> seeOther ("/_login?" ++ urlEncodeVars [("destination", page ++ fallback)]) $ 
-                                        toResponse $ p << "You must be logged in to perform this action."
+                          Nothing  -> do
+                             loginUserForm page (params { pReferer = Just $ pUri params })
                           Just u   -> do
                              usrs <- query AskUsers
                              let e = case M.lookup u usrs of
@@ -386,13 +394,18 @@ ifLoggedIn fallback responder =
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder =
-  uriRest $ \uri -> let path' = uriPath uri
-                    in  if pathtest path'
-                           then withData $ \params ->
-                                    [ withRequest $ \req -> if rqMethod req == meth
-                                                               then responder path' params
-                                                               else noHandle ]
-                           else anyRequest noHandle
+  withRequest $ \req -> let uri = rqUri req ++ rqQuery req
+                            path' = uriPath uri
+                            referer = case M.lookup (fromString "referer") (rqHeaders req) of
+                                           Just r  -> if null (hValue r)
+                                                         then Nothing
+                                                         else Just $ toString $ head $ hValue r
+                                           _       -> Nothing
+                        in  if pathtest path' && rqMethod req == meth
+                               then unServerPartT
+                                    (withData $ \params ->
+                                       [ anyRequest $ responder path' (params { pReferer = referer, pUri = uri }) ]) req
+                               else noHandle
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
@@ -906,75 +919,79 @@ formattedPage layout page params htmlContents = do
                         else ulist ! [theclass "messages"] << map (li <<) messages
   templ <- liftIO $ readIORef template
   let filledTemp = T.render $
-                   setAttribute "pagetitle" pageTitle $
-                   setAttribute "javascripts" javascriptlinks $
-                   setAttribute "pagename" page $
+                   T.setAttribute "pagetitle" pageTitle $
+                   T.setAttribute "javascripts" javascriptlinks $
+                   T.setAttribute "pagename" page $
                    (case user of
-                         Just u     -> setAttribute "user" u
+                         Just u     -> T.setAttribute "user" u
                          Nothing    -> id) $
-                   (if isPage page then setAttribute "ispage" "true" else id) $
-                   (if pgShowPageTools layout then setAttribute "pagetools" "true" else id) $
-                   (if pPrintable params then setAttribute "printable" "true" else id) $
-                   (if pRevision params == "HEAD" then id else setAttribute "nothead" "true") $
-                   setAttribute "revision" revision $
-                   setAttribute "sha1" sha1 $
-                   setAttribute "searchbox" (renderHtmlFragment searchbox) $
-                   setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
-                   setAttribute "tabs" (renderHtmlFragment tabs) $
-                   setAttribute "messages" (renderHtmlFragment htmlMessages) $
-                   setAttribute "content" (renderHtmlFragment htmlContents) $
+                   (if isPage page then T.setAttribute "ispage" "true" else id) $
+                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
+                   (if pPrintable params then T.setAttribute "printable" "true" else id) $
+                   (if pRevision params == "HEAD" then id else T.setAttribute "nothead" "true") $
+                   T.setAttribute "revision" revision $
+                   T.setAttribute "sha1" sha1 $
+                   T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
+                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
+                   T.setAttribute "tabs" (renderHtmlFragment tabs) $
+                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
+                   T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse filledTemp
 
 -- user authentication
-loginForm :: Params -> Html
-loginForm params =
-  let destination = pDestination params
-  in  gui "" ! [identifier "loginForm"] << fieldset <<
-             [ textfield "sha1" ! [thestyle "display: none", value destination]
-             , label << "Username ", textfield "username" ! [size "15"], stringToHtml " "
-             , label << "Password ", X.password "password" ! [size "15"], stringToHtml " "
-             , submit "login" "Login"] +++
-      p << [ stringToHtml "If you do not have an account, "
-             , anchor ! [href ("/_register?" ++ urlEncodeVars [("destination", destination)])] << "click here to get one." ]
+loginForm :: Html
+loginForm =
+  gui "/_login" ! [identifier "loginForm"] << fieldset <<
+     [ label << "Username ", textfield "username" ! [size "15"], stringToHtml " "
+     , label << "Password ", X.password "password" ! [size "15"], stringToHtml " "
+     , submit "login" "Login"] +++
+     p << [ stringToHtml "If you do not have an account, "
+          , anchor ! [href "/_register"] << "click here to get one." ]
 
 loginUserForm :: String -> Params -> Web Response
-loginUserForm _ params = formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Login" }) "_login" params $ loginForm params
+loginUserForm page params =
+  addCookie (60 * 10) (mkCookie "destination" $ fromMaybe "/" $ pReferer params) >>
+  loginUserForm' page params
+
+loginUserForm' :: String -> Params -> Web Response
+loginUserForm' page params =
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Login" }) page params loginForm
 
 loginUser :: String -> Params -> Web Response
-loginUser _ params = do
+loginUser page params = do
   let uname = pUsername params
   let pword = pPassword params
-  let destination = pDestination params
+  let destination = substitute " " "%20" $ pDestination params
   cfg <- query GetConfig
   let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
   allowed <- query $ AuthUser uname passwordHash
   if allowed
     then do
       key <- update $ NewSession (SessionData uname)
-      addCookie (3600) (mkCookie "sid" (show key))
-      seeOther ("/" ++ substitute " " "%20" destination) $ toResponse $ p << ("Welcome, " ++ uname)
+      addCookie sessionTime (mkCookie "sid" (show key))
+      seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      loginUserForm "_login" (params { pMessages = "Authentication failed." : pMessages params })
+      loginUserForm' page (params { pMessages = "Authentication failed." : pMessages params })
 
 logoutUser :: String -> Params -> Web Response
 logoutUser _ params = do
   let key = pSessionKey params
-  let destination = pDestination params
+  let destination = fromMaybe "/" $ pReferer params
   case key of
        Just k  -> do
          update $ DelSession k
          addCookie 0 (mkCookie "sid" "")  -- make cookie expire immediately, effectively deleting it
        Nothing -> return ()
-  seeOther ("/" ++ substitute " " "%20" destination) $ toResponse $ p << "You have been logged out."
+  seeOther destination $ toResponse "You have been logged out."
 
 registerForm :: Web Html
 registerForm = do
   cfg <- query GetConfig
   let accessQ = case accessQuestion cfg of
-        Nothing          -> noHtml
-        Just (prompt, _) -> label << prompt +++ br +++
-                            X.password "accessCode" ! [size "15"] +++ br
+                      Nothing          -> noHtml
+                      Just (prompt, _) -> label << prompt +++ br +++
+                                          X.password "accessCode" ! [size "15"] +++ br
   return $ gui "" ! [identifier "loginForm"] << fieldset <<
             [ accessQ
             , label << "Username (at least 3 letters or digits):", br
@@ -988,10 +1005,9 @@ registerForm = do
             , submit "register" "Register" ]
 
 registerUserForm :: String -> Params -> Web Response
-registerUserForm _ params = do
-  let page = "_register"
-  regForm <- registerForm
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) page params regForm
+registerUserForm _ params =
+  registerForm >>=
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) "_register" params
 
 registerUser :: String -> Params -> Web Response
 registerUser _ params = do
@@ -1022,7 +1038,7 @@ registerUser _ params = do
      then do
        let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
        update $ AddUser uname (User { uUsername = uname, uPassword = passwordHash, uEmail = email })
-       loginUser "/" (params { pUsername = uname, pPassword = pword })
+       loginUser "/" (params { pUsername = uname, pPassword = pword, pEmail = email })
      else formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) 
                     page (params { pMessages = errors }) regForm
 
