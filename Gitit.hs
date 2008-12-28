@@ -970,6 +970,7 @@ loginUser page params = do
     then do
       key <- update $ NewSession (SessionData uname)
       addCookie sessionTime (mkCookie "sid" (show key))
+      addCookie 0 (mkCookie "destination" "")   -- remove unneeded destination cookie
       seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
     else
       loginUserForm' page (params { pMessages = "Authentication failed." : pMessages params })
