@@ -1007,6 +1007,7 @@ registerForm = do
 
 registerUserForm :: String -> Params -> Web Response
 registerUserForm _ params =
+  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $ fromMaybe "/" $ pReferer params) >>
   registerForm >>=
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) "_register" params
 
