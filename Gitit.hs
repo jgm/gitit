@@ -51,7 +51,7 @@ import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
-import Network.HTTP (urlEncodeVars, urlEncode)
+import Network.HTTP (urlEncodeVars, urlEncode, urlDecode)
 import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
@@ -394,7 +394,7 @@ ifLoggedIn responder =
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder =
-  withRequest $ \req -> let uri = rqUri req ++ rqQuery req
+  withRequest $ \req -> let uri = urlDecode $ rqUri req ++ rqQuery req
                             path' = uriPath uri
                             referer = case M.lookup (fromString "referer") (rqHeaders req) of
                                            Just r  -> if null (hValue r)
@@ -951,7 +951,7 @@ loginForm =
 
 loginUserForm :: String -> Params -> Web Response
 loginUserForm page params =
-  addCookie (60 * 10) (mkCookie "destination" $ fromMaybe "/" $ pReferer params) >>
+  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $ fromMaybe "/" $ pReferer params) >>
   loginUserForm' page params
 
 loginUserForm' :: String -> Params -> Web Response
@@ -962,7 +962,7 @@ loginUser :: String -> Params -> Web Response
 loginUser page params = do
   let uname = pUsername params
   let pword = pPassword params
-  let destination = substitute " " "%20" $ pDestination params
+  let destination = pDestination params
   cfg <- query GetConfig
   let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
   allowed <- query $ AuthUser uname passwordHash
