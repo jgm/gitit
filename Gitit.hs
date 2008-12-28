@@ -51,7 +51,7 @@ import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
-import Network.HTTP (urlEncodeVars, urlEncode, urlDecode)
+import Network.HTTP (urlEncodeVars, urlEncode)
 import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
@@ -393,19 +393,18 @@ ifLoggedIn responder =
                              responder page (params { pUser = u, pEmail = e })
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
-handle pathtest meth responder =
-  withRequest $ \req -> let uri = urlDecode $ rqUri req ++ rqQuery req
-                            path' = uriPath uri
-                            referer = case M.lookup (fromString "referer") (rqHeaders req) of
-                                           Just r  -> if null (hValue r)
-                                                         then Nothing
-                                                         else Just $ toString $ head $ hValue r
-                                           _       -> Nothing
-                        in  if pathtest path' && rqMethod req == meth
-                               then unServerPartT
-                                    (withData $ \params ->
-                                       [ anyRequest $ responder path' (params { pReferer = referer, pUri = uri }) ]) req
-                               else noHandle
+handle pathtest meth responder = uriRest $ \uri ->
+  let path' = uriPath uri
+  in  if pathtest path'
+         then withData $ \params ->
+                  [ withRequest $ \req ->
+                      if rqMethod req == meth
+                         then let referer = case M.lookup (fromString "referer") (rqHeaders req) of
+                                                Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
+                                                _       -> Nothing
+                              in  responder path' (params { pReferer = referer, pUri = uri })
+                         else noHandle ]
+         else anyRequest noHandle
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
