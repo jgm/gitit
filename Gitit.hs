@@ -978,7 +978,7 @@ loginUser page params = do
 logoutUser :: String -> Params -> Web Response
 logoutUser _ params = do
   let key = pSessionKey params
-  let destination = fromMaybe "/" $ pReferer params
+  let destination = substitute " " "%20" $ fromMaybe "/" $ pReferer params
   case key of
        Just k  -> do
          update $ DelSession k
