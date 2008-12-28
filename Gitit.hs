@@ -380,6 +380,8 @@ ifLoggedIn fallback responder =
                              let e = case M.lookup u usrs of
                                            Just usr    -> uEmail usr
                                            Nothing     -> error $ "User '" ++ u ++ "' not found."
+                             -- give the user another hour...
+                             addCookie sessionTime (mkCookie "sid" (show $ fromJust $ pSessionKey params))
                              responder page (params { pUser = u, pEmail = e })
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
