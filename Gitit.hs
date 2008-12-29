@@ -88,11 +88,11 @@ main = do
                else return M.empty
   update $ SetUsers users'
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
-  let debugger = if (debugMode conf) then debugFilter else id
+  let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
-          [ dir "css" [ fileServe [] $ (staticDir conf) </> "css" ]
-          , dir "img" [ fileServe [] $ (staticDir conf) </> "img" ]
-          , dir "js" [ fileServe [] $ (staticDir conf) </> "js" ]
+          [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
+          , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
+          , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
           ] ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
@@ -142,7 +142,7 @@ handleFlag _ opt = do
   case opt of
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version      -> hPutStrLn stderr (progname ++ " version " ++ gititVersion ++ copyrightMessage) >> exitWith ExitSuccess
-    ConfigFile f -> do readFile f >>= return . read
+    ConfigFile f -> liftM read (readFile f)
 
 entryPoint :: Proxy AppState
 entryPoint = Proxy
@@ -188,20 +188,20 @@ initializeWiki conf = do
     createDirectoryIfMissing True $ staticdir </> "css"
     let stylesheets = map ("css" </>) ["screen.css", "print.css", "ie.css", "hk-pyg.css"]
     stylesheetpaths <- mapM getDataFileName stylesheets
-    zipWithM copyFile stylesheetpaths (map (staticdir </>) stylesheets)
+    zipWithM_ copyFile stylesheetpaths (map (staticdir </>) stylesheets)
     createDirectoryIfMissing True $ staticdir </> "img" </> "icons"
-    let imgs = map ("img" </>) $ map ("icons" </>)
-                                 ["cross.png", "doc.png", "email.png", "external.png", "feed.png", "folder.png",
-                                  "im.png", "key.png", "page.png", "pdf.png", "tick.png", "xls.png"]
+    let imgs = map (("img" </>) . ("icons" </>))
+                ["cross.png", "doc.png", "email.png", "external.png", "feed.png", "folder.png",
+                 "im.png", "key.png", "page.png", "pdf.png", "tick.png", "xls.png"]
     imgpaths <- mapM getDataFileName imgs
-    zipWithM copyFile imgpaths (map (staticdir </>) imgs)
+    zipWithM_ copyFile imgpaths (map (staticdir </>) imgs)
     logopath <- getDataFileName $ "img" </> "gitit-dog.png"
     copyFile logopath (staticdir </> "img" </> "logo.png")
     createDirectoryIfMissing True $ staticdir </> "js"
     let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
                        "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     javascriptpaths <- mapM getDataFileName $ map ("js" </>) javascripts
-    zipWithM copyFile javascriptpaths $ map ((staticdir </> "js") </>) javascripts
+    zipWithM_ copyFile javascriptpaths $ map ((staticdir </> "js") </>) javascripts
     hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
   jsMathExists <- doesDirectoryExist (staticdir </> "js" </> "jsMath")
   unless jsMathExists $ do
@@ -359,7 +359,7 @@ commandList = ["edit", "showraw", "history", "export", "diff", "cancel", "update
 instance FromData Command where
      fromData = do
        pairs <- lookPairs
-       return $ case (map fst pairs) `intersect` commandList of
+       return $ case map fst pairs `intersect` commandList of
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
 
@@ -456,7 +456,7 @@ isSourceCode :: String -> Bool
 isSourceCode = not . null . languagesByExtension . takeExtension
 
 urlForPage :: String -> String
-urlForPage page = "/" ++ (substitute "%2f" "/" $ urlEncode page)
+urlForPage page = '/' : (substitute "%2f" "/" $ urlEncode page)
 -- this is needed so that browsers recognize relative URLs correctly
 
 pathForPage :: String -> FilePath
@@ -485,7 +485,7 @@ setFilename fname res =
   in  res { rsHeaders = M.insert (fromString "content-disposition") newContentType respHeaders }  
 
 showRawPage :: String -> Params -> Web Response
-showRawPage page = showFileAsText $ pathForPage page
+showRawPage = showFileAsText . pathForPage
 
 showFileAsText :: String -> Params -> Web Response
 showFileAsText file params = do
@@ -496,7 +496,7 @@ showFileAsText file params = do
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
-  files <- gitLsTree "HEAD" >>= return . map (unwords . drop 3 . words) . lines
+  files <- liftM (map (unwords . drop 3 . words) . lines) (gitLsTree "HEAD")
   let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
   if null pages
      then error "No pages found!"
@@ -520,7 +520,7 @@ showPage page params = do
                                          "?edit&revision=" ++ revision ++
                                          (if revision == "HEAD"
                                              then ""
-                                             else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
+                                             else '&' : urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
        _      -> if revision == "HEAD"
                     then createPage page params
@@ -585,12 +585,11 @@ uploadFile _ params = do
                         ]
   if null errors
      then do
-       if B.length fileContents > fromIntegral (maxUploadSize cfg)
-          then error "File exceeds maximum upload size"
-          else return ()
+       when (B.length fileContents > fromIntegral (maxUploadSize cfg)) $
+          error "File exceeds maximum upload size"
        let dir' = takeDirectory wikiname
        liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-       liftIO $ B.writeFile ((repositoryPath cfg) </> wikiname) fileContents
+       liftIO $ B.writeFile (repositoryPath cfg </> wikiname) fileContents
        gitCommit wikiname (author, email) logMsg
        formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
@@ -608,7 +607,7 @@ searchResults _ params = do
   let limit = pLimit params
   matchLines <- if null patterns
                    then return []
-                   else gitGrep patterns >>= return . map parseMatchLine . take limit . lines
+                   else liftM (map parseMatchLine . take limit . lines) (gitGrep patterns)
   let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map fst matchLines
   let matches = map (\f -> (f, mapMaybe (\(a,b) -> if a == f then Just b else Nothing) matchLines)) matchedFiles
   let preamble = if null matches

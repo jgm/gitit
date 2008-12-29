@@ -33,7 +33,7 @@ module Gitit.Git
            , LogEntry (..) )
 where
 
-import Control.Monad (unless)
+import Control.Monad (unless, liftM)
 import Control.Monad.Trans
 import Network.CGI (urlEncode)
 import System.FilePath
@@ -55,15 +55,15 @@ runShellCommand workingDir environment command optionList = do
   (errorPath, hErr) <- openTempFile tempPath "err"
   hProcess <- runProcess command optionList (Just workingDir) environment Nothing (Just hOut) (Just hErr)
   status <- waitForProcess hProcess
-  errorOutput <- B.readFile errorPath >>= return . toString
-  output <- B.readFile outputPath >>= return . toString
+  errorOutput <- liftM toString (B.readFile errorPath)
+  output <- liftM toString (B.readFile outputPath)
   return (status, errorOutput, output)
 
 -- | Run git command and return error status, standard output, and error output.  The repository
 -- is used as working directory.
 runGitCommand :: MonadIO m => String -> [String] -> m (ExitCode, String, String)
 runGitCommand command args = do
-  repo <- (query GetConfig) >>= return . repositoryPath
+  repo <- liftM repositoryPath (query GetConfig)
   liftIO $ runShellCommand repo Nothing "git" (command : args)
 
 -- | Return SHA1 hash of last commit for filename.
@@ -117,7 +117,7 @@ gitDiff :: MonadIO m
         -> String     -- ^ New version (sha1)
         -> m String  -- ^ String
 gitDiff file from to = do
-  repo <- (query GetConfig) >>= return . repositoryPath
+  repo <- liftM repositoryPath (query GetConfig)
   (status, _, output) <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
                                     "git" ["diff", from, to, file]
   if status == ExitSuccess
@@ -196,7 +196,7 @@ gitLogEntry = do
   rev <- nonblankLine
   date <- nonblankLine
   author <- wholeLine
-  subject <- P.manyTill wholeLine (P.eof P.<|> (P.lookAhead (P.char ':') >> return ())) >>= return . unlines
+  subject <- liftM unlines (P.manyTill wholeLine (P.eof P.<|> (P.lookAhead (P.char ':') >> return ())))
   P.spaces
   files <- P.many gitLogChange
   P.spaces
