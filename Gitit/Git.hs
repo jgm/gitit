@@ -16,7 +16,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Auxiliary functions for running git commands -}
+{- Auxiliary functions for running git commands.
+
+   Note:  UTF-8 locale is assumed.
+-}
 
 module Gitit.Git
            ( runGitCommand
@@ -44,6 +47,7 @@ import qualified Data.ByteString.Lazy as B
 import System.Directory
 import System.IO (openTempFile)
 import Data.ByteString.Lazy.UTF8 (toString)
+import Codec.Binary.UTF8.String (encodeString)
 import HAppS.State
 import Gitit.State
 
@@ -64,7 +68,7 @@ runShellCommand workingDir environment command optionList = do
 runGitCommand :: MonadIO m => String -> [String] -> m (ExitCode, String, String)
 runGitCommand command args = do
   repo <- liftM repositoryPath (query GetConfig)
-  liftIO $ runShellCommand repo Nothing "git" (command : args)
+  liftIO $ runShellCommand repo Nothing "git" (command : map encodeString args)
 
 -- | Return SHA1 hash of last commit for filename.
 gitLastCommitHash :: MonadIO m => String -> m (Maybe String)
