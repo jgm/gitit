@@ -93,7 +93,7 @@ main = do
           [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
           , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
           , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
-          ] ++ wikiHandlers
+          ] ++ (if debugMode conf then debugHandlers else []) ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
   -- write user file
@@ -218,6 +218,10 @@ initializeWiki conf = do
 
 type Handler = ServerPart Response
 
+
+debugHandlers :: [Handler]
+debugHandlers = [ withCommand "debug"   [ handlePage GET  $ \page params -> ok (toResponse $ show (page, params)),
+                                          handlePage POST $ \page params -> ok (toResponse $ show (page, params)) ] ]
 
 wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
@@ -354,7 +358,7 @@ getLoggedInUser params = do
 data Command = Command (Maybe String)
 
 commandList :: [String]
-commandList = ["edit", "showraw", "history", "export", "diff", "cancel", "update", "delete", "discuss"]
+commandList = ["debug", "edit", "showraw", "history", "export", "diff", "cancel", "update", "delete", "discuss"]
 
 instance FromData Command where
      fromData = do
