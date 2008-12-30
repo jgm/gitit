@@ -246,6 +246,12 @@ subdirectory.  You may need to do this after you have upgraded to a new
 version of gitit, with a different `AppState` data structure, because the
 new gitit will not be able to read the old gitit's state.
 
+Character encodings
+===================
+
+Gitit assumes that the page files (stored in the git repository) are
+encoded as UTF-8.
+
 Reporting bugs
 ==============
 
