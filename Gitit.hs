@@ -499,7 +499,7 @@ showFileAsText file params = do
   mContents <- rawContents file params
   case mContents of
        Nothing   -> error "Unable to retrieve page contents."
-       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse c
+       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ encodeString c
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
