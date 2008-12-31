@@ -19,7 +19,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Main where
 
-import HAppS.Server
+import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
+import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import HAppS.State hiding (Method)
 import System.Environment
 import System.IO.UTF8
@@ -40,6 +41,7 @@ import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuff
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Data.ByteString.UTF8 (fromString, toString)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
+import Codec.Binary.UTF8.String (decodeString, encodeString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
 import Data.Digest.Pure.SHA (sha512, showDigest)
@@ -56,6 +58,7 @@ import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
+import Gitit.HStringTemplate (setAttribute)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -398,7 +401,7 @@ ifLoggedIn responder =
 
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder = uriRest $ \uri ->
-  let path' = uriPath uri
+  let path' = decodeString $ uriPath uri
   in  if pathtest path'
          then withData $ \params ->
                   [ withRequest $ \req ->
@@ -460,7 +463,7 @@ isSourceCode :: String -> Bool
 isSourceCode = not . null . languagesByExtension . takeExtension
 
 urlForPage :: String -> String
-urlForPage page = '/' : (substitute "%2f" "/" $ urlEncode page)
+urlForPage page = '/' : (substitute "%2f" "/" $ urlEncode $ encodeString page)
 -- this is needed so that browsers recognize relative URLs correctly
 
 pathForPage :: String -> FilePath
@@ -500,7 +503,7 @@ showFileAsText file params = do
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
-  files <- liftM (map (unwords . drop 3 . words) . lines) (gitLsTree "HEAD")
+  files <- gitLsTree "HEAD"
   let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
   if null pages
      then error "No pages found!"
@@ -810,7 +813,7 @@ indexPage :: String -> Params -> Web Response
 indexPage _ params = do
   let page = "_index"
   let revision = pRevision params
-  files <- gitLsTree revision >>= return . map (unwords . drop 3 . words) . lines
+  files <- gitLsTree revision
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 
@@ -921,23 +924,23 @@ formattedPage layout page params htmlContents = do
                         else ulist ! [theclass "messages"] << map (li <<) messages
   templ <- liftIO $ readIORef template
   let filledTemp = T.render $
-                   T.setAttribute "pagetitle" pageTitle $
-                   T.setAttribute "javascripts" javascriptlinks $
-                   T.setAttribute "pagename" page $
+                   setAttribute "pagetitle" pageTitle $
+                   setAttribute "javascripts" javascriptlinks $
+                   setAttribute "pagename" page $
                    (case user of
-                         Just u     -> T.setAttribute "user" u
+                         Just u     -> setAttribute "user" u
                          Nothing    -> id) $
-                   (if isPage page then T.setAttribute "ispage" "true" else id) $
-                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
-                   (if pPrintable params then T.setAttribute "printable" "true" else id) $
-                   (if pRevision params == "HEAD" then id else T.setAttribute "nothead" "true") $
-                   T.setAttribute "revision" revision $
-                   T.setAttribute "sha1" sha1 $
-                   T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
-                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
-                   T.setAttribute "tabs" (renderHtmlFragment tabs) $
-                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
-                   T.setAttribute "content" (renderHtmlFragment htmlContents) $
+                   (if isPage page then setAttribute "ispage" "true" else id) $
+                   (if pgShowPageTools layout then setAttribute "pagetools" "true" else id) $
+                   (if pPrintable params then setAttribute "printable" "true" else id) $
+                   (if pRevision params == "HEAD" then id else setAttribute "nothead" "true") $
+                   setAttribute "revision" revision $
+                   setAttribute "sha1" sha1 $
+                   setAttribute "searchbox" (renderHtmlFragment searchbox) $
+                   setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
+                   setAttribute "tabs" (renderHtmlFragment tabs) $
+                   setAttribute "messages" (renderHtmlFragment htmlMessages) $
+                   setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse filledTemp
 

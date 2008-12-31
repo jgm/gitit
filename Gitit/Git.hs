@@ -39,17 +39,17 @@ where
 import Control.Monad (unless, liftM)
 import Control.Monad.Trans
 import Network.CGI (urlEncode)
-import System.FilePath
 import System.Exit
 import System.Process
 import qualified Text.ParserCombinators.Parsec as P
-import qualified Data.ByteString.Lazy as B
 import System.Directory
 import System.IO (openTempFile)
-import Data.ByteString.Lazy.UTF8 (toString)
-import Codec.Binary.UTF8.String (encodeString)
+import Prelude hiding (readFile, writeFile)
+import System.IO.UTF8
+import Codec.Binary.UTF8.String (encodeString, decodeString)
 import HAppS.State
 import Gitit.State
+import Data.Char (chr)
 
 -- | Run shell command and return error status, standard output, and error output.
 runShellCommand :: FilePath -> Maybe [(String, String)] -> String -> [String] -> IO (ExitCode, String, String)
@@ -59,8 +59,10 @@ runShellCommand workingDir environment command optionList = do
   (errorPath, hErr) <- openTempFile tempPath "err"
   hProcess <- runProcess command optionList (Just workingDir) environment Nothing (Just hOut) (Just hErr)
   status <- waitForProcess hProcess
-  errorOutput <- liftM toString (B.readFile errorPath)
-  output <- liftM toString (B.readFile outputPath)
+  errorOutput <- readFile errorPath
+  output <- readFile outputPath
+  removeFile errorPath
+  removeFile outputPath
   return (status, errorOutput, output)
 
 -- | Run git command and return error status, standard output, and error output.  The repository
@@ -93,12 +95,36 @@ gitLog since author files = do
                 Right parsed -> return parsed
      else error $ "git whatchanged returned error status.\n" ++ err
 
-gitLsTree :: MonadIO m => String -> m String
+gitLsTree :: MonadIO m => String -> m [String]
 gitLsTree rev = do
   (status, errOutput, output) <- runGitCommand "ls-tree" ["-r", rev]
   if status == ExitSuccess
-     then return output
+     then return $ map (convertEncoded . (unwords . drop 3 . words)) $ lines output
      else error $ "git ls-tree returned error status.\n" ++ errOutput
+
+-- | git ls-tree returns UTF-8 filenames in quotes, with characters octal-escaped.
+-- like this: "\340\244\226.page"
+-- This function decodes these.
+convertEncoded :: String -> String
+convertEncoded s =
+  case P.parse pEncodedString s s of
+    Left _    -> s
+    Right res -> res
+
+pEncodedString :: P.GenParser Char st [Char]
+pEncodedString = do
+  P.char '"'
+  res <- P.many1 (pOctalChar P.<|> P.anyChar)
+  if last res == '"'
+     then return $ decodeString $ init res
+     else fail "No ending quotation mark."
+
+pOctalChar :: P.GenParser Char st Char
+pOctalChar = P.try $ do
+  P.char '\\'
+  ds <- P.count 3 (P.oneOf "01234567")
+  let num = read $ "0o" ++ ds
+  return $ chr num
 
 gitGrep :: MonadIO m => [String] -> m String
 gitGrep patterns = do
