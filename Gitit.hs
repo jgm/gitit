@@ -221,8 +221,11 @@ type Handler = ServerPart Response
 
 
 debugHandlers :: [Handler]
-debugHandlers = [ withCommand "debug"   [ handlePage GET  $ \page params -> ok (toResponse $ show (page, params)),
-                                          handlePage POST $ \page params -> ok (toResponse $ show (page, params)) ] ]
+debugHandlers = [ withCommand "params"  [ handlePage GET  $ \_ params -> ok (toResponse $ show params),
+                                          handlePage POST $ \_ params -> ok (toResponse $ show params) ]
+                , withCommand "page"    [ handlePage GET  $ \page _ -> ok (toResponse $ show page),
+                                          handlePage POST $ \page _ -> ok (toResponse $ show page) ]
+                , withCommand "request" [ withRequest $ \req -> ok $ toResponse $ show req ] ]
 
 wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
@@ -359,7 +362,7 @@ getLoggedInUser params = do
 data Command = Command (Maybe String)
 
 commandList :: [String]
-commandList = ["debug", "edit", "showraw", "history", "export", "diff", "cancel", "update", "delete", "discuss"]
+commandList = ["page", "request", "params", "edit", "showraw", "history", "export", "diff", "cancel", "update", "delete", "discuss"]
 
 instance FromData Command where
      fromData = do
