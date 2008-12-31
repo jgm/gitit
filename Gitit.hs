@@ -40,11 +40,9 @@ import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Data.ByteString.UTF8 (fromString, toString)
-import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
-import Data.Digest.Pure.SHA (sha512, showDigest)
 import Paths_gitit
 import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
@@ -968,9 +966,7 @@ loginUser page params = do
   let uname = pUsername params
   let pword = pPassword params
   let destination = pDestination params
-  cfg <- query GetConfig
-  let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
-  allowed <- query $ AuthUser uname passwordHash
+  allowed <- query $ AuthUser uname pword
   if allowed
     then do
       key <- update $ NewSession (SessionData uname)
@@ -1043,8 +1039,8 @@ registerUser _ params = do
                         , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
      then do
-       let passwordHash = showDigest $ sha512 $ L.fromString $ passwordSalt cfg ++ pword
-       update $ AddUser uname (User { uUsername = uname, uPassword = passwordHash, uEmail = email })
+       user <- liftIO $ mkUser uname email pword
+       update $ AddUser uname user
        loginUser "/" (params { pUsername = uname, pPassword = pword, pEmail = email })
      else formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) 
                     page (params { pMessages = errors }) regForm

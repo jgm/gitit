@@ -100,7 +100,6 @@ option `-f [filename]`.  A configuration file takes the following form:
     tableOfContents = False,
     maxUploadSize   = 100000,
     portNumber      = 5001,
-    passwordSalt    = "l91snthoae8eou2340987",
     debugMode       = True,
     frontPage       = "Front Page",
     noEdit          = ["Help", "Front Page"],
@@ -132,10 +131,6 @@ option `-f [filename]`.  A configuration file takes the following form:
 - `maxUploadSize` (in bytes) sets a limit to the size of file uploads.
 
 - `portNumber` is the number of the port on which the wiki will be served.
-
-- `passwordSalt` is used to hash the passwords in the user database;
-  you should change this to something unique if you use gitit in a
-  production setting.
 
 - `debugMode` is either `True` or `False`. If it is `True`, debug information
   will be printed to the console when gitit is running.

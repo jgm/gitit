@@ -22,7 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 {- Functions for maintaining user list and session state.
    Parts of this code are based on http://hpaste.org/5957 mightybyte rev by 
-   dbpatterson -}
+   dbpatterson.
+-}
 
 module Gitit.State where
 
@@ -33,6 +34,9 @@ import Data.Generics hiding ((:+:))
 import HAppS.State
 import HAppS.Data
 import GHC.Conc (STM)
+import System.Random (randomRIO)
+import Data.Digest.Pure.SHA (sha512, showDigest)
+import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 
 -- | Data structure for information read from config file.
 data Config = Config {
@@ -43,7 +47,6 @@ data Config = Config {
   tableOfContents :: Bool,                     -- should each page have an automatic table of contents?
   maxUploadSize   :: Integer,                  -- maximum size of pages and file uploads
   portNumber      :: Int,                      -- port number to serve content on
-  passwordSalt    :: String,                   -- text to serve as salt in encrypting passwords
   debugMode       :: Bool,                     -- should debug info be printed to the console?
   frontPage       :: String,                   -- the front page of the wiki
   noEdit          :: [String],                 -- pages that cannot be edited through the web interface
@@ -62,7 +65,6 @@ defaultConfig = Config {
   tableOfContents = True,
   maxUploadSize   = 100000,
   portNumber      = 5001,
-  passwordSalt    = "l91snthoae8eou2340987",
   debugMode       = False,
   frontPage       = "Front Page",
   noEdit          = ["Help"],
@@ -79,9 +81,13 @@ data SessionData = SessionData {
 data Sessions a = Sessions {unsession::M.Map SessionKey a}
   deriving (Read,Show,Eq,Typeable,Data)
 
+-- Password salt hashedPassword
+data Password = Password { pSalt :: String, pHashed :: String }
+  deriving (Read,Show,Eq,Typeable,Data)
+
 data User = User {
   uUsername :: String,
-  uPassword :: String,    -- password stored as SHA512 hash
+  uPassword :: Password,
   uEmail    :: String
 } deriving (Show,Read,Typeable,Data)
 
@@ -101,7 +107,9 @@ $(deriveSerialize ''Config)
 
 instance Version AppState
 instance Version User
+instance Version Password
 
+$(deriveSerialize ''Password)
 $(deriveSerialize ''User)
 $(deriveSerialize ''AppState)
 
@@ -127,6 +135,23 @@ modSessions f = modify $ \s -> s {sessions = f $ sessions s}
 isUser :: MonadReader AppState m => String -> m Bool
 isUser name = liftM (M.member name) askUsers
 
+mkUser :: String   -- username
+       -> String   -- email
+       -> String   -- unhashed password
+       -> IO User
+mkUser uname email pass = do
+  salt <- genSalt
+  return $ User { uUsername = uname,
+                  uPassword = Password { pSalt = salt, pHashed = hashPassword salt pass },
+                  uEmail = email }
+
+genSalt :: IO String
+genSalt =
+  replicateM 32 $ randomRIO ('0','z')
+
+hashPassword :: String -> String -> String
+hashPassword salt pass = showDigest $ sha512 $ L.fromString $ salt ++ pass
+
 addUser :: MonadState AppState m => String -> User -> m ()
 addUser name u = modUsers $ M.insert name u
 
@@ -137,7 +162,10 @@ authUser :: MonadReader AppState m => String -> String -> m Bool
 authUser name pass = do
   users' <- askUsers
   case M.lookup name users' of
-       Just u  -> return $ pass == uPassword u
+       Just u  -> do
+         let salt = pSalt $ uPassword u
+         let hashed = pHashed $ uPassword u
+         return $ hashed == hashPassword salt pass
        Nothing -> return False 
 
 listUsers :: MonadReader AppState m => m [String]
