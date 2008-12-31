@@ -250,7 +250,8 @@ Character encodings
 ===================
 
 Gitit assumes that the page files (stored in the git repository) are
-encoded as UTF-8.
+encoded as UTF-8.  Even page names may be UTF-8 if the file system supports
+this.  You should use a UTF-8 locale when running gitit.
 
 Reporting bugs
 ==============
