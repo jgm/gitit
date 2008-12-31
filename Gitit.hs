@@ -63,7 +63,7 @@ import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 
 gititVersion :: String
-gititVersion = "0.3.3"
+gititVersion = "0.3.4.1"
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
