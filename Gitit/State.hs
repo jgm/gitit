@@ -40,36 +40,42 @@ import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 
 -- | Data structure for information read from config file.
 data Config = Config {
-  repositoryPath  :: FilePath,                 -- path of git repository for pages
-  userFile        :: FilePath,                 -- path of users database 
-  templateFile    :: FilePath,                 -- path of page template file
-  staticDir       :: FilePath,                 -- path of static directory
-  tableOfContents :: Bool,                     -- should each page have an automatic table of contents?
-  maxUploadSize   :: Integer,                  -- maximum size of pages and file uploads
-  portNumber      :: Int,                      -- port number to serve content on
-  debugMode       :: Bool,                     -- should debug info be printed to the console?
-  frontPage       :: String,                   -- the front page of the wiki
-  noEdit          :: [String],                 -- pages that cannot be edited through the web interface
-  noDelete        :: [String],                 -- pages that cannot be deleted through the web interface
-  accessQuestion  :: Maybe (String, [String])  -- if Nothing, then anyone can register for an account.
-                                               -- if Just (prompt, answers), then a user will be given the prompt
-                                               -- and must give one of the answers in order to register.
+  repositoryPath      :: FilePath,                 -- path of git repository for pages
+  userFile            :: FilePath,                 -- path of users database 
+  templateFile        :: FilePath,                 -- path of page template file
+  staticDir           :: FilePath,                 -- path of static directory
+  tableOfContents     :: Bool,                     -- should each page have an automatic table of contents?
+  maxUploadSize       :: Integer,                  -- maximum size of pages and file uploads
+  portNumber          :: Int,                      -- port number to serve content on
+  debugMode           :: Bool,                     -- should debug info be printed to the console?
+  frontPage           :: String,                   -- the front page of the wiki
+  noEdit              :: [String],                 -- pages that cannot be edited through the web interface
+  noDelete            :: [String],                 -- pages that cannot be deleted through the web interface
+  accessQuestion      :: Maybe (String, [String]), -- if Nothing, then anyone can register for an account.
+                                                   -- if Just (prompt, answers), then a user will be given the prompt
+                                                   -- and must give one of the answers in order to register.
+  useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
+  recaptchaPublicKey  :: String,
+  recaptchaPrivateKey :: String
   } deriving (Read, Show,Eq,Typeable,Data)
 
 defaultConfig :: Config
 defaultConfig = Config {
-  repositoryPath  = "wikidata",
-  userFile        = "gitit-users",
-  templateFile    = "template.html",
-  staticDir       = "static",
-  tableOfContents = True,
-  maxUploadSize   = 100000,
-  portNumber      = 5001,
-  debugMode       = False,
-  frontPage       = "Front Page",
-  noEdit          = ["Help"],
-  noDelete        = ["Help", "Front Page"],
-  accessQuestion  = Nothing
+  repositoryPath      = "wikidata",
+  userFile            = "gitit-users",
+  templateFile        = "template.html",
+  staticDir           = "static",
+  tableOfContents     = True,
+  maxUploadSize       = 100000,
+  portNumber          = 5001,
+  debugMode           = False,
+  frontPage           = "Front Page",
+  noEdit              = ["Help"],
+  noDelete            = ["Help", "Front Page"],
+  accessQuestion      = Nothing,
+  useRecaptcha        = False,
+  recaptchaPublicKey  = "",
+  recaptchaPrivateKey = ""
   }
 
 type SessionKey = Integer

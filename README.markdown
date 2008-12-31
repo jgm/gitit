@@ -93,18 +93,21 @@ You can set some configuration options when starting gitit, using the
 option `-f [filename]`.  A configuration file takes the following form:
 
     Config {
-    repositoryPath  = "wikidata",
-    userFile        = "gitit-users",
-    templateFile    = "template.html",
-    staticDir       = "static",
-    tableOfContents = False,
-    maxUploadSize   = 100000,
-    portNumber      = 5001,
-    debugMode       = True,
-    frontPage       = "Front Page",
-    noEdit          = ["Help", "Front Page"],
-    noDelete        = ["Help", "Front Page"],
-    accessQuestion  = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"])
+    repositoryPath      = "wikidata",
+    userFile            = "gitit-users",
+    templateFile        = "template.html",
+    staticDir           = "static",
+    tableOfContents     = False,
+    maxUploadSize       = 100000,
+    portNumber          = 5001,
+    debugMode           = True,
+    frontPage           = "Front Page",
+    noEdit              = ["Help", "Front Page"],
+    noDelete            = ["Help", "Front Page"],
+    accessQuestion      = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"]),
+    useRecaptcha        = False,
+    recaptchaPublicKey  = "",
+    recaptchaPrivateKey = ""
     }
 
 - `repositoryPath` is the (relative) path of the git repository in which
@@ -148,6 +151,17 @@ option `-f [filename]`.  A configuration file takes the following form:
   that will be displayed when a user tries to create an account, and
   `answer1, answer2, ...` are the valid responses. The user must provide a
   valid response in order to create an account. 
+
+- `useRecaptcha` specifies whether to use the [reCAPTCHA] service to provide
+  captchas for user registration.
+
+- `recaptchaPublicKey` is a reCAPTCHA public key (which can be obtained free
+  of charge by signing up at the [reCAPTCHA] site).
+
+- `recaptchaPrivateKey` is the reCAPTCHA private key that goes with the public
+  key.
+
+[reCAPTCHA]: http://recaptcha.net
 
 Configuring gitit
 =================
