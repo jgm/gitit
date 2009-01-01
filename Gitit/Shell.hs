@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Shell where
 
-import Control.Monad (liftM)
 import Control.Monad.Trans (liftIO, MonadIO)
 import System.Directory (getTemporaryDirectory, removeFile)
 import System.Exit (ExitCode)
@@ -32,8 +31,6 @@ import Prelude hiding (readFile)
 import System.IO.UTF8
 import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
-import HAppS.State (query)
-import Gitit.State (repositoryPath, GetConfig(..))
 
 -- | Run shell command and return error status, standard output, and error output.
 runShellCommand :: FilePath -> Maybe [(String, String)] -> String -> [String] -> IO (ExitCode, String, String)
@@ -49,7 +46,6 @@ runShellCommand workingDir environment command optionList = do
   removeFile outputPath
   return (status, errorOutput, output)
 
-runProgCommand :: (MonadIO m) => String -> String -> [String] -> m (ExitCode, String, String)
-runProgCommand prog command args = do
-  repo <- liftM repositoryPath (query GetConfig)
-  liftIO $ runShellCommand repo Nothing prog (command : map encodeString args)
+runProgCommand :: MonadIO m => String -> String -> String -> [String] -> m (ExitCode, String, String)
+runProgCommand workingDir prog command args = do
+  liftIO $ runShellCommand workingDir Nothing prog (command : map encodeString args)
