@@ -40,37 +40,18 @@ import Control.Monad (unless, liftM)
 import Control.Monad.Trans
 import Network.CGI (urlEncode)
 import System.Exit
-import System.Process
 import qualified Text.ParserCombinators.Parsec as P
-import System.Directory
-import System.IO (openTempFile)
 import Prelude hiding (readFile, writeFile)
-import System.IO.UTF8
-import Codec.Binary.UTF8.String (encodeString, decodeString)
+import Codec.Binary.UTF8.String (decodeString)
 import HAppS.State
+import Gitit.Shell
 import Gitit.State
 import Data.Char (chr)
-
--- | Run shell command and return error status, standard output, and error output.
-runShellCommand :: FilePath -> Maybe [(String, String)] -> String -> [String] -> IO (ExitCode, String, String)
-runShellCommand workingDir environment command optionList = do
-  tempPath <- getTemporaryDirectory
-  (outputPath, hOut) <- openTempFile tempPath "out"
-  (errorPath, hErr) <- openTempFile tempPath "err"
-  hProcess <- runProcess command optionList (Just workingDir) environment Nothing (Just hOut) (Just hErr)
-  status <- waitForProcess hProcess
-  errorOutput <- readFile errorPath
-  output <- readFile outputPath
-  removeFile errorPath
-  removeFile outputPath
-  return (status, errorOutput, output)
 
 -- | Run git command and return error status, standard output, and error output.  The repository
 -- is used as working directory.
 runGitCommand :: MonadIO m => String -> [String] -> m (ExitCode, String, String)
-runGitCommand command args = do
-  repo <- liftM repositoryPath (query GetConfig)
-  liftIO $ runShellCommand repo Nothing "git" (command : map encodeString args)
+runGitCommand = runProgCommand "git"
 
 -- | Return SHA1 hash of last commit for filename.
 gitLastCommitHash :: MonadIO m => String -> m (Maybe String)
