@@ -234,7 +234,7 @@ gitLogEntry = do
                       logDate = date,
                       logAuthor = author,
                       logSubject = subject,
-                      logFiles = files }
+                      logFiles = map convertEncoded files }
 
 gitLogChange :: P.Parser String
 gitLogChange = do
