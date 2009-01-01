@@ -46,6 +46,6 @@ runShellCommand workingDir environment command optionList = do
   removeFile outputPath
   return (status, errorOutput, output)
 
-runProgCommand :: MonadIO m => String -> String -> String -> [String] -> m (ExitCode, String, String)
-runProgCommand workingDir prog command args = do
-  liftIO $ runShellCommand workingDir Nothing prog (command : map encodeString args)
+runProgCommand :: MonadIO m => String -> Maybe [(String, String)] -> String -> String -> [String] -> m (ExitCode, String, String)
+runProgCommand workingDir environment prog command args = do
+  liftIO $ runShellCommand workingDir environment prog (command : map encodeString args)
