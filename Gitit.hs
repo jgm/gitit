@@ -59,6 +59,8 @@ import qualified Text.StringTemplate as T
 import Gitit.HStringTemplate (setAttribute)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
+import Network.Socket
+import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 
 gititVersion :: String
 gititVersion = "0.4"
@@ -258,6 +260,11 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePage GET showPage
                ]
 
+data Recaptcha = Recaptcha {
+    recaptchaChallengeField :: String
+  , recaptchaResponseField  :: String
+  } deriving (Read, Show)
+
 data Params = Params { pUsername     :: String
                      , pPassword     :: String
                      , pPassword2    :: String
@@ -288,6 +295,8 @@ data Params = Params { pUsername     :: String
                      , pUser         :: String
                      , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
+                     , pRecaptcha    :: Recaptcha
+                     , pIPAddress    :: String
                      }  deriving Show
 
 instance FromData Params where
@@ -319,6 +328,8 @@ instance FromData Params where
          ac <- look "accessCode"     `mplus` return ""
          cn <- (look "confirm" >> return True) `mplus` return False
          sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
+         rc <- look "recaptcha_challenge_field" `mplus` return ""
+         rr <- look "recaptcha_response_field" `mplus` return ""
          return $ Params { pUsername     = un
                          , pPassword     = pw
                          , pPassword2    = p2
@@ -349,6 +360,8 @@ instance FromData Params where
                          , pUser         = ""  -- this gets set by ifLoggedIn...
                          , pConfirm      = cn
                          , pSessionKey   = sk
+                         , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
+                         , pIPAddress    = ""  -- this gets set by handle...
                          }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -407,12 +420,26 @@ handle pathtest meth responder = uriRest $ \uri ->
          then withData $ \params ->
                   [ withRequest $ \req ->
                       if rqMethod req == meth
-                         then let referer = case M.lookup (fromString "referer") (rqHeaders req) of
-                                                Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
-                                                _       -> Nothing
-                              in  responder path' (params { pReferer = referer, pUri = uri })
+                         then do
+                           let referer = case M.lookup (fromString "referer") (rqHeaders req) of
+                                              Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
+                                              _       -> Nothing
+                           let peer = fst $ rqPeer req
+                           mbIPaddr <- liftIO $ lookupIPAddr peer
+                           let ipaddr = case mbIPaddr of
+                                             Just ip -> ip
+                                             Nothing -> "0.0.0.0"
+                           -- force ipaddr to be strictly evaluated, or we run into problems when validating captchas
+                           ipaddr `seq` responder path' (params { pReferer = referer, pUri = uri, pIPAddress = ipaddr })
                          else noHandle ]
          else anyRequest noHandle
+
+lookupIPAddr :: String -> IO (Maybe String)
+lookupIPAddr hostname = do
+  addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
+  if null addrs
+     then return Nothing
+     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
@@ -997,6 +1024,9 @@ registerForm = do
                       Nothing          -> noHtml
                       Just (prompt, _) -> label << prompt +++ br +++
                                           X.password "accessCode" ! [size "15"] +++ br
+  let captcha = if useRecaptcha cfg
+                   then captchaFields (recaptchaPublicKey cfg) Nothing
+                   else noHtml
   return $ gui "" ! [identifier "loginForm"] << fieldset <<
             [ accessQ
             , label << "Username (at least 3 letters or digits):", br
@@ -1007,6 +1037,7 @@ registerForm = do
             , label << "Password (at least 6 characters, including at least one non-letter):", br
             , X.password "password" ! [size "20"], stringToHtml " ", br
             , label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br
+            , captcha
             , submit "register" "Register" ]
 
 registerUserForm :: String -> Params -> Web Response
@@ -1017,8 +1048,6 @@ registerUserForm _ params =
 
 registerUser :: String -> Params -> Web Response
 registerUser _ params = do
-  let page = "_register"
-  regForm <- registerForm
   let isValidUsername u = length u >= 3 && all isAlphaNum u
   let isValidPassword pw = length pw >= 6 && not (all isAlpha pw)
   let accessCode = pAccessCode params
@@ -1027,26 +1056,38 @@ registerUser _ params = do
   let pword2 = pPassword2 params
   let email = pEmail params
   let fakeField = pFullName params
+  let recaptcha = pRecaptcha params
   taken <- query $ IsUser uname
   cfg <- query GetConfig
   let isValidAccessCode = case accessQuestion cfg of
         Nothing           -> True
         Just (_, answers) -> accessCode `elem` answers
   let isValidEmail e = length (filter (=='@') e) == 1
+  captchaResult  <- if useRecaptcha cfg
+                       then if null (recaptchaChallengeField recaptcha) || null (recaptchaResponseField recaptcha)
+                               then return $ Left "missing-challenge-or-response"  -- no need to bother captcha.net in this case
+                               else liftIO $ validateCaptcha (recaptchaPrivateKey cfg) (pIPAddress params) (recaptchaChallengeField recaptcha)
+                                                              (recaptchaResponseField recaptcha)
+                       else return $ Right ()
+  let (validCaptcha, captchaError) = case captchaResult of
+                                      Right () -> (True, Nothing)
+                                      Left err -> (False, Just err)
   let errors = validate [ (taken, "Sorry, that username is already taken.")
                         , (not isValidAccessCode, "Incorrect response to access prompt.")
                         , (not (isValidUsername uname), "Username must be at least 3 charcaters, all letters or digits.")
                         , (not (isValidPassword pword), "Password must be at least 6 characters, with at least one non-letter.")
                         , (not (null email) && not (isValidEmail email), "Email address appears invalid.")
                         , (pword /= pword2, "Password does not match confirmation.")
+                        , (not validCaptcha, "Failed CAPTCHA (" ++ fromJust captchaError ++ "). Are you really human?")
                         , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
      then do
        user <- liftIO $ mkUser uname email pword
        update $ AddUser uname user
        loginUser "/" (params { pUsername = uname, pPassword = pword, pEmail = email })
-     else formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) 
-                    page (params { pMessages = errors }) regForm
+     else registerForm >>=
+          formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
+                    "_register" (params { pMessages = errors })
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
