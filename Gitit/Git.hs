@@ -44,14 +44,16 @@ import qualified Text.ParserCombinators.Parsec as P
 import Prelude hiding (readFile, writeFile)
 import Codec.Binary.UTF8.String (decodeString)
 import HAppS.State
-import Gitit.Shell
+import Gitit.Shell (runProgCommand, runShellCommand)
 import Gitit.State
 import Data.Char (chr)
 
 -- | Run git command and return error status, standard output, and error output.  The repository
 -- is used as working directory.
 runGitCommand :: MonadIO m => String -> [String] -> m (ExitCode, String, String)
-runGitCommand = runProgCommand "git"
+runGitCommand command args = do
+  repo <- liftM repositoryPath (query GetConfig)
+  liftIO $ runProgCommand repo "git" command args
 
 -- | Return SHA1 hash of last commit for filename.
 gitLastCommitHash :: MonadIO m => String -> m (Maybe String)
