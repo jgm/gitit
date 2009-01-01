@@ -14,12 +14,6 @@
 
 - does debugFilter still work?
 
-- redo password salting.  see the post on happs google group about this.  a salt
-  should be different for every user, and stored unhashed with the hash, not
-  something stored in config.  unfortunately this will mean changing the gitusers
-  file format again!  provide a short program to migrate.
-  http://groups.google.com/group/HAppS/browse_thread/thread/1440d07abd21a403
-
 - rss feed for all page changes?  see the rss library (Text.RSS) on HackageDB
 
 - add signature? (-- ~~~~)
@@ -29,8 +23,6 @@
 - improve use of string templates:  different components of pages should
   have their own templates.
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
-
-- maybe use http://captchas.net/ to provide captcha service?
 
 - add support for categories:
   an example of a category:
