@@ -56,7 +56,6 @@ import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
-import Gitit.HStringTemplate (setAttribute)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Network.Socket
@@ -952,25 +951,25 @@ formattedPage layout page params htmlContents = do
                         else ulist ! [theclass "messages"] << map (li <<) messages
   templ <- liftIO $ readIORef template
   let filledTemp = T.render $
-                   setAttribute "pagetitle" pageTitle $
-                   setAttribute "javascripts" javascriptlinks $
-                   setAttribute "pagename" page $
+                   T.setAttribute "pagetitle" pageTitle $
+                   T.setAttribute "javascripts" javascriptlinks $
+                   T.setAttribute "pagename" page $
                    (case user of
-                         Just u     -> setAttribute "user" u
+                         Just u     -> T.setAttribute "user" u
                          Nothing    -> id) $
-                   (if isPage page then setAttribute "ispage" "true" else id) $
-                   (if pgShowPageTools layout then setAttribute "pagetools" "true" else id) $
-                   (if pPrintable params then setAttribute "printable" "true" else id) $
-                   (if pRevision params == "HEAD" then id else setAttribute "nothead" "true") $
-                   setAttribute "revision" revision $
-                   setAttribute "sha1" sha1 $
-                   setAttribute "searchbox" (renderHtmlFragment searchbox) $
-                   setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
-                   setAttribute "tabs" (renderHtmlFragment tabs) $
-                   setAttribute "messages" (renderHtmlFragment htmlMessages) $
-                   setAttribute "content" (renderHtmlFragment htmlContents) $
+                   (if isPage page then T.setAttribute "ispage" "true" else id) $
+                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
+                   (if pPrintable params then T.setAttribute "printable" "true" else id) $
+                   (if pRevision params == "HEAD" then id else T.setAttribute "nothead" "true") $
+                   T.setAttribute "revision" revision $
+                   T.setAttribute "sha1" sha1 $
+                   T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
+                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
+                   T.setAttribute "tabs" (renderHtmlFragment tabs) $
+                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
+                   T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  ok $ setContentType "text/html" $ toResponse filledTemp
+  ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 -- user authentication
 loginForm :: Html
