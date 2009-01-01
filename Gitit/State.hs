@@ -30,7 +30,7 @@ module Gitit.State where
 import qualified Data.Map as M
 import Control.Monad.Reader
 import Control.Monad.State (modify, MonadState)
-import Data.Generics hiding ((:+:))
+import Data.Generics
 import HAppS.State
 import HAppS.Data
 import GHC.Conc (STM)
@@ -152,17 +152,16 @@ mkUser uname email pass = do
                   uEmail = email }
 
 genSalt :: IO String
-genSalt =
-  replicateM 32 $ randomRIO ('0','z')
+genSalt = replicateM 32 $ randomRIO ('0','z')
 
 hashPassword :: String -> String -> String
 hashPassword salt pass = showDigest $ sha512 $ L.fromString $ salt ++ pass
 
 addUser :: MonadState AppState m => String -> User -> m ()
-addUser name u = modUsers $ M.insert name u
+addUser name = modUsers . M.insert name
 
 delUser :: MonadState AppState m => String -> m ()
-delUser name = modUsers $ M.delete name
+delUser = modUsers . M.delete
 
 authUser :: MonadReader AppState m => String -> String -> m Bool
 authUser name pass = do
@@ -181,11 +180,11 @@ numUsers ::  MonadReader AppState m => m Int
 numUsers = liftM length listUsers
 
 isSession :: MonadReader AppState m => SessionKey -> m Bool
-isSession key = liftM ((M.member key) . unsession) askSessions
+isSession key = liftM (M.member key . unsession) askSessions
 
 setSession :: (MonadState AppState m) => SessionKey -> SessionData -> m ()
 setSession key u = do
-  modSessions $ Sessions . (M.insert key u) . unsession
+  modSessions $ Sessions . M.insert key u . unsession
   return ()
 
 newSession :: (MonadState AppState (Ev (t GHC.Conc.STM)), MonadTrans t, Monad (t GHC.Conc.STM)) =>
@@ -197,11 +196,11 @@ newSession u = do
 
 delSession :: (MonadState AppState m) => SessionKey -> m ()
 delSession key = do
-  modSessions $ Sessions . (M.delete key) . unsession
+  modSessions $ Sessions . M.delete key . unsession
   return ()
 
 getSession::SessionKey -> Query AppState (Maybe SessionData)
-getSession key = liftM ((M.lookup key) . unsession) askSessions
+getSession key = liftM (M.lookup key . unsession) askSessions
 
 getConfig :: Query AppState Config
 getConfig = return . config =<< ask
