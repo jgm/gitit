@@ -48,5 +48,4 @@ lookCookieValue :: String -> RqData String
 lookCookieValue = liftM decodeString . HAppS.Server.lookCookieValue
 
 mkCookie :: String -> String -> Cookie
-mkCookie name val = HAppS.Server.mkCookie name (encodeString val)
-
+mkCookie name = HAppS.Server.mkCookie name . encodeString
