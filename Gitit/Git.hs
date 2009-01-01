@@ -44,7 +44,7 @@ import qualified Text.ParserCombinators.Parsec as P
 import Prelude hiding (readFile, writeFile)
 import Codec.Binary.UTF8.String (decodeString)
 import HAppS.State
-import Gitit.Shell (runProgCommand, runShellCommand)
+import Gitit.Shell (runProgCommand)
 import Gitit.State
 import Data.Char (chr)
 
@@ -53,7 +53,8 @@ import Data.Char (chr)
 runGitCommand :: MonadIO m => String -> [String] -> m (ExitCode, String, String)
 runGitCommand command args = do
   repo <- liftM repositoryPath (query GetConfig)
-  liftIO $ runProgCommand repo "git" command args
+  let env = Just [("GIT_DIFF_OPTS","-u100000")]
+  liftIO $ runProgCommand repo env "git" command args
 
 -- | Return SHA1 hash of last commit for filename.
 gitLastCommitHash :: MonadIO m => String -> m (Maybe String)
@@ -130,15 +131,12 @@ gitDiff :: MonadIO m
         -> String     -- ^ New version (sha1)
         -> m String  -- ^ String
 gitDiff file from to = do
-  repo <- liftM repositoryPath (query GetConfig)
-  (status, _, output) <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
-                                    "git" ["diff", from, to, file]
+  (status, _, output) <- runGitCommand "diff" [from, to, file]
   if status == ExitSuccess
      then return output
      else do
        -- try it without the path, since the error might be "not in working tree" for a deleted file
-       (status', errOut', output') <- liftIO $ runShellCommand repo (Just [("GIT_DIFF_OPTS","-u100000")])
-                                         "git" ["diff", from, to]
+       (status', errOut', output') <- runGitCommand "diff" [from, to]
        if status' == ExitSuccess
           then return output'
           else error $ "git diff returned error: " ++ errOut'
