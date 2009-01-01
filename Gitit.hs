@@ -63,7 +63,7 @@ import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 
 gititVersion :: String
-gititVersion = "0.4"
+gititVersion = "0.4.1"
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
