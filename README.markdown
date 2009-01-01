@@ -152,14 +152,13 @@ option `-f [filename]`.  A configuration file takes the following form:
   `answer1, answer2, ...` are the valid responses. The user must provide a
   valid response in order to create an account. 
 
-- `useRecaptcha` specifies whether to use the [reCAPTCHA] service to provide
-  captchas for user registration.
+- `useRecaptcha` is either `True` or `False`. It specifies whether to
+  use the [reCAPTCHA] service to provide captchas for user registration.
 
-- `recaptchaPublicKey` is a reCAPTCHA public key (which can be obtained free
-  of charge by signing up at the [reCAPTCHA] site).
-
-- `recaptchaPrivateKey` is the reCAPTCHA private key that goes with the public
-  key.
+- `recaptchaPublicKey` and `recaptchaPrivateKey` are
+  [reCAPTCHA] keys, which can be obtained free of charge at
+  <http://recaptcha.net/api/getkey>.  The values of these fields are ignored
+  if `useRecaptcha` is set to `False`.
 
 [reCAPTCHA]: http://recaptcha.net
 
