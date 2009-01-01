@@ -28,6 +28,8 @@ import Control.Monad.Trans (liftIO, MonadIO)
 import System.Directory (getTemporaryDirectory, removeFile)
 import System.Exit (ExitCode)
 import System.IO (openTempFile)
+import Prelude hiding (readFile)
+import System.IO.UTF8
 import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
 import HAppS.State (query)
