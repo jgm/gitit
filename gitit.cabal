@@ -50,7 +50,7 @@ Executable           gitit
                      utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
                      HAppS-State >= 0.9.3 && < 0.9.4,
                      HAppS-Data >= 0.9.3 && < 0.9.4, SHA > 1, HTTP,
-                     HStringTemplate, random
+                     HStringTemplate, random, network >= 2.1.0.0, recaptcha >= 0.1
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   ghc-options:       -Wall -threaded
