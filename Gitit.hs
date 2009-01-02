@@ -529,7 +529,7 @@ showFileAsText file params = do
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
-  files <- gitLsTree "HEAD"
+  files <- gitListFiles "HEAD"
   let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
   if null pages
      then error "No pages found!"
@@ -839,7 +839,7 @@ indexPage :: String -> Params -> Web Response
 indexPage _ params = do
   let page = "_index"
   let revision = pRevision params
-  files <- gitLsTree revision
+  files <- gitListFiles revision
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 

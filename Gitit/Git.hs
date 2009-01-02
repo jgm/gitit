@@ -25,7 +25,7 @@ module Gitit.Git
            ( runGitCommand
            , gitLastCommitHash
            , gitLog
-           , gitLsTree
+           , gitListFiles
            , gitGrep
            , gitCatFile
            , gitDiff
@@ -79,8 +79,8 @@ gitLog since author files = do
                 Right parsed -> return parsed
      else error $ "git whatchanged returned error status.\n" ++ err
 
-gitLsTree :: MonadIO m => String -> m [String]
-gitLsTree rev = do
+gitListFiles :: MonadIO m => String -> m [String]
+gitListFiles rev = do
   (status, errOutput, output) <- runGitCommand "ls-tree" ["-r", rev]
   if status == ExitSuccess
      then return $ map (convertEncoded . (unwords . drop 3 . words)) $ lines output
