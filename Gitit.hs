@@ -1172,8 +1172,13 @@ rawContents file params = do
   let revision = pRevision params `orIfNull` "HEAD"
   gitCatFile revision file
 
+removeRawHtmlBlock :: Block -> Block
+removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
+removeRawHtmlBlock x = x
+
 textToPandoc :: String -> Pandoc
-textToPandoc = readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
+textToPandoc = processPandoc removeRawHtmlBlock .
+               readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
                filter (/= '\r')
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
