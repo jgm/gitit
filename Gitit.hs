@@ -520,15 +520,12 @@ setFilename fname res =
 showRawPage :: String -> Params -> Web Response
 showRawPage = showFileAsText . pathForPage
 
-responseAndEncodeWithType :: String -> String -> Web Response
-responseAndEncodeWithType typ = ok . setContentType typ . toResponse . encodeString
-
 showFileAsText :: String -> Params -> Web Response
 showFileAsText file params = do
   mContents <- rawContents file params
   case mContents of
        Nothing   -> error "Unable to retrieve page contents."
-       Just c    -> responseAndEncodeWithType "text/plain; charset=utf-8" c
+       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ encodeString c
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
@@ -667,8 +664,8 @@ parseMatchLine matchLine =
   in  (file, contents)
 
 preview :: String -> Params -> Web Response
-preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= (responseAndEncodeWithType "text/plain; charset=utf-8") . show
-   
+preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse
+
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
 
@@ -971,7 +968,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  responseAndEncodeWithType "text/html" filledTemp
+  ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 -- user authentication
 loginForm :: Html
@@ -1103,28 +1100,24 @@ showHighlightedSource file params = do
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
 
-responseAndEncodeWithTypeAndName :: String -> String -> String -> Web Response
-responseAndEncodeWithTypeAndName typ name = ok . setContentType typ . setFilename name . toResponse . encodeString
-
-
 respondLaTeX :: String -> Pandoc -> Web Response
-respondLaTeX page = responseAndEncodeWithTypeAndName "application/x-latex" (page ++ ".tex") . 
+respondLaTeX page = ok . setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse . encodeString .
                     writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
 respondConTeXt :: String -> Pandoc -> Web Response
-respondConTeXt page = responseAndEncodeWithTypeAndName "application/x-context" (page ++ ".tex") .
-                      writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader}) 
+respondConTeXt page = ok . setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse . encodeString .
+                      writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
 
 respondRTF :: String -> Pandoc -> Web Response
-respondRTF page = responseAndEncodeWithTypeAndName "application/rtf" (page ++ ".rtf") . 
+respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse . encodeString .
                   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
 respondRST :: String -> Pandoc -> Web Response
-respondRST _ = responseAndEncodeWithType "text/plain; charset=utf-8" . 
+respondRST _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
                writeRST (defaultRespOptions {writerHeader = "", writerReferenceLinks = True})
 
 respondMan :: String -> Pandoc -> Web Response
-respondMan _ = responseAndEncodeWithType "text/plain; charset=utf-8" . 
+respondMan _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
                writeMan (defaultRespOptions {writerHeader = ""})
 
 respondS5 :: String -> Pandoc -> Web Response
@@ -1132,15 +1125,15 @@ respondS5 _ = ok . toResponse . writeS5 (defaultRespOptions {writerHeader = defa
                                                              writerS5 = True, writerIncremental = True})
 
 respondTexinfo :: String -> Pandoc -> Web Response
-respondTexinfo page = responseAndEncodeWithTypeAndName "application/x-texinfo" (page ++ ".texi") . 
+respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse . encodeString .
                       writeTexinfo (defaultRespOptions {writerHeader = ""})
 
 respondDocbook :: String -> Pandoc -> Web Response
-respondDocbook page = responseAndEncodeWithTypeAndName "application/docbook+xml" (page ++ ".xml") . 
+respondDocbook page = ok . setContentType "application/docbook+xml" . setFilename (page ++ ".xml") . toResponse . encodeString .
                       writeDocbook (defaultRespOptions {writerHeader = defaultDocbookHeader})
 
 respondMediaWiki :: String -> Pandoc -> Web Response
-respondMediaWiki _ = responseAndEncodeWithType "text/plain; charset=utf-8" . 
+respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
                      writeMediaWiki (defaultRespOptions {writerHeader = ""})
 
 respondODT :: String -> Pandoc -> Web Response
