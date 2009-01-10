@@ -61,7 +61,7 @@ import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 
 gititVersion :: String
-gititVersion = "0.4.1.2"
+gititVersion = "0.4.1.3"
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
@@ -664,7 +664,7 @@ parseMatchLine matchLine =
   in  (file, contents)
 
 preview :: String -> Params -> Web Response
-preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse
+preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse . encodeString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
