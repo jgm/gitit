@@ -1104,7 +1104,7 @@ defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
 
 responseAndEncodeWithTypeAndName :: String -> String -> String -> Web Response
-responseAndEncodeWithTypeAndName typ name = ok . setContentType typ . setFilename name . toResponse . encodeString
+responseAndEncodeWithTypeAndName typ name' = ok . setContentType typ . setFilename name' . toResponse . encodeString
 
 
 respondLaTeX :: String -> Pandoc -> Web Response
