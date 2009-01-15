@@ -1,3 +1,4 @@
+{-# LANGUAGE Rank2Types, FlexibleContexts #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -20,21 +21,19 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
-import HAppS.State hiding (Method)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
 import System.IO.Error (isAlreadyExistsError)
-import Control.Exception (bracket)
-import Prelude hiding (writeFile, readFile, putStrLn, putStr)
+import Control.Exception (bracket, throwIO, catch)
+import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
 import System.Process
 import System.Directory
 import System.Time
 import Control.Concurrent
 import System.FilePath
-import Gitit.Git
 import Gitit.State
-import Text.XHtml hiding ( (</>), dir, method, password )
+import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
@@ -59,6 +58,7 @@ import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
+import Data.FileStore
 
 gititVersion :: String
 gititVersion = "0.4.1.3"
@@ -76,18 +76,20 @@ main = do
   conf <- foldM handleFlag defaultConfig options
   gitPath <- findExecutable "git"
   when (isNothing gitPath) $ error "'git' program not found in system path."
+  updateAppState (\s -> s{ filestore = case repository conf of
+                                        Git fs   -> gitFileStore fs
+                                        Darcs fs -> darcsFileStore fs })
   initializeWiki conf
   -- initialize template
   templ <- liftIO $ readFile (templateFile conf)
   writeIORef template (T.newSTMP templ)
-  control <- startSystemState entryPoint
-  update $ SetConfig conf
+  updateAppState (\s -> s{ config = conf })
   -- read user file and update state
   userFileExists <- doesFileExist $ userFile conf
   users' <- if userFileExists
                then readFile (userFile conf) >>= (return . M.fromList . read)
                else return M.empty
-  update $ SetUsers users'
+  updateAppState (\s -> s{ users = users' })
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
@@ -97,12 +99,7 @@ main = do
           ] ++ (if debugMode conf then debugHandlers else []) ++ wikiHandlers
   waitForTermination
   putStrLn "Shutting down..."
-  -- write user file
-  users'' <- query AskUsers
-  liftIO $ writeFile (userFile conf) (showPrettyList $ M.toList users'')
   killThread tid
-  createCheckpoint control
-  shutdownSystem control
   putStrLn "Shutdown complete"
 
 data Opt
@@ -145,45 +142,28 @@ handleFlag _ opt = do
     Version      -> hPutStrLn stderr (progname ++ " version " ++ gititVersion ++ copyrightMessage) >> exitWith ExitSuccess
     ConfigFile f -> liftM read (readFile f)
 
-entryPoint :: Proxy AppState
-entryPoint = Proxy
-
 showPrettyList :: Show a => [a] -> String
 showPrettyList lst = "[\n" ++
   concat (intersperse ",\n" $ map show lst) ++ "\n]"
 
-
 -- | Create repository and public directories, unless they already exist.
 initializeWiki :: Config -> IO ()
 initializeWiki conf = do
-  let repodir = repositoryPath conf
   let frontpage = frontPage conf <.> "page"
   let staticdir = staticDir conf
   let templatefile = templateFile conf
-  repoExists <- doesDirectoryExist repodir
+  fs <- getFileStore
+  repoExists <- liftIO $ catch (initialize fs >> return False)
+                               (\e -> if e == RepositoryExists then return True else throwIO e >> return False)
   unless repoExists $ do
-    postupdatepath <- getDataFileName $ "data" </> "post-update"
-    postupdatecontents <- B.readFile postupdatepath
     welcomepath <- getDataFileName $ "data" </> "FrontPage.page"
     welcomecontents <- B.readFile welcomepath
     helppath <- getDataFileName $ "data" </> "Help.page"
     helpcontents <- B.readFile helppath
-    createDirectory repodir
-    oldDir <- getCurrentDirectory
-    setCurrentDirectory repodir
-    runCommand "git init" >>= waitForProcess
     -- add front page and help page
-    B.writeFile frontpage welcomecontents
-    B.writeFile "Help.page" helpcontents
-    runCommand ("git add 'Help.page' '" ++ frontpage ++ "'; git commit -m 'Initial commit.'") >>= waitForProcess
-    -- set post-update hook so working directory will be updated
-    -- when changes are pushed to the repo
-    let postupdate = ".git" </> "hooks" </> "post-update"
-    B.writeFile postupdate postupdatecontents
-    perms <- getPermissions postupdate
-    setPermissions postupdate (perms {executable = True})
-    hPutStrLn stderr $ "Created repository " ++ repodir
-    setCurrentDirectory oldDir
+    liftIO $ create fs "Front Page.page" (Author "Gitit" "") "Default front page" welcomecontents
+    liftIO $ create fs "Help.page" (Author "Gitit" "") "Default front page" helpcontents
+    hPutStrLn stderr "Created repository"
   staticExists <- doesDirectoryExist staticdir
   unless staticExists $ do
     createDirectoryIfMissing True $ staticdir </> "css"
@@ -364,7 +344,7 @@ instance FromData Params where
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
-  mbSd <- maybe (return Nothing) ( query . GetSession ) $ pSessionKey params
+  mbSd <- maybe (return Nothing) getSession $ pSessionKey params
   let user = case mbSd of
        Nothing    -> Nothing
        Just sd    -> Just $ sessionUser sd
@@ -384,14 +364,14 @@ instance FromData Command where
 
 unlessNoEdit :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
 unlessNoEdit responder =
-  \page params -> do cfg <- query GetConfig
+  \page params -> do cfg <- getConfig
                      if page `elem` noEdit cfg
                         then showPage page (params { pMessages = ("Page is locked." : pMessages params) })
                         else responder page params
 
 unlessNoDelete :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
 unlessNoDelete responder =
-  \page params ->  do cfg <- query GetConfig
+  \page params ->  do cfg <- getConfig
                       if page `elem` noDelete cfg
                          then showPage page (params { pMessages = ("Page cannot be deleted." : pMessages params) })
                          else responder page params
@@ -403,7 +383,7 @@ ifLoggedIn responder =
                           Nothing  -> do
                              loginUserForm page (params { pReferer = Just $ pUri params })
                           Just u   -> do
-                             usrs <- query AskUsers
+                             usrs <- queryAppState users
                              let e = case M.lookup u usrs of
                                            Just usr    -> uEmail usr
                                            Nothing     -> error $ "User '" ++ u ++ "' not found."
@@ -465,14 +445,20 @@ handleSourceCode = withData $ \com ->
        Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
        _                        -> [ handle isSourceCode GET showHighlightedSource ]
 
+
+-- TODO replace this with something that uses retrieve and sets mime types appropriately?
 handleAny :: Handler
 handleAny = 
   uriRest $ \uri -> let path' = uriPath uri
-                    in  do cfg <- query GetConfig
-                           let file = repositoryPath cfg </> path'
+                    in  do cfg <- getConfig
+                           -- TODO temporary
+                           fs <- getFileStore
+                           let repopath = fromMaybe "" $ fsPath fs
+                           --
+                           let file = repopath </> path'
                            exists <- liftIO $ doesFileExist file
                            if exists
-                              then fileServe [path'] (repositoryPath cfg)
+                              then fileServe [path'] (repopath)
                               else anyRequest noHandle
 
 orIfNull :: String -> String -> String
@@ -529,7 +515,8 @@ showFileAsText file params = do
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
-  files <- gitListFiles "HEAD"
+  fs <- getFileStore
+  files <- liftIO $ index fs
   let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
   if null pages
      then error "No pages found!"
@@ -540,24 +527,24 @@ randomPage _ _ = do
 
 showPage :: String -> Params -> Web Response
 showPage "" params = do
-  cfg <- query GetConfig
+  cfg <- getConfig
   showPage (frontPage cfg) params
 showPage page params = do
-  let revision = pRevision params
+  let rev = pRevision params
   mDoc <- pageAsPandoc page params
   case mDoc of
        Just d -> do
                  cont <- pandocToHtml d
                  let cont' = thediv ! [identifier "wikipage",
                                        strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ 
-                                         "?edit&revision=" ++ revision ++
-                                         (if revision == "HEAD"
+                                         "?edit&revision=" ++ rev ++
+                                         (if rev == "HEAD"
                                              then ""
-                                             else '&' : urlEncodeVars [("logMsg", "Revert to " ++ revision)]) ++ "';")] << cont
+                                             else '&' : urlEncodeVars [("logMsg", "Revert to " ++ rev)]) ++ "';")] << cont
                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
-       _      -> if revision == "HEAD"
+       _      -> if rev == "HEAD"
                     then createPage page params
-                    else error $ "Invalid revision: " ++ revision
+                    else error $ "Invalid revision: " ++ rev
 
 discussPage :: String -> Params -> Web Response
 discussPage page params = do
@@ -599,12 +586,13 @@ uploadFile _ params = do
   let fileContents = pFileContents params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
-  cfg <- query GetConfig
+  cfg <- getConfig
   let author = pUser params
   when (null author) $ fail "User must be logged in to upload a file."
   let email = pEmail params
   let overwrite = pOverwrite params
-  exists <- liftIO $ doesFileExist (repositoryPath cfg </> wikiname)
+  fs <- getFileStore
+  exists <- liftIO $ catch (latest fs wikiname >> return True) (\e -> if e == NotFound then return False else throwIO e >> return True)
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate [ (null logMsg, "Description cannot be empty.")
                         , (null origPath, "File not found.")
@@ -621,9 +609,10 @@ uploadFile _ params = do
        when (B.length fileContents > fromIntegral (maxUploadSize cfg)) $
           error "File exceeds maximum upload size"
        let dir' = takeDirectory wikiname
-       liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-       liftIO $ B.writeFile (repositoryPath cfg </> wikiname) fileContents
-       gitCommit wikiname (author, email) logMsg
+       -- TODO fill this in 
+       -- liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
+       -- liftIO $ B.writeFile (repositoryPath cfg </> wikiname) fileContents
+       -- gitCommit wikiname (author, email) logMsg $ Binary fileContents
        formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
                                , if takeExtension wikiname `elem` imageExtensions
@@ -638,11 +627,12 @@ searchResults _ params = do
   let page = "_search"
   let patterns = pPatterns params
   let limit = pLimit params
+  fs <- getFileStore
   matchLines <- if null patterns
                    then return []
-                   else liftM (map parseMatchLine . take limit . lines) (gitGrep patterns)
-  let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map fst matchLines
-  let matches = map (\f -> (f, mapMaybe (\(a,b) -> if a == f then Just b else Nothing) matchLines)) matchedFiles
+                   else liftM (take limit) $ liftIO $ search fs defaultSearchQuery{queryPatterns = patterns}
+  let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map matchResourceName matchLines
+  let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) matchedFiles
   let preamble = if null matches
                     then h3 << if null patterns
                                   then ["Please enter a search term."]
@@ -653,15 +643,8 @@ searchResults _ params = do
                       stringToHtml (" (" ++ show (length contents) ++ " matching lines)"),
                       stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
                       pre ! [theclass "matches"] << unlines contents])
-                      (reverse  $ sortBy (comparing (length . snd)) matches)
+                      (reverse $ sortBy (comparing (length . snd)) matches)
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
-
--- Auxiliary function for searchResults
-parseMatchLine :: String -> (String, String)
-parseMatchLine matchLine =
-  let (file, rest) = break (==':') matchLine
-      contents = drop 1 rest -- strip off colon
-  in  (file, contents)
 
 preview :: String -> Params -> Web Response
 preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse . encodeString . renderHtmlFragment
@@ -675,26 +658,28 @@ showFileHistory file params = showHistory file file params
 showHistory :: String -> String -> Params -> Web Response
 showHistory file page params =  do
   let since = pSince params `orIfNull` "1 year ago"
-  hist <- gitLog since "" [file]
+  -- TODO - figure out how to convert since, until - and change the Nothing, Nothing below
+  fs <- getFileStore
+  hist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
   if null hist
      then noHandle
      else do
-       let versionToHtml entry pos = 
-              li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ logRevision entry] <<
-                   [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
+       let versionToHtml rev pos = 
+              li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ revId rev] <<
+                   [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
                     thespan ! [theclass "author"] <<
-                            anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                       (logAuthor entry), stringToHtml ")", stringToHtml ": ",
-                    anchor ! [href (urlForPage page ++ "?revision=" ++ logRevision entry)] <<
-                    thespan ! [theclass "subject"] <<  logSubject entry,
+                            anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
+                                       (authorName $ revAuthor rev), stringToHtml ")", stringToHtml ": ",
+                    anchor ! [href (urlForPage page ++ "?revision=" ++ revId rev)] <<
+                    thespan ! [theclass "subject"] <<  revDescription rev,
                     noscript << ([stringToHtml " [compare with ",
-                    anchor ! [href $ urlForPage page ++ "?diff&from=" ++ logRevision entry ++
-                              "^&to=" ++ logRevision entry] << "previous"] ++
+                    anchor ! [href $ urlForPage page ++ "?diff&from=" ++ revId rev ++
+                              "^&to=" ++ revId rev] << "previous"] ++
                                  (if pos /= 1
                                      then [primHtmlChar "nbsp", primHtmlChar "bull",
                                            primHtmlChar "nbsp",
                                            anchor ! [href $ urlForPage page ++ "?diff&from=" ++
-                                                     logRevision entry ++ "&to=HEAD"] << "current" ]
+                                                     revId rev ++ "&to=HEAD"] << "current" ]
                                      else []) ++
                                  [stringToHtml "]"])]
        let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
@@ -705,18 +690,23 @@ showActivity _ params = do
   let page = "_activity"
   let since = pSince params `orIfNull` "1 month ago"
   let forUser = pForUser params
-  hist <- gitLog since forUser []
-  let filesFor files revis = intersperse (primHtmlChar "nbsp") $ map
+  -- TODO figure out how to convert since below:
+  fs <- getFileStore
+  hist <- liftIO $ history fs [] (TimeRange Nothing Nothing)
+  let fileFromChange (Added f) = f
+      fileFromChange (Modified f) = f
+      fileFromChange (Deleted f) = f 
+  let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
                              (\file -> anchor ! [href $ urlForPage file ++ "?diff&from=" ++ revis ++ "^" ++ "&to=" ++ revis] << file) $ map
-                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) files
+                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes 
   let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
-  let contents = ulist ! [theclass "history"] << map (\entry -> li <<
-                           [thespan ! [theclass "date"] << logDate entry, stringToHtml " (",
+  let contents = ulist ! [theclass "history"] << map (\rev -> li <<
+                           [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
                             thespan ! [theclass "author"] <<
-                                    anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", logAuthor entry)]] <<
-                                               (logAuthor entry), stringToHtml "): ",
-                            thespan ! [theclass "subject"] << logSubject entry, stringToHtml " (",
-                            thespan ! [theclass "files"] << filesFor (logFiles entry) (logRevision entry),
+                                    anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
+                                               (authorName $ revAuthor rev), stringToHtml "): ",
+                            thespan ! [theclass "subject"] << revDescription rev, stringToHtml " (",
+                            thespan ! [theclass "files"] << filesFor (revChanges rev) (revId rev),
                             stringToHtml ")"]) hist
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
 
@@ -730,7 +720,8 @@ showDiff :: String -> String -> Params -> Web Response
 showDiff file page params = do
   let from = pFrom params
   let to = pTo params
-  rawDiff <- gitDiff file from to
+  fs <- getFileStore
+  rawDiff <- liftIO $ diff fs file from to
   let diffLineToHtml l = case head l of
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
@@ -742,22 +733,25 @@ showDiff file page params = do
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
-  let revision = pRevision params
+  let rev = pRevision params
   let messages = pMessages params
-  raw <- case pEditedText params of
-              Nothing -> gitCatFile revision (pathForPage page)
-              Just t  -> return $ Just t
-  let contents = case raw of
-                      Nothing -> ""
-                      Just c  -> c
-  sha1 <- case (pSHA1 params) of
-               ""  -> gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
-               s   -> return s
+  fs <- getFileStore
+  (mbRev, raw) <- case pEditedText params of
+                       Nothing -> liftIO $ catch
+                                          (do c <- liftIO $ retrieve fs (pathForPage page) (Just rev)
+                                              r <- liftIO $ revision fs rev
+                                              return $ (Just $ revId r, c))
+                                          (\e -> if e == NotFound
+                                                    then return (Nothing, "")
+                                                    else throwIO e)
+                       Just t -> return (if null (pSHA1 params) then Nothing else Just (pSHA1 params), t)
   let logMsg = pLogMsg params
-  let sha1Box = textfield "sha1" ! [thestyle "display: none", value sha1]
+  let sha1Box = case mbRev of
+                 Just r  -> textfield "sha1" ! [thestyle "display: none", value r]
+                 Nothing -> noHtml
   let editForm = gui (urlForPage page) ! [identifier "editform"] <<
                    [sha1Box,
-                    textarea ! [cols "80", name "editedText", identifier "editedText"] << contents, br,
+                    textarea ! [cols "80", name "editedText", identifier "editedText"] << raw, br,
                     label << "Description of changes:", br,
                     textfield "logMsg" ! [value logMsg],
                     submit "update" "Save", primHtmlChar "nbsp",
@@ -782,10 +776,10 @@ deletePage :: String -> Params -> Web Response
 deletePage page params = do
   if pConfirm params
      then do
-       let author = pUser params
-       when (null author) $ fail "User must be logged in to delete page."
-       let email = pEmail params
-       gitRemove (pathForPage page) (author, email) "Deleted from web."
+       let author = Author { authorName = pUser params, authorEmail = pEmail params }
+       when (null $ authorName author) $ fail "User must be logged in to delete page."
+       fs <- getFileStore
+       liftIO $ delete fs (pathForPage page) author "Deleted using web interface."
        seeOther "/" $ toResponse $ p << "Page deleted"
      else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
 
@@ -799,47 +793,37 @@ updatePage page params = do
   let email = pEmail params
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
+  fs <- getFileStore
   if null logMsg
      then editPage page (params { pMessages = ["Description cannot be empty."] })
      else do
-       cfg <- query GetConfig
+       cfg <- getConfig
        if length editedText > fromIntegral (maxUploadSize cfg)
           then error "Page exceeds maximum size."
           else return ()
-       currentSHA1 <- gitGetSHA1 (pathForPage page) >>= return . fromMaybe ""
        -- ensure that every file has a newline at the end, to avoid "No newline at eof" messages in diffs
        let editedText' = if null editedText || last editedText == '\n' then editedText else editedText ++ "\n"
        -- check SHA1 in case page has been modified, merge
-       if currentSHA1 == oldSHA1
-          then do
-            let dir' = takeDirectory page
-            liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-            liftIO $ writeFile ((repositoryPath cfg) </> pathForPage page) editedText'
-            gitCommit (pathForPage page) (author, email) logMsg
-            seeOther (urlForPage page) $ toResponse $ p << "Page updated"
-          else do -- there have been conflicting changes
-            original <- gitCatFile oldSHA1 (pathForPage page) >>= return . fromJust
-            latest <- gitCatFile currentSHA1 (pathForPage page) >>= return . fromJust
-            let pagePath = repositoryPath cfg </> pathForPage page
-            let [textTmp, originalTmp, latestTmp] = map (pagePath ++) [".edited",".original",".latest"]
-            liftIO $ writeFile textTmp editedText'
-            liftIO $ writeFile originalTmp original
-            liftIO $ writeFile latestTmp latest
-            mergeText <- gitMergeFile (pathForPage page ++ ".edited") (pathForPage page ++ ".original") (pathForPage page ++ ".latest")
-            liftIO $ mapM removeFile [textTmp, originalTmp, latestTmp]
-            let mergeMsg = "The page has been edited since you checked it out. " ++
-                           "Changes have been merged into your edits below. " ++
-                           "Please resolve conflicts and Save."
-            editPage page (params { pEditedText = Just mergeText
-                                  , pRevision = "HEAD"
-                                  , pSHA1 = currentSHA1
-                                  , pMessages = [mergeMsg] })
+       modifyRes <-    if null oldSHA1
+                          then liftIO $ create fs (pathForPage page) Author{authorName = author, authorEmail = ""} logMsg editedText' >> return (Right ())
+                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 Author{authorName = author, authorEmail = ""} logMsg editedText')
+                                     (\e -> if e == Unchanged then return (Right ()) else throwIO e)
+       case modifyRes of
+            Right ()       -> seeOther (urlForPage page) $ toResponse $ p << "Page updated"
+            Left (MergeInfo mergedWithRev conflicts mergedText) -> do
+               let mergeMsg = "The page has been edited since you checked it out. " ++
+                              "Changes have been merged into your edits below. " ++
+                              "Please resolve conflicts and Save."
+               editPage page (params { pEditedText = Just mergedText
+                                     , pRevision = "HEAD"
+                                     , pSHA1 = revId mergedWithRev
+                                     , pMessages = [mergeMsg] })
 
 indexPage :: String -> Params -> Web Response
 indexPage _ params = do
   let page = "_index"
-  let revision = pRevision params
-  files <- gitListFiles revision
+  fs <- getFileStore
+  files <- liftIO $ index fs -- TODO allow time ranges
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 
@@ -880,7 +864,7 @@ refToUrl []           = ""
 -- | Converts pandoc document to HTML.
 pandocToHtml :: MonadIO m => Pandoc -> m Html
 pandocToHtml pandocContents = do
-  cfg <- query GetConfig
+  cfg <- getConfig
   return $ writeHtml (defaultWriterOptions { writerStandalone = False
                                            , writerHTMLMathMethod = JsMath (Just "/js/jsMath/easy/load.js")
                                            , writerTableOfContents = tableOfContents cfg
@@ -909,11 +893,15 @@ defaultPageLayout = PageLayout
 -- | Returns formatted page
 formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
 formattedPage layout page params htmlContents = do
-  let revision = pRevision params
-  let path' = if isPage page then pathForPage page else page 
-  sha1 <- if revision == "HEAD"
-             then gitGetSHA1 path' >>= return . fromMaybe ""
-             else return revision
+  let rev = pRevision params
+  let path' = if isPage page then pathForPage page else page
+  fs <- getFileStore
+  sha1 <- if rev == "HEAD"
+             then liftIO $ catch (latest fs (pathForPage page))
+                                 (\e -> if e == NotFound
+                                           then return ""
+                                           else throwIO e)
+             else return rev
   user <- getLoggedInUser params
   let javascriptlinks = if null (pgScripts layout)
                            then ""
@@ -925,20 +913,20 @@ formattedPage layout page params htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let origPage s = if ":discuss" `isSuffixOf` s then take (length s - 8) s else s
-  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ revision ++ "&history"] << "history"
+  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ rev ++ "&history"] << "history"
       linkForTab DiffTab    = Just $ tabli DiffTab << anchor ! [href ""] << "diff"
       linkForTab ViewTab    = if isDiscussPage page
                                  then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
-                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if revision == "HEAD" then "" else "?revision=" ++ revision] << "view"
+                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if rev == "HEAD" then "" else "?revision=" ++ rev] << "view"
       linkForTab DiscussTab = if isDiscussPage page
                                  then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
                                  else if isPage page
                                       then Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
                                       else Nothing
       linkForTab EditTab    = if isPage page
-                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ revision ++
-                                              if revision == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ revision)]] <<
-                                                if revision == "HEAD" then "edit" else "revert"
+                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ rev ++
+                                              if rev == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ rev)]] <<
+                                                if rev == "HEAD" then "edit" else "revert"
                                  else Nothing
   let tabs = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
   let searchbox = gui ("/_search") ! [identifier "searchform"] <<
@@ -960,7 +948,7 @@ formattedPage layout page params htmlContents = do
                    (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
                    (if pPrintable params then T.setAttribute "printable" "true" else id) $
                    (if pRevision params == "HEAD" then id else T.setAttribute "nothead" "true") $
-                   T.setAttribute "revision" revision $
+                   T.setAttribute "revision" rev $
                    T.setAttribute "sha1" sha1 $
                    T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
                    T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
@@ -994,10 +982,10 @@ loginUser page params = do
   let uname = pUsername params
   let pword = pPassword params
   let destination = pDestination params
-  allowed <- query $ AuthUser uname pword
+  allowed <- authUser uname pword
   if allowed
     then do
-      key <- update $ NewSession (SessionData uname)
+      key <- newSession (SessionData uname)
       addCookie sessionTime (mkCookie "sid" (show key))
       addCookie 0 (mkCookie "destination" "")   -- remove unneeded destination cookie
       seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
@@ -1010,14 +998,14 @@ logoutUser _ params = do
   let destination = substitute " " "%20" $ fromMaybe "/" $ pReferer params
   case key of
        Just k  -> do
-         update $ DelSession k
+         delSession k
          addCookie 0 (mkCookie "sid" "")  -- make cookie expire immediately, effectively deleting it
        Nothing -> return ()
   seeOther destination $ toResponse "You have been logged out."
 
 registerForm :: Web Html
 registerForm = do
-  cfg <- query GetConfig
+  cfg <- getConfig
   let accessQ = case accessQuestion cfg of
                       Nothing          -> noHtml
                       Just (prompt, _) -> label << prompt +++ br +++
@@ -1055,8 +1043,8 @@ registerUser _ params = do
   let email = pEmail params
   let fakeField = pFullName params
   let recaptcha = pRecaptcha params
-  taken <- query $ IsUser uname
-  cfg <- query GetConfig
+  taken <- isUser uname
+  cfg <- getConfig
   let isValidAccessCode = case accessQuestion cfg of
         Nothing           -> True
         Just (_, answers) -> accessCode `elem` answers
@@ -1081,7 +1069,7 @@ registerUser _ params = do
   if null errors
      then do
        user <- liftIO $ mkUser uname email pword
-       update $ AddUser uname user
+       addUser uname user
        loginUser "/" (params { pUsername = uname, pPassword = pword, pEmail = email })
      else registerForm >>=
           formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
@@ -1138,11 +1126,13 @@ respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toRespons
 
 respondODT :: String -> Pandoc -> Web Response
 respondODT page doc = do
-  cfg <- query GetConfig
+  cfg <- getConfig
   let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
+  fs <- getFileStore
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-                saveOpenDocumentAsODT tempfile (repositoryPath cfg) openDoc
+                let repoPath = fromMaybe "" $ fsPath fs
+                saveOpenDocumentAsODT tempfile repoPath openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $ setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
 
@@ -1169,8 +1159,9 @@ exportBox _ _ = noHtml
 
 rawContents :: String -> Params -> Web (Maybe String)
 rawContents file params = do
-  let revision = pRevision params `orIfNull` "HEAD"
-  gitCatFile revision file
+  let rev = pRevision params `orIfNull` "HEAD"
+  fs <- getFileStore
+  liftIO $ catch (retrieve fs file (Just rev) >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
 
 removeRawHtmlBlock :: Block -> Block
 removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
@@ -1205,9 +1196,9 @@ withTempDir baseName = bracket (createTempDir 0 baseName) (removeDirectoryRecurs
 -- | Create a temporary directory with a unique name.
 createTempDir :: Integer -> FilePath -> IO FilePath
 createTempDir num baseName = do
-  sysTempDir <- catch getTemporaryDirectory (\_ -> return ".")
+  sysTempDir <- getTemporaryDirectory
   let dirName = sysTempDir </> baseName <.> show num
-  catch (createDirectory dirName >> return dirName) $
+  liftIO $ catch (createDirectory dirName >> return dirName) $
       \e -> if isAlreadyExistsError e
                then createTempDir (num + 1) baseName
                else ioError e

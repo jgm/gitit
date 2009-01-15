@@ -244,16 +244,6 @@ Wiki links and formatting
 
 For instructions on editing pages and creating links, see the "Help" page.
 
-Upgrading and `_local`
-======================
-
-HAppS uses the `_local` subdirectory to make state persistent.
-Gitit does not rely on this persistence; the configuration and user database
-are read from files on startup.  So, it is okay to delete the `_local`
-subdirectory.  You may need to do this after you have upgraded to a new
-version of gitit, with a different `AppState` data structure, because the
-new gitit will not be able to read the old gitit's state.
-
 Character encodings
 ===================
 

@@ -42,15 +42,14 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
 Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
-  other-modules:     Gitit.State, Gitit.Git, Gitit.HAppS, Gitit.Shell
+  other-modules:     Gitit.State, Gitit.HAppS
                      Paths_gitit
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
                      utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
-                     HAppS-State >= 0.9.3 && < 0.9.4,
-                     HAppS-Data >= 0.9.3 && < 0.9.4, SHA > 1, HTTP,
-                     HStringTemplate, random, network >= 2.1.0.0, recaptcha >= 0.1
+                     SHA > 1, HTTP, HStringTemplate, random, network >= 2.1.0.0,
+                     recaptcha >= 0.1, filestore
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   ghc-options:       -Wall -threaded
