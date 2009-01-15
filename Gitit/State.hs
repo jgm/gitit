@@ -1,7 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# LANGUAGE TemplateHaskell , FlexibleInstances,
-             UndecidableInstances, OverlappingInstances,
-             MultiParamTypeClasses, GeneralizedNewtypeDeriving #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -28,19 +24,34 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Gitit.State where
 
 import qualified Data.Map as M
-import Control.Monad.Reader
-import Control.Monad.State (modify, MonadState)
-import Data.Generics
-import HAppS.State
-import HAppS.Data
-import GHC.Conc (STM)
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
+import Data.IORef
+import System.IO.Unsafe (unsafePerformIO)
+import Control.Monad.Trans (MonadIO(), liftIO)
+import Control.Monad (replicateM, liftM)
+import Data.FileStore
+
+appstate :: IORef AppState
+appstate = unsafePerformIO $! newIORef $ AppState { sessions = Sessions M.empty
+                                                  , users = M.empty
+                                                  , config = defaultConfig
+                                                  , filestore = gitFileStore "wikidata" }
+
+updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
+updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
+
+queryAppState :: MonadIO m => (AppState -> a) -> m a
+queryAppState fn = liftIO $! readIORef appstate >>= return . fn
+
+data Repository = Git FilePath 
+                | Darcs FilePath 
+                deriving (Read, Show)
 
 -- | Data structure for information read from config file.
 data Config = Config {
-  repositoryPath      :: FilePath,                 -- path of git repository for pages
+  repository          :: Repository,               -- file store for pages
   userFile            :: FilePath,                 -- path of users database 
   templateFile        :: FilePath,                 -- path of page template file
   staticDir           :: FilePath,                 -- path of static directory
@@ -57,11 +68,11 @@ data Config = Config {
   useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
   recaptchaPublicKey  :: String,
   recaptchaPrivateKey :: String
-  } deriving (Read, Show,Eq,Typeable,Data)
+  } deriving (Read, Show)
 
 defaultConfig :: Config
 defaultConfig = Config {
-  repositoryPath      = "wikidata",
+  repository          = Git "wikidata",
   userFile            = "gitit-users",
   templateFile        = "template.html",
   staticDir           = "static",
@@ -82,64 +93,27 @@ type SessionKey = Integer
 
 data SessionData = SessionData {
   sessionUser :: String
-} deriving (Read,Show,Eq,Typeable,Data)
+} deriving (Read,Show,Eq)
 
 data Sessions a = Sessions {unsession::M.Map SessionKey a}
-  deriving (Read,Show,Eq,Typeable,Data)
+  deriving (Read,Show,Eq)
 
 -- Password salt hashedPassword
 data Password = Password { pSalt :: String, pHashed :: String }
-  deriving (Read,Show,Eq,Typeable,Data)
+  deriving (Read,Show,Eq)
 
 data User = User {
   uUsername :: String,
   uPassword :: Password,
   uEmail    :: String
-} deriving (Show,Read,Typeable,Data)
+} deriving (Show,Read)
 
 data AppState = AppState {
-  sessions :: Sessions SessionData,
-  users    :: M.Map String User,
-  config   :: Config
-} deriving (Show,Read,Typeable,Data)
-
-instance Version SessionData
-instance Version (Sessions a)
-instance Version Config
-
-$(deriveSerialize ''SessionData)
-$(deriveSerialize ''Sessions)
-$(deriveSerialize ''Config)
-
-instance Version AppState
-instance Version User
-instance Version Password
-
-$(deriveSerialize ''Password)
-$(deriveSerialize ''User)
-$(deriveSerialize ''AppState)
-
-instance Component AppState where
-  type Dependencies AppState = End
-  initialValue = AppState {sessions = (Sessions M.empty), users = M.empty, config = defaultConfig}
-
-askUsers :: MonadReader AppState m => m (M.Map String User)
-askUsers = return . users =<< ask
-
-askSessions::MonadReader AppState m => m (Sessions SessionData)
-askSessions = return . sessions =<< ask
-
-setUsers :: MonadState AppState m => M.Map String User -> m ()
-setUsers newusers = modify $ \s -> s {users = newusers}
-
-modUsers :: MonadState AppState m => (M.Map String User -> M.Map String User) -> m ()
-modUsers f = modify $ \s -> s {users = f $ users s}
-
-modSessions :: MonadState AppState m => (Sessions SessionData -> Sessions SessionData) -> m ()
-modSessions f = modify $ \s -> s {sessions = f $ sessions s}
-
-isUser :: MonadReader AppState m => String -> m Bool
-isUser name = liftM (M.member name) askUsers
+  sessions  :: Sessions SessionData,
+  users     :: M.Map String User,
+  config    :: Config,
+  filestore :: FileStore
+}
 
 mkUser :: String   -- username
        -> String   -- email
@@ -157,15 +131,9 @@ genSalt = replicateM 32 $ randomRIO ('0','z')
 hashPassword :: String -> String -> String
 hashPassword salt pass = showDigest $ sha512 $ L.fromString $ salt ++ pass
 
-addUser :: MonadState AppState m => String -> User -> m ()
-addUser name = modUsers . M.insert name
-
-delUser :: MonadState AppState m => String -> m ()
-delUser = modUsers . M.delete
-
-authUser :: MonadReader AppState m => String -> String -> m Bool
+authUser :: MonadIO m => String -> String -> m Bool
 authUser name pass = do
-  users' <- askUsers
+  users' <- queryAppState users
   case M.lookup name users' of
        Just u  -> do
          let salt = pSalt $ uPassword u
@@ -173,45 +141,32 @@ authUser name pass = do
          return $ hashed == hashPassword salt pass
        Nothing -> return False 
 
-listUsers :: MonadReader AppState m => m [String]
-listUsers = liftM M.keys askUsers
+isUser :: MonadIO m => String -> m Bool
+isUser name = liftM (M.member name) $ queryAppState users
 
-numUsers ::  MonadReader AppState m => m Int
-numUsers = liftM length listUsers
+addUser :: MonadIO m => String -> User -> m () 
+addUser uname user = updateAppState $ \s -> s { users = M.insert uname user (users s) }
 
-isSession :: MonadReader AppState m => SessionKey -> m Bool
-isSession key = liftM (M.member key . unsession) askSessions
+isSession :: MonadIO m => SessionKey -> m Bool
+isSession key = liftM (M.member key . unsession) $ queryAppState sessions
 
-setSession :: (MonadState AppState m) => SessionKey -> SessionData -> m ()
-setSession key u = do
-  modSessions $ Sessions . M.insert key u . unsession
-  return ()
+setSession :: MonadIO m => SessionKey -> SessionData -> m ()
+setSession key u = updateAppState $ \s -> s { sessions = Sessions . M.insert key u . unsession $ sessions s }
 
-newSession :: (MonadState AppState (Ev (t GHC.Conc.STM)), MonadTrans t, Monad (t GHC.Conc.STM)) =>
-              SessionData -> Ev (t GHC.Conc.STM) SessionKey
+newSession :: MonadIO m => SessionData -> m SessionKey
 newSession u = do
-  key <- getRandom
+  key <- liftIO $ randomRIO (0, 1000000000)
   setSession key u
   return key
 
-delSession :: (MonadState AppState m) => SessionKey -> m ()
-delSession key = do
-  modSessions $ Sessions . M.delete key . unsession
-  return ()
+delSession :: MonadIO m => SessionKey -> m ()
+delSession key = updateAppState $ \s -> s { sessions = Sessions . M.delete key . unsession $ sessions s }
 
-getSession::SessionKey -> Query AppState (Maybe SessionData)
-getSession key = liftM (M.lookup key . unsession) askSessions
+getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
+getSession key = queryAppState $ M.lookup key . unsession . sessions
 
-getConfig :: Query AppState Config
-getConfig = return . config =<< ask
+getConfig :: MonadIO m => m Config
+getConfig = queryAppState config
 
-setConfig :: MonadState AppState m => Config ->  m ()
-setConfig conf = modify $ \s -> s {config = conf}
-
-numSessions:: Proxy AppState -> Query AppState Int
-numSessions = proxyQuery $ liftM (M.size . unsession) askSessions
-
-$(mkMethods ''AppState ['askUsers, 'setUsers, 'addUser, 'delUser, 'authUser, 'isUser, 'listUsers, 'numUsers,
-             'isSession, 'setSession, 'getSession, 'newSession, 'delSession, 'numSessions,
-             'setConfig, 'getConfig])
-
+getFileStore :: MonadIO m => m FileStore
+getFileStore = queryAppState filestore
