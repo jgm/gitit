@@ -1,5 +1,5 @@
 Config {
-repositoryPath      = "wikidata",
+repository          = Git "wikidata",
 userFile            = "gitit-users",
 templateFile        = "template.html",
 staticDir           = "static",
