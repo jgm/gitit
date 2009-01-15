@@ -76,20 +76,16 @@ main = do
   conf <- foldM handleFlag defaultConfig options
   gitPath <- findExecutable "git"
   when (isNothing gitPath) $ error "'git' program not found in system path."
-  updateAppState (\s -> s{ filestore = case repository conf of
-                                        Git fs   -> gitFileStore fs
-                                        Darcs fs -> darcsFileStore fs })
-  initializeWiki conf
-  -- initialize template
-  templ <- liftIO $ readFile (templateFile conf)
-  writeIORef template (T.newSTMP templ)
-  updateAppState (\s -> s{ config = conf })
   -- read user file and update state
   userFileExists <- doesFileExist $ userFile conf
   users' <- if userFileExists
                then readFile (userFile conf) >>= (return . M.fromList . read)
                else return M.empty
-  updateAppState (\s -> s{ users = users' })
+  initializeAppState conf users'
+  initializeWiki conf
+  -- initialize template
+  templ <- liftIO $ readFile (templateFile conf)
+  writeIORef template (T.newSTMP templ)
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
