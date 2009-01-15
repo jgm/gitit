@@ -34,10 +34,18 @@ import Control.Monad (replicateM, liftM)
 import Data.FileStore
 
 appstate :: IORef AppState
-appstate = unsafePerformIO $! newIORef $ AppState { sessions = Sessions M.empty
-                                                  , users = M.empty
-                                                  , config = defaultConfig
-                                                  , filestore = gitFileStore "wikidata" }
+appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
+                                                  , users = undefined
+                                                  , config = undefined
+                                                  , filestore = undefined }
+
+initializeAppState :: MonadIO m => Config -> M.Map String User -> m ()
+initializeAppState conf users' = updateAppState $ \s -> s { sessions  = Sessions M.empty
+                                                          , users     = users'
+                                                          , config    = conf
+                                                          , filestore = case repository conf of
+                                                                             Git fs   -> gitFileStore fs
+                                                                             Darcs fs -> darcsFileStore fs }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
