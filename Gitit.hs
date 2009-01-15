@@ -36,7 +36,7 @@ import Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
-import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
+import Data.Maybe (fromMaybe, fromJust, mapMaybe, isJust, isNothing)
 import Data.ByteString.UTF8 (fromString, toString)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
 import qualified Data.Map as M
@@ -242,7 +242,7 @@ data Recaptcha = Recaptcha {
 data Params = Params { pUsername     :: String
                      , pPassword     :: String
                      , pPassword2    :: String
-                     , pRevision     :: String
+                     , pRevision     :: Maybe String
                      , pDestination  :: String
                      , pReferer      :: Maybe String
                      , pUri          :: String
@@ -253,8 +253,8 @@ data Params = Params { pUsername     :: String
                      , pPatterns     :: [String]
                      , pEditedText   :: Maybe String
                      , pMessages     :: [String]
-                     , pFrom         :: String
-                     , pTo           :: String
+                     , pFrom         :: Maybe String
+                     , pTo           :: Maybe String
                      , pFormat       :: String
                      , pSHA1         :: String
                      , pLogMsg       :: String
@@ -278,7 +278,7 @@ instance FromData Params where
          un <- look "username"       `mplus` return ""
          pw <- look "password"       `mplus` return ""
          p2 <- look "password2"      `mplus` return ""
-         rv <- look "revision"       `mplus` return "HEAD"
+         rv <- (look "revision" >>= return . Just) `mplus` return Nothing
          fu <- look "forUser"        `mplus` return ""
          si <- look "since"          `mplus` return ""
          ds <- (lookCookieValue "destination") `mplus` return "/"
@@ -286,8 +286,8 @@ instance FromData Params where
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
-         fm <- look "from"           `mplus` return "HEAD"
-         to <- look "to"             `mplus` return "HEAD"
+         fm <- (look "from" >>= return . Just) `mplus` return Nothing
+         to <- (look "to" >>= return . Just)   `mplus` return Nothing
          et <- (look "editedText" >>= return . Just . filter (/= '\r')) `mplus` return Nothing
          fo <- look "format"         `mplus` return ""
          sh <- look "sha1"           `mplus` return ""
@@ -533,14 +533,14 @@ showPage page params = do
                  cont <- pandocToHtml d
                  let cont' = thediv ! [identifier "wikipage",
                                        strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ 
-                                         "?edit&revision=" ++ rev ++
-                                         (if rev == "HEAD"
-                                             then ""
-                                             else '&' : urlEncodeVars [("logMsg", "Revert to " ++ rev)]) ++ "';")] << cont
+                                         "?edit" ++
+                                         (case rev of
+                                             Nothing -> ""
+                                             Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++ "';")] << cont
                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
-       _      -> if rev == "HEAD"
-                    then createPage page params
-                    else error $ "Invalid revision: " ++ rev
+       _      -> case rev of
+                    Nothing -> createPage page params
+                    Just r  -> error $ "Invalid revision: " ++ r
 
 discussPage :: String -> Params -> Web Response
 discussPage page params = do
@@ -722,7 +722,7 @@ showDiff file page params = do
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
                                 _     -> thespan << [tail l, "\n"]
-  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ from) +++
+  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from of { Just r -> r; Nothing -> "latest" }) +++
                       pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
   formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
                 page (params { pRevision = to }) formattedDiff
@@ -734,8 +734,10 @@ editPage page params = do
   fs <- getFileStore
   (mbRev, raw) <- case pEditedText params of
                        Nothing -> liftIO $ catch
-                                          (do c <- liftIO $ retrieve fs (pathForPage page) (Just rev)
-                                              r <- liftIO $ revision fs rev
+                                          (do c <- liftIO $ retrieve fs (pathForPage page) rev
+                                              r <- liftIO $ case rev of
+                                                                 Nothing  -> latest fs (pathForPage page) >>= revision fs
+                                                                 Just r   -> revision fs r
                                               return $ (Just $ revId r, c))
                                           (\e -> if e == NotFound
                                                     then return (Nothing, "")
@@ -811,7 +813,7 @@ updatePage page params = do
                               "Changes have been merged into your edits below. " ++
                               "Please resolve conflicts and Save."
                editPage page (params { pEditedText = Just mergedText
-                                     , pRevision = "HEAD"
+                                     -- TODO I think this can be removed: , pRevision = "HEAD"
                                      , pSHA1 = revId mergedWithRev
                                      , pMessages = [mergeMsg] })
 
@@ -892,12 +894,12 @@ formattedPage layout page params htmlContents = do
   let rev = pRevision params
   let path' = if isPage page then pathForPage page else page
   fs <- getFileStore
-  sha1 <- if rev == "HEAD"
-             then liftIO $ catch (latest fs (pathForPage page))
-                                 (\e -> if e == NotFound
-                                           then return ""
-                                           else throwIO e)
-             else return rev
+  sha1 <- case rev of
+             Nothing -> liftIO $ catch (latest fs (pathForPage page))
+                                       (\e -> if e == NotFound
+                                                 then return ""
+                                                 else throwIO e)
+             Just r  -> return r
   user <- getLoggedInUser params
   let javascriptlinks = if null (pgScripts layout)
                            then ""
@@ -909,20 +911,24 @@ formattedPage layout page params htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let origPage s = if ":discuss" `isSuffixOf` s then take (length s - 8) s else s
-  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?revision=" ++ rev ++ "&history"] << "history"
+  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?history" ++ 
+                                                                    case rev of { Just r -> "&revision" ++ r; Nothing -> "" }] << "history"
       linkForTab DiffTab    = Just $ tabli DiffTab << anchor ! [href ""] << "diff"
       linkForTab ViewTab    = if isDiscussPage page
                                  then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
-                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++ if rev == "HEAD" then "" else "?revision=" ++ rev] << "view"
+                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++
+                                                                    case rev of { Just r -> "?revision=" ++ r; Nothing -> "" }] << "view"
       linkForTab DiscussTab = if isDiscussPage page
                                  then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
                                  else if isPage page
                                       then Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
                                       else Nothing
       linkForTab EditTab    = if isPage page
-                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit&revision=" ++ rev ++
-                                              if rev == "HEAD" then "" else "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ rev)]] <<
-                                                if rev == "HEAD" then "edit" else "revert"
+                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit" ++
+                                              (case rev of
+                                                    Just r   -> "&revision=" ++ r ++ "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ r)]
+                                                    Nothing  -> "")] <<
+                                             if isNothing rev then "edit" else "revert"
                                  else Nothing
   let tabs = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
   let searchbox = gui ("/_search") ! [identifier "searchform"] <<
@@ -943,8 +949,8 @@ formattedPage layout page params htmlContents = do
                    (if isPage page then T.setAttribute "ispage" "true" else id) $
                    (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
                    (if pPrintable params then T.setAttribute "printable" "true" else id) $
-                   (if pRevision params == "HEAD" then id else T.setAttribute "nothead" "true") $
-                   T.setAttribute "revision" rev $
+                   (if isJust rev then id else T.setAttribute "nothead" "true") $
+                   (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
                    T.setAttribute "sha1" sha1 $
                    T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
                    T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
@@ -1146,18 +1152,19 @@ exportFormats = [ ("LaTeX",     respondLaTeX)
 
 exportBox :: String -> Params -> Html
 exportBox page params | isPage page =
-   gui (urlForPage page) ! [identifier "exportbox"] << 
-     [ textfield "revision" ! [thestyle "display: none;", value (pRevision params)]
-     , select ! [name "format"] <<
-         map ((\f -> option ! [value f] << f) . fst) exportFormats
-     , submit "export" "Export" ]
+  let rev = pRevision params
+  in  gui (urlForPage page) ! [identifier "exportbox"] << 
+        ([ textfield "revision" ! [thestyle "display: none;", value (fromJust rev)] | isJust rev ] ++
+         [ select ! [name "format"] <<
+             map ((\f -> option ! [value f] << f) . fst) exportFormats
+         , submit "export" "Export" ])
 exportBox _ _ = noHtml
 
 rawContents :: String -> Params -> Web (Maybe String)
 rawContents file params = do
-  let rev = pRevision params `orIfNull` "HEAD"
+  let rev = pRevision params
   fs <- getFileStore
-  liftIO $ catch (retrieve fs file (Just rev) >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
+  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
 
 removeRawHtmlBlock :: Block -> Block
 removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
