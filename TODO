@@ -1,3 +1,10 @@
+filestore-specific:
+
+_ get rid of use of git's ^ suffix in history and diffs
+_ get search working
+
+--------
+
 - add:  popular pages?  pages last visited?
 
 - add "related changes" to history page (like activity, but looks at
