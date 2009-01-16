@@ -175,6 +175,12 @@ accessible at the url `/img/foo.jpg`. Pandoc creates three subdirectories
 of `static`, `css`, `img`, and `js`, which include the icons, stylesheets,
 and javascripts it uses.
 
+Note:  if you set `staticDir` to be a subdirectory of `repositoryPath`,
+and then add the files in the static directory to your repository, you
+can ensure that others who clone your wiki repository get these files
+as well.  It will not be possible to modify these files using the web
+interface, but they will be modifiable via git.
+
 Changing the theme
 ------------------
 
