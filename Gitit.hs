@@ -27,7 +27,6 @@ import System.IO (stderr)
 import System.IO.Error (isAlreadyExistsError)
 import Control.Exception (bracket, throwIO, catch)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
-import System.Process
 import System.Directory
 import System.Time
 import Control.Concurrent
@@ -55,6 +54,7 @@ import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
 import Data.IORef
+import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime)
 import System.IO.Unsafe (unsafePerformIO)
 import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
@@ -247,7 +247,7 @@ data Params = Params { pUsername     :: String
                      , pReferer      :: Maybe String
                      , pUri          :: String
                      , pForUser      :: String
-                     , pSince        :: String
+                     , pSince        :: Maybe DateTime
                      , pRaw          :: String
                      , pLimit        :: Int
                      , pPatterns     :: [String]
@@ -280,7 +280,7 @@ instance FromData Params where
          p2 <- look "password2"      `mplus` return ""
          rv <- (look "revision" >>= return . Just) `mplus` return Nothing
          fu <- look "forUser"        `mplus` return ""
-         si <- look "since"          `mplus` return ""
+         si <- (look "since" >>= return . parseDateTime "%Y-%m-%d") `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- (lookCookieValue "destination") `mplus` return "/"
          ra <- look "raw"            `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
@@ -653,10 +653,13 @@ showFileHistory file params = showHistory file file params
 
 showHistory :: String -> String -> Params -> Web Response
 showHistory file page params =  do
-  let since = pSince params `orIfNull` "1 year ago"
-  -- TODO - figure out how to convert since, until - and change the Nothing, Nothing below
+  currTime <- liftIO getCurrentTime
+  let oneYearAgo = addMinutes (-1 * 60 * 24 * 365) currTime
+  let since = case pSince params of
+                   Nothing -> Just oneYearAgo
+                   Just t  -> Just t
   fs <- getFileStore
-  hist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
+  hist <- liftIO $ history fs [file] (TimeRange since Nothing)
   if null hist
      then noHandle
      else do
@@ -684,11 +687,14 @@ showHistory file page params =  do
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
   let page = "_activity"
-  let since = pSince params `orIfNull` "1 month ago"
+  currTime <- liftIO getCurrentTime
+  let oneMonthAgo = addMinutes (-1 * 60 * 24 * 30) currTime
+  let since = case pSince params of
+                   Nothing -> Just oneMonthAgo
+                   Just t  -> Just t
   let forUser = pForUser params
-  -- TODO figure out how to convert since below:
   fs <- getFileStore
-  hist <- liftIO $ history fs [] (TimeRange Nothing Nothing)
+  hist <- liftIO $ history fs [] (TimeRange since Nothing)
   let fileFromChange (Added f) = f
       fileFromChange (Modified f) = f
       fileFromChange (Deleted f) = f 
