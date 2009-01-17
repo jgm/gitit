@@ -697,9 +697,9 @@ showActivity _ params = do
   hist <- liftIO $ history fs [] (TimeRange since Nothing)
   let fileFromChange (Added f) = f
       fileFromChange (Modified f) = f
-      fileFromChange (Deleted f) = f 
+      fileFromChange (Deleted f) = f
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
-                             (\file -> anchor ! [href $ urlForPage file ++ "?diff&from=" ++ revis ++ "^" ++ "&to=" ++ revis] << file) $ map
+                             (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
                              (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes 
   let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
   let contents = ulist ! [theclass "history"] << map (\rev -> li <<
@@ -723,7 +723,20 @@ showDiff file page params = do
   let from = pFrom params
   let to = pTo params
   fs <- getFileStore
-  rawDiff <- liftIO $ diff fs file from to
+  from' <- case from of
+              Nothing -> do
+                pageHist <- liftIO $ history fs [pathForPage page] (TimeRange Nothing Nothing)
+                if length pageHist < 2
+                   then return Nothing
+                   else case to of
+                            Nothing -> return $ Just $ revId $ pageHist !! 2
+                            Just t  -> let (after, upto) = break (\r -> idsMatch fs (revId r) t) pageHist
+                                       in  return $
+                                           if length upto >= 2
+                                              then Just $ revId $ last $ init upto
+                                              else Nothing
+              x       -> return x
+  rawDiff <- liftIO $ diff fs file from' to
   let diffLineToHtml l = case head l of
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
