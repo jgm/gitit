@@ -49,7 +49,7 @@ Executable           gitit
                      network, old-time, highlighting-kate, bytestring,
                      utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
                      SHA > 1, HTTP, HStringTemplate, random, network >= 2.1.0.0,
-                     recaptcha >= 0.1, filestore
+                     recaptcha >= 0.1, filestore, datetime
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   ghc-options:       -Wall -threaded
