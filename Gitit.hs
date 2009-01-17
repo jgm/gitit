@@ -729,11 +729,11 @@ showDiff file page params = do
                 if length pageHist < 2
                    then return Nothing
                    else case to of
-                            Nothing -> return $ Just $ revId $ pageHist !! 2
+                            Nothing -> return Nothing
                             Just t  -> let (after, upto) = break (\r -> idsMatch fs (revId r) t) pageHist
                                        in  return $
                                            if length upto >= 2
-                                              then Just $ revId $ last $ init upto
+                                              then Just $ revId $ upto !! 1  -- the immediately preceding revision
                                               else Nothing
               x       -> return x
   rawDiff <- liftIO $ diff fs file from' to
@@ -741,7 +741,7 @@ showDiff file page params = do
                                 '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
                                 '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
                                 _     -> thespan << [tail l, "\n"]
-  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from of { Just r -> r; Nothing -> "latest" }) +++
+  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
                       pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
   formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
                 page (params { pRevision = to }) formattedDiff
