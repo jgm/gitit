@@ -19,6 +19,8 @@ h2{font-size:17pt;}
 h3{font-size:15pt;}
 h4,h5,h6{font-size:12pt;}
 
+h2.revision { font-size: 10pt; font-weight: normal; font-style: italic; text-align: right; }
+
 pre, code { font: 10pt Courier, monospace; } 
 blockquote { margin: 1.3em; padding: 1em;  font-size: 10pt; }
 hr { background-color: #ccc; }
