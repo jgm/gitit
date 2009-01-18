@@ -585,7 +585,6 @@ uploadFile _ params = do
   cfg <- getConfig
   let author = pUser params
   when (null author) $ fail "User must be logged in to upload a file."
-  let email = pEmail params
   let overwrite = pOverwrite params
   fs <- getFileStore
   exists <- liftIO $ catch (latest fs wikiname >> return True) (\e -> if e == NotFound then return False else throwIO e >> return True)
