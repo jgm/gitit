@@ -737,12 +737,11 @@ showDiff file page params = do
                                               else Nothing
               x       -> return x
   rawDiff <- liftIO $ diff fs file from' to
-  let diffLineToHtml l = case head l of
-                                '+'   -> thespan ! [theclass "added"] << [tail l, "\n"]
-                                '-'   -> thespan ! [theclass "deleted"] << [tail l, "\n"]
-                                _     -> thespan << [tail l, "\n"]
+  let diffItemToHtml (B, xs) = thespan << xs
+      diffItemToHtml (F, xs) = thespan ! [theclass "deleted"] << xs
+      diffItemToHtml (S, xs) = thespan ! [theclass "added"]   << xs
   let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
-                      pre ! [theclass "diff"] << map diffLineToHtml (drop 5 $ lines rawDiff)
+                      pre ! [theclass "diff"] << map diffItemToHtml rawDiff
   formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
                 page (params { pRevision = to }) formattedDiff
 
