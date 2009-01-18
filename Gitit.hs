@@ -74,8 +74,13 @@ main = do
   argv <- getArgs
   options <- parseArgs argv
   conf <- foldM handleFlag defaultConfig options
-  gitPath <- findExecutable "git"
-  when (isNothing gitPath) $ error "'git' program not found in system path."
+  -- check for external programs that are needed
+  let prereqs = "grep" : case repository conf of
+                      Git _        -> ["git"]
+                      Darcs _      -> ["darcs"]
+  forM_ prereqs $ \prog ->
+    findExecutable prog >>= \mbFind ->
+    when (isNothing mbFind) $ error $ "Required program '" ++ prog ++ "' not found in system path."
   -- read user file and update state
   userFileExists <- doesFileExist $ userFile conf
   users' <- if userFileExists
