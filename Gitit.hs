@@ -840,7 +840,7 @@ indexPage :: String -> Params -> Web Response
 indexPage _ params = do
   let page = "_index"
   fs <- getFileStore
-  files <- liftIO $ index fs -- TODO allow time ranges
+  files <- liftIO $ index fs
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
 
