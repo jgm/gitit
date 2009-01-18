@@ -727,7 +727,7 @@ showDiff file page params = do
                    then return Nothing
                    else case to of
                             Nothing -> return Nothing
-                            Just t  -> let (after, upto) = break (\r -> idsMatch fs (revId r) t) pageHist
+                            Just t  -> let (_, upto) = break (\r -> idsMatch fs (revId r) t) pageHist
                                        in  return $
                                            if length upto >= 2
                                               then Just $ revId $ upto !! 1  -- the immediately preceding revision
