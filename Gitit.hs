@@ -145,7 +145,6 @@ showPrettyList lst = "[\n" ++
 -- | Create repository and public directories, unless they already exist.
 initializeWiki :: Config -> IO ()
 initializeWiki conf = do
-  let frontpage = frontPage conf <.> "page"
   let staticdir = staticDir conf
   let templatefile = templateFile conf
   fs <- getFileStore
@@ -157,7 +156,7 @@ initializeWiki conf = do
     helppath <- getDataFileName $ "data" </> "Help.page"
     helpcontents <- B.readFile helppath
     -- add front page and help page
-    liftIO $ create fs "Front Page.page" (Author "Gitit" "") "Default front page" welcomecontents
+    liftIO $ create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
     liftIO $ create fs "Help.page" (Author "Gitit" "") "Default front page" helpcontents
     hPutStrLn stderr "Created repository"
   staticExists <- doesDirectoryExist staticdir
