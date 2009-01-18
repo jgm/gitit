@@ -13,6 +13,7 @@ noDelete            = ["Help", "Front Page"],
 accessQuestion      = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"]),
 useRecaptcha        = False,
 recaptchaPublicKey  = "",
-recaptchaPrivateKey = ""
+recaptchaPrivateKey = "",
+mimeTypesFile       = "/etc/mime.types"
 }
 

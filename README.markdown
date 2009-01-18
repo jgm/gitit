@@ -107,7 +107,8 @@ option `-f [filename]`.  A configuration file takes the following form:
     accessQuestion      = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"]),
     useRecaptcha        = False,
     recaptchaPublicKey  = "",
-    recaptchaPrivateKey = ""
+    recaptchaPrivateKey = "",
+    mimeTypesFile       = "/etc/mime.types"
     }
 
 - `repositoryPath` is the (relative) path of the git repository in which
@@ -159,6 +160,11 @@ option `-f [filename]`.  A configuration file takes the following form:
   [reCAPTCHA] keys, which can be obtained free of charge at
   <http://recaptcha.net/api/getkey>.  The values of these fields are ignored
   if `useRecaptcha` is set to `False`.
+
+- `mimeTypesFile` is the path of a file containing mime type associations.
+  Each line of the file should contain a mime type, followed by some space,
+  followed by a space-separated list of file extensions that map to that mime
+  type.  If the file is not found, some simple defaults will be used.
 
 [reCAPTCHA]: http://recaptcha.net
 

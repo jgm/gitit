@@ -21,7 +21,6 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.MimeTypes (findMimeType)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
@@ -447,7 +446,7 @@ handleAny :: Handler
 handleAny = 
   uriRest $ \uri -> let path' = uriPath uri
                     in  do fs <- getFileStore
-                           let mimetype = findMimeType (takeExtension path')
+                           mimetype <- getMimeTypeForExtension (takeExtension path')
                            res <- liftIO $ try $ (retrieve fs path' Nothing  :: IO B.ByteString)
                            case res of
                                   Right contents -> anyRequest $ ok $ setContentType mimetype $
