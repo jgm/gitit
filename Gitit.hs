@@ -21,11 +21,12 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
+import Gitit.MimeTypes (findMimeType)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
 import System.IO.Error (isAlreadyExistsError)
-import Control.Exception (bracket, throwIO, catch)
+import Control.Exception (bracket, throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
 import System.Directory
 import System.Time
@@ -441,20 +442,17 @@ handleSourceCode = withData $ \com ->
        _                        -> [ handle isSourceCode GET showHighlightedSource ]
 
 
--- TODO replace this with something that uses retrieve and sets mime types appropriately?
 handleAny :: Handler
 handleAny = 
   uriRest $ \uri -> let path' = uriPath uri
-                    in  do cfg <- getConfig
-                           -- TODO temporary
-                           fs <- getFileStore
-                           let repopath = fromMaybe "" $ fsPath fs
-                           --
-                           let file = repopath </> path'
-                           exists <- liftIO $ doesFileExist file
-                           if exists
-                              then fileServe [path'] (repopath)
-                              else anyRequest noHandle
+                    in  do fs <- getFileStore
+                           let mimetype = findMimeType (takeExtension path')
+                           res <- liftIO $ try $ (retrieve fs path' Nothing  :: IO B.ByteString)
+                           case res of
+                                  Right contents -> anyRequest $ ok $ setContentType mimetype $
+                                                               (toResponse noHtml) {rsBody = contents} -- ugly hack
+                                  Left NotFound  -> anyRequest noHandle
+                                  Left e         -> error (show e)
 
 orIfNull :: String -> String -> String
 orIfNull str backup = if null str then backup else str
