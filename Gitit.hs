@@ -143,10 +143,6 @@ handleFlag _ opt = do
     Version      -> hPutStrLn stderr (progname ++ " version " ++ gititVersion ++ copyrightMessage) >> exitWith ExitSuccess
     ConfigFile f -> liftM read (readFile f)
 
-showPrettyList :: Show a => [a] -> String
-showPrettyList lst = "[\n" ++
-  concat (intersperse ",\n" $ map show lst) ++ "\n]"
-
 -- | Create repository and public directories, unless they already exist.
 initializeWiki :: Config -> IO ()
 initializeWiki conf = do
