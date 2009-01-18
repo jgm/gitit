@@ -583,8 +583,10 @@ uploadFile _ params = do
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
-  let author = pUser params
-  when (null author) $ fail "User must be logged in to upload a file."
+  mbUser <- getUser $ pUser params
+  (user, email) <- case mbUser of
+                        Nothing -> fail "User must be logged in to delete page."
+                        Just u  -> return (uUsername u, uEmail u)
   let overwrite = pOverwrite params
   fs <- getFileStore
   exists <- liftIO $ catch (latest fs wikiname >> return True) (\e -> if e == NotFound then return False else throwIO e >> return True)
@@ -601,7 +603,7 @@ uploadFile _ params = do
                         ]
   if null errors
      then do
-       liftIO $ save fs wikiname (Author author "") logMsg fileContents
+       liftIO $ save fs wikiname (Author user email) logMsg fileContents
        formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
                                , if takeExtension wikiname `elem` imageExtensions
@@ -783,19 +785,23 @@ confirmDelete page params = do
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
+  mbUser <- getUser $ pUser params
+  (user, email) <- case mbUser of
+                        Nothing -> fail "User must be logged in to delete page."
+                        Just u  -> return (uUsername u, uEmail u)
   if pConfirm params
      then do
-       let author = Author { authorName = pUser params, authorEmail = pEmail params }
-       when (null $ authorName author) $ fail "User must be logged in to delete page."
        fs <- getFileStore
-       liftIO $ delete fs (pathForPage page) author "Deleted using web interface."
+       liftIO $ delete fs (pathForPage page) (Author user email) "Deleted using web interface."
        seeOther "/" $ toResponse $ p << "Page deleted"
      else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
 
 updatePage :: String -> Params -> Web Response
 updatePage page params = do
-  let author = pUser params
-  when (null author) $ fail "User must be logged in to update page."
+  mbUser <- getUser $ pUser params
+  (user, email) <- case mbUser of
+                        Nothing -> fail "User must be logged in to delete page."
+                        Just u  -> return (uUsername u, uEmail u)
   let editedText = case pEditedText params of
                       Nothing -> error "No body text in POST request"
                       Just b  -> b
@@ -813,8 +819,8 @@ updatePage page params = do
        let editedText' = if null editedText || last editedText == '\n' then editedText else editedText ++ "\n"
        -- check SHA1 in case page has been modified, merge
        modifyRes <-    if null oldSHA1
-                          then liftIO $ create fs (pathForPage page) Author{authorName = author, authorEmail = ""} logMsg editedText' >> return (Right ())
-                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 Author{authorName = author, authorEmail = ""} logMsg editedText')
+                          then liftIO $ create fs (pathForPage page) (Author user email) logMsg editedText' >> return (Right ())
+                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 (Author user email) logMsg editedText')
                                      (\e -> if e == Unchanged then return (Right ()) else throwIO e)
        case modifyRes of
             Right ()       -> seeOther (urlForPage page) $ toResponse $ p << "Page updated"
