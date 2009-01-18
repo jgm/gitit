@@ -825,12 +825,15 @@ updatePage page params = do
                                      (\e -> if e == Unchanged then return (Right ()) else throwIO e)
        case modifyRes of
             Right ()       -> seeOther (urlForPage page) $ toResponse $ p << "Page updated"
-            Left (MergeInfo mergedWithRev conflicts mergedText) -> do
+            Left (MergeInfo mergedWithRev False mergedText) ->
+                              updatePage page params{ pMessages = ("Merged with revision " ++ revId mergedWithRev) : pMessages params,
+                                                      pEditedText = Just mergedText,
+                                                      pSHA1 = revId mergedWithRev }
+            Left (MergeInfo mergedWithRev True mergedText) -> do
                let mergeMsg = "The page has been edited since you checked it out. " ++
                               "Changes have been merged into your edits below. " ++
                               "Please resolve conflicts and Save."
                editPage page (params { pEditedText = Just mergedText
-                                     -- TODO I think this can be removed: , pRevision = "HEAD"
                                      , pSHA1 = revId mergedWithRev
                                      , pMessages = [mergeMsg] })
 
@@ -912,7 +915,7 @@ formattedPage layout page params htmlContents = do
   let path' = if isPage page then pathForPage page else page
   fs <- getFileStore
   sha1 <- case rev of
-             Nothing -> liftIO $ catch (latest fs (pathForPage page))
+             Nothing -> liftIO $ catch (latest fs path')
                                        (\e -> if e == NotFound
                                                  then return ""
                                                  else throwIO e)
@@ -1145,7 +1148,6 @@ respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toRespons
 
 respondODT :: String -> Pandoc -> Web Response
 respondODT page doc = do
-  cfg <- getConfig
   let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
   fs <- getFileStore
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
