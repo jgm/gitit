@@ -1149,10 +1149,12 @@ respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toRespons
 respondODT :: String -> Pandoc -> Web Response
 respondODT page doc = do
   let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
-  fs <- getFileStore
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-                let repoPath = fromMaybe "" $ fsPath fs
+                conf <- getConfig
+                let repoPath = case repository conf of
+                                Git path'   -> path'
+                                Darcs path' -> path'
                 saveOpenDocumentAsODT tempfile repoPath openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $ setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
