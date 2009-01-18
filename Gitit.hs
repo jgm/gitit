@@ -805,7 +805,6 @@ updatePage page params = do
   let editedText = case pEditedText params of
                       Nothing -> error "No body text in POST request"
                       Just b  -> b
-  let email = pEmail params
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
