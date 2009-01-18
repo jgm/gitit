@@ -217,6 +217,7 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_upload"    GET  (ifLoggedIn uploadForm)
                , handlePath "_upload"    POST (ifLoggedIn uploadFile)
                , handlePath "_random"    GET  randomPage
+               , handlePath ""           GET  showFrontPage
                , withCommand "showraw" [ handlePage GET showRawPage ]
                , withCommand "history" [ handlePage GET showPageHistory,
                                          handle (not . isPage) GET showFileHistory ]
@@ -518,10 +519,11 @@ randomPage _ _ = do
        let newPage = pages !! ((fromIntegral picosecs `div` 1000000) `mod` length pages)
        seeOther (urlForPage newPage) $ toResponse $ p << "Redirecting to a random page"
 
-showPage :: String -> Params -> Web Response
-showPage "" params = do
+showFrontPage :: String -> Params -> Web Response
+showFrontPage _ params = do
   cfg <- getConfig
   showPage (frontPage cfg) params
+
 showPage page params = do
   let rev = pRevision params
   mDoc <- pageAsPandoc page params
