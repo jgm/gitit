@@ -33,6 +33,7 @@ import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM)
 import Data.FileStore
 import Gitit.MimeTypes (readMimeTypesFile)
+import Data.List (intercalate)
 import Data.Char (toLower)
 
 appstate :: IORef AppState
@@ -162,7 +163,18 @@ isUser :: MonadIO m => String -> m Bool
 isUser name = liftM (M.member name) $ queryAppState users
 
 addUser :: MonadIO m => String -> User -> m () 
-addUser uname user = updateAppState $ \s -> s { users = M.insert uname user (users s) }
+addUser uname user = updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
+                     liftIO writeUserFile
+
+delUser :: MonadIO m => String -> m ()
+delUser uname = updateAppState (\s -> s { users = M.delete uname (users s) }) >>
+                liftIO writeUserFile
+
+writeUserFile :: IO ()
+writeUserFile = do
+  conf <- getConfig
+  usrs <- queryAppState users
+  liftIO $ writeFile (userFile conf) $ "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
 
 getUser :: MonadIO m => String -> m (Maybe User)
 getUser uname = liftM (M.lookup uname) $ queryAppState users
