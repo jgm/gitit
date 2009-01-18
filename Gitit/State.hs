@@ -155,6 +155,9 @@ isUser name = liftM (M.member name) $ queryAppState users
 addUser :: MonadIO m => String -> User -> m () 
 addUser uname user = updateAppState $ \s -> s { users = M.insert uname user (users s) }
 
+getUser :: MonadIO m => String -> m (Maybe User)
+getUser uname = liftM (M.lookup uname) $ queryAppState users
+
 isSession :: MonadIO m => SessionKey -> m Bool
 isSession key = liftM (M.member key . unsession) $ queryAppState sessions
 
