@@ -524,6 +524,7 @@ showFrontPage _ params = do
   cfg <- getConfig
   showPage (frontPage cfg) params
 
+showPage :: String -> Params -> Web Response
 showPage page params = do
   let rev = pRevision params
   mDoc <- pageAsPandoc page params
