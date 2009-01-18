@@ -966,7 +966,7 @@ formattedPage layout page params htmlContents = do
                    (if isPage page then T.setAttribute "ispage" "true" else id) $
                    (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
                    (if pPrintable params then T.setAttribute "printable" "true" else id) $
-                   (if isJust rev then id else T.setAttribute "nothead" "true") $
+                   (if isJust rev then T.setAttribute "nothead" "true" else id) $
                    (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
                    T.setAttribute "sha1" sha1 $
                    T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
