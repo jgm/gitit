@@ -32,20 +32,26 @@ import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM)
 import Data.FileStore
+import Gitit.MimeTypes (readMimeTypesFile)
+import Data.Char (toLower)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
                                                   , users = undefined
                                                   , config = undefined
-                                                  , filestore = undefined }
+                                                  , filestore = undefined
+                                                  , mimeMap = undefined }
 
 initializeAppState :: MonadIO m => Config -> M.Map String User -> m ()
-initializeAppState conf users' = updateAppState $ \s -> s { sessions  = Sessions M.empty
-                                                          , users     = users'
-                                                          , config    = conf
-                                                          , filestore = case repository conf of
-                                                                             Git fs   -> gitFileStore fs
-                                                                             Darcs fs -> darcsFileStore fs }
+initializeAppState conf users' = do
+  mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
+  updateAppState $ \s -> s { sessions  = Sessions M.empty
+                           , users     = users'
+                           , config    = conf
+                           , filestore = case repository conf of
+                                              Git fs   -> gitFileStore fs
+                                              Darcs fs -> darcsFileStore fs
+                           , mimeMap   = mimeMapFromFile }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
@@ -75,7 +81,8 @@ data Config = Config {
                                                    -- and must give one of the answers in order to register.
   useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
   recaptchaPublicKey  :: String,
-  recaptchaPrivateKey :: String
+  recaptchaPrivateKey :: String,
+  mimeTypesFile       :: FilePath                  -- path of file associating mime types with file extensions
   } deriving (Read, Show)
 
 defaultConfig :: Config
@@ -94,7 +101,8 @@ defaultConfig = Config {
   accessQuestion      = Nothing,
   useRecaptcha        = False,
   recaptchaPublicKey  = "",
-  recaptchaPrivateKey = ""
+  recaptchaPrivateKey = "",
+  mimeTypesFile       = "/etc/mime.types"
   }
 
 type SessionKey = Integer
@@ -120,7 +128,8 @@ data AppState = AppState {
   sessions  :: Sessions SessionData,
   users     :: M.Map String User,
   config    :: Config,
-  filestore :: FileStore
+  filestore :: FileStore,
+  mimeMap   :: M.Map String String
 }
 
 mkUser :: String   -- username
@@ -181,3 +190,12 @@ getConfig = queryAppState config
 
 getFileStore :: MonadIO m => m FileStore
 getFileStore = queryAppState filestore
+
+getMimeTypeForExtension :: MonadIO m => String -> m String
+getMimeTypeForExtension ext = do
+  mimes <- queryAppState mimeMap
+  return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
+                Nothing -> "application/octet-stream"
+                Just t  -> t
+
+
