@@ -602,13 +602,7 @@ uploadFile _ params = do
                         ]
   if null errors
      then do
-       when (B.length fileContents > fromIntegral (maxUploadSize cfg)) $
-          error "File exceeds maximum upload size"
-       let dir' = takeDirectory wikiname
-       -- TODO fill this in 
-       -- liftIO $ createDirectoryIfMissing True ((repositoryPath cfg) </> dir')
-       -- liftIO $ B.writeFile (repositoryPath cfg </> wikiname) fileContents
-       -- gitCommit wikiname (author, email) logMsg $ Binary fileContents
+       liftIO $ save fs wikiname (Author author "") logMsg fileContents
        formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
                      thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
                                , if takeExtension wikiname `elem` imageExtensions
