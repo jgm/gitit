@@ -1,9 +1,6 @@
-filestore-specific:
-
-_ get rid of use of git's ^ suffix in history and diffs
-_ get search working
-
---------
+_ Add a Go box that goes to the specified page title;
+  if page does not exist, falls back to a normal search. Complements
+  existing Search box.
 
 - add:  popular pages?  pages last visited?
 
