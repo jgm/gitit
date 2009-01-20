@@ -960,6 +960,9 @@ formattedPage layout page params htmlContents = do
   let searchbox = gui ("/_search") ! [identifier "searchform"] <<
                          [ textfield "patterns"
                          , submit "search" "Search" ]
+  let gobox     = gui ("/_go") ! [identifier "goform"] <<
+                         [ textfield "pagename"
+                         , submit "go" "Go" ]
   let messages = pMessages params
   let htmlMessages = if null messages
                         then noHtml
@@ -978,7 +981,7 @@ formattedPage layout page params htmlContents = do
                    (if isJust rev then T.setAttribute "nothead" "true" else id) $
                    (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
                    T.setAttribute "sha1" sha1 $
-                   T.setAttribute "searchbox" (renderHtmlFragment searchbox) $
+                   T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) $
                    T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
                    T.setAttribute "tabs" (renderHtmlFragment tabs) $
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) $

@@ -350,6 +350,14 @@ ul.tabs li a {
   width: 7.5em;
   border: 1px solid #ccc;
 }
+#goform {
+  padding: 0;
+  margin: 0.3em 0 0.5em 0.4em;
+}
+#goform input[type='text'] {
+  width: 7.5em;
+  border: 1px solid #ccc;
+}
 .search_result { margin-bottom: 15px; }
 .search_result .match {
   line-height: 1em;
