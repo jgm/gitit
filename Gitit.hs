@@ -45,7 +45,7 @@ import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
 import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
-import Data.Char (isAlphaNum, isAlpha)
+import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars, urlEncode)
@@ -623,8 +623,13 @@ searchResults _ params = do
   matchLines <- if null patterns
                    then return []
                    else liftM (take limit) $ liftIO $ search fs defaultSearchQuery{queryPatterns = patterns}
-  let matchedFiles = nub $ filter (".page" `isSuffixOf`) $ map matchResourceName matchLines
-  let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) matchedFiles
+  let contentMatches = map matchResourceName matchLines
+  allPages <- liftIO $ index fs
+  let matchesPatterns pageName = all (`elem` (words $ map toLower $ dropExtension pageName)) $ map (map toLower) patterns
+  let pageNameMatches = filter matchesPatterns allPages
+  let allMatchedFiles = nub $ filter (".page" `isSuffixOf`) $ contentMatches ++ pageNameMatches
+  let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) allMatchedFiles
+  let relevance (f, ms) = length ms + if f `elem` pageNameMatches then 100 else 0
   let preamble = if null matches
                     then h3 << if null patterns
                                   then ["Please enter a search term."]
@@ -633,9 +638,10 @@ searchResults _ params = do
   let htmlMatches = preamble +++ olist << map
                       (\(file, contents) -> li << [anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file,
                       stringToHtml (" (" ++ show (length contents) ++ " matching lines)"),
-                      stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] << "[show matches]",
+                      stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] <<
+                      if length contents > 0 then "[show matches]" else "",
                       pre ! [theclass "matches"] << unlines contents])
-                      (reverse $ sortBy (comparing (length . snd)) matches)
+                      (reverse $ sortBy (comparing relevance) matches)
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
 
 preview :: String -> Params -> Web Response
