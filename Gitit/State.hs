@@ -35,13 +35,15 @@ import Data.FileStore
 import Gitit.MimeTypes (readMimeTypesFile)
 import Data.List (intercalate)
 import Data.Char (toLower)
+import Text.XHtml (Html)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
                                                   , users = undefined
                                                   , config = undefined
                                                   , filestore = undefined
-                                                  , mimeMap = undefined }
+                                                  , mimeMap = undefined
+                                                  , cache = undefined }
 
 initializeAppState :: MonadIO m => Config -> M.Map String User -> m ()
 initializeAppState conf users' = do
@@ -52,7 +54,8 @@ initializeAppState conf users' = do
                            , filestore = case repository conf of
                                               Git fs   -> gitFileStore fs
                                               Darcs fs -> darcsFileStore fs
-                           , mimeMap   = mimeMapFromFile }
+                           , mimeMap   = mimeMapFromFile
+                           , cache     = M.empty }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
@@ -106,6 +109,12 @@ defaultConfig = Config {
   mimeTypesFile       = "/etc/mime.types"
   }
 
+data CachedPage = CachedPage {
+    cpContents        :: Html
+  , cpRevisionId      :: RevisionId
+  , cpLastAccessed    :: DateTime
+  }
+
 type SessionKey = Integer
 
 data SessionData = SessionData {
@@ -130,7 +139,8 @@ data AppState = AppState {
   users     :: M.Map String User,
   config    :: Config,
   filestore :: FileStore,
-  mimeMap   :: M.Map String String
+  mimeMap   :: M.Map String String,
+  cache     :: M.Map String CachedPage
 }
 
 mkUser :: String   -- username
