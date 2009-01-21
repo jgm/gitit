@@ -50,23 +50,11 @@ input[type='text'] { cursor: text; }
 
 body { font-size: 1em; line-height: 1.6em; }
 
-hr {
-	height: 1px;
-	color: #aaa;
-	background-color: #aaa;
-	border: 0;
-	margin: .2em 0 .2em 0;
+hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0;
 }
 
-h1, h2, h3, h4, h5, h6 {
-	color: black;
-	background: none;
-	font-weight: normal;
-	margin: 0;
-	padding-top: .5em;
-	padding-bottom: .17em;
-	border-bottom: 1px solid #aaa;
-}
+h1, h2, h3, h4, h5, h6 { color: black; background: none; font-weight: normal; margin: 0;
+	padding-top: .5em; padding-bottom: .17em; border-bottom: 1px solid #aaa; }
 
 h1.pageTitle { font-size: 220%; margin: 0.2em 0 .5em;  }
 h1 { font-size: 150%; margin: 1.07em 0 .535em; }
@@ -76,33 +64,12 @@ h4 { font-size: 100%; margin: 1.33em 0 .67em; }
 h5 { font-size: 88%; margin: 1.6em 0 .8em; }
 h6 { font-size: 80%; margin: 1.6em 0 .8em; }
 
-ul {
-	line-height: 1.5em;
-	list-style-type: square;
-	margin: .3em 0 0 1.5em;
-	padding: 0;
-}
-ol {
-	line-height: 1.5em;
-	margin: .3em 0 0 3.2em;
-	padding: 0;
-}
-li {
-	margin-bottom: .1em;
-}
-dt {
-	font-weight: bold;
-	margin-bottom: .1em;
-}
-dl {
-	margin-top: .2em;
-	margin-bottom: .5em;
-}
-dd {
-	line-height: 1.5em;
-	margin-left: 2em;
-	margin-bottom: .1em;
-}
+ul { line-height: 1.5em; list-style-type: square; margin: .3em 0 0 1.5em; padding: 0; }
+ol { line-height: 1.5em; margin: .3em 0 0 3.2em; padding: 0; }
+li { margin-bottom: .1em; }
+dt { font-weight: bold; margin-bottom: .1em; }
+dl { margin-top: .2em; margin-bottom: .5em; }
+dd { line-height: 1.5em; margin-left: 2em; margin-bottom: .1em; }
 
 /* TABLES */
 
@@ -160,16 +127,8 @@ a:active,  a:focus { text-decoration: underline; color: #000; }
 input.search_term { width: 95% }
 
 /* Standard Buttons */
-button:hover, a.button:hover{
-  background-color:#dff4ff;
-  border:1px solid #c2e1ef;
-  color:#336699;
-}
-a.button:active, button:active{
-  background-color:#6299c5;
-  border:1px solid #6299c5;
-  color:#fff;
-}
+button:hover, a.button:hover { background-color:#dff4ff; border:1px solid #c2e1ef; color:#336699; }
+a.button:active, button:active { background-color:#6299c5; border:1px solid #6299c5; color:#fff; }
 
 /* Link icons */
 
@@ -210,184 +169,50 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         color: black;
         text-decoration: none;
 }
-body {
-	font: x-small sans-serif;
-	background: #f9f9f9;
-	color: black;
-	margin: 0;
-	padding: 0;
-}
-#container {
-    font-size: 120%;
-	margin: 0 ;
-	padding: 0;
-}
-
+body { font: x-small sans-serif; background: #f9f9f9; color: black; margin: 0; padding: 0; }
+#container { font-size: 120%; margin: 0 ; padding: 0; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em 1em 0 0; }
 #logo { min-height: 50px; }
 #sidebar  { width: 12em; float: left; margin-right: 10px; }
-#sidebar fieldset {
-  background-color: white;
-  margin-bottom: 1em;
-  padding: 0;
-}
-#sidebar fieldset, #sidebar fieldset legend {
-  font-weight: normal;
-  font-size: 95%;
-}
-#sidebar ul {
-  padding: 0;
-  margin: 0;
-  margin-left: 1.6em;
-  line-height: 1.5em;
-}
+#sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; }
+#sidebar fieldset, #sidebar fieldset legend { font-weight: normal; font-size: 95%; }
+#sidebar ul { padding: 0; margin: 0; margin-left: 1.6em; line-height: 1.5em; }
 #sidebar ul li { color: #888; }
 #maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; }
 #content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 110%; line-height: 150%; }
-div#toc {
-  float: right;
-  background-color: #f9f9f9;
-  border: 10px solid white;
-  margin: 0.8em;
-  margin-right: 0;
-  padding: 0.4em;
-}
-#toc ul {
-  margin: 0;
-  padding-left: 1em;
-  list-style: none;
-}
-#toc > ul {
-  margin-right: 1em;
-}
+div#toc { float: right; background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
+#toc ul { margin: 0; padding-left: 1em; list-style: none; }
+#toc > ul { margin-right: 1em; }
 /* .req is used to hide a honeypot in a form */
-.req {
-  display: none;
-}
-ul.messages > li {
-  color: red;
-  list-style: square;
-  font-weight: bold;
-}
-ul.tabs {
-    padding: 0;
-    margin: 0;
-}
-ul.tabs li {
-    display: inline;
-    border: 1px solid #ccc;
-    border-bottom: none;
-    border-collapse: collapse;
-    padding: 0 0.6em 0 0.6em;
-    margin: 0 0 0 1.2em;
-    overflow: visible;
-    background: white;
-    line-height: 1.2em;
-}
-ul.tabs li.selected {
-    border-bottom: 3px solid white;
-}
-ul.tabs li a {
-    text-decoration: none;
-    font-size: 95%;
-    font-weight: bold;
-    margin: 0;
-    z-index: 0;
-    color: #36c;
-}
-
-.folding ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-.folding li {
-    list-style: none;
-    background-position: 0 1px;
-    background-repeat: no-repeat;
-    padding-left: 20px;
-}
-.folding li.page {
-    background-image: url(/img/icons/page.png);
-}
-.folding li.folder {
-    background-image: url(/img/icons/folder.png);
-}
-
-.folding a {
-    color: #000000;
-    cursor: pointer;
-    text-decoration: none;
-}
-.folding a:hover {
-    text-decoration: underline;
-}
-#sidebar input, #sidebar select {
-    font-size:  95%;
-    padding: 0.1em;
-}
-#exportbox select {
-    width: 8em;
-    border: 1px solid #ccc;
-    padding: 0;
-}
-#exportbox {
-    margin: 0.3em 0 0.5em 0.4em;
-    padding: 0;
-}
-#sidebar input[type='submit'] {
-    border: none;
-    background-color: #ccc;
-    color: white;
-}
-#searchform {
-  padding: 0;
-  margin: 0.3em 0 0.5em 0.4em;
-}
-#searchform input[type='text'] {
-  width: 7.5em;
-  border: 1px solid #ccc;
-}
-#goform {
-  padding: 0;
-  margin: 0.3em 0 0.5em 0.4em;
-}
-#goform input[type='text'] {
-  width: 7.5em;
-  border: 1px solid #ccc;
-}
+.req { display: none; }
+ul.messages > li { color: red; list-style: square; font-weight: bold; }
+ul.tabs { padding: 0; margin: 0; }
+ul.tabs li { display: inline; border: 1px solid #ccc; border-bottom: none; border-collapse: collapse; padding: 0 0.6em 0 0.6em;
+    margin: 0 0 0 1.2em; overflow: visible; background: white; line-height: 1.2em; }
+ul.tabs li.selected { border-bottom: 3px solid white; }
+ul.tabs li a { text-decoration: none; font-size: 95%; font-weight: bold; margin: 0; z-index: 0; color: #36c; }
+.folding ul { list-style: none; margin: 0; padding: 0; }
+.folding li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
+.folding li.page { background-image: url(/img/icons/page.png); }
+.folding li.folder { background-image: url(/img/icons/folder.png); }
+.folding a { color: #000000; cursor: pointer; text-decoration: none; }
+.folding a:hover { text-decoration: underline; }
+#sidebar input, #sidebar select { font-size:  95%; padding: 0.1em; }
+#exportbox select { width: 8em; border: 1px solid #ccc; padding: 0; }
+#exportbox { margin: 0.3em 0 0.5em 0.4em; padding: 0; }
+#sidebar input[type='submit'] { border: none; background-color: #ccc; color: white; }
+#searchform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
+#searchform input[type='text'] { width: 7.5em; border: 1px solid #ccc; }
+#goform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
+#goform input[type='text'] { width: 7.5em; border: 1px solid #ccc; }
 .search_result { margin-bottom: 15px; }
-.search_result .match {
-  line-height: 1em;
-  margin-bottom: 15px;
-}
-pre.matches {
-    font-size: .85em;
-    margin: 0;
-    padding: 0;
-}
-#editform textarea {
-  height: 25em;
-  width: 98%;
-}
-#editform #logMsg {
-  width: 98%;
-  margin-right: 1em;
-  margin-bottom: 0.3em;
-}
+.search_result .match { line-height: 1em; margin-bottom: 15px; }
+pre.matches { font-size: .85em; margin: 0; padding: 0; }
+#editform textarea { height: 25em; width: 98%; }
+#editform #logMsg { width: 98%; margin-right: 1em; margin-bottom: 0.3em; }
 .added { background-color: yellow; }
 .deleted { text-decoration: line-through; color: gray; }
-h2.revision {
-  font-size: 100%;
-  color: #888;
-  font-style: italic;
-  border: none;
-  margin: 0 0 0.5em 0;
-  padding: 0;
-}
-#footer {
-  padding: 1em;
-  color: #888;
-  text-align: center;
-  font-size: 95%;
-}
+h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
+#footer { padding: 1em; color: #888; text-align: center; font-size: 95%; }
+
+@import url("hk-pyg.css")
