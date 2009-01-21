@@ -103,6 +103,12 @@ main = do
   killThread tid
   putStrLn "Shutdown complete"
 
+setContentType :: String -> Response -> Response
+setContentType = setHeader "Content-Type"
+
+setFilename :: String -> Response -> Response
+setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+
 data Opt
     = Help
     | ConfigFile FilePath
@@ -483,20 +489,6 @@ withCommands meth commands page = withRequest $ \req -> do
      else if all (`elem` (map fst $ rqInputs req)) commands
              then page (intercalate "/" $ rqPaths req) req
              else noHandle
-
-setContentType :: String -> Response -> Response
-setContentType contentType res =
-  let respHeaders = rsHeaders res
-      newContentType = HeaderPair { hName = fromString "Content-Type",
-                                    hValue = [ fromString contentType ] }
-  in  res { rsHeaders = M.insert (fromString "content-type") newContentType respHeaders }  
-
-setFilename :: String -> Response -> Response
-setFilename fname res =
-  let respHeaders = rsHeaders res
-      newContentType = HeaderPair { hName = fromString "Content-Disposition",
-                                    hValue = [ fromString $ "attachment; filename=\"" ++ fname ++ "\"" ] }
-  in  res { rsHeaders = M.insert (fromString "content-disposition") newContentType respHeaders }  
 
 showRawPage :: String -> Params -> Web Response
 showRawPage = showFileAsText . pathForPage
