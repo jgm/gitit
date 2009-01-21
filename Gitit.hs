@@ -34,7 +34,7 @@ import System.FilePath
 import Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
-import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf)
+import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf, find, isPrefixOf)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isJust, isNothing)
 import Data.ByteString.UTF8 (fromString, toString)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
@@ -213,6 +213,7 @@ wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_activity"  GET  showActivity
                , handlePath "_preview"   POST preview
+               , handlePath "_go"        POST goToPage
                , handlePath "_search"    POST searchResults
                , handlePath "_search"    GET  searchResults
                , handlePath "_register"  GET  registerUserForm
@@ -258,6 +259,7 @@ data Params = Params { pUsername     :: String
                      , pRaw          :: String
                      , pLimit        :: Int
                      , pPatterns     :: [String]
+                     , pGotoPage     :: String
                      , pEditedText   :: Maybe String
                      , pMessages     :: [String]
                      , pFrom         :: Maybe String
@@ -293,6 +295,7 @@ instance FromData Params where
          ra <- look "raw"            `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
+         gt <- look "gotopage"       `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
          fm <- (look "from" >>= return . Just) `mplus` return Nothing
          to <- (look "to" >>= return . Just)   `mplus` return Nothing
@@ -324,6 +327,7 @@ instance FromData Params where
                          , pRaw          = ra
                          , pLimit        = read lt
                          , pPatterns     = words pa
+                         , pGotoPage     = gt
                          , pMessages     = me
                          , pFrom         = fm
                          , pTo           = to
@@ -606,6 +610,20 @@ uploadFile _ params = do
                                          pre << ("[link label](/" ++ wikiname ++ ")") ]
      else uploadForm page (params { pMessages = errors })
 
+goToPage :: String -> Params -> Web Response
+goToPage _ params = do
+  let gotopage = pGotoPage params
+  fs <- getFileStore
+  allPageNames <- liftM (map dropExtension . filter (".page" `isSuffixOf`)) $ liftIO $ index fs
+  let findPage f = find f allPageNames
+  case findPage (gotopage ==) of
+       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to exact match"
+       Nothing -> case findPage (\n -> (map toLower gotopage) == (map toLower n)) of
+                       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to case-insensitive match"
+                       Nothing -> case findPage (\n -> (map toLower gotopage) `isPrefixOf` (map toLower n)) of
+                                       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to partial match"
+                                       Nothing -> searchResults "" params{ pPatterns = words gotopage }
+
 searchResults :: String -> Params -> Web Response
 searchResults _ params = do
   let page = "_search"
@@ -616,10 +634,10 @@ searchResults _ params = do
                    then return []
                    else liftM (take limit) $ liftIO $ search fs defaultSearchQuery{queryPatterns = patterns}
   let contentMatches = map matchResourceName matchLines
-  allPages <- liftIO $ index fs
+  allPages <- liftM (filter (".page" `isSuffixOf`)) $ liftIO $ index fs
   let matchesPatterns pageName = all (`elem` (words $ map toLower $ dropExtension pageName)) $ map (map toLower) patterns
   let pageNameMatches = filter matchesPatterns allPages
-  let allMatchedFiles = nub $ filter (".page" `isSuffixOf`) $ contentMatches ++ pageNameMatches
+  let allMatchedFiles = nub $ filter (".page" `isSuffixOf`) contentMatches ++ pageNameMatches
   let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) allMatchedFiles
   let relevance (f, ms) = length ms + if f `elem` pageNameMatches then 100 else 0
   let preamble = if null matches
@@ -953,7 +971,7 @@ formattedPage layout page params htmlContents = do
                          [ textfield "patterns"
                          , submit "search" "Search" ]
   let gobox     = gui ("/_go") ! [identifier "goform"] <<
-                         [ textfield "pagename"
+                         [ textfield "gotopage"
                          , submit "go" "Go" ]
   let messages = pMessages params
   let htmlMessages = if null messages
