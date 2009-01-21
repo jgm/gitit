@@ -1,8 +1,6 @@
-/* -----------------------------------------------------------------------
-   gitit screen css
-   borrows heavily from Mike Crittenden's BlueTripCSS framework (GPL)
-   and from Wikipedia's CSS.
------------------------------------------------------------------------ */
+@import url("/css/hk-pyg.css");
+
+/* gitit screen css - borrows heavily from Mike Crittenden's BlueTripCSS framework (GPL) and from Wikipedia's CSS. */
 
 /* MEYER RESET */
 html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, code, del, dfn, em, img, q, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {margin:0;padding:0;border:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
@@ -214,5 +212,3 @@ pre.matches { font-size: .85em; margin: 0; padding: 0; }
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
 #footer { padding: 1em; color: #888; text-align: center; font-size: 95%; }
-
-@import url("hk-pyg.css")
