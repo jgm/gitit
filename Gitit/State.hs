@@ -31,6 +31,7 @@ import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM)
+import Control.Exception (try, throwIO)
 import Data.FileStore
 import Gitit.MimeTypes (readMimeTypesFile)
 import Data.List (intercalate)
@@ -112,7 +113,6 @@ defaultConfig = Config {
 data CachedPage = CachedPage {
     cpContents        :: Html
   , cpRevisionId      :: RevisionId
-  , cpLastAccessed    :: DateTime
   }
 
 type SessionKey = Integer
@@ -142,6 +142,28 @@ data AppState = AppState {
   mimeMap   :: M.Map String String,
   cache     :: M.Map String CachedPage
 }
+
+lookupCache :: MonadIO m => String -> m (Maybe CachedPage)
+lookupCache file = do
+  fs <- getFileStore
+  latestRes <- liftIO $ try (latest fs file)
+  case latestRes of
+       Right latestid -> do
+         c <- queryAppState cache
+         case M.lookup file c of
+              Just cp | idsMatch fs (cpRevisionId cp) latestid ->
+                          return $ Just cp
+              _        -> return Nothing
+       Left NotFound   -> return Nothing
+       Left e          -> liftIO $ throwIO e
+
+cacheContents :: MonadIO m => String -> RevisionId -> Html -> m ()
+cacheContents file revid contents = do
+  c <- queryAppState cache
+  let newpage = CachedPage { cpContents = contents
+                           , cpRevisionId = revid }
+  let newcache = M.insert file newpage c
+  updateAppState $ \s -> s { cache = newcache }
 
 mkUser :: String   -- username
        -> String   -- email
