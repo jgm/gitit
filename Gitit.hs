@@ -94,7 +94,7 @@ main = do
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
-          [ liftM (setHeader "expires" "access plus 1 day") $ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
+          [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
           , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
           , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
           ] ++ (if debugMode conf then debugHandlers else []) ++ wikiHandlers
