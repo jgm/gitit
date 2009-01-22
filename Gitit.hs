@@ -187,6 +187,7 @@ initializeWiki conf = do
     zipWithM_ copyFile javascriptpaths $ map ((staticdir </> "js") </>) javascripts
     hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
   jsMathExists <- doesDirectoryExist (staticdir </> "js" </> "jsMath")
+  updateAppState $ \s -> s{ jsMath = jsMathExists }
   unless jsMathExists $ do
     hPutStrLn stderr $ replicate 80 '*' ++
                        "\nWarning:  jsMath not found.\n" ++
@@ -523,10 +524,11 @@ showFrontPage _ params = do
 
 showPage :: String -> Params -> Web Response
 showPage page params = do
+  jsMathExists <- queryAppState jsMath
   mbCached <- lookupCache (pathForPage page)
   case mbCached of
          Just cp ->
-           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params $ cpContents cp
+           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params $ cpContents cp
          _ -> do
            mDoc <- pageAsPandoc page params
            case mDoc of
@@ -545,7 +547,7 @@ showPage page params = do
                     fs <- getFileStore
                     rev <- liftIO $ latest fs (pathForPage page)
                     cacheContents (pathForPage page) rev c
-                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params c
+                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params c
                 Nothing -> createPage page params
 
 discussPage :: String -> Params -> Web Response

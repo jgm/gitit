@@ -44,7 +44,8 @@ appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
                                                   , config = undefined
                                                   , filestore = undefined
                                                   , mimeMap = undefined
-                                                  , cache = undefined }
+                                                  , cache = undefined
+                                                  , jsMath = undefined }
 
 initializeAppState :: MonadIO m => Config -> M.Map String User -> m ()
 initializeAppState conf users' = do
@@ -56,7 +57,8 @@ initializeAppState conf users' = do
                                               Git fs   -> gitFileStore fs
                                               Darcs fs -> darcsFileStore fs
                            , mimeMap   = mimeMapFromFile
-                           , cache     = M.empty }
+                           , cache     = M.empty
+                           , jsMath    = False }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
@@ -140,7 +142,8 @@ data AppState = AppState {
   config    :: Config,
   filestore :: FileStore,
   mimeMap   :: M.Map String String,
-  cache     :: M.Map String CachedPage
+  cache     :: M.Map String CachedPage,
+  jsMath    :: Bool
 }
 
 lookupCache :: MonadIO m => String -> m (Maybe CachedPage)
