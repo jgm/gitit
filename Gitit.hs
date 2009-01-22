@@ -94,7 +94,7 @@ main = do
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
-          [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
+          [ liftM (setHeader "expires" "access plus 1 day") $ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
           , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
           , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
           ] ++ (if debugMode conf then debugHandlers else []) ++ wikiHandlers
@@ -525,7 +525,7 @@ showFrontPage _ params = do
 showPage :: String -> Params -> Web Response
 showPage page params = do
   jsMathExists <- queryAppState jsMath
-  mbCached <- lookupCache (pathForPage page)
+  mbCached <- lookupCache (pathForPage page) (pRevision params)
   case mbCached of
          Just cp ->
            formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params $ cpContents cp
@@ -1129,7 +1129,7 @@ registerUser _ params = do
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
-  mbCached <- lookupCache file
+  mbCached <- lookupCache file (pRevision params)
   case mbCached of
          Just cp -> formattedPage defaultPageLayout file params $ cpContents cp
          _ -> do
@@ -1140,9 +1140,10 @@ showHighlightedSource file params = do
                                        Left _       -> noHandle
                                        Right res    -> do
                                          let formattedContents = formatAsXHtml [OptNumberLines] lang' res
-                                         fs <- getFileStore
-                                         rev <- liftIO $ latest fs file
-                                         cacheContents file rev formattedContents
+                                         when (isNothing (pRevision params)) $ do
+                                           fs <- getFileStore
+                                           rev <- liftIO $ latest fs file
+                                           cacheContents file rev formattedContents
                                          formattedPage defaultPageLayout file params $ formattedContents
                Nothing     -> noHandle
 

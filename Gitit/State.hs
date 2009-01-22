@@ -146,8 +146,15 @@ data AppState = AppState {
   jsMath    :: Bool
 }
 
-lookupCache :: MonadIO m => String -> m (Maybe CachedPage)
-lookupCache file = do
+lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe CachedPage)
+lookupCache file (Just revid) = do
+  c <- queryAppState cache
+  fs <- getFileStore
+  case M.lookup file c of
+       Just cp | idsMatch fs (cpRevisionId cp) revid ->
+                   return $ Just cp
+       _        -> return Nothing
+lookupCache file Nothing = do
   fs <- getFileStore
   latestRes <- liftIO $ try (latest fs file)
   case latestRes of
