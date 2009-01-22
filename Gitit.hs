@@ -523,21 +523,30 @@ showFrontPage _ params = do
 
 showPage :: String -> Params -> Web Response
 showPage page params = do
-  let rev = pRevision params
-  mDoc <- pageAsPandoc page params
-  case mDoc of
-       Just d -> do
-                 cont <- pandocToHtml d
-                 let cont' = thediv ! [identifier "wikipage",
-                                       strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++ 
-                                         "?edit" ++
-                                         (case rev of
-                                             Nothing -> ""
-                                             Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++ "';")] << cont
-                 formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params cont'
-       _      -> case rev of
-                    Nothing -> createPage page params
-                    Just r  -> error $ "Invalid revision: " ++ r
+  mbCached <- lookupCache (pathForPage page)
+  case mbCached of
+         Just cp ->
+           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params $ cpContents cp
+         _ -> do
+           mDoc <- pageAsPandoc page params
+           case mDoc of
+                Just d  -> do
+                  let divify c = thediv ! [identifier "wikipage",
+                                            strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++
+                                            "?edit" ++
+                                            (case (pRevision params) of
+                                                  Nothing -> ""
+                                                  Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++ "';")] << c
+
+                  c <- liftM divify $ pandocToHtml d
+                  when (isNothing (pRevision params)) $ do
+                    -- TODO not quite ideal, since page might have been modified after being retrieved by pageAsPandoc
+                    -- better to have pageAsPandoc return the revision ID too...
+                    fs <- getFileStore
+                    rev <- liftIO $ latest fs (pathForPage page)
+                    cacheContents (pathForPage page) rev c
+                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js"]}) page params c
+                Nothing -> createPage page params
 
 discussPage :: String -> Params -> Web Response
 discussPage page params = do
@@ -1118,13 +1127,22 @@ registerUser _ params = do
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
-  contents <- rawContents file params
-  case contents of
-      Just source -> let lang' = head $ languagesByExtension $ takeExtension file
-                     in case highlightAs lang' (filter (/='\r') source) of
-                              Left _       -> noHandle
-                              Right res    -> formattedPage defaultPageLayout file params $ formatAsXHtml [OptNumberLines] lang' res
-      Nothing     -> noHandle
+  mbCached <- lookupCache file
+  case mbCached of
+         Just cp -> formattedPage defaultPageLayout file params $ cpContents cp
+         _ -> do
+           contents <- rawContents file params
+           case contents of
+               Just source -> let lang' = head $ languagesByExtension $ takeExtension file
+                              in case highlightAs lang' (filter (/='\r') source) of
+                                       Left _       -> noHandle
+                                       Right res    -> do
+                                         let formattedContents = formatAsXHtml [OptNumberLines] lang' res
+                                         fs <- getFileStore
+                                         rev <- liftIO $ latest fs file
+                                         cacheContents file rev formattedContents
+                                         formattedPage defaultPageLayout file params $ formattedContents
+               Nothing     -> noHandle
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
