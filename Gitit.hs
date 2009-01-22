@@ -48,6 +48,7 @@ import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
+import Codec.Compression.GZip (compress)
 import Network.HTTP (urlEncodeVars, urlEncode)
 import System.Console.GetOpt
 import System.Exit
@@ -281,6 +282,7 @@ data Params = Params { pUsername     :: String
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
                      , pIPAddress    :: String
+                     , pAcceptZip    :: Bool -- ^ use HTTP 1.1 GZip encoding?
                      }  deriving Show
 
 instance FromData Params where
@@ -349,6 +351,7 @@ instance FromData Params where
                          , pSessionKey   = sk
                          , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
                          , pIPAddress    = ""  -- this gets set by handle...
+                         , pAcceptZip    = False  -- this gets set by handle...
                          }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -411,13 +414,19 @@ handle pathtest meth responder = uriRest $ \uri ->
                            let referer = case M.lookup (fromString "referer") (rqHeaders req) of
                                               Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                               _       -> Nothing
+                           let dozip = case M.lookup (fromString "accept-encoding") (rqHeaders req) of
+                                          Just _ -> True
+                                          _      -> False
                            let peer = fst $ rqPeer req
                            mbIPaddr <- liftIO $ lookupIPAddr peer
                            let ipaddr = case mbIPaddr of
                                              Just ip -> ip
                                              Nothing -> "0.0.0.0"
                            -- force ipaddr to be strictly evaluated, or we run into problems when validating captchas
-                           ipaddr `seq` responder path' (params { pReferer = referer, pUri = uri, pIPAddress = ipaddr })
+                           ipaddr `seq` responder path' (params { pReferer = referer,
+                                                                  pUri = uri,
+                                                                  pIPAddress = ipaddr,
+                                                                  pAcceptZip = dozip })
                          else noHandle ]
          else anyRequest noHandle
 
@@ -503,7 +512,7 @@ showFileAsText file params = do
   mContents <- rawContents file params
   case mContents of
        Nothing   -> error "Unable to retrieve page contents."
-       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ encodeString c
+       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ fromString c
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
@@ -666,7 +675,7 @@ searchResults _ params = do
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
 
 preview :: String -> Params -> Web Response
-preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . toResponse . encodeString . renderHtmlFragment
+preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . setContentType "text/html" . toResponse . fromString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
@@ -1008,7 +1017,13 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
+  let dozip = pAcceptZip params
+  if dozip
+     then ok $ setContentType "text/html" $ gzip filledTemp
+     else ok $ setContentType "text/html" $ toResponse $ fromString filledTemp
+
+gzip :: String -> Response
+gzip = setHeader "Content-Encoding" "gzip" . toResponse . compress . B.fromChunks . return . fromString
 
 -- user authentication
 loginForm :: Html
@@ -1151,23 +1166,23 @@ defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
 
 respondLaTeX :: String -> Pandoc -> Web Response
-respondLaTeX page = ok . setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse . encodeString .
+respondLaTeX page = ok . setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse . fromString .
                     writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
 respondConTeXt :: String -> Pandoc -> Web Response
-respondConTeXt page = ok . setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse . encodeString .
+respondConTeXt page = ok . setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse . fromString .
                       writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
 
 respondRTF :: String -> Pandoc -> Web Response
-respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse . encodeString .
+respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse . fromString .
                   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
 respondRST :: String -> Pandoc -> Web Response
-respondRST _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
+respondRST _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . fromString .
                writeRST (defaultRespOptions {writerHeader = "", writerReferenceLinks = True})
 
 respondMan :: String -> Pandoc -> Web Response
-respondMan _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
+respondMan _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . fromString .
                writeMan (defaultRespOptions {writerHeader = ""})
 
 respondS5 :: String -> Pandoc -> Web Response
@@ -1175,15 +1190,15 @@ respondS5 _ = ok . toResponse . writeS5 (defaultRespOptions {writerHeader = defa
                                                              writerS5 = True, writerIncremental = True})
 
 respondTexinfo :: String -> Pandoc -> Web Response
-respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse . encodeString .
+respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse . fromString .
                       writeTexinfo (defaultRespOptions {writerHeader = ""})
 
 respondDocbook :: String -> Pandoc -> Web Response
-respondDocbook page = ok . setContentType "application/docbook+xml" . setFilename (page ++ ".xml") . toResponse . encodeString .
+respondDocbook page = ok . setContentType "application/docbook+xml" . setFilename (page ++ ".xml") . toResponse . fromString .
                       writeDocbook (defaultRespOptions {writerHeader = defaultDocbookHeader})
 
 respondMediaWiki :: String -> Pandoc -> Web Response
-respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
+respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . fromString .
                      writeMediaWiki (defaultRespOptions {writerHeader = ""})
 
 respondODT :: String -> Pandoc -> Web Response
