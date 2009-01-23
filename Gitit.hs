@@ -55,7 +55,7 @@ import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
 import Data.IORef
-import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime)
+import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime, formatDateTime)
 import System.IO.Unsafe (unsafePerformIO)
 import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
@@ -96,9 +96,9 @@ main = do
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
           debugger $
-          [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
-          , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
-          , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
+          [ dir "css" [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "css" ]
+          , dir "img" [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "img" ]
+          , dir "js"  [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "js" ]
           ] ++ 
           (if debugMode conf then debugHandlers else []) ++
           map (filterIf acceptsZip gzipBinary) wikiHandlers
@@ -120,6 +120,12 @@ gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r 
 
 acceptsZip :: Request -> Bool
 acceptsZip req = isJust $ M.lookup (fromString "accept-encoding") (rqHeaders req)
+
+getCacheTime :: IO (Maybe DateTime)
+getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
+
+withExpiresHeaders :: ServerPart Response -> ServerPart Response
+withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
 
 setContentType :: String -> Response -> Response
 setContentType = setHeader "Content-Type"
