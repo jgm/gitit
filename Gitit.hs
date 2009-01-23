@@ -94,7 +94,9 @@ main = do
   writeIORef template (T.newSTMP templ)
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
-  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $ map (filterIf acceptsZip gzipBinary) $ 
+  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
+          debugger $
+          map (filterIf acceptsZip gzipBinary) $
           [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
           , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
           , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
@@ -113,7 +115,7 @@ filterIf test filt sp =
          else handler req
 
 gzipBinary :: Response -> Response
-gzipBinary r@(Response {rsBody=body}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress body}
+gzipBinary r@(Response {rsBody=b}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress b}
 
 acceptsZip :: Request -> Bool
 acceptsZip req =
@@ -299,7 +301,6 @@ data Params = Params { pUsername     :: String
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
                      , pIPAddress    :: String
-                     , pAcceptZip    :: Bool -- ^ use HTTP 1.1 GZip encoding?
                      }  deriving Show
 
 instance FromData Params where
@@ -368,7 +369,6 @@ instance FromData Params where
                          , pSessionKey   = sk
                          , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
                          , pIPAddress    = ""  -- this gets set by handle...
-                         , pAcceptZip    = False  -- this gets set by handle...
                          }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -431,9 +431,6 @@ handle pathtest meth responder = uriRest $ \uri ->
                            let referer = case M.lookup (fromString "referer") (rqHeaders req) of
                                               Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                               _       -> Nothing
-                           let dozip = case M.lookup (fromString "accept-encoding") (rqHeaders req) of
-                                          Just _ -> True
-                                          _      -> False
                            let peer = fst $ rqPeer req
                            mbIPaddr <- liftIO $ lookupIPAddr peer
                            let ipaddr = case mbIPaddr of
@@ -442,8 +439,7 @@ handle pathtest meth responder = uriRest $ \uri ->
                            -- force ipaddr to be strictly evaluated, or we run into problems when validating captchas
                            ipaddr `seq` responder path' (params { pReferer = referer,
                                                                   pUri = uri,
-                                                                  pIPAddress = ipaddr,
-                                                                  pAcceptZip = dozip })
+                                                                  pIPAddress = ipaddr })
                          else noHandle ]
          else anyRequest noHandle
 
@@ -1034,13 +1030,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  let dozip = pAcceptZip params
-  if dozip
-     then ok $ setContentType "text/html" $ gzip filledTemp
-     else ok $ setContentType "text/html" $ toResponse $ fromString filledTemp
-
-gzip :: String -> Response
-gzip = setHeader "Content-Encoding" "gzip" . toResponse . compress . B.fromChunks . return . fromString
+  ok $ setContentType "text/html" $ toResponse $ fromString filledTemp
 
 -- user authentication
 loginForm :: Html
