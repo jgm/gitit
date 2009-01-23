@@ -54,9 +54,7 @@ import System.Console.GetOpt
 import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
-import Data.IORef
 import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime, formatDateTime)
-import System.IO.Unsafe (unsafePerformIO)
 import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
@@ -66,9 +64,6 @@ gititVersion = "0.5"
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
-
-template :: IORef (T.StringTemplate String)
-template = unsafePerformIO $ newIORef $ T.newSTMP ""  -- initialize template to empty string
 
 main :: IO ()
 main = do
@@ -87,11 +82,9 @@ main = do
   users' <- if userFileExists
                then readFile (userFile conf) >>= (return . M.fromList . read)
                else return M.empty
-  initializeAppState conf users'
-  initializeWiki conf
-  -- initialize template
   templ <- liftIO $ readFile (templateFile conf)
-  writeIORef template (T.newSTMP templ)
+  initializeAppState conf users' (T.newSTMP templ)
+  initializeWiki conf
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
@@ -1014,7 +1007,7 @@ formattedPage layout page params htmlContents = do
   let htmlMessages = if null messages
                         then noHtml
                         else ulist ! [theclass "messages"] << map (li <<) messages
-  templ <- liftIO $ readIORef template
+  templ <- queryAppState template
   let filledTemp = T.render $
                    T.setAttribute "pagetitle" pageTitle $
                    T.setAttribute "javascripts" javascriptlinks $

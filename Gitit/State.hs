@@ -37,6 +37,7 @@ import Gitit.MimeTypes (readMimeTypesFile)
 import Data.List (intercalate)
 import Data.Char (toLower)
 import Text.XHtml (Html)
+import qualified Text.StringTemplate as T
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
@@ -45,10 +46,11 @@ appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
                                                   , filestore = undefined
                                                   , mimeMap = undefined
                                                   , cache = undefined
+                                                  , template = undefined
                                                   , jsMath = undefined }
 
-initializeAppState :: MonadIO m => Config -> M.Map String User -> m ()
-initializeAppState conf users' = do
+initializeAppState :: MonadIO m => Config -> M.Map String User -> T.StringTemplate String -> m ()
+initializeAppState conf users' templ = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
@@ -58,6 +60,7 @@ initializeAppState conf users' = do
                                               Darcs fs -> darcsFileStore fs
                            , mimeMap   = mimeMapFromFile
                            , cache     = M.empty
+                           , template  = templ
                            , jsMath    = False }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
@@ -143,6 +146,7 @@ data AppState = AppState {
   filestore :: FileStore,
   mimeMap   :: M.Map String String,
   cache     :: M.Map String CachedPage,
+  template  :: T.StringTemplate String,
   jsMath    :: Bool
 }
 
