@@ -94,7 +94,7 @@ main = do
   writeIORef template (T.newSTMP templ)
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
-  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $
+  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ debugger $ map (filterIf acceptsZip gzipBinary) $ 
           [ dir "css" [ fileServe [] $ staticDir conf </> "css" ]
           , dir "img" [ fileServe [] $ staticDir conf </> "img" ]
           , dir "js"  [ fileServe [] $ staticDir conf </> "js" ]
@@ -103,6 +103,23 @@ main = do
   putStrLn "Shutting down..."
   killThread tid
   putStrLn "Shutdown complete"
+
+filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
+filterIf test filt sp =
+  let handler = unServerPartT sp
+  in  withRequest $ \req ->
+      if test req
+         then liftM filt $ handler req
+         else handler req
+
+gzipBinary :: Response -> Response
+gzipBinary r@(Response {rsBody=body}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress body}
+
+acceptsZip :: Request -> Bool
+acceptsZip req =
+  case M.lookup (fromString "accept-encoding") (rqHeaders req) of
+        Just _ -> True
+        _      -> False
 
 setContentType :: String -> Response -> Response
 setContentType = setHeader "Content-Type"
