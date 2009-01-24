@@ -1,11 +1,14 @@
 # Welcome to Gitit!
 
-Gitit is a [Wiki] written in [Haskell]. [HAppS] is used for the web
-server and session state. Pages and uploaded files are stored in a [git]
-repository and may be modified either by using git's command-line tools
-or through the wiki's web interface. [Pandoc]'s extended version of
-[markdown] is used as a markup language. Gitit can be configured to
-display TeX math and highlighted source code.
+Gitit is a wiki program written in Haskell. It uses [HAppS][] for the
+web server and [pandoc][] for markup processing. Pages and uploaded
+files are stored in a [git][] or [darcs][] repository and may be modified either
+by using the VCS's command-line tools or through the wiki's web interface.
+By default, pandoc's extended version of markdown is used as a markup language,
+but reStructuredText can also be used.  Pages can be exported in a
+number of different formats, including LaTeX, RTF, OpenOffice ODT, and
+MediaWiki markup. Gitit can be configured to display TeX math (using
+[jsMath][]) and highlighted source code (using [highlighting-kate][]).
 
 You can edit this page by double-clicking on it, or by clicking on the
 "edit" tab at the top of the screen.
@@ -23,10 +26,12 @@ the link.
 
 Help is always available through the "Help" link in the sidebar.
 
-[Wiki]: http://en.wikipedia.org/wiki/Wiki
-[git]: http://git.or.cz/
+[git]: http://git.or.cz
+[darcs]: http://darcs.net
+[pandoc]: http://johnmacfarlane.net/pandoc
 [HAppS]: http://happs.org
+[jsMath]: http://www.math.union.edu/~dpvc/jsMath/
+[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
 [Haskell]:  http://www.haskell.org/
-[pandoc]: http://johnmacfarlane.net/pandoc/
 [markdown]: http://daringfireball.net/projects/markdown/
 
