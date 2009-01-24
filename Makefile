@@ -1,4 +1,4 @@
-gitit: Gitit.hs Gitit/Git.hs Gitit/State.hs Gitit/HAppS.hs
+gitit: Gitit.hs Gitit/State.hs Gitit/HAppS.hs
 	ghc --make -Wall -o gitit Gitit.hs -threaded -idata
 
 .PHONY: static clean
