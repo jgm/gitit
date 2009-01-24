@@ -169,14 +169,14 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
 }
 body { font: x-small sans-serif; background: #f9f9f9; color: black; margin: 0; padding: 0; }
 #container { font-size: 120%; margin: 0 ; padding: 0; }
-#userbox  { text-align: right; font-weight: bold; margin: 1em 1em 0 0; }
+#userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
 #sidebar  { width: 12em; float: left; margin-right: 10px; }
 #sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; }
 #sidebar fieldset, #sidebar fieldset legend { font-weight: normal; font-size: 95%; }
 #sidebar ul { padding: 0; margin: 0; margin-left: 1.6em; line-height: 1.5em; }
 #sidebar ul li { color: #888; }
-#maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; }
+#maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; max-width: 60em; }
 #content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 110%; line-height: 150%; }
 div#toc { float: right; background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
 #toc ul { margin: 0; padding-left: 1em; list-style: none; }
