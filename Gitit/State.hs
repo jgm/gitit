@@ -73,9 +73,13 @@ data Repository = Git FilePath
                 | Darcs FilePath 
                 deriving (Read, Show)
 
+data PageType = Markdown | RST
+                deriving (Read, Show)
+
 -- | Data structure for information read from config file.
 data Config = Config {
   repository          :: Repository,               -- file store for pages
+  defaultPageType     :: PageType,                 -- the default page markup type for this wiki
   userFile            :: FilePath,                 -- path of users database 
   templateFile        :: FilePath,                 -- path of page template file
   staticDir           :: FilePath,                 -- path of static directory
@@ -98,6 +102,7 @@ data Config = Config {
 defaultConfig :: Config
 defaultConfig = Config {
   repository          = Git "wikidata",
+  defaultPageType     = Markdown,
   userFile            = "gitit-users",
   templateFile        = "template.html",
   staticDir           = "static",
@@ -118,7 +123,7 @@ defaultConfig = Config {
 data CachedPage = CachedPage {
     cpContents        :: Html
   , cpRevisionId      :: RevisionId
-  }
+  } deriving Show
 
 type SessionKey = Integer
 
@@ -256,4 +261,5 @@ getMimeTypeForExtension ext = do
                 Nothing -> "application/octet-stream"
                 Just t  -> t
 
-
+getDefaultPageType :: MonadIO m => m PageType
+getDefaultPageType = liftM defaultPageType (queryAppState config)

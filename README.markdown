@@ -108,7 +108,8 @@ option `-f [filename]`.  A configuration file takes the following form:
     useRecaptcha        = False,
     recaptchaPublicKey  = "",
     recaptchaPrivateKey = "",
-    mimeTypesFile       = "/etc/mime.types"
+    mimeTypesFile       = "/etc/mime.types",
+    defaultPageType     = Markdown
     }
 
 - `repositoryPath` is the (relative) path of the git repository in which
@@ -165,6 +166,9 @@ option `-f [filename]`.  A configuration file takes the following form:
   Each line of the file should contain a mime type, followed by some space,
   followed by a space-separated list of file extensions that map to that mime
   type.  If the file is not found, some simple defaults will be used.
+
+- `defaultPageType` is the type of markup used to interpret pages in
+  the wiki. Two values are currently supported: Markdown and RST
 
 [reCAPTCHA]: http://recaptcha.net
 

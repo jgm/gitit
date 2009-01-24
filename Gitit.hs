@@ -689,7 +689,9 @@ searchResults _ params = do
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
 
 preview :: String -> Params -> Web Response
-preview _ params = pandocToHtml (textToPandoc $ pRaw params) >>= ok . setContentType "text/html" . toResponse . encodeString . renderHtmlFragment
+preview _ params = do
+  pt <- getDefaultPageType -- should get the current page type instead
+  pandocToHtml (textToPandoc pt $ pRaw params) >>= ok . toResponse . encodeString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
@@ -1254,14 +1256,20 @@ removeRawHtmlBlock :: Block -> Block
 removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
 removeRawHtmlBlock x = x
 
-textToPandoc :: String -> Pandoc
-textToPandoc = processPandoc removeRawHtmlBlock .
-               readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) .
-               filter (/= '\r')
+readerFor :: PageType -> (ParserState -> String -> Pandoc)
+readerFor pt = case pt of
+                 RST      -> readRST
+                 Markdown -> readMarkdown
+
+textToPandoc :: PageType -> String -> Pandoc
+textToPandoc pt s = processPandoc removeRawHtmlBlock $
+               (readerFor pt) (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) $
+               filter (/= '\r') s
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
-  mDoc <- rawContents (pathForPage page) params >>= (return . liftM textToPandoc)
+  pt <- getDefaultPageType
+  mDoc <- rawContents (pathForPage page) params >>= (return . liftM (textToPandoc pt))
   return $ case mDoc of
            Nothing                -> Nothing
            Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
