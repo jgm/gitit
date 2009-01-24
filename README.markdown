@@ -265,6 +265,10 @@ Wiki links and formatting
 
 For instructions on editing pages and creating links, see the "Help" page.
 
+Gitit interprets links with empty URLs as wikilinks.  Thus, in markdown pages,
+`[Front Page]()` creates an internal wikilink to the page `Front Page`.
+In reStructuredText pages, `` `Front Page <>`_ `` has the same effect.
+
 Character encodings
 ===================
 
@@ -285,9 +289,6 @@ Gwern Brandwen helped to optimize Gitit.  Simon Michael contributed the patch fo
 RST support.
 
 The visual layout is shamelessly borrowed from Wikipedia.
-
-The code in `Gitit/State.hs` is based on http://hpaste.org/5957 by mightybyte,
-as revised by dbpatterson.
 
 The stylesheets are influenced by Wikipedia's stylesheets and by the
 bluetrip CSS framework (see BLUETRIP-LICENSE). Some of the icons in
