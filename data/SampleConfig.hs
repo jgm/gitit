@@ -1,5 +1,6 @@
 Config {
 repository          = Git "wikidata",
+defaultPageType     = Markdown,
 userFile            = "gitit-users",
 templateFile        = "template.html",
 staticDir           = "static",
