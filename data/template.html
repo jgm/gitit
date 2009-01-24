@@ -47,14 +47,14 @@
         </div>
         $endif$
       </div>
-      <div id="userbox">
-        $if(user)$
-        <a href="/_logout">Logout $user$</a>
-        $else$
-        <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
-        $endif$
-      </div>
       <div id="maincol">
+        <div id="userbox">
+          $if(user)$
+          <a href="/_logout">Logout $user$</a>
+          $else$
+          <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+          $endif$
+        </div>
         $tabs$ 
         <div id="content">
           $if(nothead)$
