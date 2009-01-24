@@ -7,6 +7,7 @@ button will take you to a list of all pages on the wiki (organized into
 folders if directories are used). Alternatively, you can search using
 the search box. Note that the search is set to look for whole words, so
 if you are looking for "gremlins", type that and not "gremlin".
+The "go" box will take you directly to the page you type.
 
 # Markdown
 
