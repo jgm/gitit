@@ -1256,15 +1256,13 @@ removeRawHtmlBlock :: Block -> Block
 removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
 removeRawHtmlBlock x = x
 
-readerFor :: PageType -> (ParserState -> String -> Pandoc)
+readerFor :: PageType -> (String -> Pandoc)
 readerFor pt = case pt of
-                 RST      -> readRST
-                 Markdown -> readMarkdown
+                 RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
+                 Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
 textToPandoc :: PageType -> String -> Pandoc
-textToPandoc pt s = processPandoc removeRawHtmlBlock $
-               (readerFor pt) (defaultParserState { stateSanitizeHTML = True, stateSmart = True }) $
-               filter (/= '\r') s
+textToPandoc pt s = processPandoc removeRawHtmlBlock $ readerFor pt $ filter (/= '\r') s
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
