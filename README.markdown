@@ -2,10 +2,9 @@ Gitit
 =====
 
 Gitit is a wiki program written in Haskell. It uses [HAppS][] for the
-web server and session state, [git][] for storage, history, search,
-diffs, and merging, and [pandoc][] for markup processing. Pages and
-uploaded files are stored in a git repository and may be modified either
-by using git's command-line tools or through the wiki's web interface.
+web server and [pandoc][] for markup processing. Pages and uploaded
+files are stored in a [git][] or [darcs][] repository and may be modified either
+by using the VCS's command-line tools or through the wiki's web interface.
 Pandoc's extended version of markdown is used as a markup language.
 Pages can be exported in a number of different formats, including LaTeX,
 RTF, OpenOffice ODT, and MediaWiki markup. Gitit can be configured to
@@ -13,6 +12,7 @@ display TeX math (using [jsMath][]) and highlighted source code (using
 [highlighting-kate][]).
 
 [git]: http://git.or.cz  
+[darcs]: http://darcs.net
 [pandoc]: http://johnmacfarlane.net/pandoc
 [HAppS]: http://happs.org
 [jsMath]: http://www.math.union.edu/~dpvc/jsMath/
