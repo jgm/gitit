@@ -17,8 +17,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 {- Functions for maintaining user list and session state.
-   Parts of this code are based on http://hpaste.org/5957 mightybyte rev by 
-   dbpatterson.
 -}
 
 module Gitit.State where
