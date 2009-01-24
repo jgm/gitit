@@ -82,9 +82,19 @@ main = do
   users' <- if userFileExists
                then readFile (userFile conf) >>= (return . M.fromList . read)
                else return M.empty
+  -- create template file if it doesn't exist, and read it
+  let templatefile = templateFile conf
+  templateExists <- doesFileExist templatefile
+  unless templateExists $ do
+    templatePath <- getDataFileName $ "data" </> "template.html"
+    copyFile templatePath templatefile
+    hPutStrLn stderr $ "Created " ++ templatefile
   templ <- liftIO $ readFile (templateFile conf)
+  -- initialize state
   initializeAppState conf users' (T.newSTMP templ)
+  -- setup the page repository and static files, if they don't exist
   initializeWiki conf
+  -- start the server
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
@@ -170,7 +180,6 @@ handleFlag _ opt = do
 initializeWiki :: Config -> IO ()
 initializeWiki conf = do
   let staticdir = staticDir conf
-  let templatefile = templateFile conf
   fs <- getFileStore
   repoExists <- liftIO $ catch (initialize fs >> return False)
                                (\e -> if e == RepositoryExists then return True else throwIO e >> return False)
@@ -211,11 +220,6 @@ initializeWiki conf = do
                        "If you want support for math, copy the jsMath directory into " ++ staticdir ++ "/js/\n" ++
                        "jsMath can be obtained from http://www.math.union.edu/~dpvc/jsMath/\n" ++
                        replicate 80 '*'
-  templateExists <- doesFileExist templatefile
-  unless templateExists $ do
-    templatePath <- getDataFileName $ "data" </> "template.html"
-    copyFile templatePath templatefile
-    hPutStrLn stderr $ "Created " ++ templatefile
 
 type Handler = ServerPart Response
 
