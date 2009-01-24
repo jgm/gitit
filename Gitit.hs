@@ -1252,9 +1252,11 @@ rawContents file params = do
   fs <- getFileStore
   liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
 
+{-
 removeRawHtmlBlock :: Block -> Block
 removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
 removeRawHtmlBlock x = x
+-}
 
 readerFor :: PageType -> (String -> Pandoc)
 readerFor pt = case pt of
@@ -1262,7 +1264,7 @@ readerFor pt = case pt of
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
 textToPandoc :: PageType -> String -> Pandoc
-textToPandoc pt s = processPandoc removeRawHtmlBlock $ readerFor pt $ filter (/= '\r') s
+textToPandoc pt s = {- processPandoc removeRawHtmlBlock $ -} readerFor pt $ filter (/= '\r') s
 
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
