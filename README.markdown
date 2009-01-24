@@ -5,11 +5,11 @@ Gitit is a wiki program written in Haskell. It uses [HAppS][] for the
 web server and [pandoc][] for markup processing. Pages and uploaded
 files are stored in a [git][] or [darcs][] repository and may be modified either
 by using the VCS's command-line tools or through the wiki's web interface.
-Pandoc's extended version of markdown is used as a markup language.
-Pages can be exported in a number of different formats, including LaTeX,
-RTF, OpenOffice ODT, and MediaWiki markup. Gitit can be configured to
-display TeX math (using [jsMath][]) and highlighted source code (using
-[highlighting-kate][]).
+By default, pandoc's extended version of markdown is used as a markup language,
+but reStructuredText can also be used.  Pages can be exported in a
+number of different formats, including LaTeX, RTF, OpenOffice ODT, and
+MediaWiki markup. Gitit can be configured to display TeX math (using
+[jsMath][]) and highlighted source code (using [highlighting-kate][]).
 
 [git]: http://git.or.cz  
 [darcs]: http://darcs.net
@@ -93,7 +93,8 @@ You can set some configuration options when starting gitit, using the
 option `-f [filename]`.  A configuration file takes the following form:
 
     Config {
-    repositoryPath      = "wikidata",
+    repository          = Git "wikidata",
+    defaultPageType     = Markdown,
     userFile            = "gitit-users",
     templateFile        = "template.html",
     staticDir           = "static",
@@ -108,13 +109,20 @@ option `-f [filename]`.  A configuration file takes the following form:
     useRecaptcha        = False,
     recaptchaPublicKey  = "",
     recaptchaPrivateKey = "",
-    mimeTypesFile       = "/etc/mime.types",
-    defaultPageType     = Markdown
+    mimeTypesFile       = "/etc/mime.types"
     }
 
-- `repositoryPath` is the (relative) path of the git repository in which
-  the wiki's pages will be stored.  If it does not exist, gitit will create
-  it on startup.
+- `repository` specifies the type and (relative) path of the repository
+  in which the wiki's pages will be stored. If it does not exist, gitit
+  will create it on startup.  Supported repository types are `Git` and
+  `Darcs`.
+
+- `defaultPageType` is the type of markup used to interpret pages in
+  the wiki. Two values are currently supported: `Markdown` and `RST`.
+  If `Markdown` is selected, [pandoc]'s syntax extensions (for footnotes,
+  delimited code blocks, etc.) will be enabled.  Note that pandoc's
+  reStructuredText parser is not complete, so some pages may
+  not be rendered correctly if `RST` is selected.
 
 - `userFile` is a file containing user login information (with hashed
   passwords).  If it does not exist, gitit will start with an empty list
@@ -166,9 +174,6 @@ option `-f [filename]`.  A configuration file takes the following form:
   Each line of the file should contain a mime type, followed by some space,
   followed by a space-separated list of file extensions that map to that mime
   type.  If the file is not found, some simple defaults will be used.
-
-- `defaultPageType` is the type of markup used to interpret pages in
-  the wiki. Two values are currently supported: Markdown and RST
 
 [reCAPTCHA]: http://recaptcha.net
 
@@ -275,6 +280,9 @@ Bugs may be reported (and feature requests filed) at
 
 Acknowledgements
 ================
+
+Gwern Brandwen helped to optimize Gitit.  Simon Michael contributed the patch for
+RST support.
 
 The visual layout is shamelessly borrowed from Wikipedia.
 
