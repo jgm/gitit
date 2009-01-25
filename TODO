@@ -15,10 +15,20 @@ _ Add a Go box that goes to the specified page title;
 - handle logging: see http://groups.google.com/group/HAppS/browse_thread/thread/2b412f24c53f5aa/4ef39b57c6062a87?lnk=gst&q=logging#4ef39b57c6062a87
 
 - add literate haskell support to pandoc, and to gitit
+  (By this is meant that the 'literate' part of the file should
+  be interpreted and displayed as Markdown/ReST, and the code
+  would be handled as it is now, inside delimited code blocks like
+  ~~~~{.haskell}
+
+- add haddock support to pandoc & gitit; this is much like literate haskell
+  support, but in a sense the inverse as in literate haskell one marks the code
+  and in haddock mode the 'literate' part is not merely all the comments but rather
+  all the comments which are marked as being haddock (with '-- |' syntax).
 
 - does debugFilter still work?
 
-- rss feed for all page changes?  see the rss library (Text.RSS) on HackageDB
+- rss feed for individual page changes & Recent Activity?  
+  see the rss library (Text.RSS) on HackageDB
 
 - add signature? (-- ~~~~)
 
@@ -27,6 +37,8 @@ _ Add a Go box that goes to the specified page title;
 - improve use of string templates:  different components of pages should
   have their own templates.
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
+
+- figure out how Pandoc plugins could be useful for gitit
 
 - add support for categories:
   an example of a category:
@@ -37,4 +49,3 @@ _ Add a Go box that goes to the specified page title;
   https://secure.wikimedia.org/wikipedia/en/wiki/Wikipedia:Categorization
   Categories can form a tree structure.
   Articles can be in multiple categories.
-
