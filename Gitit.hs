@@ -21,7 +21,7 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.Util (withTempDir)
+import Gitit.Util (withTempDir, orIfNull)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
@@ -489,9 +489,6 @@ handleAny =
                                                                (toResponse noHtml) {rsBody = contents} -- ugly hack
                                   Left NotFound  -> anyRequest noHandle
                                   Left e         -> error (show e)
-
-orIfNull :: String -> String -> String
-orIfNull str backup = if null str then backup else str
 
 isPage :: String -> Bool
 isPage ('_':_) = False
