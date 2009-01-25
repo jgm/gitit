@@ -21,7 +21,7 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.Util (withTempDir, orIfNull)
+import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
@@ -893,14 +893,6 @@ indexPage _ params = do
   files <- liftIO $ index fs
   let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
-
--- | Map a list of nonempty lists onto a list of pairs of list heads and list of tails.
--- e.g. [[1,2],[1],[2,1]] -> [(1,[[2],[]]), (2,[[1]])]
-consolidateHeads :: Eq a => [[a]] -> [(a,[[a]])]
-consolidateHeads lst =
-  let heads = nub $ map head lst
-      tailsFor h = map tail [l | l <- lst, head l == h]
-  in  map (\h -> (h, tailsFor h)) heads
 
 -- | Create a hierarchical ordered list (with links) for a list of files
 fileListToHtml :: String -> [[FilePath]] -> Html
