@@ -914,22 +914,22 @@ fileListToHtml prefix lst = ulist ! [identifier "index", theclass "folding"] <<
                          else li ! [theclass "folder"] << [stringToHtml h', fileListToHtml (prefix ++ h') l]) $
   consolidateHeads lst)
 
--- | Convert links with no URL to wikilinks, if their labels are all strings and spaces
+-- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
-convertWikiLinks (Link ref ("", "")) | all isStringOrSpace ref =
+convertWikiLinks (Link ref ("", "")) =
   Link ref (refToUrl ref, "Go to wiki page")
 convertWikiLinks x = x
 
-isStringOrSpace :: Inline -> Bool
-isStringOrSpace Space   = True
-isStringOrSpace (Str _) = True
-isStringOrSpace _       = False
-
 refToUrl :: [Inline] -> String
-refToUrl ((Str x):xs) = x ++ refToUrl xs
-refToUrl (Space:xs)   = "%20" ++ refToUrl xs
-refToUrl (_:_)        = error "Encountered an inline other than Str or Space"
-refToUrl []           = ""
+refToUrl = concatMap go
+  where go (Str x)                  = x
+        go (Space)                  = "%20"
+        go (Quoted DoubleQuote xs)  = '"' : (refToUrl xs ++ "\"")
+        go (Quoted SingleQuote xs)  = '\'' : (refToUrl xs ++ "'")
+        go (Apostrophe)             = "'"
+        go (Ellipses)               = "..."
+        go (Math InlineMath t)      = '$' : (t ++ "$")
+        go _                        = ""
 
 -- | Converts pandoc document to HTML.
 pandocToHtml :: MonadIO m => Pandoc -> m Html
