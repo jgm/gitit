@@ -22,6 +22,7 @@ module Main where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
+import Gitit.Initialize (initializeWiki)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
@@ -175,51 +176,6 @@ handleFlag _ opt = do
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version      -> hPutStrLn stderr (progname ++ " version " ++ gititVersion ++ copyrightMessage) >> exitWith ExitSuccess
     ConfigFile f -> liftM read (readFile f)
-
--- | Create repository and public directories, unless they already exist.
-initializeWiki :: Config -> IO ()
-initializeWiki conf = do
-  let staticdir = staticDir conf
-  fs <- getFileStore
-  repoExists <- liftIO $ catch (initialize fs >> return False)
-                               (\e -> if e == RepositoryExists then return True else throwIO e >> return False)
-  unless repoExists $ do
-    welcomepath <- getDataFileName $ "data" </> "FrontPage.page"
-    welcomecontents <- B.readFile welcomepath
-    helppath <- getDataFileName $ "data" </> "Help.page"
-    helpcontents <- B.readFile helppath
-    -- add front page and help page
-    liftIO $ create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
-    liftIO $ create fs "Help.page" (Author "Gitit" "") "Default front page" helpcontents
-    hPutStrLn stderr "Created repository"
-  staticExists <- doesDirectoryExist staticdir
-  unless staticExists $ do
-    createDirectoryIfMissing True $ staticdir </> "css"
-    let stylesheets = map ("css" </>) ["screen.css", "print.css", "ie.css", "hk-pyg.css"]
-    stylesheetpaths <- mapM getDataFileName stylesheets
-    zipWithM_ copyFile stylesheetpaths (map (staticdir </>) stylesheets)
-    createDirectoryIfMissing True $ staticdir </> "img" </> "icons"
-    let imgs = map (("img" </>) . ("icons" </>))
-                ["cross.png", "doc.png", "email.png", "external.png", "feed.png", "folder.png",
-                 "im.png", "key.png", "page.png", "pdf.png", "tick.png", "xls.png"]
-    imgpaths <- mapM getDataFileName imgs
-    zipWithM_ copyFile imgpaths (map (staticdir </>) imgs)
-    logopath <- getDataFileName $ "img" </> "gitit-dog.png"
-    copyFile logopath (staticdir </> "img" </> "logo.png")
-    createDirectoryIfMissing True $ staticdir </> "js"
-    let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
-                       "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
-    javascriptpaths <- mapM getDataFileName $ map ("js" </>) javascripts
-    zipWithM_ copyFile javascriptpaths $ map ((staticdir </> "js") </>) javascripts
-    hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
-  jsMathExists <- doesDirectoryExist (staticdir </> "js" </> "jsMath")
-  updateAppState $ \s -> s{ jsMath = jsMathExists }
-  unless jsMathExists $ do
-    hPutStrLn stderr $ replicate 80 '*' ++
-                       "\nWarning:  jsMath not found.\n" ++
-                       "If you want support for math, copy the jsMath directory into " ++ staticdir ++ "/js/\n" ++
-                       "jsMath can be obtained from http://www.math.union.edu/~dpvc/jsMath/\n" ++
-                       replicate 80 '*'
 
 type Handler = ServerPart Response
 
