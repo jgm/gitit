@@ -21,11 +21,11 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
+import Gitit.Util (withTempDir)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
-import System.IO.Error (isAlreadyExistsError)
-import Control.Exception (bracket, throwIO, catch, try)
+import Control.Exception (throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
 import System.Directory
 import System.Time
@@ -1283,18 +1283,4 @@ exportPage page params = do
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
                         Just writer -> writer page doc
-
--- | Perform a function in a temporary directory and clean up.
-withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
-withTempDir baseName = bracket (createTempDir 0 baseName) (removeDirectoryRecursive)
-
--- | Create a temporary directory with a unique name.
-createTempDir :: Integer -> FilePath -> IO FilePath
-createTempDir num baseName = do
-  sysTempDir <- getTemporaryDirectory
-  let dirName = sysTempDir </> baseName <.> show num
-  liftIO $ catch (createDirectory dirName >> return dirName) $
-      \e -> if isAlreadyExistsError e
-               then createTempDir (num + 1) baseName
-               else ioError e
 
