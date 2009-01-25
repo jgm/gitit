@@ -16,7 +16,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Utility functions for Gitit.
 -}
 
-module Gitit.Util ( withTempDir )
+module Gitit.Util ( withTempDir
+                  , orIfNull
+                  )
 where
 import System.Directory (getTemporaryDirectory, createDirectory, removeDirectoryRecursive)
 import Control.Exception (bracket)
@@ -37,5 +39,9 @@ createTempDir num baseName = do
       \e -> if isAlreadyExistsError e
                then createTempDir (num + 1) baseName
                else ioError e
+
+-- | Returns a string, if it is not null, or a backup, if it is.
+orIfNull :: String -> String -> String
+orIfNull str backup = if null str then backup else str
 
 
