@@ -582,7 +582,7 @@ uploadFile _ params = do
                            "or check the box to overwrite the existing file existing file.")
                         , (B.length fileContents > fromIntegral (maxUploadSize cfg),
                            "File exceeds maximum upload size.")
-                        , (isPage wikiname,
+                        , (takeExtension wikiname == ".page",
                            "This file extension is reserved for wiki pages.")
                         ]
   if null errors
