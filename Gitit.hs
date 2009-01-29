@@ -103,13 +103,8 @@ main = do
 
   -- start the server
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
-  let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
-          debugger $
-          [ dir "css" [ withExpiresHeaders $ fileServe [] $ staticdir </> "css" ]
-          , dir "img" [ withExpiresHeaders $ fileServe [] $ staticdir </> "img" ]
-          , dir "js"  [ withExpiresHeaders $ fileServe [] $ staticdir </> "js" ]
-          ] ++ 
+          map (\d -> dir d [ withExpiresHeaders $ fileServe [] $ staticdir </> d]) ["css", "img", "js"] ++
           [ debugHandler | debugMode conf ] ++
           [ filterIf acceptsZip gzipBinary $ multi wikiHandlers ]
   waitForTermination
