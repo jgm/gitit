@@ -110,8 +110,8 @@ main = do
           , dir "img" [ withExpiresHeaders $ fileServe [] $ staticdir </> "img" ]
           , dir "js"  [ withExpiresHeaders $ fileServe [] $ staticdir </> "js" ]
           ] ++ 
-          (if debugMode conf then debugHandlers else []) ++
-          map (filterIf acceptsZip gzipBinary) wikiHandlers
+          [ debugHandler | debugMode conf ] ++
+          [ filterIf acceptsZip gzipBinary $ multi wikiHandlers ]
   waitForTermination
 
   -- shut down the server
@@ -197,12 +197,14 @@ setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=
 type Handler = ServerPart Response
 
 
-debugHandlers :: [Handler]
-debugHandlers = [ withCommand "params"  [ handlePage GET  $ \_ params -> ok (toResponse $ show params),
-                                          handlePage POST $ \_ params -> ok (toResponse $ show params) ]
-                , withCommand "page"    [ handlePage GET  $ \page _ -> ok (toResponse $ show page),
-                                          handlePage POST $ \page _ -> ok (toResponse $ show page) ]
-                , withCommand "request" [ withRequest $ \req -> ok $ toResponse $ show req ] ]
+debugHandler :: Handler
+debugHandler = do
+  liftIO $ putStr "\n"
+  withRequest $ \req -> liftIO $ getCurrentTime >>= (putStrLn . formatDateTime "%c") >> putStrLn (show req)
+  multi [ handle (const True) GET showParams, handle (const True) POST showParams ]
+    where showParams page params = do
+            liftIO $ putStrLn page >> putStrLn (show params)
+            noHandle
 
 wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
