@@ -70,6 +70,9 @@ To run gitit, you'll need [git][] in your system path. Check this by doing
 
     git --version
 
+You should also make sure that you are using a UTF-8 locale.
+(To check this, type `locale`.)
+
 Switch to the directory where you want to run gitit.  This should be a directory
 where you have write access, since two directories, `static` and `wikidata`, and
 two files, `gitit-users` and `template.html`, will be created here. To
