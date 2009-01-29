@@ -224,7 +224,7 @@ data Params = Params { pUsername     :: String
                      , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
-                     , pIPAddress    :: String
+                     , pPeer         :: String
                      }  deriving Show
 
 instance FromData Params where
@@ -292,7 +292,7 @@ instance FromData Params where
                          , pConfirm      = cn
                          , pSessionKey   = sk
                          , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
-                         , pIPAddress    = ""  -- this gets set by handle...
+                         , pPeer         = ""  -- this gets set by handle...
                          }
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
@@ -359,14 +359,9 @@ handle pathtest meth responder = uriRest $ \uri ->
                                               Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                               _       -> Nothing
                            let peer = fst $ rqPeer req
-                           mbIPaddr <- liftIO $ lookupIPAddr peer
-                           let ipaddr = case mbIPaddr of
-                                             Just ip -> ip
-                                             Nothing -> "0.0.0.0"
-                           -- force ipaddr to be strictly evaluated, or we run into problems when validating captchas
-                           ipaddr `seq` responder path' (params { pReferer = referer,
-                                                                  pUri = uri,
-                                                                  pIPAddress = ipaddr })
+                           responder path' (params { pReferer = referer,
+                                                     pUri = uri,
+                                                     pPeer = peer })
                          else noHandle ]
          else anyRequest noHandle
 
@@ -1044,8 +1039,13 @@ registerUser _ params = do
   captchaResult  <- if useRecaptcha cfg
                        then if null (recaptchaChallengeField recaptcha) || null (recaptchaResponseField recaptcha)
                                then return $ Left "missing-challenge-or-response"  -- no need to bother captcha.net in this case
-                               else liftIO $ validateCaptcha (recaptchaPrivateKey cfg) (pIPAddress params) (recaptchaChallengeField recaptcha)
-                                                              (recaptchaResponseField recaptcha)
+                               else liftIO $ do
+                                      mbIPaddr <- lookupIPAddr $ pPeer params
+                                      let ipaddr = case mbIPaddr of
+                                                        Just ip -> ip
+                                                        Nothing -> error $ "Could not find ip address for " ++ pPeer params
+                                      ipaddr `seq` validateCaptcha (recaptchaPrivateKey cfg) ipaddr (recaptchaChallengeField recaptcha)
+                                                        (recaptchaResponseField recaptcha)
                        else return $ Right ()
   let (validCaptcha, captchaError) = case captchaResult of
                                       Right () -> (True, Nothing)
