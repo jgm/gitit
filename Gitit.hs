@@ -65,9 +65,7 @@ sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
 main :: IO ()
 main = do
-  argv <- getArgs
-  options <- parseArgs argv
-  conf <- foldM handleFlag defaultConfig options
+  conf <- getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
   -- check for external programs that are needed
   let prereqs = "grep" : case repository conf of
                       Git _        -> ["git"]
