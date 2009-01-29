@@ -23,6 +23,7 @@ import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
+import Gitit.CookieFixer (cookieFixer)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -104,7 +105,7 @@ main = do
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
           map (\d -> dir d [ withExpiresHeaders $ fileServe [] $ staticdir </> d]) ["css", "img", "js"] ++
           [ debugHandler | debugMode conf ] ++
-          [ filterIf acceptsZip gzipBinary $ multi wikiHandlers ]
+          [ filterIf acceptsZip gzipBinary $ cookieFixer $ multi wikiHandlers ]
   waitForTermination
 
   -- shut down the server
