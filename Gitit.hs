@@ -1,4 +1,4 @@
-{-# LANGUAGE Rank2Types, FlexibleContexts #-}
+{-# LANGUAGE CPP, Rank2Types, FlexibleContexts #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -59,9 +59,6 @@ import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime, forma
 import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
-
-gititVersion :: String
-gititVersion = "0.5"
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
@@ -174,7 +171,7 @@ handleFlag _ opt = do
   progname <- getProgName
   case opt of
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version      -> hPutStrLn stderr (progname ++ " version " ++ gititVersion ++ copyrightMessage) >> exitWith ExitSuccess
+    Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
     ConfigFile f -> liftM read (readFile f)
 
 type Handler = ServerPart Response
