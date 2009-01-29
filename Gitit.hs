@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, Rank2Types, FlexibleContexts #-}
+{-# LANGUAGE Rank2Types, FlexibleContexts #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -23,7 +23,6 @@ import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
-import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -33,6 +32,7 @@ import System.Time
 import Control.Concurrent
 import System.FilePath
 import Gitit.State
+import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersect, intersperse, intercalate, sort, nub, sortBy, isSuffixOf, find, isPrefixOf)
@@ -51,8 +51,6 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Codec.Compression.GZip (compress)
 import Network.HTTP (urlEncodeVars, urlEncode)
-import System.Console.GetOpt
-import System.Exit
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes, parseDateTime, DateTime, formatDateTime)
@@ -65,7 +63,7 @@ main :: IO ()
 main = do
 
   -- parse options to get config file
-  conf <- getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
+  conf <- getConfigFromOpts
 
   -- check for external programs that are needed
   let prereqs = "grep" : case repository conf of
@@ -113,52 +111,6 @@ main = do
   putStrLn "Shutting down..."
   killThread tid
   putStrLn "Shutdown complete"
-
----------------------------
------ Option parsing ------
----------------------------
-
-data Opt
-    = Help
-    | ConfigFile FilePath
-    | Version
-    deriving (Eq)
-
-flags :: [OptDescr Opt]
-flags =
-   [ Option ['h'] [] (NoArg Help)
-        "Print this help message"
-   , Option ['v'] [] (NoArg Version)
-        "Print version information"
-   , Option ['f'] [] (ReqArg ConfigFile "FILE")
-        "Specify configuration file"
-   ]
-
-parseArgs :: [String] -> IO [Opt]
-parseArgs argv = do
-  progname <- getProgName
-  case getOpt Permute flags argv of
-    (opts,_,[])  -> return opts
-    (_,_,errs)   -> hPutStrLn stderr (concat errs ++ usageInfo (usageHeader progname) flags) >>
-                       exitWith (ExitFailure 1)
-
-usageHeader :: String -> String
-usageHeader progname = "Usage:  " ++ progname ++ " [opts...]"
-
-copyrightMessage :: String
-copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
-                   "This is free software; see the source for copying conditions.  There is no\n" ++
-                   "warranty, not even for merchantability or fitness for a particular purpose."
-
-handleFlag :: Config -> Opt -> IO Config
-handleFlag _ opt = do
-  progname <- getProgName
-  case opt of
-    Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
-    ConfigFile f -> liftM read (readFile f)
-
-------
 
 
 filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
