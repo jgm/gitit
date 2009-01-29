@@ -32,16 +32,19 @@ import Control.Monad (liftM, foldM)
 data Opt
     = Help
     | ConfigFile FilePath
+    | Port Int
     | Version
     deriving (Eq)
 
 flags :: [OptDescr Opt]
 flags =
-   [ Option ['h'] [] (NoArg Help)
+   [ Option ['h'] ["help"] (NoArg Help)
         "Print this help message"
-   , Option ['v'] [] (NoArg Version)
+   , Option ['v'] ["version"] (NoArg Version)
         "Print version information"
-   , Option ['f'] [] (ReqArg ConfigFile "FILE")
+   , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
+        "Specify port"
+   , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
         "Specify configuration file"
    ]
 
@@ -62,11 +65,12 @@ copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
                    "warranty, not even for merchantability or fitness for a particular purpose."
 
 handleFlag :: Config -> Opt -> IO Config
-handleFlag _ opt = do
+handleFlag conf opt = do
   progname <- getProgName
   case opt of
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
+    Port p       -> return $ conf { portNumber = p }
     ConfigFile f -> liftM read (readFile f)
 
 getConfigFromOpts :: IO Config
