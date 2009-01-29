@@ -22,7 +22,7 @@ module Main where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
-import Gitit.Initialize (initializeWiki)
+import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import System.Environment
 import System.IO.UTF8
 import System.IO (stderr)
@@ -73,7 +73,8 @@ main = do
                       Darcs _      -> ["darcs"]
   forM_ prereqs $ \prog ->
     findExecutable prog >>= \mbFind ->
-    when (isNothing mbFind) $ error $ "Required program '" ++ prog ++ "' not found in system path."
+    when (isNothing mbFind) $ error $
+      "Required program '" ++ prog ++ "' not found in system path."
 
   -- read user file and update state
   userFileExists <- doesFileExist $ userFile conf
@@ -96,16 +97,18 @@ main = do
   initializeAppState conf users' templ
 
   -- setup the page repository and static files, if they don't exist
-  initializeWiki conf
+  createRepoIfMissing conf
+  let staticdir = staticDir conf
+  createStaticIfMissing staticdir
 
   -- start the server
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
           debugger $
-          [ dir "css" [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "css" ]
-          , dir "img" [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "img" ]
-          , dir "js"  [ withExpiresHeaders $ fileServe [] $ staticDir conf </> "js" ]
+          [ dir "css" [ withExpiresHeaders $ fileServe [] $ staticdir </> "css" ]
+          , dir "img" [ withExpiresHeaders $ fileServe [] $ staticdir </> "img" ]
+          , dir "js"  [ withExpiresHeaders $ fileServe [] $ staticdir </> "js" ]
           ] ++ 
           (if debugMode conf then debugHandlers else []) ++
           map (filterIf acceptsZip gzipBinary) wikiHandlers
