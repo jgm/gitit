@@ -60,12 +60,13 @@ import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
 
-sessionTime :: Int
-sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
 main :: IO ()
 main = do
+
+  -- parse options to get config file
   conf <- getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
+
   -- check for external programs that are needed
   let prereqs = "grep" : case repository conf of
                       Git _        -> ["git"]
@@ -73,23 +74,30 @@ main = do
   forM_ prereqs $ \prog ->
     findExecutable prog >>= \mbFind ->
     when (isNothing mbFind) $ error $ "Required program '" ++ prog ++ "' not found in system path."
+
   -- read user file and update state
   userFileExists <- doesFileExist $ userFile conf
   users' <- if userFileExists
-               then readFile (userFile conf) >>= (return . M.fromList . read)
+               then liftM (M.fromList . read) $ readFile $ userFile conf
                else return M.empty
-  -- create template file if it doesn't exist, and read it
+
+  -- create template file if it doesn't exist
   let templatefile = templateFile conf
   templateExists <- doesFileExist templatefile
   unless templateExists $ do
     templatePath <- getDataFileName $ "data" </> "template.html"
     copyFile templatePath templatefile
     hPutStrLn stderr $ "Created " ++ templatefile
-  templ <- liftIO $ readFile (templateFile conf)
+
+  -- read template file
+  templ <- liftM T.newSTMP $ liftIO $ readFile templatefile
+
   -- initialize state
-  initializeAppState conf users' (T.newSTMP templ)
+  initializeAppState conf users' templ
+
   -- setup the page repository and static files, if they don't exist
   initializeWiki conf
+
   -- start the server
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   let debugger = if debugMode conf then debugFilter else id
@@ -102,35 +110,15 @@ main = do
           (if debugMode conf then debugHandlers else []) ++
           map (filterIf acceptsZip gzipBinary) wikiHandlers
   waitForTermination
+
+  -- shut down the server
   putStrLn "Shutting down..."
   killThread tid
   putStrLn "Shutdown complete"
 
-filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
-filterIf test filt sp =
-  let handler = unServerPartT sp
-  in  withRequest $ \req ->
-      if test req
-         then liftM filt $ handler req
-         else handler req
-
-gzipBinary :: Response -> Response
-gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress b}
-
-acceptsZip :: Request -> Bool
-acceptsZip req = isJust $ M.lookup (fromString "accept-encoding") (rqHeaders req)
-
-getCacheTime :: IO (Maybe DateTime)
-getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
-
-withExpiresHeaders :: ServerPart Response -> ServerPart Response
-withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
-
-setContentType :: String -> Response -> Response
-setContentType = setHeader "Content-Type"
-
-setFilename :: String -> Response -> Response
-setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+---------------------------
+----- Option parsing ------
+---------------------------
 
 data Opt
     = Help
@@ -171,6 +159,37 @@ handleFlag _ opt = do
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
     ConfigFile f -> liftM read (readFile f)
+
+------
+
+
+filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
+filterIf test filt sp =
+  let handler = unServerPartT sp
+  in  withRequest $ \req ->
+      if test req
+         then liftM filt $ handler req
+         else handler req
+
+gzipBinary :: Response -> Response
+gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress b}
+
+acceptsZip :: Request -> Bool
+acceptsZip req = isJust $ M.lookup (fromString "accept-encoding") (rqHeaders req)
+
+getCacheTime :: IO (Maybe DateTime)
+getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
+
+withExpiresHeaders :: ServerPart Response -> ServerPart Response
+withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
+
+setContentType :: String -> Response -> Response
+setContentType = setHeader "Content-Type"
+
+setFilename :: String -> Response -> Response
+setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+
+
 
 type Handler = ServerPart Response
 
@@ -330,6 +349,9 @@ getLoggedInUser params = do
        Nothing    -> Nothing
        Just sd    -> Just $ sessionUser sd
   return $! user
+
+sessionTime :: Int
+sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
 data Command = Command (Maybe String)
 
