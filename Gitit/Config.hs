@@ -33,6 +33,7 @@ data Opt
     = Help
     | ConfigFile FilePath
     | Port Int
+    | Debug
     | Version
     deriving (Eq)
 
@@ -44,6 +45,8 @@ flags =
         "Print version information"
    , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
         "Specify port"
+   , Option ['d'] ["debug"] (NoArg Debug)
+        "Print debugging information on each request"
    , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
         "Specify configuration file"
    ]
@@ -70,6 +73,7 @@ handleFlag conf opt = do
   case opt of
     Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
+    Debug        -> return $ conf { debugMode = True }
     Port p       -> return $ conf { portNumber = p }
     ConfigFile f -> liftM read (readFile f)
 
