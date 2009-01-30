@@ -289,7 +289,7 @@ Bugs may be reported (and feature requests filed) at
 Acknowledgements
 ================
 
-Gwern Brandwen helped to optimize Gitit.  Simon Michael contributed the patch for
+Gwern Branwen helped to optimize Gitit.  Simon Michael contributed the patch for
 RST support.
 
 The visual layout is shamelessly borrowed from Wikipedia.
