@@ -43,7 +43,7 @@ Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
   other-modules:     Gitit.State, Gitit.HAppS, Gitit.MimeTypes, Gitit.Util,
-                     Gitit.Initialize, Gitit.Config, Gitit.CookieFixer, Paths_gitit
+                     Gitit.Initialize, Gitit.Config, Paths_gitit
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
