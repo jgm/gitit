@@ -365,13 +365,6 @@ handle pathtest meth responder = uriRest $ \uri ->
                          else noHandle ]
          else anyRequest noHandle
 
-lookupIPAddr :: String -> IO (Maybe String)
-lookupIPAddr hostname = do
-  addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
-  if null addrs
-     then return Nothing
-     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
-
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
 uriPath :: String -> String
@@ -1066,6 +1059,13 @@ registerUser _ params = do
      else registerForm >>=
           formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
                     "_register" (params { pMessages = errors })
+
+lookupIPAddr :: String -> IO (Maybe String)
+lookupIPAddr hostname = do
+  addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
+  if null addrs
+     then return Nothing
+     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
