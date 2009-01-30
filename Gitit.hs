@@ -23,6 +23,7 @@ import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie, cookieFixer)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
+import Gitit.Framework (Handler, filterIf, gzipBinary, acceptsZip, withExpiresHeaders, setContentType, setFilename)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -49,7 +50,6 @@ import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
-import Codec.Compression.GZip (compress)
 import Network.HTTP (urlEncodeVars, urlEncode)
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
@@ -112,36 +112,6 @@ main = do
   killThread tid
   putStrLn "Shutdown complete"
 
-
-filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
-filterIf test filt sp =
-  let handler = unServerPartT sp
-  in  withRequest $ \req ->
-      if test req
-         then liftM filt $ handler req
-         else handler req
-
-gzipBinary :: Response -> Response
-gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress b}
-
-acceptsZip :: Request -> Bool
-acceptsZip req = isJust $ M.lookup (fromString "accept-encoding") (rqHeaders req)
-
-getCacheTime :: IO (Maybe DateTime)
-getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
-
-withExpiresHeaders :: ServerPart Response -> ServerPart Response
-withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
-
-setContentType :: String -> Response -> Response
-setContentType = setHeader "Content-Type"
-
-setFilename :: String -> Response -> Response
-setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
-
-
-
-type Handler = ServerPart Response
 
 
 debugHandler :: Handler
