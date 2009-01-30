@@ -20,10 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
+import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie, cookieFixer)
 import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
-import Gitit.CookieFixer (cookieFixer)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
