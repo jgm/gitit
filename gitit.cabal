@@ -57,8 +57,8 @@ Executable           gitit
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(happstack)
-    build-depends:   Happstack-Server
-    cpp-options:     -D_HAPPS=Happstack
+    build-depends:   happstack-server
+    cpp-options:     -D_HAPPS=HAppS
   else
     build-depends:   HAppS-Server >= 0.9.3 && < 0.9.4
     cpp-options:     -D_HAPPS=HAppS
