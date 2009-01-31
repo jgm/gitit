@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 {- Replacements for HAppS functions that don't handle UTF-8 properly,
+   functions for setting headers and zipping contents,
    and a fix for broken HAppS cookie parsing.
 -}
 
@@ -26,20 +27,31 @@ module Gitit.HAppS
            , lookRead
            , lookCookieValue
            , mkCookie
+           , filterIf
+           , gzipBinary
+           , acceptsZip
+           , withExpiresHeaders
+           , setContentType
+           , setFilename
+           , readMimeTypesFile
            , cookieFixer
            )
 where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie, getCookies)
 import qualified HAppS.Server (lookCookieValue, mkCookie)
 import HAppS.Server.Cookie (Cookie(..))
+import System.IO (stderr, hPutStrLn)
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 import Control.Monad (liftM)
+import Data.DateTime
 import Data.ByteString.Lazy.UTF8 (toString)
 import Codec.Binary.UTF8.String (encodeString, decodeString)
 import qualified Data.ByteString.Char8 as C
 import Data.Char (chr, toLower)
 import Data.List ((\\))
 import Data.Maybe
+import qualified Data.Map as M
+import Codec.Compression.GZip (compress)
 import Control.Applicative
 import Control.Monad (MonadPlus(..), ap)
 -- Hide Parsec's definitions of some Applicative functions.
@@ -61,6 +73,51 @@ lookCookieValue = liftM decodeString . HAppS.Server.lookCookieValue
 
 mkCookie :: String -> String -> Cookie
 mkCookie name = HAppS.Server.mkCookie name . encodeString
+
+-- Functions for zipping responses and setting headers.
+
+filterIf :: (Request -> Bool) -> (Response -> Response) -> ServerPart Response -> ServerPart Response
+filterIf test filt sp =
+  let handler = unServerPartT sp
+  in  withRequest $ \req ->
+      if test req
+         then liftM filt $ handler req
+         else handler req
+
+gzipBinary :: Response -> Response
+gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r {rsBody = compress b}
+
+acceptsZip :: Request -> Bool
+acceptsZip req = isJust $ M.lookup (C.pack "accept-encoding") (rqHeaders req)
+
+getCacheTime :: IO (Maybe DateTime)
+getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
+
+withExpiresHeaders :: ServerPart Response -> ServerPart Response
+withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
+
+setContentType :: String -> Response -> Response
+setContentType = setHeader "Content-Type"
+
+setFilename :: String -> Response -> Response
+setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+
+-- mime types
+
+-- | Read a file associating mime types with extensions, and return a
+-- map from extensions to types. Each line of the file consists of a
+-- mime type, followed by space, followed by a list of zero or more
+-- extensions, separated by spaces. Example: text/plain txt text
+readMimeTypesFile :: FilePath -> IO (M.Map String String)
+readMimeTypesFile f = catch (readFile f >>= return . foldr go M.empty . map words . lines) $
+                            handleMimeTypesFileNotFound
+     where go []     m = m  -- skip blank lines
+           go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
+           handleMimeTypesFileNotFound e = do
+             hPutStrLn stderr $ "Could not read mime types file: " ++ f
+             hPutStrLn stderr $ show e
+             hPutStrLn stderr $ "Using defaults instead."
+             return HAppS.Server.mimeTypes
 
 ----- the following code is from the HAppSHelpers package, 0.10,
 ----- (C) 2008 Thomas Hartman.
