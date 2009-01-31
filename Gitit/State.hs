@@ -34,7 +34,7 @@ import Data.FileStore
 import Data.List (intercalate)
 import Text.XHtml (Html)
 import qualified Text.StringTemplate as T
-import Gitit.HAppS (readMimeTypesFile)
+import Gitit.Server (readMimeTypesFile)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined

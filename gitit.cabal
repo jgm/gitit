@@ -39,20 +39,29 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      README.markdown, data/SampleConfig.hs, BLUETRIP-LICENSE,
                      TANGOICONS
 
+Flag happstack
+  description:       Use Happstack instead of HAppS for the server.
+  default:           False
+
 Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
-  other-modules:     Gitit.State, Gitit.HAppS, Gitit.Util, Gitit.Export, Gitit.Layout,
+  other-modules:     Gitit.State, Gitit.Server, Gitit.Util, Gitit.Export, Gitit.Layout,
                      Gitit.Convert, Gitit.Initialize, Gitit.Config, Gitit.Framework,
                      Paths_gitit
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
-                     utf8-string, HAppS-Server >= 0.9.3 && < 0.9.4,
-                     SHA > 1, HTTP, HStringTemplate, random, network >= 2.1.0.0,
-                     recaptcha >= 0.1, filestore, datetime, zlib
+                     utf8-string, SHA > 1, HTTP, HStringTemplate, random,
+                     network >= 2.1.0.0, recaptcha >= 0.1, filestore, datetime, zlib
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
+  if flag(happstack)
+    build-depends:   Happstack-Server
+    cpp-options:     -D_HAPPS=Happstack
+  else
+    build-depends:   HAppS-Server >= 0.9.3 && < 0.9.4
+    cpp-options:     -D_HAPPS=HAppS
   ghc-options:       -Wall -threaded
   cpp-options:       -D_VERSION="0.5"
   ghc-prof-options:  -auto-all
