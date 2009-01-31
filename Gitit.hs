@@ -24,6 +24,7 @@ import Gitit.HAppS
 import Gitit.Util (orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
+import Gitit.Layout
 import Gitit.Convert
 import Gitit.Export (exportFormats)
 import System.IO.UTF8
@@ -39,7 +40,7 @@ import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersperse, sort, nub, sortBy, isSuffixOf, find, isPrefixOf)
-import Data.Maybe (fromMaybe, fromJust, mapMaybe, isJust, isNothing)
+import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
@@ -553,101 +554,6 @@ fileListToHtml prefix lst = ulist ! [identifier "index", theclass "folding"] <<
                          else li ! [theclass "folder"] << [stringToHtml h', fileListToHtml (prefix ++ h') l]) $
   consolidateHeads lst)
 
--- | Abstract representation of page layout (tabs, scripts, etc.)
-data PageLayout = PageLayout
-  { pgTitle          :: String
-  , pgScripts        :: [String]
-  , pgShowPageTools  :: Bool
-  , pgTabs           :: [Tab]
-  , pgSelectedTab    :: Tab
-  }
-
-data Tab = ViewTab | EditTab | HistoryTab | DiscussTab | DiffTab deriving (Eq, Show)
-
-defaultPageLayout :: PageLayout
-defaultPageLayout = PageLayout
-  { pgTitle          = ""
-  , pgScripts        = []
-  , pgShowPageTools  = True
-  , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
-  , pgSelectedTab    = ViewTab
-  }
-
--- | Returns formatted page
-formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
-formattedPage layout page params htmlContents = do
-  let rev = pRevision params
-  let path' = if isPage page then pathForPage page else page
-  fs <- getFileStore
-  sha1 <- case rev of
-             Nothing -> liftIO $ catch (latest fs path')
-                                       (\e -> if e == NotFound
-                                                 then return ""
-                                                 else throwIO e)
-             Just r  -> return r
-  user <- getLoggedInUser params
-  let javascriptlinks = if null (pgScripts layout)
-                           then ""
-                           else renderHtmlFragment $ concatHtml $ map
-                                  (\x -> script ! [src ("/js/" ++ x), thetype "text/javascript"] << noHtml)
-                                  (["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout)
-  let pageTitle = pgTitle layout `orIfNull` page
-  let tabli tab = if tab == pgSelectedTab layout
-                     then li ! [theclass "selected"]
-                     else li
-  let origPage s = if ":discuss" `isSuffixOf` s then take (length s - 8) s else s
-  let linkForTab HistoryTab = Just $ tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?history" ++ 
-                                                                    case rev of { Just r -> "&revision" ++ r; Nothing -> "" }] << "history"
-      linkForTab DiffTab    = Just $ tabli DiffTab << anchor ! [href ""] << "diff"
-      linkForTab ViewTab    = if isDiscussPage page
-                                 then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
-                                 else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++
-                                                                    case rev of { Just r -> "?revision=" ++ r; Nothing -> "" }] << "view"
-      linkForTab DiscussTab = if isDiscussPage page
-                                 then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
-                                 else if isPage page
-                                      then Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
-                                      else Nothing
-      linkForTab EditTab    = if isPage page
-                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit" ++
-                                              (case rev of
-                                                    Just r   -> "&revision=" ++ r ++ "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ r)]
-                                                    Nothing  -> "")] <<
-                                             if isNothing rev then "edit" else "revert"
-                                 else Nothing
-  let tabs = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
-  let searchbox = gui ("/_search") ! [identifier "searchform"] <<
-                         [ textfield "patterns"
-                         , submit "search" "Search" ]
-  let gobox     = gui ("/_go") ! [identifier "goform"] <<
-                         [ textfield "gotopage"
-                         , submit "go" "Go" ]
-  let messages = pMessages params
-  let htmlMessages = if null messages
-                        then noHtml
-                        else ulist ! [theclass "messages"] << map (li <<) messages
-  templ <- queryAppState template
-  let filledTemp = T.render $
-                   T.setAttribute "pagetitle" pageTitle $
-                   T.setAttribute "javascripts" javascriptlinks $
-                   T.setAttribute "pagename" page $
-                   (case user of
-                         Just u     -> T.setAttribute "user" u
-                         Nothing    -> id) $
-                   (if isPage page then T.setAttribute "ispage" "true" else id) $
-                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
-                   (if pPrintable params then T.setAttribute "printable" "true" else id) $
-                   (if isJust rev then T.setAttribute "nothead" "true" else id) $
-                   (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
-                   T.setAttribute "sha1" sha1 $
-                   T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) $
-                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
-                   T.setAttribute "tabs" (renderHtmlFragment tabs) $
-                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
-                   T.setAttribute "content" (renderHtmlFragment htmlContents) $
-                   templ
-  ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
-
 -- user authentication
 loginForm :: Html
 loginForm =
@@ -789,16 +695,6 @@ showHighlightedSource file params = do
                                            cacheContents file rev formattedContents
                                          formattedPage defaultPageLayout file params $ formattedContents
                Nothing     -> noHandle
-
-exportBox :: String -> Params -> Html
-exportBox page params | isPage page =
-  let rev = pRevision params
-  in  gui (urlForPage page) ! [identifier "exportbox"] << 
-        ([ textfield "revision" ! [thestyle "display: none;", value (fromJust rev)] | isJust rev ] ++
-         [ select ! [name "format"] <<
-             map ((\f -> option ! [value f] << f) . fst) exportFormats
-         , submit "export" "Export" ])
-exportBox _ _ = noHtml
 
 exportPage :: String -> Params -> Web Response
 exportPage page params = do
