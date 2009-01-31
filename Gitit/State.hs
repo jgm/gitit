@@ -31,11 +31,11 @@ import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM)
 import Control.Exception (try, throwIO)
 import Data.FileStore
-import Gitit.MimeTypes (readMimeTypesFile)
 import Data.List (intercalate)
 import Data.Char (toLower)
 import Text.XHtml (Html)
 import qualified Text.StringTemplate as T
+import Gitit.HAppS (readMimeTypesFile)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
