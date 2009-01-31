@@ -239,11 +239,6 @@ createPage page params =
      p << [ stringToHtml ("There is no page '" ++ page ++ "'.  You may create the page by ")
           , anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ] 
 
-validate :: [(Bool, String)]   -- ^ list of conditions and error messages
-         -> [String]           -- ^ list of error messages
-validate = foldl go []
-   where go errs (condition, msg) = if condition then msg:errs else errs
-
 uploadForm :: String -> Params -> Web Response
 uploadForm _ params = do
   let page = "_upload"
