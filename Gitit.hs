@@ -110,34 +110,6 @@ main = do
   killThread tid
   putStrLn "Shutdown complete"
 
-
-handleSourceCode :: Handler
-handleSourceCode = withData $ \com ->
-  case com of
-       Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
-       _                        -> [ handle isSourceCode GET showHighlightedSource ]
-
-handleAny :: Handler
-handleAny = 
-  uriRest $ \uri -> let path' = uriPath uri
-                    in  do fs <- getFileStore
-                           mimetype <- getMimeTypeForExtension (takeExtension path')
-                           res <- liftIO $ try $ (retrieve fs path' Nothing  :: IO B.ByteString)
-                           case res of
-                                  Right contents -> anyRequest $ ok $ setContentType mimetype $
-                                                               (toResponse noHtml) {rsBody = contents} -- ugly hack
-                                  Left NotFound  -> anyRequest noHandle
-                                  Left e         -> error (show e)
-
-debugHandler :: Handler
-debugHandler = do
-  liftIO $ putStr "\n"
-  withRequest $ \req -> liftIO $ getCurrentTime >>= (putStrLn . formatDateTime "%c") >> putStrLn (show req)
-  multi [ handle (const True) GET showParams, handle (const True) POST showParams ]
-    where showParams page params = do
-            liftIO $ putStrLn page >> putStrLn (show params)
-            noHandle
-
 wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_activity"  GET  showActivity
@@ -170,6 +142,33 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handleAny
                , handlePage GET showPage
                ]
+
+handleSourceCode :: Handler
+handleSourceCode = withData $ \com ->
+  case com of
+       Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
+       _                        -> [ handle isSourceCode GET showHighlightedSource ]
+
+handleAny :: Handler
+handleAny = 
+  uriRest $ \uri -> let path' = uriPath uri
+                    in  do fs <- getFileStore
+                           mimetype <- getMimeTypeForExtension (takeExtension path')
+                           res <- liftIO $ try $ (retrieve fs path' Nothing  :: IO B.ByteString)
+                           case res of
+                                  Right contents -> anyRequest $ ok $ setContentType mimetype $
+                                                               (toResponse noHtml) {rsBody = contents} -- ugly hack
+                                  Left NotFound  -> anyRequest noHandle
+                                  Left e         -> error (show e)
+
+debugHandler :: Handler
+debugHandler = do
+  liftIO $ putStr "\n"
+  withRequest $ \req -> liftIO $ getCurrentTime >>= (putStrLn . formatDateTime "%c") >> putStrLn (show req)
+  multi [ handle (const True) GET showParams, handle (const True) POST showParams ]
+    where showParams page params = do
+            liftIO $ putStrLn page >> putStrLn (show params)
+            noHandle
 
 showRawPage :: String -> Params -> Web Response
 showRawPage = showFileAsText . pathForPage
