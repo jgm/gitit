@@ -24,6 +24,7 @@ import Gitit.HAppS
 import Gitit.Util (orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
+import Gitit.Convert
 import Gitit.Export (exportFormats)
 import System.IO.UTF8
 import System.IO (stderr)
@@ -44,8 +45,7 @@ import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
 import Text.Pandoc
-import Text.Pandoc.Definition (processPandoc)
-import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
+import Text.Pandoc.Shared (substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
@@ -553,32 +553,6 @@ fileListToHtml prefix lst = ulist ! [identifier "index", theclass "folding"] <<
                          else li ! [theclass "folder"] << [stringToHtml h', fileListToHtml (prefix ++ h') l]) $
   consolidateHeads lst)
 
--- | Convert links with no URL to wikilinks.
-convertWikiLinks :: Inline -> Inline
-convertWikiLinks (Link ref ("", "")) =
-  Link ref (refToUrl ref, "Go to wiki page")
-convertWikiLinks x = x
-
-refToUrl :: [Inline] -> String
-refToUrl = concatMap go
-  where go (Str x)                  = x
-        go (Space)                  = "%20"
-        go (Quoted DoubleQuote xs)  = '"' : (refToUrl xs ++ "\"")
-        go (Quoted SingleQuote xs)  = '\'' : (refToUrl xs ++ "'")
-        go (Apostrophe)             = "'"
-        go (Ellipses)               = "..."
-        go (Math InlineMath t)      = '$' : (t ++ "$")
-        go _                        = ""
-
--- | Converts pandoc document to HTML.
-pandocToHtml :: MonadIO m => Pandoc -> m Html
-pandocToHtml pandocContents = do
-  cfg <- getConfig
-  return $ writeHtml (defaultWriterOptions { writerStandalone = False
-                                           , writerHTMLMathMethod = JsMath (Just "/js/jsMath/easy/load.js")
-                                           , writerTableOfContents = tableOfContents cfg
-                                           }) $ processPandoc convertWikiLinks pandocContents
-
 -- | Abstract representation of page layout (tabs, scripts, etc.)
 data PageLayout = PageLayout
   { pgTitle          :: String
@@ -826,34 +800,6 @@ exportBox page params | isPage page =
          , submit "export" "Export" ])
 exportBox _ _ = noHtml
 
-rawContents :: String -> Params -> Web (Maybe String)
-rawContents file params = do
-  let rev = pRevision params
-  fs <- getFileStore
-  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
-
-{-
-removeRawHtmlBlock :: Block -> Block
-removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
-removeRawHtmlBlock x = x
--}
-
-readerFor :: PageType -> (String -> Pandoc)
-readerFor pt = case pt of
-                 RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
-                 Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
-
-textToPandoc :: PageType -> String -> Pandoc
-textToPandoc pt s = {- processPandoc removeRawHtmlBlock $ -} readerFor pt $ filter (/= '\r') s
-
-pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
-pageAsPandoc page params = do
-  pt <- getDefaultPageType
-  mDoc <- rawContents (pathForPage page) params >>= (return . liftM (textToPandoc pt))
-  return $ case mDoc of
-           Nothing                -> Nothing
-           Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
-
 exportPage :: String -> Params -> Web Response
 exportPage page params = do
   let format = pFormat params
@@ -863,4 +809,19 @@ exportPage page params = do
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
                         Just writer -> writer page doc
+
+rawContents :: String -> Params -> Web (Maybe String)
+rawContents file params = do
+  let rev = pRevision params
+  fs <- getFileStore
+  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
+
+pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
+pageAsPandoc page params = do
+  pt <- getDefaultPageType
+  mDoc <- rawContents (pathForPage page) params >>= (return . liftM (textToPandoc pt))
+  return $ case mDoc of
+           Nothing                -> Nothing
+           Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
+
 
