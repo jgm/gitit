@@ -21,9 +21,10 @@ module Main where
 
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.HAppS
-import Gitit.Util (withTempDir, orIfNull, consolidateHeads)
+import Gitit.Util (orIfNull, consolidateHeads)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
+import Gitit.Export (exportFormats)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -43,7 +44,6 @@ import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
 import Text.Pandoc
-import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Definition (processPandoc)
 import Text.Pandoc.Shared (HTMLMathMethod(..), substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
@@ -815,70 +815,6 @@ showHighlightedSource file params = do
                                            cacheContents file rev formattedContents
                                          formattedPage defaultPageLayout file params $ formattedContents
                Nothing     -> noHandle
-
-defaultRespOptions :: WriterOptions
-defaultRespOptions = defaultWriterOptions { writerStandalone = True, writerWrapText = True }
-
-respondLaTeX :: String -> Pandoc -> Web Response
-respondLaTeX page = ok . setContentType "application/x-latex" . setFilename (page ++ ".tex") . toResponse . encodeString .
-                    writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
-
-respondConTeXt :: String -> Pandoc -> Web Response
-respondConTeXt page = ok . setContentType "application/x-context" . setFilename (page ++ ".tex") . toResponse . encodeString .
-                      writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
-
-respondRTF :: String -> Pandoc -> Web Response
-respondRTF page = ok . setContentType "application/rtf" . setFilename (page ++ ".rtf") . toResponse . encodeString .
-                  writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
-
-respondRST :: String -> Pandoc -> Web Response
-respondRST _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
-               writeRST (defaultRespOptions {writerHeader = "", writerReferenceLinks = True})
-
-respondMan :: String -> Pandoc -> Web Response
-respondMan _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
-               writeMan (defaultRespOptions {writerHeader = ""})
-
-respondS5 :: String -> Pandoc -> Web Response
-respondS5 _ = ok . toResponse . writeS5 (defaultRespOptions {writerHeader = defaultS5Header,
-                                                             writerS5 = True, writerIncremental = True})
-
-respondTexinfo :: String -> Pandoc -> Web Response
-respondTexinfo page = ok . setContentType "application/x-texinfo" . setFilename (page ++ ".texi") . toResponse . encodeString .
-                      writeTexinfo (defaultRespOptions {writerHeader = ""})
-
-respondDocbook :: String -> Pandoc -> Web Response
-respondDocbook page = ok . setContentType "application/docbook+xml" . setFilename (page ++ ".xml") . toResponse . encodeString .
-                      writeDocbook (defaultRespOptions {writerHeader = defaultDocbookHeader})
-
-respondMediaWiki :: String -> Pandoc -> Web Response
-respondMediaWiki _ = ok . setContentType "text/plain; charset=utf-8" . toResponse . encodeString .
-                     writeMediaWiki (defaultRespOptions {writerHeader = ""})
-
-respondODT :: String -> Pandoc -> Web Response
-respondODT page doc = do
-  let openDoc = writeOpenDocument (defaultRespOptions {writerHeader = defaultOpenDocumentHeader}) doc
-  contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
-                let tempfile = tempdir </> page <.> "odt"
-                conf <- getConfig
-                let repoPath = case repository conf of
-                                Git path'   -> path'
-                                Darcs path' -> path'
-                saveOpenDocumentAsODT tempfile repoPath openDoc
-                B.readFile tempfile
-  ok $ setContentType "application/vnd.oasis.opendocument.text" $ setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
-
-exportFormats :: [(String, String -> Pandoc -> Web Response)]   -- (description, writer)
-exportFormats = [ ("LaTeX",     respondLaTeX)
-                , ("ConTeXt",   respondConTeXt)
-                , ("Texinfo",   respondTexinfo)
-                , ("reST",      respondRST)
-                , ("MediaWiki", respondMediaWiki)
-                , ("man",       respondMan)
-                , ("DocBook",   respondDocbook)
-                , ("S5",        respondS5)
-                , ("ODT",       respondODT)
-                , ("RTF",       respondRTF) ]
 
 exportBox :: String -> Params -> Html
 exportBox page params | isPage page =
