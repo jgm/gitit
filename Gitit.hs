@@ -53,7 +53,6 @@ import Network.HTTP (urlEncodeVars)
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes, formatDateTime)
-import Network.Socket
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
 
@@ -797,13 +796,6 @@ registerUser _ params = do
      else registerForm >>=
           formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
                     "_register" (params { pMessages = errors })
-
-lookupIPAddr :: String -> IO (Maybe String)
-lookupIPAddr hostname = do
-  addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
-  if null addrs
-     then return Nothing
-     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
 
 showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
