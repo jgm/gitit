@@ -42,7 +42,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
 Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
-  other-modules:     Gitit.State, Gitit.HAppS, Gitit.Util, Gitit.Export,
+  other-modules:     Gitit.State, Gitit.HAppS, Gitit.Util, Gitit.Export, Gitit.Layout,
                      Gitit.Convert, Gitit.Initialize, Gitit.Config, Gitit.Framework,
                      Paths_gitit
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
