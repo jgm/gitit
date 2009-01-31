@@ -139,21 +139,6 @@ debugHandler = do
             liftIO $ putStrLn page >> putStrLn (show params)
             noHandle
 
-ifLoggedIn :: (String -> Params -> Web Response) -> (String -> Params -> Web Response)
-ifLoggedIn responder =
-  \page params -> do user <- getLoggedInUser params
-                     case user of
-                          Nothing  -> do
-                             loginUserForm page (params { pReferer = Just $ pUri params })
-                          Just u   -> do
-                             usrs <- queryAppState users
-                             let e = case M.lookup u usrs of
-                                           Just usr    -> uEmail usr
-                                           Nothing     -> error $ "User '" ++ u ++ "' not found."
-                             -- give the user another hour...
-                             addCookie sessionTime (mkCookie "sid" (show $ fromJust $ pSessionKey params))
-                             responder page (params { pUser = u, pEmail = e })
-
 wikiHandlers :: [Handler]
 wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_activity"  GET  showActivity
@@ -166,22 +151,22 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePath "_login"     GET  loginUserForm
                , handlePath "_login"     POST loginUser
                , handlePath "_logout"    GET  logoutUser
-               , handlePath "_upload"    GET  (ifLoggedIn uploadForm)
-               , handlePath "_upload"    POST (ifLoggedIn uploadFile)
+               , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
+               , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
                , handlePath "_random"    GET  randomPage
                , handlePath ""           GET  showFrontPage
                , withCommand "showraw" [ handlePage GET showRawPage ]
                , withCommand "history" [ handlePage GET showPageHistory,
                                          handle (not . isPage) GET showFileHistory ]
-               , withCommand "edit"    [ handlePage GET $ unlessNoEdit (ifLoggedIn editPage) showPage ]
+               , withCommand "edit"    [ handlePage GET $ unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage ]
                , withCommand "diff"    [ handlePage GET  showPageDiff,
                                          handle isSourceCode GET showFileDiff ]
                , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
                , withCommand "cancel"  [ handlePage POST showPage ]
                , withCommand "discuss" [ handlePage GET discussPage ]
-               , withCommand "update"  [ handlePage POST $ unlessNoEdit (ifLoggedIn updatePage) showPage ]
-               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete (ifLoggedIn confirmDelete) showPage,
-                                         handlePage POST $ unlessNoDelete (ifLoggedIn deletePage) showPage ]
+               , withCommand "update"  [ handlePage POST $ unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage ]
+               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage,
+                                         handlePage POST $ unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
                , handleSourceCode
                , handleAny
                , handlePage GET showPage

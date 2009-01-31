@@ -38,10 +38,11 @@ module Gitit.Framework (
                        , pathForPage
                        , withCommands
                        , getMimeTypeForExtension
+                       , ifLoggedIn
                        )
 where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.HAppS (look, lookRead, lookCookieValue)
+import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
 import Gitit.State
 import Text.Pandoc.Shared (substitute)
 import Control.Monad.Reader (mplus)
@@ -51,7 +52,7 @@ import Control.Monad.Trans (MonadIO)
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (fromString, toString)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.List (intersect, intercalate, isSuffixOf)
 import System.FilePath ((<.>), takeExtension)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
@@ -277,4 +278,21 @@ getMimeTypeForExtension ext = do
   return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
                 Nothing -> "application/octet-stream"
                 Just t  -> t
+
+ifLoggedIn :: (String -> Params -> Web Response)
+           -> (String -> Params -> Web Response)
+           -> (String -> Params -> Web Response)
+ifLoggedIn responder fallback =
+  \page params -> do user <- getLoggedInUser params
+                     case user of
+                          Nothing  -> do
+                             fallback page (params { pReferer = Just $ pUri params })
+                          Just u   -> do
+                             usrs <- queryAppState users
+                             let e = case M.lookup u usrs of
+                                           Just usr    -> uEmail usr
+                                           Nothing     -> error $ "User '" ++ u ++ "' not found."
+                             -- give the user another hour...
+                             addCookie sessionTime (mkCookie "sid" (show $ fromJust $ pSessionKey params))
+                             responder page (params { pUser = u, pEmail = e })
 
