@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 {- Replacements for HAppS functions that don't handle UTF-8 properly,
-   functions for setting headers and zipping contents,
-   and a fix for broken HAppS cookie parsing.
+   functions for setting headers and zipping contents, looking up IP
+   addresses, and a fix for broken HAppS cookie parsing.
 -}
 
 module Gitit.HAppS
@@ -33,6 +33,7 @@ module Gitit.HAppS
            , withExpiresHeaders
            , setContentType
            , setFilename
+           , lookupIPAddr
            , readMimeTypesFile
            , cookieFixer
            )
@@ -40,6 +41,7 @@ where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie, getCookies)
 import qualified HAppS.Server (lookCookieValue, mkCookie)
 import HAppS.Server.Cookie (Cookie(..))
+import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import System.IO (stderr, hPutStrLn)
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 import Control.Monad (liftM)
@@ -101,6 +103,16 @@ setContentType = setHeader "Content-Type"
 
 setFilename :: String -> Response -> Response
 setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+
+-- IP lookup
+
+lookupIPAddr :: String -> IO (Maybe String)
+lookupIPAddr hostname = do
+  addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
+  if null addrs
+     then return Nothing
+     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
+
 
 -- mime types
 
