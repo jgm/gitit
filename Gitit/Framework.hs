@@ -39,6 +39,7 @@ module Gitit.Framework (
                        , withCommands
                        , getMimeTypeForExtension
                        , ifLoggedIn
+                       , validate
                        )
 where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
@@ -295,4 +296,9 @@ ifLoggedIn responder fallback =
                              -- give the user another hour...
                              addCookie sessionTime (mkCookie "sid" (show $ fromJust $ pSessionKey params))
                              responder page (params { pUser = u, pEmail = e })
+
+validate :: [(Bool, String)]   -- ^ list of conditions and error messages
+         -> [String]           -- ^ list of error messages
+validate = foldl go []
+   where go errs (condition, msg) = if condition then msg:errs else errs
 
