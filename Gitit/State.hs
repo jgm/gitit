@@ -32,7 +32,6 @@ import Control.Monad (replicateM, liftM)
 import Control.Exception (try, throwIO)
 import Data.FileStore
 import Data.List (intercalate)
-import Data.Char (toLower)
 import Text.XHtml (Html)
 import qualified Text.StringTemplate as T
 import Gitit.HAppS (readMimeTypesFile)
@@ -251,13 +250,6 @@ getConfig = queryAppState config
 
 getFileStore :: MonadIO m => m FileStore
 getFileStore = queryAppState filestore
-
-getMimeTypeForExtension :: MonadIO m => String -> m String
-getMimeTypeForExtension ext = do
-  mimes <- queryAppState mimeMap
-  return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
-                Nothing -> "application/octet-stream"
-                Just t  -> t
 
 getDefaultPageType :: MonadIO m => m PageType
 getDefaultPageType = liftM defaultPageType (queryAppState config)

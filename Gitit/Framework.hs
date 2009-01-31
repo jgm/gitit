@@ -37,6 +37,7 @@ module Gitit.Framework (
                        , urlForPage
                        , pathForPage
                        , withCommands
+                       , getMimeTypeForExtension
                        )
 where
 import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
@@ -44,6 +45,7 @@ import Gitit.HAppS (look, lookRead, lookCookieValue)
 import Gitit.State
 import Text.Pandoc.Shared (substitute)
 import Control.Monad.Reader (mplus)
+import Data.Char (toLower)
 import Data.DateTime
 import Control.Monad.Trans (MonadIO)
 import qualified Data.ByteString.Lazy as B
@@ -269,4 +271,10 @@ withCommands meth commands page = withRequest $ \req -> do
              then page (intercalate "/" $ rqPaths req) req
              else noHandle
 
+getMimeTypeForExtension :: MonadIO m => String -> m String
+getMimeTypeForExtension ext = do
+  mimes <- queryAppState mimeMap
+  return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
+                Nothing -> "application/octet-stream"
+                Just t  -> t
 
