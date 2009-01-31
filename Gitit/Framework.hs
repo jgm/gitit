@@ -42,8 +42,7 @@ module Gitit.Framework (
                        , validate
                        )
 where
-import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.HAppS (look, lookRead, lookCookieValue, mkCookie)
+import Gitit.Server
 import Gitit.State
 import Text.Pandoc.Shared (substitute)
 import Control.Monad.Reader (mplus)

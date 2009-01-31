@@ -25,9 +25,8 @@ module Gitit.Layout ( PageLayout(..)
                     , formattedPage 
                     )
 where
-import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
 import Data.FileStore
-import Gitit.HAppS
+import Gitit.Server
 import Gitit.Framework
 import Gitit.State
 import Gitit.Util (orIfNull)

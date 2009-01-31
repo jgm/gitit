@@ -23,8 +23,7 @@ module Gitit.Export ( exportFormats )
 where
 import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
-import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie)
-import Gitit.HAppS
+import Gitit.Server
 import Gitit.Util (withTempDir)
 import Gitit.State
 import Control.Monad.Trans (liftIO)

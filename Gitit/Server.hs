@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
@@ -17,37 +18,66 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Replacements for HAppS functions that don't handle UTF-8 properly,
-   functions for setting headers and zipping contents, looking up IP
+{- Re-exports HAppS functions needed by gitit, including 
+   replacements for HAppS functions that don't handle UTF-8 properly,
+   new functions for setting headers and zipping contents and for looking up IP
    addresses, and a fix for broken HAppS cookie parsing.
 -}
 
-module Gitit.HAppS
-           ( look
-           , lookRead
-           , lookCookieValue
-           , mkCookie
-           , filterIf
-           , gzipBinary
-           , acceptsZip
-           , withExpiresHeaders
-           , setContentType
-           , setFilename
-           , lookupIPAddr
-           , readMimeTypesFile
-           , cookieFixer
-           )
+module Gitit.Server
+          ( look
+          , lookPairs
+          , lookRead
+          , mkCookie
+          , filterIf
+          , gzipBinary
+          , acceptsZip
+          , withExpiresHeaders
+          , setContentType
+          , setFilename
+          , lookupIPAddr
+          , readMimeTypesFile
+          , cookieFixer
+          -- re-exported HAppS functions
+          , ok
+          , toResponse
+          , Response(..)
+          , Method(..)
+          , Request(..)
+          , Input(..)
+          , HeaderPair(..)
+          , Web
+          , ServerPart
+          , FromData(..)
+          , waitForTermination
+          , Conf(..)
+          , simpleHTTP
+          , fileServe
+          , dir
+          , multi
+          , seeOther
+          , withData
+          , withRequest
+          , anyRequest
+          , noHandle
+          , uriRest
+          , lookInput
+          , addCookie
+          , lookCookieValue
+          , readCookieValue
+          )
 where
-import HAppS.Server hiding (look, lookRead, lookCookieValue, mkCookie, getCookies)
-import qualified HAppS.Server (lookCookieValue, mkCookie)
-import HAppS.Server.Cookie (Cookie(..))
+import _HAPPS.Server hiding (look, lookRead, lookPairs, mkCookie, getCookies)
+import qualified _HAPPS.Server (mkCookie)
+import _HAPPS.Server.Cookie (Cookie(..))
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import System.IO (stderr, hPutStrLn)
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 import Control.Monad (liftM)
+import Control.Monad.Reader
 import Data.DateTime
 import Data.ByteString.Lazy.UTF8 (toString)
-import Codec.Binary.UTF8.String (encodeString, decodeString)
+import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.ByteString.Char8 as C
 import Data.Char (chr, toLower)
 import Data.List ((\\))
@@ -65,16 +95,16 @@ import Text.ParserCombinators.Parsec hiding (many, optional, (<|>), token)
 -- convert from UTF-8, since HAppS doesn't do this.
 
 look :: String -> RqData String
-look = liftM (decodeCharacterReferences . toString) . HAppS.Server.lookBS
+look = liftM (decodeCharacterReferences . toString) . lookBS
+
+lookPairs :: RqData [(String,String)]
+lookPairs = asks fst >>= return . map (\(n,vbs)->(n,toString $ inputValue vbs))
 
 lookRead :: Read a => String -> RqData a
 lookRead = liftM read . look
 
-lookCookieValue :: String -> RqData String
-lookCookieValue = liftM decodeString . HAppS.Server.lookCookieValue
-
 mkCookie :: String -> String -> Cookie
-mkCookie name = HAppS.Server.mkCookie name . encodeString
+mkCookie name = _HAPPS.Server.mkCookie name . encodeString
 
 -- Functions for zipping responses and setting headers.
 
@@ -129,7 +159,7 @@ readMimeTypesFile f = catch (readFile f >>= return . foldr go M.empty . map word
              hPutStrLn stderr $ "Could not read mime types file: " ++ f
              hPutStrLn stderr $ show e
              hPutStrLn stderr $ "Using defaults instead."
-             return HAppS.Server.mimeTypes
+             return mimeTypes
 
 ----- the following code is from the HAppSHelpers package, 0.10,
 ----- (C) 2008 Thomas Hartman.
