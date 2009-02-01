@@ -583,7 +583,7 @@ loginUser page params = do
     then do
       key <- newSession (SessionData uname)
       addCookie sessionTime (mkCookie "sid" (show key))
-      addCookie 0 (mkCookie "destination" "")   -- remove unneeded destination cookie
+      addCookie 0 (mkCookie "destination" "/")   -- remove unneeded destination cookie
       seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
     else
       loginUserForm' page (params { pMessages = "Authentication failed." : pMessages params })
@@ -595,7 +595,7 @@ logoutUser _ params = do
   case key of
        Just k  -> do
          delSession k
-         addCookie 0 (mkCookie "sid" "")  -- make cookie expire immediately, effectively deleting it
+         addCookie 0 (mkCookie "sid" "-1")  -- make cookie expire immediately, effectively deleting it
        Nothing -> return ()
   seeOther destination $ toResponse "You have been logged out."
 
