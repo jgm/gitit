@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.5.1
+version:             0.5.2
 Cabal-version:       >= 1.2
 build-type:          Simple
 synopsis:            Wiki using HAppS, git or darcs, and pandoc.
@@ -62,6 +62,6 @@ Executable           gitit
     build-depends:   HAppS-Server >= 0.9.3 && < 0.9.4
     cpp-options:     -D_HAPPS
   ghc-options:       -Wall -threaded
-  cpp-options:       -D_VERSION="0.5.1"
+  cpp-options:       -D_VERSION="0.5.2"
   ghc-prof-options:  -auto-all
 
