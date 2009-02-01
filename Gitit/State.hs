@@ -27,6 +27,8 @@ import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
+import System.Directory (doesFileExist)
+import System.FilePath ((</>))
 import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM)
 import Control.Exception (try, throwIO)
@@ -49,6 +51,7 @@ appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
 initializeAppState :: MonadIO m => Config -> M.Map String User -> T.StringTemplate String -> m ()
 initializeAppState conf users' templ = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
+  jsMathExists <- liftIO $ doesFileExist $ staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , config    = conf
@@ -58,7 +61,7 @@ initializeAppState conf users' templ = do
                            , mimeMap   = mimeMapFromFile
                            , cache     = M.empty
                            , template  = templ
-                           , jsMath    = False }
+                           , jsMath    = jsMathExists }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
