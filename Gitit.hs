@@ -138,9 +138,10 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , withCommand "update"  [ handlePage POST $ unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage ]
                , withCommand "delete"  [ handlePage GET  $ unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage,
                                          handlePage POST $ unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
+               , handlePage GET showPage
                , handleSourceCode
                , handleAny
-               , handlePage GET showPage
+               , handlePage GET createPage
                ]
 
 handleSourceCode :: Handler
@@ -223,7 +224,7 @@ showPage page params = do
                     rev <- liftIO $ latest fs (pathForPage page)
                     cacheContents (pathForPage page) rev c
                   formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params c
-                Nothing -> createPage page params
+                Nothing -> noHandle
 
 discussPage :: String -> Params -> Web Response
 discussPage page params = do
