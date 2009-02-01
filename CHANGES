@@ -1,0 +1,13 @@
+Version 0.5.1 released 1 Feb 2009
+
+* Major code reorganization, making gitit more modular.
+* Gitit can now optionally be built using Happstack instead of HAppS
+  (just use -fhappstack when cabal installing).
+* Fixed bug with directories that had the same names as pages.
+* Added code from HAppS-Extra to fix cookie parsing problems.
+* New command-line options for --port, --debug.
+* New debug feature prints the date, the raw request, and
+  the processed request data to standard output on each request.
+* Files with ".page" extension can no longer be uploaded.
+* Apostrophes and quotation marks now allowed in page names.
+
