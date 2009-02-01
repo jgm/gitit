@@ -218,7 +218,11 @@ You'll have two `.zip` archives. Unzip them both in the
 `static/js` directory (a new subdirectory, `jsMath`, will be
 created).  You can test to see if math is working properly by clicking
 "help" on the top navigation bar and looking for the math example
-(the quadratic formula).
+(the quadratic formula).  Note that if you copied the `jsMath` directory
+into `static` *after* starting gitit, you will have to restart gitit
+for the change to be noticed.  Gitit checks for the existence of the
+jsMath files when it starts, and will not include links to them unless
+they exist.
 
 To write math on a wiki page, just enclose it in dollar signs, as in LaTeX:
 
