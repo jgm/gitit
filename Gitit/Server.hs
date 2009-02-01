@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
@@ -67,9 +66,9 @@ module Gitit.Server
           , readCookieValue
           )
 where
-import _HAPPS.Server hiding (look, lookRead, lookPairs, mkCookie, getCookies)
-import qualified _HAPPS.Server (mkCookie)
-import _HAPPS.Server.Cookie (Cookie(..))
+import HAppS.Server hiding (look, lookRead, lookPairs, mkCookie, getCookies)
+import qualified HAppS.Server (mkCookie)
+import HAppS.Server.Cookie (Cookie(..))
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import System.IO (stderr, hPutStrLn)
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
@@ -104,7 +103,7 @@ lookRead :: Read a => String -> RqData a
 lookRead = liftM read . look
 
 mkCookie :: String -> String -> Cookie
-mkCookie name = _HAPPS.Server.mkCookie name . encodeString
+mkCookie name = HAppS.Server.mkCookie name . encodeString
 
 -- Functions for zipping responses and setting headers.
 
