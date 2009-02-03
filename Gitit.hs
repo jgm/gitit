@@ -141,7 +141,8 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePage GET showPage
                , handleSourceCode
                , handleAny
-               , handlePage GET createPage
+               , handlePage GET  createPage
+               , handlePage POST createPage  -- this will happen if they click Discard on a new page
                ]
 
 handleSourceCode :: Handler
