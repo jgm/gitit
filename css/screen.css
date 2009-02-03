@@ -4,7 +4,7 @@
 
 /* MEYER RESET */
 html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, code, del, dfn, em, img, q, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {margin:0;padding:0;border:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
-body {line-height:1.5;}
+body {line-height:1.5em;}
 table {border-collapse:separate;border-spacing:0;}
 caption, th, td {text-align:left;font-weight:normal;}
 table, td, th {vertical-align:middle;}
@@ -54,7 +54,7 @@ hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0
 h1, h2, h3, h4, h5, h6 { color: black; background: none; font-weight: normal; margin: 0;
 	padding-top: .5em; padding-bottom: .17em; border-bottom: 1px solid #aaa; }
 
-h1.pageTitle { font-size: 220%; margin: 0.2em 0 .5em;  }
+h1.pageTitle { font-size: 220%; line-height: 140%; margin: 0.2em 0 .5em;  }
 h1 { font-size: 150%; margin: 1.07em 0 .535em; }
 h2 { font-size: 132%; margin: 1.14em 0 .57em; }
 h3 { font-size: 116%; margin: 1.23em 0 .615em; }
