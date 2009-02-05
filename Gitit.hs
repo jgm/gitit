@@ -517,12 +517,10 @@ updatePage page params = do
        if length editedText > fromIntegral (maxUploadSize cfg)
           then error "Page exceeds maximum size."
           else return ()
-       -- ensure that every file has a newline at the end, to avoid "No newline at eof" messages in diffs
-       let editedText' = if null editedText || last editedText == '\n' then editedText else editedText ++ "\n"
        -- check SHA1 in case page has been modified, merge
        modifyRes <-    if null oldSHA1
-                          then liftIO $ create fs (pathForPage page) (Author user email) logMsg editedText' >> return (Right ())
-                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 (Author user email) logMsg editedText')
+                          then liftIO $ create fs (pathForPage page) (Author user email) logMsg editedText >> return (Right ())
+                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 (Author user email) logMsg editedText)
                                      (\e -> if e == Unchanged then return (Right ()) else throwIO e)
        case modifyRes of
             Right ()       -> seeOther (urlForPage page) $ toResponse $ p << "Page updated"
