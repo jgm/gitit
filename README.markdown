@@ -63,6 +63,10 @@ If that doesn't work, check to see that `gitit` is in your local
 cabal-install executable directory (usually `~/.cabal/bin`). And make
 sure `~/.cabal/bin` is in your system path.
 
+Note:  the build process is configured to use happstack by default.
+If you want to use the old HAppS packages instead, use the flag
+`-f-happstack`.
+
 Running gitit
 -------------
 
