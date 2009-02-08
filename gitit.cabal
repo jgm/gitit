@@ -63,5 +63,5 @@ Executable           gitit
     cpp-options:     -D_HAPPS
   ghc-options:       -Wall -threaded
   cpp-options:       -D_VERSION="0.5.3"
-  ghc-prof-options:  -auto-all
+  ghc-prof-options:  -auto-all -caf-all
 
