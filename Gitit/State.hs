@@ -59,7 +59,7 @@ initializeAppState conf users' templ = do
                                               Git fs   -> gitFileStore fs
                                               Darcs fs -> darcsFileStore fs
                            , mimeMap   = mimeMapFromFile
-                           , cache     = M.empty
+                           , cache     = emptyCache
                            , template  = templ
                            , jsMath    = jsMathExists }
 
@@ -150,16 +150,24 @@ data AppState = AppState {
   config    :: Config,
   filestore :: FileStore,
   mimeMap   :: M.Map String String,
-  cache     :: M.Map String CachedPage,
+  cache     :: Cache,
   template  :: T.StringTemplate String,
   jsMath    :: Bool
 }
+
+data Cache = Cache {
+  cachePages :: M.Map String CachedPage,
+  cacheSize  :: Integer
+}
+
+emptyCache :: Cache
+emptyCache = Cache M.empty 0
 
 lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe CachedPage)
 lookupCache file (Just revid) = do
   c <- queryAppState cache
   fs <- getFileStore
-  case M.lookup file c of
+  case M.lookup file (cachePages c) of
        Just cp | idsMatch fs (cpRevisionId cp) revid ->
                    return $ Just cp
        _        -> return Nothing
@@ -169,7 +177,7 @@ lookupCache file Nothing = do
   case latestRes of
        Right latestid -> do
          c <- queryAppState cache
-         case M.lookup file c of
+         case M.lookup file (cachePages c) of
               Just cp | idsMatch fs (cpRevisionId cp) latestid ->
                           return $ Just cp
               _        -> return Nothing
@@ -181,7 +189,8 @@ cacheContents file revid contents = do
   c <- queryAppState cache
   let newpage = CachedPage { cpContents = contents
                            , cpRevisionId = revid }
-  let newcache = M.insert file newpage c
+  let newcache = c{ cachePages = M.insert file newpage (cachePages c)
+                  , cacheSize  = 0}
   updateAppState $ \s -> s { cache = newcache }
 
 mkUser :: String   -- username
