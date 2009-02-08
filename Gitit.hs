@@ -433,11 +433,11 @@ showDiff file page params = do
                                               else Nothing
               x       -> return x
   rawDiff <- liftIO $ diff fs file from' to
-  let diffItemToHtml (B, xs) = thespan << xs
-      diffItemToHtml (F, xs) = thespan ! [theclass "deleted"] << xs
-      diffItemToHtml (S, xs) = thespan ! [theclass "added"]   << xs
+  let diffLineToHtml (B, xs) = thespan << unlines xs
+      diffLineToHtml (F, xs) = thespan ! [theclass "deleted"] << unlines xs
+      diffLineToHtml (S, xs) = thespan ! [theclass "added"]   << unlines xs
   let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
-                      pre ! [theclass "diff"] << map diffItemToHtml rawDiff
+                      pre ! [theclass "diff"] << map diffLineToHtml rawDiff
   formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
                 page (params { pRevision = to }) formattedDiff
 
@@ -686,7 +686,7 @@ showHighlightedSource file params = do
                               in case highlightAs lang' (filter (/='\r') source) of
                                        Left _       -> noHandle
                                        Right res    -> do
-                                         let formattedContents = formatAsXHtml [OptNumberLines] lang' res
+                                         let formattedContents = formatAsXHtml [OptNumberLines] lang' $! res
                                          when (isNothing (pRevision params)) $ do
                                            fs <- getFileStore
                                            rev <- liftIO $ latest fs file
