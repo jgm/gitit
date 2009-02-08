@@ -346,7 +346,7 @@ showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
 
 showFileHistory :: String -> Params -> Web Response
-showFileHistory file params = showHistory file file params
+showFileHistory file = showHistory file file
 
 showHistory :: String -> String -> Params -> Web Response
 showHistory file page params =  do
@@ -397,7 +397,7 @@ showActivity _ params = do
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
                              (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
                              (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes 
-  let heading = h1 << ("Recent changes" ++ if null forUser then "" else (" by " ++ forUser))
+  let heading = h1 << ("Recent changes" ++ if null forUser then "" else " by " ++ forUser)
   let contents = ulist ! [theclass "history"] << map (\rev -> li <<
                            [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
                             thespan ! [theclass "author"] <<
@@ -409,10 +409,10 @@ showActivity _ params = do
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
 
 showPageDiff :: String -> Params -> Web Response
-showPageDiff page params = showDiff (pathForPage page) page params
+showPageDiff page = showDiff (pathForPage page) page
 
 showFileDiff :: String -> Params -> Web Response
-showFileDiff page params = showDiff page page params
+showFileDiff page = showDiff page page
 
 showDiff :: String -> String -> Params -> Web Response
 showDiff file page params = do
@@ -699,7 +699,7 @@ exportPage page params = do
   let format = pFormat params
   mDoc <- pageAsPandoc page params
   case mDoc of
-       Nothing  -> error $ "Unable to retrieve page contents."
+       Nothing  -> error "Unable to retrieve page contents."
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
                         Just writer -> writer page doc
