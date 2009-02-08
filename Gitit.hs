@@ -369,13 +369,12 @@ showHistory file page params =  do
                     anchor ! [href (urlForPage page ++ "?revision=" ++ revId rev)] <<
                     thespan ! [theclass "subject"] <<  revDescription rev,
                     noscript << ([stringToHtml " [compare with ",
-                    anchor ! [href $ urlForPage page ++ "?diff&from=" ++ revId rev ++
-                              "^&to=" ++ revId rev] << "previous"] ++
+                    anchor ! [href $ urlForPage page ++ "?diff&to=" ++ revId rev] << "previous"] ++
                                  (if pos /= 1
                                      then [primHtmlChar "nbsp", primHtmlChar "bull",
                                            primHtmlChar "nbsp",
                                            anchor ! [href $ urlForPage page ++ "?diff&from=" ++
-                                                     revId rev ++ "&to=HEAD"] << "current" ]
+                                                     revId rev] << "current" ]
                                      else []) ++
                                  [stringToHtml "]"])]
        let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
