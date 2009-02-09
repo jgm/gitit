@@ -205,7 +205,7 @@ showPage page params = do
   mbCached <- lookupCache (pathForPage page) (pRevision params)
   case mbCached of
          Just cp ->
-           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params $ cpContents cp
+           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params cp
          _ -> do
            mDoc <- pageAsPandoc page params
            case mDoc of
@@ -678,7 +678,7 @@ showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
   mbCached <- lookupCache file (pRevision params)
   case mbCached of
-         Just cp -> formattedPage defaultPageLayout file params $ cpContents cp
+         Just cp -> formattedPage defaultPageLayout file params cp
          _ -> do
            contents <- rawContents file params
            case contents of

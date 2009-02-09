@@ -15,6 +15,7 @@ accessQuestion      = Just ("Enter the access code (to request an access code, c
 useRecaptcha        = False,
 recaptchaPublicKey  = "",
 recaptchaPrivateKey = "",
+maxCacheSize        = 2 * 1024 * 1024,
 mimeTypesFile       = "/etc/mime.types"
 }
 

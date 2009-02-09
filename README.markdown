@@ -117,6 +117,7 @@ option `-f [filename]`.  A configuration file takes the following form:
     useRecaptcha        = False,
     recaptchaPublicKey  = "",
     recaptchaPrivateKey = "",
+    maxCacheSize        = 2 * 1024 * 1024,
     mimeTypesFile       = "/etc/mime.types"
     }
 
@@ -177,6 +178,8 @@ option `-f [filename]`.  A configuration file takes the following form:
   [reCAPTCHA] keys, which can be obtained free of charge at
   <http://recaptcha.net/api/getkey>.  The values of these fields are ignored
   if `useRecaptcha` is set to `False`.
+
+- `maxCacheSize` is the maximum size of the in-memory page cache (in bytes).
 
 - `mimeTypesFile` is the path of a file containing mime type associations.
   Each line of the file should contain a mime type, followed by some space,

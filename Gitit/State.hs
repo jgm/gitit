@@ -25,16 +25,19 @@ import qualified Data.Map as M
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
+import qualified Data.ByteString.UTF8 as B (ByteString, fromString, toString, length)
+import System.Time (getClockTime, ClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import System.Directory (doesFileExist)
 import System.FilePath ((</>))
 import Control.Monad.Trans (MonadIO(), liftIO)
-import Control.Monad (replicateM, liftM)
+import Control.Monad (replicateM, liftM, when)
 import Control.Exception (try, throwIO)
 import Data.FileStore
-import Data.List (intercalate)
-import Text.XHtml (Html)
+import Data.List (intercalate, minimumBy)
+import Data.Ord (comparing)
+import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
 import Gitit.Server (readMimeTypesFile)
 
@@ -96,6 +99,7 @@ data Config = Config {
   useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
   recaptchaPublicKey  :: String,
   recaptchaPrivateKey :: String,
+  maxCacheSize        :: Integer,                  -- maximum size in bytes of in-memory page cache
   mimeTypesFile       :: FilePath                  -- path of file associating mime types with file extensions
   } deriving (Read, Show)
 
@@ -117,13 +121,9 @@ defaultConfig = Config {
   useRecaptcha        = False,
   recaptchaPublicKey  = "",
   recaptchaPrivateKey = "",
+  maxCacheSize        = 2 * 1024 * 1024,
   mimeTypesFile       = "/etc/mime.types"
   }
-
-data CachedPage = CachedPage {
-    cpContents        :: Html
-  , cpRevisionId      :: RevisionId
-  } deriving Show
 
 type SessionKey = Integer
 
@@ -155,43 +155,85 @@ data AppState = AppState {
   jsMath    :: Bool
 }
 
+data CachedPage = CachedPage {
+    cpContents        :: B.ByteString
+  , cpRevisionId      :: RevisionId
+  , cpLastAccessTime  :: ClockTime
+  } deriving Show
+
 data Cache = Cache {
-  cachePages :: M.Map String CachedPage,
-  cacheSize  :: Integer
+    cachePages :: M.Map String CachedPage
+  , cacheSize  :: Integer
 }
 
 emptyCache :: Cache
 emptyCache = Cache M.empty 0
 
-lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe CachedPage)
+debugMessage :: MonadIO m => String -> m ()
+debugMessage msg = do
+  debug <- liftM debugMode getConfig
+  when debug $ liftIO $ putStrLn msg
+
+updateCachedPageTimestamp :: MonadIO m => Cache -> String -> m ()
+updateCachedPageTimestamp cache' page = do
+  now <- liftIO getClockTime
+  let setTimeStamp Nothing   = Nothing
+      setTimeStamp (Just cp) = Just cp{ cpLastAccessTime = now }
+  let newcache = cache'{ cachePages = M.alter setTimeStamp page (cachePages cache') }
+  updateAppState $ \s -> s {cache = newcache }
+
+lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe Html)
 lookupCache file (Just revid) = do
   c <- queryAppState cache
   fs <- getFileStore
   case M.lookup file (cachePages c) of
-       Just cp | idsMatch fs (cpRevisionId cp) revid ->
-                   return $ Just cp
+       Just cp | idsMatch fs (cpRevisionId cp) revid -> do
+                   debugMessage $ "Retrieving " ++ file ++ " from cache."
+                   updateCachedPageTimestamp c file
+                   return $ Just $ primHtml $ B.toString $ cpContents cp
        _        -> return Nothing
 lookupCache file Nothing = do
   fs <- getFileStore
   latestRes <- liftIO $ try (latest fs file)
   case latestRes of
-       Right latestid -> do
-         c <- queryAppState cache
-         case M.lookup file (cachePages c) of
-              Just cp | idsMatch fs (cpRevisionId cp) latestid ->
-                          return $ Just cp
-              _        -> return Nothing
+       Right latestid -> lookupCache file (Just latestid)
        Left NotFound   -> return Nothing
        Left e          -> liftIO $ throwIO e
 
 cacheContents :: MonadIO m => String -> RevisionId -> Html -> m ()
 cacheContents file revid contents = do
   c <- queryAppState cache
-  let newpage = CachedPage { cpContents = contents
-                           , cpRevisionId = revid }
-  let newcache = c{ cachePages = M.insert file newpage (cachePages c)
-                  , cacheSize  = 0}
-  updateAppState $ \s -> s { cache = newcache }
+  let oldsize = case M.lookup file (cachePages c) of
+                     Just cp  -> fromIntegral $ B.length $ cpContents cp
+                     Nothing  -> 0
+  let contentsBS = B.fromString $! renderHtmlFragment contents
+  let newsize = fromIntegral (B.length contentsBS)
+  maxCacheSize <- liftM maxCacheSize getConfig
+  if newsize > maxCacheSize
+     then debugMessage $ "Not caching page " ++ file ++ " because it is bigger than the maximum cache size."
+     else do
+       now <- liftIO getClockTime
+       let newpage = CachedPage { cpContents       = contentsBS
+                                , cpRevisionId     = revid
+                                , cpLastAccessTime = now }
+       let newcache = c{ cachePages = M.insert file newpage (cachePages c), cacheSize  = cacheSize c + newsize - oldsize }
+       newcachePruned <- pruneCache maxCacheSize newcache
+       debugMessage $ "Updating cache with " ++ file ++ ".  Total cache size = " ++ show (cacheSize newcachePruned)
+       updateAppState $ \s -> s { cache = newcachePruned }
+
+pruneCache :: MonadIO m => Integer -> Cache -> m Cache
+pruneCache maxSize c =
+  if cacheSize c < maxSize
+     then return c
+     else dropOldest c >>= pruneCache maxSize
+
+dropOldest :: MonadIO m => Cache -> m Cache
+dropOldest c = do
+  let pgs    = M.toList $ cachePages c
+  let (oldestFile, oldestCp) = minimumBy (comparing (cpLastAccessTime . snd)) pgs
+  let oldestSize = fromIntegral $ B.length $ cpContents oldestCp
+  debugMessage $ "Removing " ++ oldestFile ++ " (" ++ show oldestSize ++ " bytes) from cache to keep size under limit."
+  return $ c{ cachePages = M.delete oldestFile (cachePages c), cacheSize = cacheSize c - oldestSize }
 
 mkUser :: String   -- username
        -> String   -- email
