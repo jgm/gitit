@@ -35,6 +35,7 @@ data Opt
     | Port Int
     | Debug
     | Version
+    | PrintDefaultConfig
     deriving (Eq)
 
 flags :: [OptDescr Opt]
@@ -43,6 +44,8 @@ flags =
         "Print this help message"
    , Option ['v'] ["version"] (NoArg Version)
         "Print version information"
+   , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
+        "Print default configuration"
    , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
         "Specify port"
    , Option ['d'] ["debug"] (NoArg Debug)
@@ -71,12 +74,12 @@ handleFlag :: Config -> Opt -> IO Config
 handleFlag conf opt = do
   progname <- getProgName
   case opt of
-    Help         -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version      -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
-    Debug        -> return $ conf { debugMode = True }
-    Port p       -> return $ conf { portNumber = p }
-    ConfigFile f -> liftM read (readFile f)
+    Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
+    Version            -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
+    PrintDefaultConfig -> print conf >> exitWith ExitSuccess
+    Debug              -> return $ conf { debugMode = True }
+    Port p             -> return $ conf { portNumber = p }
+    ConfigFile f       -> liftM read (readFile f)
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
-
