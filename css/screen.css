@@ -29,10 +29,7 @@ sub { vertical-align: sub; }
 
 /* QUOTES */
 
-blockquote { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; color: #666; }
-/* Uncomment these lines to have quotation marks inserted around block quotes: */
-/* blockquote *:first-child:before { content: "\201C"; } */
-/* blockquote *:first-child:after { content: "\201D"; } */
+blockquote { color: #666; }
 
 /* FORMS */
 
@@ -76,12 +73,11 @@ th, td { border-bottom: 1px solid #ddd; border-right: 1px solid #ccc; }
 
 /* MARGINS & PADDINGS */
 
-blockquote *:first-child { margin: .8em 0; }
 hr,  p,  ul,  ol,  dl,  blockquote,  address,  table,  pre, form { margin-bottom: 1.4em; }
 /* NOTE: Calulate header margins: TOP: 1.6em/size, BOTTOM: 1.6em/size/2 */
 th,  td { padding: .8em; }
 caption { padding-bottom: .8em; } /* padding instead of margin for IE */
-blockquote { padding: 0 1em; margin: 1.6em 0; }
+blockquote { padding: 0 1.6em; }
 legend { padding-left: .8em; padding-right: .8em; }
 legend+* { margin-top: 1em; } /* compensates for the opera margin bug */
 textarea,  input { padding: .3em .4em .15em .4em; }
