@@ -188,6 +188,12 @@ option `-f [filename]`.  A configuration file takes the following form:
 
 [reCAPTCHA]: http://recaptcha.net
 
+The easiest way to create a custom configuration file is to dump the default
+configuration and modify it:
+
+    gitit --print-default-config > myconf.hs
+    # edit myconf.hs
+
 Configuring gitit
 =================
 
