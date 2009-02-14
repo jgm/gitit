@@ -40,6 +40,7 @@ import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
 import Gitit.Server (readMimeTypesFile)
+import Text.Pandoc (Pandoc)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
@@ -49,7 +50,8 @@ appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
                                                   , mimeMap = undefined
                                                   , cache = undefined
                                                   , template = undefined
-                                                  , jsMath = undefined }
+                                                  , jsMath = undefined
+                                                  , plugins = undefined }
 
 initializeAppState :: MonadIO m => Config -> M.Map String User -> T.StringTemplate String -> m ()
 initializeAppState conf users' templ = do
@@ -64,7 +66,8 @@ initializeAppState conf users' templ = do
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
                            , template  = templ
-                           , jsMath    = jsMathExists }
+                           , jsMath    = jsMathExists
+                           , plugins   = [] }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
@@ -86,6 +89,7 @@ data Config = Config {
   userFile            :: FilePath,                 -- path of users database 
   templateFile        :: FilePath,                 -- path of page template file
   staticDir           :: FilePath,                 -- path of static directory
+  pluginsDir          :: FilePath,                 -- path of directory containing plugins
   tableOfContents     :: Bool,                     -- should each page have an automatic table of contents?
   maxUploadSize       :: Integer,                  -- maximum size of pages and file uploads
   portNumber          :: Int,                      -- port number to serve content on
@@ -110,6 +114,7 @@ defaultConfig = Config {
   userFile            = "gitit-users",
   templateFile        = "template.html",
   staticDir           = "static",
+  pluginsDir          = "plugins",
   tableOfContents     = True,
   maxUploadSize       = 10 * 1024 * 1024,
   portNumber          = 5001,
@@ -152,7 +157,8 @@ data AppState = AppState {
   mimeMap   :: M.Map String String,
   cache     :: Cache,
   template  :: T.StringTemplate String,
-  jsMath    :: Bool
+  jsMath    :: Bool,
+  plugins   :: [Pandoc -> IO Pandoc]
 }
 
 data CachedPage = CachedPage {
