@@ -19,10 +19,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Main where
 
-import Gitit.Plugins ( loadPlugins )
+import Gitit.Plugins ( loadPlugin )
 import Gitit.Server
 import Gitit.Util (orIfNull, consolidateHeads)
-import Gitit.Initialize (createPluginsIfMissing, createStaticIfMissing, createRepoIfMissing)
+import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
 import Gitit.Convert
@@ -93,10 +93,8 @@ main = do
   -- initialize state
   initializeAppState conf users' templ
 
-  -- create the plugins directory, if it doesn't exist
-  createPluginsIfMissing $ pluginsDir conf
   -- load plugins
-  plugins' <- loadPlugins (pluginsDir conf)
+  plugins' <- mapM loadPlugin (pluginModules conf)
   updateAppState $ \st -> plugins' `seq` st { plugins = plugins' }
 
   -- setup the page repository and static files, if they don't exist
