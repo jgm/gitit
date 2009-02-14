@@ -1,4 +1,6 @@
 Plugins todo:
+_ right now >1 plugin crashes
+_ allow plugins to be in packages
 _ define an interface that allows you to retrieve config, params, etc. inside plugins
 _ better type safety
 _ allow different module names in plugins
