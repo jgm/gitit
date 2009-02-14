@@ -1,3 +1,12 @@
+Plugins todo:
+_ define an interface that allows you to retrieve config, params, etc. inside plugins
+_ better type safety
+_ allow different module names in plugins
+_ document interface
+
+
+----------
+
 _ Add a Go box that goes to the specified page title;
   if page does not exist, falls back to a normal search. Complements
   existing Search box.
