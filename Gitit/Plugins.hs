@@ -19,39 +19,33 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for loading plugins.
 -}
 
-module Gitit.Plugins ( loadPlugins )
+module Gitit.Plugins ( loadPlugin )
 where
 import GHC
 import GHC.Paths
 import DynFlags
 import Unsafe.Coerce
 import Text.Pandoc
-import Control.Monad (liftM)
 import System.FilePath
-import System.Directory (getDirectoryContents)
-
-loadPlugins :: FilePath -> IO [Pandoc -> IO Pandoc]
-loadPlugins pluginsDir = do
-  pluginPaths <- liftM (filter (\f -> takeExtension f `elem` [".hs",".lhs"])) $ getDirectoryContents pluginsDir 
-  mapM loadPlugin $ map (pluginsDir </>) pluginPaths
 
 loadPlugin :: FilePath -> IO (Pandoc -> IO Pandoc)
-loadPlugin pluginPath = do
-  putStrLn $ "Loading plugin: " ++ pluginPath
+loadPlugin pluginName = do
+  putStrLn $ "Loading plugin: " ++ pluginName
   defaultErrorHandler defaultDynFlags $ do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
-      target <- guessTarget pluginPath Nothing
+      target <- guessTarget pluginName Nothing
       addTarget target
       r <- load LoadAllTargets
       case r of
-        Failed -> error $ "Error loading plugin: " ++ pluginPath
+        Failed -> error $ "Error loading plugin: " ++ pluginName
         Succeeded -> do
-          m <- findModule (mkModuleName "GititPlugin") Nothing
+          let modName = takeBaseName pluginName
+          m <- findModule (mkModuleName modName) Nothing
           p <- findModule (mkModuleName "Text.Pandoc") Nothing
           pr <- findModule (mkModuleName "Prelude") Nothing
           setContext [] [m, p, pr]
-          value <- compileExpr ("(processWithM GititPlugin.transform :: Pandoc -> IO Pandoc)")
+          value <- compileExpr ("(processWithM " ++ modName ++ ".transform :: Pandoc -> IO Pandoc)")
           do let value' = (unsafeCoerce value) :: Pandoc -> IO Pandoc
              return value'

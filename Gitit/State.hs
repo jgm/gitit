@@ -89,7 +89,7 @@ data Config = Config {
   userFile            :: FilePath,                 -- path of users database 
   templateFile        :: FilePath,                 -- path of page template file
   staticDir           :: FilePath,                 -- path of static directory
-  pluginsDir          :: FilePath,                 -- path of directory containing plugins
+  pluginModules       :: [String],                 -- names of plugin modules to load
   tableOfContents     :: Bool,                     -- should each page have an automatic table of contents?
   maxUploadSize       :: Integer,                  -- maximum size of pages and file uploads
   portNumber          :: Int,                      -- port number to serve content on
@@ -114,7 +114,7 @@ defaultConfig = Config {
   userFile            = "gitit-users",
   templateFile        = "template.html",
   staticDir           = "static",
-  pluginsDir          = "plugins",
+  pluginModules       = [],
   tableOfContents     = True,
   maxUploadSize       = 10 * 1024 * 1024,
   portNumber          = 5001,
