@@ -19,9 +19,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Main where
 
+import Gitit.Plugins ( loadPlugins )
 import Gitit.Server
 import Gitit.Util (orIfNull, consolidateHeads)
-import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
+import Gitit.Initialize (createPluginsIfMissing, createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
 import Gitit.Convert
@@ -91,6 +92,12 @@ main = do
 
   -- initialize state
   initializeAppState conf users' templ
+
+  -- create the plugins directory, if it doesn't exist
+  createPluginsIfMissing $ pluginsDir conf
+  -- load plugins
+  plugins' <- loadPlugins (pluginsDir conf)
+  updateAppState $ \st -> plugins' `seq` st { plugins = plugins' }
 
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf
@@ -340,7 +347,8 @@ searchResults _ params = do
 preview :: String -> Params -> Web Response
 preview _ params = do
   pt <- getDefaultPageType -- should get the current page type instead
-  pandocToHtml (textToPandoc pt $ pRaw params) >>= ok . toResponse . encodeString . renderHtmlFragment
+  pandoc' <- textToPandoc pt $ pRaw params
+  pandocToHtml pandoc' >>= ok . toResponse . encodeString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
@@ -714,9 +722,11 @@ rawContents file params = do
 pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
 pageAsPandoc page params = do
   pt <- getDefaultPageType
-  mDoc <- rawContents (pathForPage page) params >>= (return . liftM (textToPandoc pt))
-  return $ case mDoc of
-           Nothing                -> Nothing
-           Just (Pandoc _ blocks) -> Just $ Pandoc (Meta [Str page] [] []) blocks
+  mDoc <- rawContents (pathForPage page) params
+  case mDoc of
+        Nothing -> return Nothing
+        Just d  -> do
+          (Pandoc _ blocks) <- textToPandoc pt d
+          return $ Just $ Pandoc (Meta [Str page] [] []) blocks
 
 

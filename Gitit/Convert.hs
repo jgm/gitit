@@ -25,7 +25,8 @@ module Gitit.Convert ( textToPandoc
 where
 import Text.Pandoc
 import Gitit.State
-import Control.Monad.Trans (MonadIO)
+import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Monad (foldM)
 import Text.XHtml
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 
@@ -40,8 +41,11 @@ readerFor pt = case pt of
                  RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
-textToPandoc :: PageType -> String -> Pandoc
-textToPandoc pt s = {- processPandoc removeRawHtmlBlock $ -} readerFor pt $ filter (/= '\r') s
+textToPandoc :: MonadIO m => PageType -> String -> m Pandoc
+textToPandoc pt s = do
+  plugins' <- queryAppState plugins
+  let plugins'' = (processWithM (return . convertWikiLinks)) : plugins'
+  liftIO $ foldM (\d pl -> pl d) (readerFor pt $ filter (/= '\r') s) plugins''
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
@@ -67,5 +71,5 @@ pandocToHtml pandocContents = do
   return $ writeHtml (defaultWriterOptions { writerStandalone = False
                                            , writerHTMLMathMethod = JsMath (Just "/js/jsMath/easy/load.js")
                                            , writerTableOfContents = tableOfContents cfg
-                                           }) $ processPandoc convertWikiLinks pandocContents
+                                           }) pandocContents
 

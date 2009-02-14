@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for initializing a Gitit wiki.
 -}
 
-module Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing )
+module Gitit.Initialize ( createStaticIfMissing, createPluginsIfMissing, createRepoIfMissing )
 where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
@@ -47,6 +47,13 @@ createRepoIfMissing conf = do
     create fs "Help.page" (Author "Gitit" "") "Default front page" helpcontents
     hPutStrLn stderr "Created repository"
 
+-- | Create plugins directory unless it exists.
+createPluginsIfMissing :: FilePath -> IO ()
+createPluginsIfMissing pluginsdir = do
+  pluginsExists <- doesDirectoryExist pluginsdir
+  unless pluginsExists $ do
+    createDirectoryIfMissing True pluginsdir
+    hPutStrLn stderr $ "Created " ++ pluginsdir ++ " directory"
 
 -- | Create static directory unless it exists.
 createStaticIfMissing :: FilePath -> IO ()
