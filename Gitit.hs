@@ -664,7 +664,8 @@ registerUser _ params = do
                         , (not (null email) && not (isValidEmail email), "Email address appears invalid.")
                         , (pword /= pword2, "Password does not match confirmation.")
                         , (not validCaptcha, "Failed CAPTCHA (" ++ fromJust captchaError ++ "). Are you really human?")
-                        , (not (null fakeField), "You do not seem human enough.") ] -- fakeField is hidden in CSS (honeypot)
+                        , (not (null fakeField), "You do not seem human enough. If you're sure you are human, " ++
+                                                 "try turning off form auto-completion in your browser.") ] -- fakeField is hidden in CSS (honeypot)
   if null errors
      then do
        user <- liftIO $ mkUser uname email pword
