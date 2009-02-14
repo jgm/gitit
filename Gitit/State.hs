@@ -214,8 +214,8 @@ cacheContents file revid contents = do
                      Nothing  -> 0
   let contentsBS = B.fromString $! renderHtmlFragment contents
   let newsize = fromIntegral (B.length contentsBS)
-  maxCacheSize <- liftM maxCacheSize getConfig
-  if newsize > maxCacheSize
+  maxCacheSize' <- liftM maxCacheSize getConfig
+  if newsize > maxCacheSize'
      then debugMessage $ "Not caching page " ++ file ++ " because it is bigger than the maximum cache size."
      else do
        now <- liftIO getClockTime
@@ -223,7 +223,7 @@ cacheContents file revid contents = do
                                 , cpRevisionId     = revid
                                 , cpLastAccessTime = now }
        let newcache = c{ cachePages = M.insert file newpage (cachePages c), cacheSize  = cacheSize c + newsize - oldsize }
-       newcachePruned <- pruneCache maxCacheSize newcache
+       newcachePruned <- pruneCache maxCacheSize' newcache
        debugMessage $ "Updating cache with " ++ file ++ ".  Total cache size = " ++ show (cacheSize newcachePruned)
        updateAppState $ \s -> s { cache = newcachePruned }
 
