@@ -48,9 +48,10 @@ textToPandoc pt s = do
   let plugins'' = wikiLinksPlugin : plugins'
   foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) $ map transformation plugins''
 
+wikiLinksPlugin :: Plugin
 wikiLinksPlugin = Plugin {
     description = "Converts links with blank url to wikilinks."
-  , transformation = \_ d -> return $ processWith convertWikiLinks d }
+  , transformation = \_ d -> return $ processPandoc convertWikiLinks d }
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
