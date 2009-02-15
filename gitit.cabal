@@ -42,6 +42,14 @@ Flag happstack
   description:       Use Happstack instead of HAppS for the server.
   default:           True
 
+Library
+  hs-source-dirs:    .
+  exposed-modules:   Gitit.Interface
+  other-modules:     Gitit.State, Gitit.Server
+  build-depends:     base >= 3, pandoc >= 1.1, filepath
+  ghc-options:       -Wall
+  ghc-prof-options:  -auto-all -caf-all
+
 Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
