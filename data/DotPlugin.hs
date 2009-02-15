@@ -8,6 +8,7 @@ import Data.Char (ord)
 import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
 import Data.Digest.Pure.SHA
+import Data.Generics (everywhereM, mkM)
 import System.FilePath
 import Control.Monad.Trans (liftIO)
 
@@ -21,7 +22,7 @@ plugin = Plugin {
   , transformation = dotTransform }
 
 dotTransform :: AppState -> Pandoc -> Web Pandoc
-dotTransform st = processWithM (transformBlock st)
+dotTransform st = everywhereM (mkM (transformBlock st))
 
 transformBlock :: AppState -> Block -> Web Block
 transformBlock st (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
