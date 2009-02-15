@@ -25,7 +25,8 @@ module Gitit.Convert ( textToPandoc
 where
 import Text.Pandoc
 import Gitit.State
-import Control.Monad.Trans (MonadIO, liftIO)
+import Gitit.Server (Web)
+import Control.Monad.Trans (MonadIO)
 import Control.Monad (foldM)
 import Text.XHtml
 import Text.Pandoc.Shared (HTMLMathMethod(..))
@@ -41,11 +42,15 @@ readerFor pt = case pt of
                  RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
-textToPandoc :: MonadIO m => PageType -> String -> m Pandoc
+textToPandoc :: PageType -> String -> Web Pandoc
 textToPandoc pt s = do
   plugins' <- queryAppState plugins
-  let plugins'' = (processWithM (return . convertWikiLinks)) : plugins'
-  liftIO $ foldM (\d pl -> pl d) (readerFor pt $ filter (/= '\r') s) plugins''
+  let plugins'' = wikiLinksPlugin : plugins'
+  foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) $ map transformation plugins''
+
+wikiLinksPlugin = Plugin {
+    description = "Converts links with blank url to wikilinks."
+  , transformation = \_ d -> return $ processWith convertWikiLinks d }
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline

@@ -25,13 +25,13 @@ import GHC
 import GHC.Paths
 import DynFlags
 import Unsafe.Coerce
-import Text.Pandoc
 import System.FilePath
+import Gitit.State
 
-loadPlugin :: FilePath -> IO (Pandoc -> IO Pandoc)
+loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
   putStrLn $ "Loading plugin: " ++ pluginName
-  defaultErrorHandler defaultDynFlags $ do
+  plugin <- defaultErrorHandler defaultDynFlags $ do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
@@ -43,9 +43,11 @@ loadPlugin pluginName = do
         Succeeded -> do
           let modName = takeBaseName pluginName
           m <- findModule (mkModuleName modName) Nothing
-          p <- findModule (mkModuleName "Text.Pandoc") Nothing
+          i <- findModule (mkModuleName "Gitit.Interface") Nothing
           pr <- findModule (mkModuleName "Prelude") Nothing
-          setContext [] [m, p, pr]
-          value <- compileExpr ("(processWithM " ++ modName ++ ".transform :: Pandoc -> IO Pandoc)")
-          do let value' = (unsafeCoerce value) :: Pandoc -> IO Pandoc
+          setContext [] [m, i, pr]
+          value <- compileExpr (modName ++ ".plugin :: Plugin")
+          do let value' = (unsafeCoerce value) :: Plugin
              return value'
+  putStrLn $ description plugin
+  return plugin
