@@ -39,7 +39,7 @@ import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
-import Gitit.Server (readMimeTypesFile)
+import Gitit.Server (readMimeTypesFile, Web)
 import Text.Pandoc (Pandoc)
 
 appstate :: IORef AppState
@@ -158,8 +158,13 @@ data AppState = AppState {
   cache     :: Cache,
   template  :: T.StringTemplate String,
   jsMath    :: Bool,
-  plugins   :: [Pandoc -> IO Pandoc]
+  plugins   :: [Plugin]
 }
+
+data Plugin = Plugin 
+  { description     :: String
+  , transformation  :: AppState -> Pandoc -> Web Pandoc
+  }
 
 data CachedPage = CachedPage {
     cpContents        :: B.ByteString

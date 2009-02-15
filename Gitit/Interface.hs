@@ -36,8 +36,3 @@ import Data.FileStore
 import Gitit.State
 import Gitit.Server
 
-data Plugin = Plugin
-  { description     :: String
-  , transformation  :: AppState -> Pandoc -> Web Pandoc
-  }
-
