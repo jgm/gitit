@@ -106,6 +106,7 @@ option `-f [filename]`.  A configuration file takes the following form:
     userFile            = "gitit-users",
     templateFile        = "template.html",
     staticDir           = "static",
+    pluginModules       = ["plugins/DotPlugin"],
     tableOfContents     = False,
     maxUploadSize       = 100000,
     portNumber          = 5001,
@@ -146,6 +147,8 @@ option `-f [filename]`.  A configuration file takes the following form:
 - `staticDir` is the (relative) path of a directory in which static content
   (javascript, CSS, images) is stored.  If it does not exist, gitit will
   create it on startup.
+
+- `pluginModules` is a list (possibly empty) of plugin modules to load.
 
 - `tableOfContents` is either `False` or `True`.  If it is `True`, a table
   of contents (derived from the page's headers) will appear on each page.
