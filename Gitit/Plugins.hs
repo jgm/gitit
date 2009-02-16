@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -21,12 +22,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Plugins ( loadPlugin )
 where
+import System.FilePath
+import Gitit.State
+#ifdef _PLUGINS
 import GHC
 import GHC.Paths
 import DynFlags
 import Unsafe.Coerce
-import System.FilePath
-import Gitit.State
 
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
@@ -51,3 +53,12 @@ loadPlugin pluginName = do
              return value'
   putStrLn $ description plugin
   return plugin
+
+#else
+
+loadPlugin :: FilePath -> IO Plugin
+loadPlugin pluginName = do
+  error $ "Cannot load plugin '" ++ pluginName ++ "'. gitit was not compiled with plugin support."
+  return undefined
+
+#endif

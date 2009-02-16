@@ -70,12 +70,20 @@ copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
                    "This is free software; see the source for copying conditions.  There is no\n" ++
                    "warranty, not even for merchantability or fitness for a particular purpose."
 
+compileInfo :: String
+compileInfo =
+#ifdef _PLUGINS
+  " +plugins"
+#else
+  " -plugins"
+#endif
+
 handleFlag :: Config -> Opt -> IO Config
 handleFlag conf opt = do
   progname <- getProgName
   case opt of
     Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version            -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ copyrightMessage) >> exitWith ExitSuccess
+    Version            -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
     PrintDefaultConfig -> print conf >> exitWith ExitSuccess
     Debug              -> return $ conf { debugMode = True }
     Port p             -> return $ conf { portNumber = p }
