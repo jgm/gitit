@@ -33,7 +33,7 @@ import Unsafe.Coerce
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
   putStrLn $ "Loading plugin: " ++ pluginName
-  plugin <- defaultErrorHandler defaultDynFlags $ do
+  plugin <- defaultCleanupHandler defaultDynFlags $ do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
