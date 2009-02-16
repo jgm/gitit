@@ -47,6 +47,14 @@ If you don't care about highlighting support, you can just do:
     cabal install gitit
 
 These commands will install the latest released version of gitit.
+
+To enable support for plugins, pass the `plugins` flag to Cabal:
+
+    cabal install gitit -fplugins
+
+Note that the gitit executable will be much larger if plugins support
+is compiled in.  Plugin support is disabled by default.
+
 To install a version of gitit checked out from the repository,
 change to the gitit directory and type:
 
