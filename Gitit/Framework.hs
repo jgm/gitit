@@ -73,7 +73,7 @@ data Params = Params { pUsername     :: String
                      , pDestination  :: String
                      , pReferer      :: Maybe String
                      , pUri          :: String
-                     , pForUser      :: String
+                     , pForUser      :: Maybe String
                      , pSince        :: Maybe DateTime
                      , pRaw          :: String
                      , pLimit        :: Int
@@ -108,7 +108,7 @@ instance FromData Params where
          p2 <- look "password2"      `mplus` return ""
          rv <- (look "revision" >>= \s ->
                  return (if null s then Nothing else Just s)) `mplus` return Nothing
-         fu <- look "forUser"        `mplus` return ""
+         fu <- (look "forUser" >>= return . Just) `mplus` return Nothing
          si <- (look "since" >>= return . parseDateTime "%Y-%m-%d") `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- (lookCookieValue "destination") `mplus` return "/"
          ra <- look "raw"            `mplus` return ""

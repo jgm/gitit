@@ -397,13 +397,16 @@ showActivity _ params = do
   let forUser = pForUser params
   fs <- getFileStore
   hist <- liftIO $ history fs [] (TimeRange since Nothing)
+  let hist' = case forUser of
+                   Nothing -> hist
+                   Just u  -> filter (\r -> authorName (revAuthor r) == u) hist
   let fileFromChange (Added f) = f
       fileFromChange (Modified f) = f
       fileFromChange (Deleted f) = f
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
                              (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
                              (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes 
-  let heading = h1 << ("Recent changes" ++ if null forUser then "" else " by " ++ forUser)
+  let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
   let contents = ulist ! [theclass "history"] << map (\rev -> li <<
                            [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
                             thespan ! [theclass "author"] <<
@@ -411,7 +414,7 @@ showActivity _ params = do
                                                (authorName $ revAuthor rev), stringToHtml "): ",
                             thespan ! [theclass "subject"] << revDescription rev, stringToHtml " (",
                             thespan ! [theclass "files"] << filesFor (revChanges rev) (revId rev),
-                            stringToHtml ")"]) hist
+                            stringToHtml ")"]) hist'
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
 
 showPageDiff :: String -> Params -> Web Response
