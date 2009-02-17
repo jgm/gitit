@@ -47,14 +47,6 @@ If you don't care about highlighting support, you can just do:
     cabal install gitit
 
 These commands will install the latest released version of gitit.
-
-To enable support for plugins, pass the `plugins` flag to Cabal:
-
-    cabal install gitit -fplugins
-
-Note that the gitit executable will be much larger if plugins support
-is compiled in.  Plugin support is disabled by default.
-
 To install a version of gitit checked out from the repository,
 change to the gitit directory and type:
 
@@ -74,6 +66,25 @@ sure `~/.cabal/bin` is in your system path.
 Note:  the build process is configured to use happstack by default.
 If you want to use the old HAppS packages instead, use the flag
 `-f-happstack`.
+
+Optional plugins support
+------------------------
+
+Plugins are small Haskell programs that transform a wiki page
+after it has been converted from Markdown or RST.  See the example
+plugin `data/DotPlugin.hs`, which causes delimited code blocks with
+the `dot` class to be converted into graphviz dot diagrams.  To
+enable a plugin, include the path to the plugin in the `pluginModules`
+field of a configuration file.
+
+The gitit executable will be much larger if plugins support is compiled
+in. Plugin support is disabled by default. To enable support for
+plugins, pass the `plugins` flag to Cabal:
+
+    cabal install gitit -fplugins
+
+Note also that if you compile gitit for executable profiling, attempts
+to load plugins will result in "internal error: PAP object entered!"
 
 Running gitit
 -------------
