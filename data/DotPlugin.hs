@@ -1,6 +1,18 @@
 module DotPlugin (plugin) where
-import Gitit.Interface
 
+-- This plugin allows you to include a graphviz dot diagram
+-- in a page like this:
+--
+-- ~~~ {.dot name="diagram1"}
+-- digraph G {Hello->World}
+-- ~~~
+--
+-- The "dot" executable must be in the path.
+-- The generated png file will be saved in the static img directory.
+-- If no name is specified, a unique name will be generated from a hash
+-- of the file contents.
+
+import Gitit.Interface
 import Text.Pandoc.Shared
 import System.Process (readProcess)
 import Data.Char (ord)
@@ -13,13 +25,7 @@ import System.FilePath
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
-plugin = Plugin {
-    description = "This plugin allows you to include a graphviz 'dot' diagram\n" ++ 
-                  "in a document like this:\n\n" ++
-                  "~~~ {.dot name=\"diagram1\"}\n" ++
-                  "digraph G {Hello->World}\n" ++
-                  "~~~"
-  , transformation = dotTransform }
+plugin = PageTransform dotTransform
 
 dotTransform :: AppState -> Pandoc -> Web Pandoc
 dotTransform st = everywhereM (mkM (transformBlock st))

@@ -37,6 +37,7 @@ import Control.Exception (try, throwIO)
 import Data.FileStore
 import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
+import Data.Maybe (mapMaybe)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
 import Gitit.Server (readMimeTypesFile, Web)
@@ -150,21 +151,24 @@ data User = User {
 } deriving (Show,Read)
 
 data AppState = AppState {
-  sessions  :: Sessions SessionData,
-  users     :: M.Map String User,
-  config    :: Config,
-  filestore :: FileStore,
-  mimeMap   :: M.Map String String,
-  cache     :: Cache,
-  template  :: T.StringTemplate String,
-  jsMath    :: Bool,
-  plugins   :: [Plugin]
+  sessions       :: Sessions SessionData,
+  users          :: M.Map String User,
+  config         :: Config,
+  filestore      :: FileStore,
+  mimeMap        :: M.Map String String,
+  cache          :: Cache,
+  template       :: T.StringTemplate String,
+  jsMath         :: Bool,
+  plugins        :: [Plugin]
 }
 
-data Plugin = Plugin 
-  { description     :: String
-  , transformation  :: AppState -> Pandoc -> Web Pandoc
-  }
+-- later other types of plugin can be added
+data Plugin = PageTransform (AppState -> Pandoc -> Web Pandoc)
+
+getPageTransforms :: Web [AppState -> Pandoc -> Web Pandoc]
+getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
+  where pageTransform (PageTransform x) = Just x
+        -- pageTransform _                 = Nothing
 
 data CachedPage = CachedPage {
     cpContents        :: B.ByteString
