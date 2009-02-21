@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Plugins ( loadPlugin )
 where
+import System.IO (hFlush, stdout)
 import System.FilePath
 import Gitit.State
 #ifdef _PLUGINS
@@ -32,7 +33,8 @@ import Unsafe.Coerce
 
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
-  putStrLn $ "Loading plugin: " ++ pluginName
+  putStr $ "Loading plugin '" ++ pluginName ++ "'..."
+  hFlush stdout
   plugin <- defaultCleanupHandler defaultDynFlags $ do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
@@ -51,7 +53,7 @@ loadPlugin pluginName = do
           value <- compileExpr (modName ++ ".plugin :: Plugin")
           do let value' = (unsafeCoerce value) :: Plugin
              return value'
-  putStrLn $ description plugin
+  putStrLn "loaded."
   return plugin
 
 #else

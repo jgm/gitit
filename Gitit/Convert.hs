@@ -44,14 +44,11 @@ readerFor pt = case pt of
 
 textToPandoc :: PageType -> String -> Web Pandoc
 textToPandoc pt s = do
-  plugins' <- queryAppState plugins
-  let plugins'' = wikiLinksPlugin : plugins'
-  foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) $ map transformation plugins''
+  transforms <- getPageTransforms
+  foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) (wikiLinksTransform : transforms)
 
-wikiLinksPlugin :: Plugin
-wikiLinksPlugin = Plugin {
-    description = "Converts links with blank url to wikilinks."
-  , transformation = \_ d -> return $ processPandoc convertWikiLinks d }
+wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
+wikiLinksTransform _ d = return $ processPandoc convertWikiLinks d
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
