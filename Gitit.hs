@@ -622,7 +622,7 @@ registerForm = do
             , textfield "username" ! [size "20"], stringToHtml " ", br
             , label << "Email (optional, will not be displayed on the Wiki):", br
             , textfield "email" ! [size "20"], br
-            , textfield "fullname" ! [size "20", theclass "req"]
+            , textfield "full_name_1" ! [size "20", theclass "req"]
             , label << "Password (at least 6 characters, including at least one non-letter):", br
             , X.password "password" ! [size "20"], stringToHtml " ", br
             , label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br

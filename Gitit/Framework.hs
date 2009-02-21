@@ -123,7 +123,7 @@ instance FromData Params where
          sh <- look "sha1"           `mplus` return ""
          lm <- look "logMsg"         `mplus` return ""
          em <- look "email"          `mplus` return ""
-         na <- look "fullname"       `mplus` return ""
+         na <- look "full_name_1"    `mplus` return ""
          wn <- look "wikiname"       `mplus` return ""
          pr <- (look "printable" >> return True) `mplus` return False
          ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
