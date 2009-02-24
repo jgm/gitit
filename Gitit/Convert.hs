@@ -30,12 +30,7 @@ import Control.Monad.Trans (MonadIO)
 import Control.Monad (foldM)
 import Text.XHtml
 import Text.Pandoc.Shared (HTMLMathMethod(..))
-
-{-
-removeRawHtmlBlock :: Block -> Block
-removeRawHtmlBlock (RawHtml _) = RawHtml "<!-- raw HTML removed -->"
-removeRawHtmlBlock x = x
--}
+import Data.Generics (everywhere, mkT)
 
 readerFor :: PageType -> (String -> Pandoc)
 readerFor pt = case pt of
@@ -48,7 +43,7 @@ textToPandoc pt s = do
   foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) (wikiLinksTransform : transforms)
 
 wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
-wikiLinksTransform _ d = return $ processPandoc convertWikiLinks d
+wikiLinksTransform _ = return . everywhere (mkT convertWikiLinks)
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
