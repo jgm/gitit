@@ -220,8 +220,9 @@ showPage page params = do
                                             "?edit" ++
                                             (case (pRevision params) of
                                                   Nothing -> ""
-                                                  Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++ "';")] << c
-
+                                                  Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++
+                                            "';")
+                                          ] << c
                   c <- liftM divify $ pandocToHtml d
                   when (isNothing (pRevision params)) $ do
                     -- TODO not quite ideal, since page might have been modified after being retrieved by pageAsPandoc
