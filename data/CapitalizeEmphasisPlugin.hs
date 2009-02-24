@@ -1,0 +1,24 @@
+module CapitalizeEmphasisPlugin (plugin) where
+
+-- This plugin converts emphasized text to ALL CAPS.
+-- Not a very useful feature, but useful as an example
+-- of how to write a plugin.
+
+import Gitit.Interface
+import Data.Char (toUpper)
+import Data.Generics (everywhereM, mkM)
+
+plugin :: Plugin
+plugin = PageTransform transform
+
+transform :: AppState -> Pandoc -> Web Pandoc
+transform _ = everywhereM (mkM (return . capsTransform))
+
+capsTransform :: [Inline] -> [Inline]
+capsTransform (Emph x : ys) = processWith capStr x ++ capsTransform ys
+capsTransform (x : ys)      = x : capsTransform ys
+capsTransform []            = []
+
+capStr :: Inline -> Inline
+capStr (Str x) = Str (map toUpper x)
+capStr x       = x
