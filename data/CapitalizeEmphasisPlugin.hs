@@ -6,7 +6,7 @@ module CapitalizeEmphasisPlugin (plugin) where
 
 import Gitit.Interface
 import Data.Char (toUpper)
-import Data.Generics (everywhereM, mkM)
+import Data.Generics (everywhereM, mkM, everywhere, mkT)
 
 plugin :: Plugin
 plugin = PageTransform transform
@@ -15,7 +15,7 @@ transform :: AppState -> Pandoc -> Web Pandoc
 transform _ = everywhereM (mkM (return . capsTransform))
 
 capsTransform :: [Inline] -> [Inline]
-capsTransform (Emph x : ys) = processWith capStr x ++ capsTransform ys
+capsTransform (Emph x : ys) = everywhere (mkT capStr) x ++ capsTransform ys
 capsTransform (x : ys)      = x : capsTransform ys
 capsTransform []            = []
 
