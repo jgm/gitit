@@ -72,10 +72,8 @@ Optional plugins support
 
 Plugins are small Haskell programs that transform a wiki page
 after it has been converted from Markdown or RST.  See the example
-plugin `data/DotPlugin.hs`, which causes delimited code blocks with
-the `dot` class to be converted into graphviz dot diagrams.  To
-enable a plugin, include the path to the plugin in the `pluginModules`
-field of a configuration file.
+plugins in the `plugins` directory. To enable a plugin, include the path
+to the plugin in the `pluginModules` field of a configuration file.
 
 The gitit executable will be much larger if plugins support is compiled
 in. Plugin support is disabled by default. To enable support for
