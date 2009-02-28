@@ -74,7 +74,6 @@ import System.IO (stderr, hPutStrLn)
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 import Control.Monad (liftM)
 import Control.Monad.Reader
-import Data.DateTime
 import Data.ByteString.Lazy.UTF8 (toString)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.ByteString.Char8 as C
@@ -121,11 +120,8 @@ gzipBinary r@(Response {rsBody = b}) =  setHeader "Content-Encoding" "gzip" $ r 
 acceptsZip :: Request -> Bool
 acceptsZip req = isJust $ M.lookup (C.pack "accept-encoding") (rqHeaders req)
 
-getCacheTime :: IO (Maybe DateTime)
-getCacheTime = liftM (Just . addMinutes 360) $ getCurrentTime
-
 withExpiresHeaders :: ServerPart Response -> ServerPart Response
-withExpiresHeaders sp = require getCacheTime $ \t -> [liftM (setHeader "Expires" $ formatDateTime "%a, %d %b %Y %T GMT" t) sp]
+withExpiresHeaders = liftM (setHeader "Cache-Control" "max-age=21600")
 
 setContentType :: String -> Response -> Response
 setContentType = setHeader "Content-Type"
