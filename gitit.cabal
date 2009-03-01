@@ -23,6 +23,7 @@ bug-reports:         http://code.google.com/p/gitit/issues/list
 homepage:            http://github.com/jgm/gitit/tree/master
 stability:           experimental 
 data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
+                     css/reset-fonts-grids.css, css/base-min.css,
                      img/gitit-dog.png,
                      img/icons/folder.png, img/icons/page.png,
                      img/icons/cross.png, img/icons/doc.png, img/icons/email.png,
@@ -39,7 +40,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      plugins/CapitalizeEmphasisPlugin.hs,
                      plugins/DotPlugin.hs,
                      plugins/InterwikiPlugin.hs,
-                     CHANGES, README.markdown, BLUETRIP-LICENSE, TANGOICONS
+                     CHANGES, README.markdown, YUI-LICENSE, BLUETRIP-LICENSE, TANGOICONS
 
 Flag happstack
   description:       Use Happstack instead of HAppS for the server.
