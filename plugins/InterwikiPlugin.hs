@@ -1,16 +1,18 @@
+{- | This plugin causes link URLs of the form wikiname!articlename to be
+  treated as interwiki links.  So, for example,
+
+> [Emperor Palpatine]!@Wookieepedia "Emperor Palpatine")
+
+  links to the article on "Emperor Palpatine" in Wookieepedia
+  (<http://starwars.wikia.com/wiki/Emperor_Palpatine>).
+
+  (written by Gwern Branwen) -}
+
 module InterwikiPlugin (plugin) where
-
--- This plugin causes link URLs of the form wikiname!articlename to be
--- treated as interwiki links.  So, for example,
--- [Emperor Palpatine](Wookieepedia!Emperor Palpatine) links to the
--- article on "Emperor Palpatine" in Wookieepedia.
-
--- (written by Gwern Branwen)
 
 import Gitit.Interface
 
-import Data.List.Split (splitOn)
-import qualified Data.Map as M
+import qualified Data.Map as M (fromList, lookup, Map)
 import Network.URI (escapeURIString, isAllowedInURI)
 
 plugin :: Plugin
@@ -19,24 +21,32 @@ plugin = PageTransform interwikiTransform
 interwikiTransform :: AppState -> Pandoc -> Web Pandoc
 interwikiTransform _ = return . processWith convertInterwikiLinks
 
--- A good interwiki link looks like "Wookieepedia!Emperor Palpatine". So we split on '!', and there should be
--- 2 elements in the list. Then we take the first element, the site name, and we look it up in our database.
--- If it's there, we get back the canonical URL, and we concatenate the article to the site, and feed it back.
--- If there aren't 2 elements, or we get back a Nothing, we just return the Link unchanged.
+{- | A good interwiki link looks like '!Wookieepedia "Emperor Palpatine"'. So we check for a leading '!'.
+     We strip it off, and now we have the canonical sitename (in this case, "Wookieepedia" and we look it up
+     in our database.
+     The database should return the URL for that site; we only need append the (escaped) article name to that, and we
+     have the full URL!
+     If there isn't a leading '!', we get back a Nothing (the database doesn't know the site), we just return
+     the Link unchanged. -}
 convertInterwikiLinks :: Inline -> Inline
-convertInterwikiLinks (Link _ref (short, _z)) =
-  if length splat == 2
-     then case M.lookup (head splat) interwikiMap of 
-                Just l  -> Link _ref ((escapeURIString isAllowedInURI $ l ++ (splat !! 1)), _z)
-                Nothing -> Link _ref (short, _z)
-     else Link _ref (short, _z)
-    where splat = splitOn "!" short
+convertInterwikiLinks (Link _ref (interwiki, article)) =
+  if head interwiki == '!'
+     then case M.lookup interwiki' interwikiMap of
+                Just url  -> Link _ref (interwikiurl url, summary)
+                Nothing -> Link _ref (interwiki, article)
+     else Link _ref (interwiki, article)
+ where -- '!Wookieepedia' -> 'Wookieepedia'
+       interwiki' = tail interwiki
+       -- 'http://starwars.wikia.com/wiki/Emperor_Palpatine'
+       interwikiurl u = escapeURIString isAllowedInURI $ u ++ article
+       -- 'Wookieepedia: Emperor Palpatine'
+       summary = interwiki' ++ ": " ++ article
 convertInterwikiLinks x = x
 
--- | Large table of constants; this is a mapping from shortcuts to a URL. The URL can be used by
--- appending to it the article name (suitably URL-escaped, of course).
--- The mapping is derived from <https://secure.wikimedia.org/wikipedia/meta/wiki/Interwiki_map>
--- as of 11:19 PM, 11 February 2009.
+{- | Large table of constants; this is a mapping from shortcuts to a URL. The URL can be used by
+   appending to it the article name (suitably URL-escaped, of course).
+   The mapping is derived from <https://secure.wikimedia.org/wikipedia/meta/wiki/Interwiki_map>
+   as of 11:19 PM, 11 February 2009. -}
 interwikiMap :: M.Map String String
 interwikiMap = M.fromList [ ("AbbeNormal", "http://ourpla.net/cgi/pikie?"),
                  ("Acronym", "http://www.acronymfinder.com/af-query.asp?String=exact&Acronym="),
