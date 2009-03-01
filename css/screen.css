@@ -2,6 +2,8 @@
 @import url("/css/base-min.css");
 @import url("/css/hk-pyg.css");
 
+html { background: #f9f9f9; color: black; }
+
 /* QUOTES */
 
 blockquote { color: #666; }
@@ -21,17 +23,16 @@ input[type='text'] { cursor: text; }
 hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0;
 }
 
-h1, h2, h3, h4, h5, h6 { color: black; background: none; font-weight: normal; margin: 0;
-	padding-top: .5em; padding-bottom: .17em; border-bottom: 1px solid #aaa; }
+h1, h2, h3, h4, h5, h6 { font-weight: normal; border-bottom: 1px solid black; }
 
-h1.pageTitle { font-size: 220%; margin: 0.2em 0 .5em;  }
+h1.pageTitle { font-size: 197%; margin: 0.2em 0 .5em; }
 
-h1 { font-size: 150%; margin: 1.07em 0 .535em; }
-h2 { font-size: 132%; margin: 1.14em 0 .57em; }
+h1 { font-size: 153.9%; margin: 1.07em 0 .535em; }
+h2 { font-size: 131%; margin: 1.14em 0 .57em; }
 h3 { font-size: 116%; margin: 1.23em 0 .615em; }
-h4 { font-size: 100%; margin: 1.33em 0 .67em; }
-h5 { font-size: 88%; margin: 1.6em 0 .8em; }
-h6 { font-size: 80%; margin: 1.6em 0 .8em; }
+h4 { font-size: 108%; margin: 1.33em 0 .67em; }
+h5 { font-size: 100%; margin: 1.6em 0 .8em; }
+h6 { font-size: 93%; margin: 1.6em 0 .8em; }
 
 ul { list-style-type: square; margin: .3em 0 0 1.5em; padding: 0; }
 ol { margin: .3em 0 0 3.2em; }
@@ -51,7 +52,6 @@ blockquote { padding: 0 1.6em; }
 textarea,  input { padding: .3em .4em .15em .4em; }
 select { padding: .1em .2em 0 .2em; }
 option { padding: 0 .4em; }
-
 
 /* COLORS */
 
@@ -106,15 +106,14 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         color: black;
         text-decoration: none;
 }
-html { background: #f9f9f9; color: black; }
+#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 108%; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
 #sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; font-size: 93%; }
 #sidebar fieldset, #sidebar fieldset legend { font-weight: normal; }
 #sidebar ul { padding: 0; margin: 0; margin-left: 1.6em; line-height: 1.5em; }
 #sidebar ul li { color: #888; list-style: square; }
-#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 100%; }
-div#toc { float: right; background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
+div#toc { background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
 #toc ul { margin: 0; padding-left: 1em; list-style: none; }
 #toc > ul { margin-right: 1em; }
 /* .req is used to hide a honeypot in a form */
@@ -131,7 +130,7 @@ ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin:
 .folding li.folder { background-image: url(/img/icons/folder.png); }
 .folding a { color: #000000; cursor: pointer; text-decoration: none; }
 .folding a:hover { text-decoration: underline; }
-#sidebar input, #sidebar select { font-size:  95%; padding: 0.1em; }
+#sidebar input, #sidebar select { font-size:  93%; padding: 0.1em; }
 #exportbox select { width: 9em; border: 1px solid #ccc; padding: 0; }
 #exportbox { margin: 0.3em 0 0.5em 0.4em; padding: 0; }
 #sidebar input[type='submit'] { border: none; background-color: #ccc; color: white; }
@@ -148,4 +147,4 @@ pre.matches { margin: 0; padding: 0; }
 .added { background-color: yellow; }
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
-#footer { padding: 1em; color: #888; text-align: center; font-size: 95%; }
+#footer { padding: 1em; color: #888; text-align: center; font-size: 93%; }
