@@ -1,3 +1,8 @@
+for release:
+
+_ document (API haddock) for Gitit.Interface
+_ document plugins in README
+
 ----------
 
 _ Add a Go box that goes to the specified page title;
