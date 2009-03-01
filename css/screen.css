@@ -4,12 +4,6 @@
 
 html { background: #f9f9f9; color: black; } 
 
-/* QUOTES */
-
-blockquote { color: #666; }
-
-/* FORMS */
-
 fieldset { border: 1px solid #ccc; padding: 1em; }
 legend { font-weight: bold; margin-left: 1em; padding: 4px; }
 textarea, input[type='text'], input[type='password'], select { border: 1px solid #ccc; background: #fff; }
@@ -17,8 +11,9 @@ textarea:hover, input[type='text']:hover, input[type='password']:hover, select:h
 textarea:focus, input[type='text']:focus, input[type='password']:focus, select:focus { border-color: #888; outline: 2px solid #ffffaa; }
 input, select { cursor: pointer; }
 input[type='text'] { cursor: text; }
-
-/* BASE SIZES */
+textarea,  input { padding: .3em .4em .15em .4em; }
+select { padding: .1em .2em 0 .2em; }
+option { padding: 0 .4em; }
 
 hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0;
 }
@@ -34,24 +29,13 @@ h4 { font-size: 108%; margin: 1.33em 0 .67em; }
 h5 { font-size: 100%; margin: 1.6em 0 .8em; }
 h6 { font-size: 93%; margin: 1.6em 0 .8em; }
 
-ul { list-style-type: square; margin: .3em 0 0 1.5em; padding: 0; }
-ol { margin: .3em 0 0 3.2em; }
-li { margin-bottom: .1em; }
+ul { list-style-type: square; }
 dt { font-weight: bold; margin-bottom: .1em; }
-dl { margin-top: .2em; margin-bottom: .5em; }
-dd { margin-left: 2em; margin-bottom: .1em; }
-
-/* TABLES */
 
 table { border-top: 1px solid #ccc;  border-left: 1px solid #ccc; }
 th, td { border-bottom: 1px solid #ddd; border-right: 1px solid #ccc; }
 
-/* MARGINS & PADDINGS */
-
-blockquote { padding: 0 1.6em; }
-textarea,  input { padding: .3em .4em .15em .4em; }
-select { padding: .1em .2em 0 .2em; }
-option { padding: 0 .4em; }
+blockquote { padding: 0 1.6em; color: #666; }
 
 /* COLORS */
 
@@ -107,6 +91,7 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         text-decoration: none;
 }
 #content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 100%; }
+#content p, #content pre, #content li { line-height: 140%; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
 #sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; font-size: 93%; }
