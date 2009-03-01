@@ -2,7 +2,7 @@
 @import url("/css/base-min.css");
 @import url("/css/hk-pyg.css");
 
-html { background: #f9f9f9; color: black; }
+html { background: #f9f9f9; color: black; } 
 
 /* QUOTES */
 
@@ -106,7 +106,7 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         color: black;
         text-decoration: none;
 }
-#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 108%; }
+#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 100%; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
 #sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; font-size: 93%; }
@@ -140,7 +140,7 @@ ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin:
 #goform input[type='text'] { width: 9em; border: 1px solid #ccc; }
 .search_result { margin-bottom: 15px; }
 .search_result .match { margin-bottom: 15px; }
-pre { font-size: 85%; }
+code { font-size: 93%; }
 pre.matches { margin: 0; padding: 0; }
 #editform textarea { height: 25em; width: 98%; }
 #editform #logMsg { width: 98%; margin-right: 1em; margin-bottom: 0.3em; }
