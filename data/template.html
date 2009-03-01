@@ -13,59 +13,63 @@
     <!--[if IE]><link href="/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
   </head>
   <body>
-    <div id="container">
-      <div id="sidebar">
-        <div id="logo">
-          <a href="/" title="Go to top page"><img src="/img/logo.png" /></a>
-        </div>
-        <div class="sitenav">
-          <fieldset>
-            <legend>Site</legend>
-            <ul>
-              <li><a href="/">Front page</a></li>
-              <li><a href="/_index">All pages</a></li>
-              <li><a href="/_random">Random page</a></li>
-              <li><a href="/_activity">Recent activity</a></li>
-              <li><a href="/_upload">Upload a file</a></li>
-              <li><a href="/Help">Help</a></li>
-            </ul>
-            $searchbox$
-          </fieldset>
-        </div>
-        $if(pagetools)$
-        <div class="pageTools">
-          <fieldset>
-            <legend>This page</legend>
-            <ul>
-              <li><a href="/$pagename$?revision=$revision$&amp;showraw">Raw page source</a></li>
-              <li><a href="/$pagename$?revision=$revision$&amp;printable">Printable version</a></li>
-              <li><a href="/$pagename$?revision=$sha1$">Permanent link</a></li>
-              <li><a href="/$pagename$?delete">Delete this page</a></li>
-            </ul>
-            $exportbox$
-          </fieldset>
-        </div>
-        $endif$
-      </div>
-      <div id="maincol">
-        <div id="userbox">
-          $if(user)$
-          <a href="/_logout">Logout $user$</a>
-          $else$
-          <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+    <div id="doc3" class="yui-t1">
+        <div id="sidebar" class="yui-b first">
+          <div id="logo">
+            <a href="/" title="Go to top page"><img src="/img/logo.png" /></a>
+          </div>
+          <div class="sitenav">
+            <fieldset>
+              <legend>Site</legend>
+              <ul>
+                <li><a href="/">Front page</a></li>
+                <li><a href="/_index">All pages</a></li>
+                <li><a href="/_random">Random page</a></li>
+                <li><a href="/_activity">Recent activity</a></li>
+                <li><a href="/_upload">Upload a file</a></li>
+                <li><a href="/Help">Help</a></li>
+              </ul>
+              $searchbox$
+            </fieldset>
+          </div>
+          $if(pagetools)$
+          <div class="pageTools">
+            <fieldset>
+              <legend>This page</legend>
+              <ul>
+                <li><a href="/$pagename$?revision=$revision$&amp;showraw">Raw page source</a></li>
+                <li><a href="/$pagename$?revision=$revision$&amp;printable">Printable version</a></li>
+                <li><a href="/$pagename$?revision=$sha1$">Permanent link</a></li>
+                <li><a href="/$pagename$?delete">Delete this page</a></li>
+              </ul>
+              $exportbox$
+            </fieldset>
+          </div>
           $endif$
         </div>
-        $tabs$ 
-        <div id="content">
-          $if(nothead)$
-          <h2 class="revision">Revision $revision$</h2>
-          $endif$
-          <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
-          $messages$
-          $content$
+        <div id="yui-main">
+          <div id="maincol" class="yui-b">
+            <div id="userbox">
+              $if(user)$
+              <a href="/_logout">Logout $user$</a>
+              $else$
+              <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+              $endif$
+            </div>
+            $tabs$ 
+            <div id="content">
+              $if(nothead)$
+              <h2 class="revision">Revision $revision$</h2>
+              $endif$
+              <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
+              $messages$
+              <div id="wikipage" ondblclick="window.location='/$pagename$?edit">
+                $content$
+              </div>
+            </div>
+            <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">gitit</a></div>
+          </div>
         </div>
-        <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">gitit</a></div>
-      </div>
     </div>
     $javascripts$
   </body>

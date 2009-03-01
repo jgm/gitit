@@ -1,31 +1,6 @@
+@import url("/css/reset-fonts-grids.css");
+@import url("/css/base-min.css");
 @import url("/css/hk-pyg.css");
-
-/* gitit screen css - borrows heavily from Mike Crittenden's BlueTripCSS framework (GPL) and from Wikipedia's CSS. */
-
-/* MEYER RESET */
-html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, code, del, dfn, em, img, q, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {margin:0;padding:0;border:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
-body {line-height:1.5em;}
-table {border-collapse:separate;border-spacing:0;}
-caption, th, td {text-align:left;font-weight:normal;}
-table, td, th {vertical-align:middle;}
-blockquote:before, blockquote:after, q:before, q:after {content:"";}
-blockquote, q {quotes:"" "";}
-a img {border:none;}
-
-/* BASIC TYPOGRAPHY */
-
-html { font-family: helvetica, "microsoft sans serif", arial, sans-serif; }
-strong, th, thead td, h1, h2, h3, h4, h5, h6 { font-weight: bold; }
-cite, em, dfn { font-style: italic; }
-code, kbd, samp, pre, tt, var, textarea { font-family: monospace; }
-del { text-decoration: line-through; color: #666; }
-ins, dfn { border-bottom: 1px solid #ccc; }
-small, sup, sub { font-size: 85%; }
-abbr, acronym { text-transform: uppercase; font-size: 85%; letter-spacing: .1em; }
-a abbr, a acronym { border: none; }
-abbr[title], acronym[title], dfn[title] { cursor: help; border-bottom: 1px solid #ccc; }
-sup { vertical-align: super; }
-sub { vertical-align: sub; }
 
 /* QUOTES */
 
@@ -33,8 +8,8 @@ blockquote { color: #666; }
 
 /* FORMS */
 
-fieldset { padding:1.4em; margin: 0 0 1.5em 0; border: 1px solid #ccc; }
-legend { font-weight: bold; font-size:1.2em; }
+fieldset { border: 1px solid #ccc; padding: 1em; }
+legend { font-weight: bold; margin-left: 1em; padding: 4px; }
 textarea, input[type='text'], input[type='password'], select { border: 1px solid #ccc; background: #fff; }
 textarea:hover, input[type='text']:hover, input[type='password']:hover, select:hover { border-color: #aaa; }
 textarea:focus, input[type='text']:focus, input[type='password']:focus, select:focus { border-color: #888; outline: 2px solid #ffffaa; }
@@ -43,15 +18,14 @@ input[type='text'] { cursor: text; }
 
 /* BASE SIZES */
 
-body { font-size: 1em; line-height: 1.6em; }
-
 hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0;
 }
 
 h1, h2, h3, h4, h5, h6 { color: black; background: none; font-weight: normal; margin: 0;
 	padding-top: .5em; padding-bottom: .17em; border-bottom: 1px solid #aaa; }
 
-h1.pageTitle { font-size: 220%; line-height: 140%; margin: 0.2em 0 .5em;  }
+h1.pageTitle { font-size: 220%; margin: 0.2em 0 .5em;  }
+
 h1 { font-size: 150%; margin: 1.07em 0 .535em; }
 h2 { font-size: 132%; margin: 1.14em 0 .57em; }
 h3 { font-size: 116%; margin: 1.23em 0 .615em; }
@@ -59,12 +33,12 @@ h4 { font-size: 100%; margin: 1.33em 0 .67em; }
 h5 { font-size: 88%; margin: 1.6em 0 .8em; }
 h6 { font-size: 80%; margin: 1.6em 0 .8em; }
 
-ul { line-height: 1.5em; list-style-type: square; margin: .3em 0 0 1.5em; padding: 0; }
-ol { line-height: 1.5em; margin: .3em 0 0 3.2em; padding: 0; }
+ul { list-style-type: square; margin: .3em 0 0 1.5em; padding: 0; }
+ol { margin: .3em 0 0 3.2em; }
 li { margin-bottom: .1em; }
 dt { font-weight: bold; margin-bottom: .1em; }
 dl { margin-top: .2em; margin-bottom: .5em; }
-dd { line-height: 1.5em; margin-left: 2em; margin-bottom: .1em; }
+dd { margin-left: 2em; margin-bottom: .1em; }
 
 /* TABLES */
 
@@ -73,22 +47,11 @@ th, td { border-bottom: 1px solid #ddd; border-right: 1px solid #ccc; }
 
 /* MARGINS & PADDINGS */
 
-hr,  p,  ul,  ol,  dl,  blockquote,  address,  table,  pre, form { margin-bottom: 1.4em; }
-/* NOTE: Calulate header margins: TOP: 1.6em/size, BOTTOM: 1.6em/size/2 */
-th,  td { padding: .8em; }
-caption { padding-bottom: .8em; } /* padding instead of margin for IE */
 blockquote { padding: 0 1.6em; }
-legend { padding-left: .8em; padding-right: .8em; }
-legend+* { margin-top: 1em; } /* compensates for the opera margin bug */
 textarea,  input { padding: .3em .4em .15em .4em; }
 select { padding: .1em .2em 0 .2em; }
 option { padding: 0 .4em; }
-a { position: relative; padding: 0.3em 0 .1em 0; } /* for larger click-area */
-dt { margin-top: .8em; margin-bottom: .4em; }
-ul { margin-left: 1.5em; }
-ol { margin-left: 2.35em; }
-ol ol,  ul ol { margin-left: 2.5em; }
-form div { margin-bottom: .8em; }
+
 
 /* COLORS */
 
@@ -97,26 +60,6 @@ a:visited { text-decoration: underline; color: #99c; }
 a:hover { text-decoration: underline; color: #c33; }
 a:active,  a:focus { text-decoration: underline; color: #000; }
 /* code,  pre { color: #c33; } /* very optional, but still useful. W3C uses about the same colors for codes */
-
-/* TEXT CLASSES */
-
-.small {font-size:.8em;margin-bottom:1.875em;line-height:1.875em;}
-.large {font-size:1.2em;line-height:2.5em;margin-bottom:1.25em;}
-.hide {display:none;}
-.quiet {color:#666;}
-.loud {color:#000;}
-.highlight {background:#ff0;}
-.top {margin-top:0;padding-top:0;}
-.bottom {margin-bottom:0;padding-bottom:0;}
-.thin {font-weight: lighter;}
-.error,  .notice,  .success {padding:.8em;margin-bottom:1.6em;border:2px solid #ddd;}
-.error {background:#FBE3E4;color:#8a1f11;border-color:#FBC2C4;}
-.notice {background:#FFF6BF;color:#514721;border-color:#FFD324;}
-.success {background:#E6EFC2;color:#264409;border-color:#C6D880;}
-.error a {color:#8a1f11; background:none; padding:0; margin:0; }
-.notice a {color:#514721; background:none; padding:0; margin:0; }
-.success a {color:#264409; background:none; padding:0; margin:0; }
-.center {text-align: center;}
 
 input.search_term { width: 95% }
 
@@ -163,17 +106,14 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         color: black;
         text-decoration: none;
 }
-body { font: x-small sans-serif; background: #f9f9f9; color: black; margin: 0; padding: 0; }
-#container { font-size: 120%; margin: 0 ; padding: 0; }
+html { background: #f9f9f9; color: black; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
-#sidebar  { width: 12em; float: left; margin-right: 10px; }
-#sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; }
-#sidebar fieldset, #sidebar fieldset legend { font-weight: normal; font-size: 95%; }
+#sidebar fieldset { background-color: white; margin-bottom: 1em; padding: 0; font-size: 93%; }
+#sidebar fieldset, #sidebar fieldset legend { font-weight: normal; }
 #sidebar ul { padding: 0; margin: 0; margin-left: 1.6em; line-height: 1.5em; }
-#sidebar ul li { color: #888; }
-#maincol { position: absolute; margin-left: 13em; margin-top: 1em; padding-top: 0; margin-right: 0; max-width: 60em; }
-#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 110%; line-height: 150%; }
+#sidebar ul li { color: #888; list-style: square; }
+#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 100%; }
 div#toc { float: right; background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
 #toc ul { margin: 0; padding-left: 1em; list-style: none; }
 #toc > ul { margin-right: 1em; }
@@ -182,9 +122,9 @@ div#toc { float: right; background-color: #f9f9f9; border: 10px solid white; mar
 ul.messages > li { color: red; list-style: square; font-weight: bold; }
 ul.tabs { padding: 0; margin: 0; }
 ul.tabs li { display: inline; border: 1px solid #ccc; border-bottom: none; border-collapse: collapse; padding: 0 0.6em 0 0.6em;
-    margin: 0 0 0 1.2em; overflow: visible; background: white; line-height: 1.2em; }
+    margin: 0 0 0 1.2em; overflow: visible; background: white; }
 ul.tabs li.selected { border-bottom: 3px solid white; }
-ul.tabs li a { text-decoration: none; font-size: 95%; font-weight: bold; margin: 0; z-index: 0; color: #36c; }
+ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin: 0; z-index: 0; color: #36c; }
 .folding ul { list-style: none; margin: 0; padding: 0; }
 .folding li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
 .folding li.page { background-image: url(/img/icons/page.png); }
@@ -192,16 +132,17 @@ ul.tabs li a { text-decoration: none; font-size: 95%; font-weight: bold; margin:
 .folding a { color: #000000; cursor: pointer; text-decoration: none; }
 .folding a:hover { text-decoration: underline; }
 #sidebar input, #sidebar select { font-size:  95%; padding: 0.1em; }
-#exportbox select { width: 8em; border: 1px solid #ccc; padding: 0; }
+#exportbox select { width: 9em; border: 1px solid #ccc; padding: 0; }
 #exportbox { margin: 0.3em 0 0.5em 0.4em; padding: 0; }
 #sidebar input[type='submit'] { border: none; background-color: #ccc; color: white; }
 #searchform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
-#searchform input[type='text'] { width: 7.5em; border: 1px solid #ccc; }
+#searchform input[type='text'] { width: 9em; border: 1px solid #ccc; }
 #goform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
-#goform input[type='text'] { width: 7.5em; border: 1px solid #ccc; }
+#goform input[type='text'] { width: 9em; border: 1px solid #ccc; }
 .search_result { margin-bottom: 15px; }
-.search_result .match { line-height: 1em; margin-bottom: 15px; }
-pre.matches { font-size: .85em; margin: 0; padding: 0; }
+.search_result .match { margin-bottom: 15px; }
+pre { font-size: 85%; }
+pre.matches { margin: 0; padding: 0; }
 #editform textarea { height: 25em; width: 98%; }
 #editform #logMsg { width: 98%; margin-right: 1em; margin-bottom: 0.3em; }
 .added { background-color: yellow; }
