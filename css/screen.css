@@ -116,13 +116,13 @@ ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin:
 .folding a { color: #000000; cursor: pointer; text-decoration: none; }
 .folding a:hover { text-decoration: underline; }
 #sidebar input, #sidebar select { font-size:  93%; padding: 0.1em; }
-#exportbox select { width: 9em; border: 1px solid #ccc; padding: 0; }
+#exportbox select { width: 8.5em; border: 1px solid #ccc; padding: 0; }
 #exportbox { margin: 0.3em 0 0.5em 0.4em; padding: 0; }
 #sidebar input[type='submit'] { border: none; background-color: #ccc; color: white; }
 #searchform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
-#searchform input[type='text'] { width: 9em; border: 1px solid #ccc; }
+#searchform input[type='text'] { width: 8.5em; border: 1px solid #ccc; }
 #goform { padding: 0; margin: 0.3em 0 0.5em 0.4em; }
-#goform input[type='text'] { width: 9em; border: 1px solid #ccc; }
+#goform input[type='text'] { width: 8.5em; border: 1px solid #ccc; }
 .search_result { margin-bottom: 15px; }
 .search_result .match { margin-bottom: 15px; }
 code { font-size: 93%; }
