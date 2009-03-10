@@ -61,9 +61,11 @@ module Gitit.Server
           , addCookie
           , lookCookieValue
           , readCookieValue
+          , compressedResponseFilter
           )
 where
 import Happstack.Server hiding (look, lookRead, lookPairs, mkCookie, getCookies)
+import Happstack.Server.Parts (compressedResponseFilter)
 import qualified Happstack.Server (mkCookie)
 import Happstack.Server.Cookie (Cookie(..))
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
