@@ -104,10 +104,10 @@ main = do
 
   -- start the server
   hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
-  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
-          map (\d -> dir d [ withExpiresHeaders $ fileServe [] $ staticdir </> d]) ["css", "img", "js"] ++
-          [ debugHandler | debugMode conf ] ++
-          [ compressedResponseFilter $ multi wikiHandlers ]
+  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ msum $
+          map (\d -> dir d (withExpiresHeaders $ fileServe [] $ staticdir </> d)) ["css", "img", "js"] ++
+          -- [ debugHandler | debugMode conf ] ++
+          wikiHandlers
   waitForTermination
 
   -- shut down the server
@@ -153,8 +153,8 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
 handleSourceCode :: Handler
 handleSourceCode = withData $ \com ->
   case com of
-       Command (Just "showraw") -> [ handle isSourceCode GET showFileAsText ]
-       _                        -> [ handle isSourceCode GET showHighlightedSource ]
+       Command (Just "showraw") -> handle isSourceCode GET showFileAsText
+       _                        -> handle isSourceCode GET showHighlightedSource
 
 handleAny :: Handler
 handleAny = 
@@ -165,17 +165,17 @@ handleAny =
                            case res of
                                   Right contents -> anyRequest $ ok $ setContentType mimetype $
                                                                (toResponse noHtml) {rsBody = contents} -- ugly hack
-                                  Left NotFound  -> anyRequest noHandle
+                                  Left NotFound  -> anyRequest mzero
                                   Left e         -> error (show e)
 
 debugHandler :: Handler
 debugHandler = do
   liftIO $ putStr "\n"
   withRequest $ \req -> liftIO $ getCurrentTime >>= (putStrLn . formatDateTime "%c") >> putStrLn (show req)
-  multi [ handle (const True) GET showParams, handle (const True) POST showParams ]
+  msum [ handle (const True) GET showParams, handle (const True) POST showParams ]
     where showParams page params = do
             liftIO $ putStrLn page >> putStrLn (show params)
-            noHandle
+            mzero
 
 showRawPage :: String -> Params -> Web Response
 showRawPage = showFileAsText . pathForPage
@@ -231,7 +231,7 @@ showPage page params = do
                     rev <- liftIO $ latest fs (pathForPage page)
                     cacheContents (pathForPage page) rev c
                   formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params c
-                Nothing -> noHandle
+                Nothing -> mzero
 
 discussPage :: String -> Params -> Web Response
 discussPage page params = do
@@ -365,7 +365,7 @@ showHistory file page params =  do
   fs <- getFileStore
   hist <- liftIO $ history fs [file] (TimeRange since Nothing)
   if null hist
-     then noHandle
+     then mzero
      else do
        let versionToHtml rev pos = 
               li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ revId rev] <<
@@ -695,7 +695,7 @@ showHighlightedSource file params = do
            case contents of
                Just source -> let lang' = head $ languagesByExtension $ takeExtension file
                               in case highlightAs lang' (filter (/='\r') source) of
-                                       Left _       -> noHandle
+                                       Left _       -> mzero
                                        Right res    -> do
                                          let formattedContents = formatAsXHtml [OptNumberLines] lang' $! res
                                          when (isNothing (pRevision params)) $ do
@@ -703,7 +703,7 @@ showHighlightedSource file params = do
                                            rev <- liftIO $ latest fs file
                                            cacheContents file rev formattedContents
                                          formattedPage defaultPageLayout file params $ formattedContents
-               Nothing     -> noHandle
+               Nothing     -> mzero
 
 exportPage :: String -> Params -> Web Response
 exportPage page params = do
