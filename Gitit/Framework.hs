@@ -214,18 +214,20 @@ handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Ha
 handle pathtest meth responder = uriRest $ \uri ->
   let path' = decodeString $ uriPath uri
   in  if pathtest path'
-         then withData $ \params ->
-                    withRequest $ \req ->
-                      if rqMethod req == meth
-                         then do
-                           let referer = case M.lookup (fromString "referer") (rqHeaders req) of
-                                              Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
-                                              _       -> Nothing
-                           let peer = fst $ rqPeer req
-                           responder path' (params { pReferer = referer,
-                                                     pUri = uri,
-                                                     pPeer = peer })
-                         else mzero
+         then do
+           compressedResponseFilter
+           withData $ \params ->
+               withRequest $ \req ->
+                 if rqMethod req == meth
+                    then do
+                      let referer = case M.lookup (fromString "referer") (rqHeaders req) of
+                                         Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
+                                         _       -> Nothing
+                      let peer = fst $ rqPeer req
+                      responder path' (params { pReferer = referer,
+                                                pUri = uri,
+                                                pPeer = peer })
+                    else mzero
          else anyRequest mzero
 
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
