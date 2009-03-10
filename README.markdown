@@ -1,7 +1,7 @@
 Gitit
 =====
 
-Gitit is a wiki program written in Haskell. It uses [HAppS][] for the
+Gitit is a wiki program written in Haskell. It uses [Happstack][] for the
 web server and [pandoc][] for markup processing. Pages and uploaded
 files are stored in a [git][] or [darcs][] repository and may be modified either
 by using the VCS's command-line tools or through the wiki's web interface.
@@ -14,7 +14,7 @@ MediaWiki markup. Gitit can be configured to display TeX math (using
 [git]: http://git.or.cz  
 [darcs]: http://darcs.net
 [pandoc]: http://johnmacfarlane.net/pandoc
-[HAppS]: http://happs.org
+[Happstack]: http://happstack.com
 [jsMath]: http://www.math.union.edu/~dpvc/jsMath/
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/  
 
@@ -62,10 +62,6 @@ can check this by trying:
 If that doesn't work, check to see that `gitit` is in your local
 cabal-install executable directory (usually `~/.cabal/bin`). And make
 sure `~/.cabal/bin` is in your system path.
-
-Note:  the build process is configured to use happstack by default.
-If you want to use the old HAppS packages instead, use the flag
-`-f-happstack`.
 
 Optional plugins support
 ------------------------
