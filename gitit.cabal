@@ -2,7 +2,7 @@ name:                gitit
 version:             0.6
 Cabal-version:       >= 1.2
 build-type:          Simple
-synopsis:            Wiki using HAppS, git or darcs, and pandoc.
+synopsis:            Wiki using Happstack, git or darcs, and pandoc.
 description:         Gitit is a wiki program. Pages and uploaded files
                      are stored in a git or darcs repository and may be modified
                      either by using the VCS's command-line tools or through
