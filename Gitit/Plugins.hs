@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Plugins ( loadPlugin )
 where
-import System.IO (hFlush, stdout)
 import System.FilePath
 import Gitit.State
 #ifdef _PLUGINS
