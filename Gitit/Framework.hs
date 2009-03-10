@@ -49,6 +49,7 @@ import Control.Monad.Reader (mplus)
 import Data.Char (toLower)
 import Data.DateTime
 import Control.Monad.Trans (MonadIO)
+import Control.Monad (msum, mzero)
 import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (fromString, toString)
@@ -214,7 +215,7 @@ handle pathtest meth responder = uriRest $ \uri ->
   let path' = decodeString $ uriPath uri
   in  if pathtest path'
          then withData $ \params ->
-                  [ withRequest $ \req ->
+                    withRequest $ \req ->
                       if rqMethod req == meth
                          then do
                            let referer = case M.lookup (fromString "referer") (rqHeaders req) of
@@ -224,8 +225,8 @@ handle pathtest meth responder = uriRest $ \uri ->
                            responder path' (params { pReferer = referer,
                                                      pUri = uri,
                                                      pPeer = peer })
-                         else noHandle ]
-         else anyRequest noHandle
+                         else mzero
+         else anyRequest mzero
 
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
 handlePage = handle isPage
@@ -239,8 +240,8 @@ handlePath path' = handle (== path')
 withCommand :: String -> [Handler] -> Handler
 withCommand command handlers =
   withData $ \com -> case com of
-                          Command (Just c) | c == command -> handlers
-                          _                               -> []
+                          Command (Just c) | c == command -> msum handlers
+                          _                               -> anyRequest mzero 
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
@@ -267,10 +268,10 @@ pathForPage page = page <.> "page"
 withCommands :: Method -> [String] -> (String -> Request -> Web Response) -> Handler
 withCommands meth commands page = withRequest $ \req -> do
   if rqMethod req /= meth
-     then noHandle
+     then mzero
      else if all (`elem` (map fst $ rqInputs req)) commands
              then page (intercalate "/" $ rqPaths req) req
-             else noHandle
+             else mzero
 
 getMimeTypeForExtension :: MonadIO m => String -> m String
 getMimeTypeForExtension ext = do
