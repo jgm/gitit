@@ -261,7 +261,7 @@ isSourceCode :: String -> Bool
 isSourceCode = not . null . languagesByExtension . takeExtension
 
 urlForPage :: String -> String
-urlForPage page = '/' : (substitute "%2f" "/" $ urlEncode $ encodeString page)
+urlForPage page = '/' : (substitute "%2f" "/" $ substitute "%3a" ":" $ urlEncode $ encodeString page)
 -- this is needed so that browsers recognize relative URLs correctly
 
 pathForPage :: String -> FilePath
