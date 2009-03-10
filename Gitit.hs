@@ -107,7 +107,7 @@ main = do
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $
           map (\d -> dir d [ withExpiresHeaders $ fileServe [] $ staticdir </> d]) ["css", "img", "js"] ++
           [ debugHandler | debugMode conf ] ++
-          [ filterIf acceptsZip gzipBinary $ cookieFixer $ multi wikiHandlers ]
+          [ compressedResponseFilter $ multi wikiHandlers ]
   waitForTermination
 
   -- shut down the server
