@@ -234,10 +234,8 @@ showPage page params = do
                 Nothing -> mzero
 
 discussPage :: String -> Params -> Web Response
-discussPage page params = do
-  if isDiscussPage page
-     then showPage page params
-     else showPage (page ++ ":discuss") params
+discussPage page _ = seeOther (urlForPage discussionPage) $ toResponse "Redirecting to discussion page"
+    where discussionPage = if isDiscussPage page then page else page ++ ":discuss"
 
 createPage :: String -> Params -> Web Response
 createPage page params =
