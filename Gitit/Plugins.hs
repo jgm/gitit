@@ -29,6 +29,7 @@ import GHC
 import GHC.Paths
 import DynFlags
 import Unsafe.Coerce
+import System.IO (hFlush, stdout)
 
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
