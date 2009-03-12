@@ -23,11 +23,11 @@ h1, h2, h3, h4, h5, h6 { font-weight: normal; border-bottom: 1px solid black; }
 h1.pageTitle { font-size: 197%; margin: 0.2em 0 .5em; }
 
 h1 { font-size: 153.9%; margin: 1.07em 0 .535em; }
-h2 { font-size: 131%; margin: 1.14em 0 .57em; }
-h3 { font-size: 116%; margin: 1.23em 0 .615em; }
-h4 { font-size: 108%; margin: 1.33em 0 .67em; }
-h5 { font-size: 100%; margin: 1.6em 0 .8em; }
-h6 { font-size: 93%; margin: 1.6em 0 .8em; }
+h2 { font-size: 138.5%; margin: 1.14em 0 .57em; }
+h3 { font-size: 123.1%; margin: 1.23em 0 .615em; }
+h4 { font-size: 116%; margin: 1.33em 0 .67em; }
+h5 { font-size: 108%; margin: 1.6em 0 .8em; }
+h6 { font-size: 100%; margin: 1.6em 0 .8em; }
 
 ul { list-style-type: square; }
 dt { font-weight: bold; margin-bottom: .1em; }
@@ -90,7 +90,7 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
         color: black;
         text-decoration: none;
 }
-#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 100%; }
+#content { border: 1px solid #ccc; background-color: #fff; padding: 1em; font-size: 108%; }
 #content p, #content pre, #content li { line-height: 140%; }
 #userbox  { text-align: right; font-weight: bold; margin: 1em; }
 #logo { min-height: 50px; }
