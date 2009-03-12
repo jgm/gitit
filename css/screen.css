@@ -105,10 +105,10 @@ div#toc { background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; ma
 .req { display: none; }
 ul.messages > li { color: red; list-style: square; font-weight: bold; }
 ul.tabs { padding: 0; margin: 0 0 1px 0; }
-ul.tabs li { display: inline; border: 1px solid #ccc; border-bottom: none; border-collapse: collapse; padding: 0 0.6em 0 0.6em;
-    margin: 0 0 0 1.2em; overflow: visible; background: white; }
-ul.tabs li.selected { border-bottom: 5px solid white; }
-ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin: 0; z-index: 0; color: #36c; }
+ul.tabs li { display: inline; border: 1px solid #ccc; border-bottom: none; padding: 0 0.6em 0 0.6em;
+    margin: 0 0 0 1.2em; background: white; }
+ul.tabs li.selected { border-bottom: 3px solid white; }
+ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin: 0; color: #36c; }
 .folding ul { list-style: none; margin: 0; padding: 0; }
 .folding li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
 .folding li.page { background-image: url(/img/icons/page.png); }
