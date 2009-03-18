@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Convert ( textToPandoc
                      , pandocToHtml
+                     , readerFor
                      )
 where
 import Text.Pandoc
@@ -37,13 +38,13 @@ readerFor pt = case pt of
                  RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
-textToPandoc :: PageType -> String -> Web Pandoc
-textToPandoc pt s = do
+textToPandoc :: PageType -> String -> String -> Web Pandoc
+textToPandoc pt page s = do
   transforms <- getPageTransforms
-  foldM (\d pl -> queryAppState id >>= \st -> pl st d) (readerFor pt $ filter (/= '\r') s) (wikiLinksTransform : transforms)
+  foldM (\d pl -> queryAppState id >>= \st -> pl st page d) (readerFor pt $ filter (/= '\r') s) (wikiLinksTransform : transforms)
 
-wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
-wikiLinksTransform _ = return . everywhere (mkT convertWikiLinks)
+wikiLinksTransform :: AppState -> String -> Pandoc -> Web Pandoc
+wikiLinksTransform _ _ = return . everywhere (mkT convertWikiLinks)
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline

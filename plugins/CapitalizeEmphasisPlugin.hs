@@ -11,8 +11,8 @@ import Data.Generics (everywhereM, mkM, everywhere, mkT)
 plugin :: Plugin
 plugin = PageTransform transform
 
-transform :: AppState -> Pandoc -> Web Pandoc
-transform _ = everywhereM (mkM (return . capsTransform))
+transform :: AppState -> String -> Pandoc -> Web Pandoc
+transform _ _ = everywhereM (mkM (return . capsTransform))
 
 capsTransform :: [Inline] -> [Inline]
 capsTransform (Emph x : ys) = everywhere (mkT capStr) x ++ capsTransform ys

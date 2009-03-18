@@ -48,7 +48,7 @@ Flag plugins
 Library
   hs-source-dirs:    .
   exposed-modules:   Gitit.Interface
-  other-modules:     Gitit.State, Gitit.Server
+  other-modules:     Gitit.State, Gitit.Server, Gitit.Framework, Gitit.Page, Gitit.Convert
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
