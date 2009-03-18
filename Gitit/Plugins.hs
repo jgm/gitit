@@ -22,9 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Plugins ( loadPlugin )
 where
-import System.FilePath
 import Gitit.State
+import System.FilePath
 #ifdef _PLUGINS
+import Control.Monad (when)
+import Data.List (isInfixOf, isPrefixOf)
 import GHC
 import GHC.Paths
 import DynFlags
@@ -39,20 +41,26 @@ loadPlugin pluginName = do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
-      target <- guessTarget pluginName Nothing
-      addTarget target
-      r <- load LoadAllTargets
-      case r of
-        Failed -> error $ "Error loading plugin: " ++ pluginName
-        Succeeded -> do
-          let modName = takeBaseName pluginName
-          m <- findModule (mkModuleName modName) Nothing
-          i <- findModule (mkModuleName "Gitit.Interface") Nothing
-          pr <- findModule (mkModuleName "Prelude") Nothing
-          setContext [] [m, i, pr]
-          value <- compileExpr (modName ++ ".plugin :: Plugin")
-          do let value' = (unsafeCoerce value) :: Plugin
-             return value'
+      when (not $ "Gitit.Plugin." `isPrefixOf` pluginName)
+        $ do
+            addTarget =<< guessTarget pluginName Nothing
+            r <- load LoadAllTargets
+            case r of
+              Failed -> error $ "Error loading plugin: " ++ pluginName
+              Succeeded -> return ()
+      let modName =
+            if "Gitit.Plugin" `isPrefixOf` pluginName
+            then pluginName
+            else
+              (if "Gitit/Plugin/" `isInfixOf` pluginName then ("Gitit.Plugin." ++) else id)
+              $ takeBaseName pluginName
+      pr <- findModule (mkModuleName "Prelude") Nothing
+      i <- findModule (mkModuleName "Gitit.Interface") Nothing
+      m <- findModule (mkModuleName modName) Nothing
+      setContext [] [m, i, pr]
+      value <- compileExpr (modName ++ ".plugin :: Plugin")
+      let value' = (unsafeCoerce value) :: Plugin
+      return value'
   putStrLn "loaded."
   return plugin
 
