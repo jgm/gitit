@@ -27,6 +27,7 @@ import Gitit.Framework
 import Gitit.Layout
 import Gitit.Convert
 import Gitit.Export (exportFormats)
+import Gitit.Page (pageAsPandoc, rawContents)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -45,7 +46,6 @@ import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
-import Text.Pandoc
 import Text.Pandoc.Shared (substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
@@ -56,7 +56,6 @@ import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes, formatDateTime)
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
-
 
 main :: IO ()
 main = do
@@ -346,9 +345,9 @@ searchResults _ params = do
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
 
 preview :: String -> Params -> Web Response
-preview _ params = do
+preview page params = do
   pt <- getDefaultPageType -- should get the current page type instead
-  pandoc' <- textToPandoc pt $ pRaw params
+  pandoc' <- textToPandoc pt page $ pRaw params
   pandocToHtml pandoc' >>= ok . toResponse . encodeString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
@@ -723,21 +722,3 @@ exportPage page params = do
        Just doc -> case lookup format exportFormats of
                         Nothing     -> error $ "Unknown export format: " ++ format
                         Just writer -> writer page doc
-
-rawContents :: String -> Params -> Web (Maybe String)
-rawContents file params = do
-  let rev = pRevision params
-  fs <- getFileStore
-  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
-
-pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
-pageAsPandoc page params = do
-  pt <- getDefaultPageType
-  mDoc <- rawContents (pathForPage page) params
-  case mDoc of
-        Nothing -> return Nothing
-        Just d  -> do
-          (Pandoc _ blocks) <- textToPandoc pt d
-          return $ Just $ Pandoc (Meta [Str page] [] []) blocks
-
-

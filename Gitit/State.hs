@@ -163,9 +163,9 @@ data AppState = AppState {
 }
 
 -- later other types of plugin can be added
-data Plugin = PageTransform (AppState -> Pandoc -> Web Pandoc)
+data Plugin = PageTransform (AppState -> String -> Pandoc -> Web Pandoc)
 
-getPageTransforms :: Web [AppState -> Pandoc -> Web Pandoc]
+getPageTransforms :: Web [AppState -> String -> Pandoc -> Web Pandoc]
 getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
   where pageTransform (PageTransform x) = Just x
         -- pageTransform _                 = Nothing

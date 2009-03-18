@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Gitit.Interface ( getConfig
                        , Config(..)
                        , AppState(..)
+                       , updateAppState -- Note: Plugins (each plugin? Or all of them together?) have a separate AppState from gitit. Bug or feature?
                        , User(..)
                        , FileStore(..)
                        , getFileStore
@@ -29,10 +30,15 @@ module Gitit.Interface ( getConfig
                        , look
                        , module Text.Pandoc.Definition
                        , Plugin(..)
+                       , pageAsPandoc
+                       , readerFor
+                       , urlForPage
                        )
 where
 import Text.Pandoc.Definition
 import Data.FileStore
 import Gitit.State
 import Gitit.Server
-
+import Gitit.Page
+import Gitit.Framework
+import Gitit.Convert
