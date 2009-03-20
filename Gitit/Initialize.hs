@@ -71,7 +71,7 @@ createStaticIfMissing staticdir = do
     let jsdir = staticdir </> "js"
     createDirectoryIfMissing True jsdir
     let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
-                       "folding.js", "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
+                       "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     jsDataDir <- getDataFileName "js"
     forM_ javascripts $ \f -> copyFile (jsDataDir </> f) (jsdir </> f)
 
