@@ -109,12 +109,13 @@ ul.tabs li { display: inline; border: 1px solid #ccc; border-bottom: none; paddi
     margin: 0 0 0 1.2em; background: white; }
 ul.tabs li.selected { border-bottom: 3px solid white; }
 ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin: 0; color: #36c; }
-.folding ul { list-style: none; margin: 0; padding: 0; }
-.folding li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
-.folding li.page { background-image: url(/img/icons/page.png); }
-.folding li.folder { background-image: url(/img/icons/folder.png); }
-.folding a { color: #000000; cursor: pointer; text-decoration: none; }
-.folding a:hover { text-decoration: underline; }
+.index ul { list-style: none; margin: 0; padding: 0; }
+.index li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
+.index li.page { background-image: url(/img/icons/page.png); }
+.index li.folder { background-image: url(/img/icons/folder.png); }
+.index a { color: #000000; cursor: pointer; text-decoration: none; }
+.index a:hover { text-decoration: underline; }
+.updirs ul { margin-left: 1em; }
 #sidebar input, #sidebar select { font-size:  93%; padding: 0.1em; }
 #exportbox select { width: 8.5em; border: 1px solid #ccc; padding: 0; }
 #exportbox { margin: 0.3em 0 0.5em 0.4em; padding: 0; }

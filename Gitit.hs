@@ -21,7 +21,7 @@ module Main where
 
 import Gitit.Plugins ( loadPlugin )
 import Gitit.Server
-import Gitit.Util (orIfNull, consolidateHeads)
+import Gitit.Util (orIfNull)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
@@ -39,7 +39,7 @@ import Gitit.State
 import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
-import Data.List (intersperse, sort, nub, sortBy, isSuffixOf, find, isPrefixOf)
+import Data.List (intersperse, partition, sort, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.Map as M
@@ -116,7 +116,7 @@ main = do
   putStrLn "Shutdown complete"
 
 wikiHandlers :: [Handler]
-wikiHandlers = [ handlePath "_index"     GET  indexPage
+wikiHandlers = [ handle isIndex          GET indexPage
                , handlePath "_activity"  GET  showActivity
                , handlePath "_preview"   POST preview
                , handlePath "_go"        POST goToPage
@@ -149,6 +149,10 @@ wikiHandlers = [ handlePath "_index"     GET  indexPage
                , handlePage GET  createPage
                , handlePage POST createPage  -- this will happen if they click Discard on a new page
                ]
+
+isIndex :: String -> Bool
+isIndex "_index" = True
+isIndex x        = "_index/" `isPrefixOf` x
 
 handleSourceCode :: Handler
 handleSourceCode = withData $ \com ->
@@ -544,21 +548,32 @@ updatePage page params = do
                                      , pMessages = [mergeMsg] })
 
 indexPage :: String -> Params -> Web Response
-indexPage _ params = do
-  let page = "_index"
+indexPage page params = do
   fs <- getFileStore
-  files <- liftIO $ index fs
-  let htmlIndex = fileListToHtml "/" $ map splitPath $ sort $ filter (\f -> not (":discuss.page" `isSuffixOf` f)) files
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["folding.js"], pgTitle = "All pages" }) page params htmlIndex
+  let prefix'  = dropWhile (=='/') . drop 6 $ page   -- drop the "_index/" part
+  let prefix'' = if null prefix' then "" else prefix' ++ "/"
+  listing <- liftM (filter (prefix'' `isPrefixOf`)) $ liftIO $ index fs
+  let listingFilter f = if prefix'' `isPrefixOf` f && not (f == prefix'') && not (":discuss.page" `isSuffixOf` f)
+                           then Just . drop (length prefix'') $ f
+                           else Nothing
+  let prunedListing  = mapMaybe listingFilter listing
+  let (dirs, files) = partition ('/' `elem`) prunedListing
+  let dirs'  = nub $ map ((++ "/") . takeWhile (/= '/')) dirs
+  let htmlIndex = fileListToHtml prefix'' $ sort $ dirs' ++ files
+  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = [], pgTitle = "Contents"}) page params htmlIndex
 
--- | Create a hierarchical ordered list (with links) for a list of files
-fileListToHtml :: String -> [[FilePath]] -> Html
-fileListToHtml prefix lst = ulist ! [identifier "index", theclass "folding"] <<
-  (map (\(h, l) -> let h' = if takeExtension h == ".page" then dropExtension h else h
-                   in if [] `elem` l
-                         then li ! [theclass $ if takeExtension h == ".page" then "page" else "upload"] << anchor ! [href $ prefix ++ h'] << h'
-                         else li ! [theclass "folder"] << [stringToHtml h', fileListToHtml (prefix ++ h') l]) $
-  consolidateHeads lst)
+fileListToHtml :: String -> [FilePath] -> Html
+fileListToHtml prefix files =
+  let fileLink f = if takeExtension f == ".page"
+                      then li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
+                      else if "/" `isSuffixOf` f
+                           then li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
+                           else li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
+      uplink =  let updirs = drop 1 $ inits $ splitPath $ "/" ++ prefix
+                in  foldr (\d accum -> ulist ! [theclass "updirs index"] <<
+                       [li ! [theclass "folder"] <<
+                           anchor ! [href $ "/_index" ++ joinPath d] << last d, accum]) noHtml updirs
+  in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
 -- user authentication
 loginForm :: Html
