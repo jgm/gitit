@@ -39,7 +39,7 @@ import Gitit.State
 import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
-import Data.List (intersperse, partition, sort, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
+import Data.List (intersperse, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.Map as M
@@ -552,23 +552,19 @@ indexPage page params = do
   fs <- getFileStore
   let prefix'  = dropWhile (=='/') . drop 6 $ page   -- drop the "_index/" part
   let prefix'' = if null prefix' then "" else prefix' ++ "/"
-  listing <- liftM (filter (prefix'' `isPrefixOf`)) $ liftIO $ index fs
-  let listingFilter f = if prefix'' `isPrefixOf` f && not (f == prefix'') && not (":discuss.page" `isSuffixOf` f)
-                           then Just . drop (length prefix'') $ f
-                           else Nothing
-  let prunedListing  = mapMaybe listingFilter listing
-  let (dirs, files) = partition ('/' `elem`) prunedListing
-  let dirs'  = nub $ map ((++ "/") . takeWhile (/= '/')) dirs
-  let htmlIndex = fileListToHtml prefix'' $ sort $ dirs' ++ files
+  listing <- liftIO $ directory fs prefix'
+  let isDiscussionPage (FSFile f) = ":discuss.page" `isSuffixOf` f
+      isDiscussionPage (FSDirectory _) = False
+  let prunedListing = filter (not . isDiscussionPage) listing
+  let htmlIndex = fileListToHtml prefix'' prunedListing
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = [], pgTitle = "Contents"}) page params htmlIndex
 
-fileListToHtml :: String -> [FilePath] -> Html
+fileListToHtml :: String -> [Resource] -> Html
 fileListToHtml prefix files =
-  let fileLink f = if takeExtension f == ".page"
-                      then li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
-                      else if "/" `isSuffixOf` f
-                           then li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
-                           else li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
+  let fileLink (FSFile f) | takeExtension f == ".page" =
+                 li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
+      fileLink (FSFile f) = li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
+      fileLink (FSDirectory f) = li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
       uplink =  let updirs = drop 1 $ inits $ splitPath $ "/" ++ prefix
                 in  foldr (\d accum -> ulist ! [theclass "updirs index"] <<
                        [li ! [theclass "folder"] <<
