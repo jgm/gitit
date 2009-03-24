@@ -21,7 +21,6 @@ module Gitit.Framework (
                        , Recaptcha(..)
                        , Params(..)
                        , Command(..)
-                       , decodePath
                        , getLoggedInUser
                        , sessionTime
                        , unlessNoEdit
@@ -46,14 +45,15 @@ where
 import Gitit.Server
 import Gitit.State
 import Text.Pandoc.Shared (substitute)
+import Control.Monad.Reader (mplus)
 import Data.Char (toLower)
-import Control.Monad.Trans (MonadIO)
-import Control.Monad (msum, mzero, mplus)
-import qualified Data.Map as M
-import Data.ByteString.Lazy (ByteString, empty)
-import Data.ByteString.UTF8 (fromString, toString)
 import Data.DateTime
-import Data.Maybe (fromJust, fromMaybe)
+import Control.Monad.Trans (MonadIO)
+import Control.Monad (msum, mzero)
+import qualified Data.ByteString.Lazy as B
+import qualified Data.Map as M
+import Data.ByteString.UTF8 (fromString, toString)
+import Data.Maybe (fromMaybe, fromJust)
 import Data.List (intersect, intercalate, isSuffixOf)
 import System.FilePath ((<.>), takeExtension)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
@@ -94,7 +94,7 @@ data Params = Params { pUsername     :: String
                      , pPrintable    :: Bool
                      , pOverwrite    :: Bool
                      , pFilename     :: String
-                     , pFileContents :: ByteString
+                     , pFileContents :: B.ByteString
                      , pUser         :: String
                      , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
@@ -129,7 +129,7 @@ instance FromData Params where
          pr <- (look "printable" >> return True) `mplus` return False
          ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
          fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
-         fc <- (lookInput "file" >>= return . inputValue) `mplus` return empty
+         fc <- (lookInput "file" >>= return . inputValue) `mplus` return B.empty
          ac <- look "accessCode"     `mplus` return ""
          cn <- (look "confirm" >> return True) `mplus` return False
          sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
@@ -210,12 +210,9 @@ unlessNoDelete responder fallback =
                          then fallback page params{pMessages = ("Page cannot be deleted." : pMessages params)}
                          else responder page params
 
-decodePath :: String -> String
-decodePath = decodeString . uriPath
-
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder = uriRest $ \uri ->
-  let path' = decodePath uri
+  let path' = decodeString $ uriPath uri
   in  if pathtest path'
          then do
            compressedResponseFilter
