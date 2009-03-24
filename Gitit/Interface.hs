@@ -29,10 +29,12 @@ module Gitit.Interface ( getConfig
                        , look
                        , module Text.Pandoc.Definition
                        , Plugin(..)
+                       , inlinesToURL
+                       , inlinesToString
                        )
 where
 import Text.Pandoc.Definition
 import Data.FileStore
 import Gitit.State
 import Gitit.Server
-
+import Gitit.Convert
