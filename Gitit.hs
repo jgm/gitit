@@ -229,7 +229,7 @@ showPage page params = do
            case mDoc of
                 Just d  -> do
                   let divify c = thediv ! [identifier "wikipage",
-                                            strAttr "onDblClick" ("window.location = '" ++ urlForPage page ++
+                                            strAttr "onDblClick" ("window.location = '" ++ substitute "'" "\\x27" (urlForPage page) ++
                                             "?edit" ++
                                             (case (pRevision params) of
                                                   Nothing -> ""
