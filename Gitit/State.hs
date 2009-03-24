@@ -42,6 +42,7 @@ import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
 import Gitit.Server (readMimeTypesFile, Web)
 import Text.Pandoc (Pandoc)
+import System.Log.Logger (Priority(..), logM)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
@@ -89,6 +90,9 @@ data Config = Config {
   defaultPageType     :: PageType,                 -- the default page markup type for this wiki
   userFile            :: FilePath,                 -- path of users database 
   templateFile        :: FilePath,                 -- path of page template file
+  logFile             :: FilePath,                 -- path of server log file
+  logLevel            :: Priority,                 -- severity filter for log messages (DEBUG, INFO, NOTICE,
+                                                   -- WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
   staticDir           :: FilePath,                 -- path of static directory
   pluginModules       :: [String],                 -- names of plugin modules to load
   tableOfContents     :: Bool,                     -- should each page have an automatic table of contents?
@@ -114,6 +118,8 @@ defaultConfig = Config {
   defaultPageType     = Markdown,
   userFile            = "gitit-users",
   templateFile        = "template.html",
+  logFile             = "gitit.log",
+  logLevel            = INFO,
   staticDir           = "static",
   pluginModules       = [],
   tableOfContents     = True,
@@ -186,8 +192,8 @@ emptyCache = Cache M.empty 0
 
 debugMessage :: MonadIO m => String -> m ()
 debugMessage msg = do
-  debug <- liftM debugMode getConfig
-  when debug $ liftIO $ putStrLn msg
+  level <- liftM logLevel getConfig
+  when (level == DEBUG) $ liftIO $ logM "gitit" DEBUG msg
 
 updateCachedPageTimestamp :: MonadIO m => Cache -> String -> m ()
 updateCachedPageTimestamp cache' page = do

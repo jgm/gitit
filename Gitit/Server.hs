@@ -69,7 +69,7 @@ import Happstack.Server.Parts (compressedResponseFilter)
 import qualified Happstack.Server (mkCookie)
 import Happstack.Server.Cookie (Cookie(..))
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
-import System.IO (stderr, hPutStrLn)
+import System.Log.Logger (logM, Priority(..))
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 import Control.Monad.Reader
 import Data.ByteString.Lazy.UTF8 (toString)
@@ -125,9 +125,8 @@ readMimeTypesFile f = catch (readFile f >>= return . foldr go M.empty . map word
      where go []     m = m  -- skip blank lines
            go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
            handleMimeTypesFileNotFound e = do
-             hPutStrLn stderr $ "Could not read mime types file: " ++ f
-             hPutStrLn stderr $ show e
-             hPutStrLn stderr $ "Using defaults instead."
+             logM "gitit" WARNING $ "Could not read mime types file: " ++ f ++ "\n" ++
+               show e ++ "\n" ++ "Using defaults instead."
              return mimeTypes
 
 -- Note: waitForTermination is copied from Happstack.State.Control

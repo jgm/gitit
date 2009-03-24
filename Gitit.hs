@@ -30,7 +30,7 @@ import Gitit.Export (exportFormats)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
-import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
+import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
 import System.Time
 import Control.Concurrent
@@ -53,16 +53,19 @@ import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars)
 import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
-import Data.DateTime (getCurrentTime, addMinutes, formatDateTime)
+import Data.DateTime (getCurrentTime, addMinutes)
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
+import System.Log.Logger (logM, Priority(..), setLevel, setHandlers, getLogger, saveGlobalLogger)
+import System.Log.Handler.Simple (fileHandler)
 
 
 main :: IO ()
 main = do
 
   -- parse options to get config file
-  conf <- getConfigFromOpts
+  conf' <- getConfigFromOpts
+  let conf = if debugMode conf' then conf'{logLevel = DEBUG} else conf'
 
   -- check for external programs that are needed
   let prereqs = "grep" : case repository conf of
@@ -79,6 +82,14 @@ main = do
                then liftM (M.fromList . read) $ readFile $ userFile conf
                else return M.empty
 
+  -- set up logging
+  let level = logLevel conf
+  logFileHandler <- fileHandler (logFile conf) level
+  serverLogger <- getLogger "Happstack.Server" -- changes to "Happstack.Server.AccessLog.Combined" for 0.3
+  gititLogger <- getLogger "gitit"
+  saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
+  saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
+
   -- create template file if it doesn't exist
   let templatefile = templateFile conf
   templateExists <- doesFileExist templatefile
@@ -94,8 +105,10 @@ main = do
   initializeAppState conf users' templ
 
   -- load plugins
-  plugins' <- mapM loadPlugin (pluginModules conf)
+  let loadPluginAndLog plg = logM "gitit" WARNING ("Loading plugin '" ++ plg ++ "'...") >> loadPlugin plg
+  plugins' <- mapM loadPluginAndLog (pluginModules conf)
   updateAppState $ \st -> plugins' `seq` st { plugins = plugins' }
+  unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
 
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf
@@ -103,17 +116,14 @@ main = do
   createStaticIfMissing staticdir
 
   -- start the server
-  hPutStrLn stderr $ "Starting server on port " ++ show (portNumber conf)
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ msum $
           map (\d -> dir d (withExpiresHeaders $ fileServe [] $ staticdir </> d)) ["css", "img", "js"] ++
-          -- [ debugHandler | debugMode conf ] ++
+          [ debugHandler | debugMode conf ] ++
           wikiHandlers
   waitForTermination
 
   -- shut down the server
-  putStrLn "Shutting down..."
   killThread tid
-  putStrLn "Shutdown complete"
 
 wikiHandlers :: [Handler]
 wikiHandlers = [ handle isIndex          GET indexPage
@@ -174,11 +184,10 @@ handleAny =
 
 debugHandler :: Handler
 debugHandler = do
-  liftIO $ putStr "\n"
-  withRequest $ \req -> liftIO $ getCurrentTime >>= (putStrLn . formatDateTime "%c") >> putStrLn (show req)
+  withRequest $ \req -> liftIO $ logM "gitit" DEBUG (show req)
   msum [ handle (const True) GET showParams, handle (const True) POST showParams ]
     where showParams page params = do
-            liftIO $ putStrLn page >> putStrLn (show params)
+            liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++ show params
             mzero
 
 showRawPage :: String -> Params -> Web Response

@@ -3,6 +3,8 @@ Config {
   defaultPageType     = Markdown,
   userFile            = "gitit-users",
   templateFile        = "template.html",
+  logFile             = "gitit.log",
+  logLevel            = WARNING,
   staticDir           = "static",
   pluginModules       = ["data/DotPlugin"],
   tableOfContents     = False,
