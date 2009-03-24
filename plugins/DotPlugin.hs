@@ -27,8 +27,8 @@ import Control.Monad.Trans (liftIO)
 plugin :: Plugin
 plugin = PageTransform dotTransform
 
-dotTransform :: AppState -> String -> Pandoc -> Web Pandoc
-dotTransform st _ = everywhereM (mkM (transformBlock st))
+dotTransform :: AppState -> Pandoc -> Web Pandoc
+dotTransform st = everywhereM (mkM (transformBlock st))
 
 transformBlock :: AppState -> Block -> Web Block
 transformBlock st (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
