@@ -31,12 +31,9 @@ import GHC
 import GHC.Paths
 import DynFlags
 import Unsafe.Coerce
-import System.IO (hFlush, stdout)
 
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
-  putStr $ "Loading plugin '" ++ pluginName ++ "'..."
-  hFlush stdout
   plugin <- defaultCleanupHandler defaultDynFlags $ do
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
@@ -61,7 +58,6 @@ loadPlugin pluginName = do
       value <- compileExpr (modName ++ ".plugin :: Plugin")
       let value' = (unsafeCoerce value) :: Plugin
       return value'
-  putStrLn "loaded."
   return plugin
 
 #else
