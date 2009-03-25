@@ -569,15 +569,15 @@ indexPage page params = do
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = [], pgTitle = "Contents"}) page params htmlIndex
 
 fileListToHtml :: String -> [Resource] -> Html
+
 fileListToHtml prefix files =
   let fileLink (FSFile f) | takeExtension f == ".page" =
                  li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
       fileLink (FSFile f) = li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
       fileLink (FSDirectory f) = li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
       uplink =  let updirs = drop 1 $ inits $ splitPath $ "/" ++ prefix
-                in  foldr (\d accum -> ulist ! [theclass "updirs index"] <<
-                       [li ! [theclass "folder"] <<
-                           anchor ! [href $ "/_index" ++ joinPath d] << last d, accum]) noHtml updirs
+                in  foldr (\d accum ->  concatHtml [ anchor ! [theclass "updir", href $ "/_index" ++ joinPath d] <<
+                                           last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
 -- user authentication
