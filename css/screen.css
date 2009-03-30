@@ -128,7 +128,7 @@ a.updir { font-weight: bold; }
 .search_result .match { margin-bottom: 15px; }
 code { font-size: 93%; }
 pre.matches { margin: 0; padding: 0; }
-#editform textarea { height: 25em; width: 98%; }
+#editform textarea { height: 25em; width: 98%; font-family: monospace; font-size: 93%; }
 #editform #logMsg { width: 98%; margin-right: 1em; margin-bottom: 0.3em; }
 .added { background-color: yellow; }
 .deleted { text-decoration: line-through; color: gray; }
