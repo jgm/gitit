@@ -121,6 +121,8 @@ option `-f [filename]`.  A configuration file takes the following form:
     defaultPageType     = Markdown,
     userFile            = "gitit-users",
     templateFile        = "template.html",
+    logFile             = "gitit.log",
+    logLevel            = WARNING,
     staticDir           = "static",
     pluginModules       = ["plugins/DotPlugin"],
     tableOfContents     = False,
@@ -134,7 +136,7 @@ option `-f [filename]`.  A configuration file takes the following form:
     useRecaptcha        = False,
     recaptchaPublicKey  = "",
     recaptchaPrivateKey = "",
-    maxCacheSize        = 2 * 1024 * 1024,
+    maxCacheSize        = 2000000,
     mimeTypesFile       = "/etc/mime.types"
     }
 
@@ -159,6 +161,13 @@ option `-f [filename]`.  A configuration file takes the following form:
   purposes, this can be used just as it is, but some users may wish to
   customize the look of their wiki.)  `templateFile` is an
   `HStringTemplate` template.
+
+- `logFile` is the path of gitit's log file.  The log file is in
+  [Apache combined log format].
+
+- `logLevel` controls how much is logged.  Possible values (from
+  most to least verbose) are `DEBUG`, `INFO`, `NOTICE`, `WARNING`,
+  `ERROR`, `CRITICAL`, `ALERT`, `EMERGENCY`.
 
 - `staticDir` is the (relative) path of a directory in which static content
   (javascript, CSS, images) is stored.  If it does not exist, gitit will
@@ -206,6 +215,7 @@ option `-f [filename]`.  A configuration file takes the following form:
   type.  If the file is not found, some simple defaults will be used.
 
 [reCAPTCHA]: http://recaptcha.net
+[Apache combined log format]: http://httpd.apache.org/docs/2.2/logs.html#combined
 
 The easiest way to create a custom configuration file is to dump the default
 configuration and modify it:
