@@ -49,8 +49,8 @@ Here are some examples to get you started:
 <td>[external link](http://google.com)</td>
 </tr>
 <tr>
-<td>`![folder](/stylesheets/folder.png)`</td>
-<td>![folder](/stylesheets/folder.png)</td>
+<td>`![folder](/img/icons/folder.png)`</td>
+<td>![folder](/img/icons/folder.png)</td>
 </tr>
 <tr>
 <td>Wikilink: `[Front Page]()`</td>
