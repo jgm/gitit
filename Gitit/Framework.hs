@@ -27,7 +27,6 @@ module Gitit.Framework (
                        , unlessNoDelete
                        , handle
                        , handlePage
-                       , handleText
                        , handlePath
                        , withCommand
                        , uriPath
@@ -232,9 +231,6 @@ handle pathtest meth responder = uriRest $ \uri ->
 
 handlePage :: Method -> (String -> Params -> Web Response) -> Handler
 handlePage = handle isPage
-
-handleText :: Method -> (String -> Params -> Web Response) -> Handler
-handleText = handle (\x -> isPage x || isSourceCode x)
 
 handlePath :: String -> Method -> (String -> Params -> Web Response) -> Handler
 handlePath path' = handle (== path')
