@@ -141,20 +141,22 @@ wikiHandlers = [ handle isIndex          GET indexPage
                , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
                , handlePath "_random"    GET  randomPage
                , handlePath ""           GET  showFrontPage
-               , withCommand "showraw" [ handlePage GET showRawPage ]
-               , withCommand "history" [ handlePage GET showPageHistory,
-                                         handle (not . isPage) GET showFileHistory ]
+               , withCommand "showraw" [ handlePage GET showRawPage
+                                       , handle isSourceCode GET showFileAsText ]
+               , withCommand "history" [ handlePage GET showPageHistory
+                                       , handle isSourceCode GET showFileHistory ]
                , withCommand "edit"    [ handlePage GET $ unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage ]
-               , withCommand "diff"    [ handlePage GET  showPageDiff,
-                                         handle isSourceCode GET showFileDiff ]
-               , withCommand "export"  [ handlePage POST exportPage, handlePage GET exportPage ]
+               , withCommand "diff"    [ handlePage GET showPageDiff
+                                       , handle isSourceCode GET showFileDiff ]
+               , withCommand "export"  [ handlePage POST exportPage
+                                       , handlePage GET exportPage ]
                , withCommand "cancel"  [ handlePage POST showPage ]
                , withCommand "discuss" [ handlePage GET discussPage ]
                , withCommand "update"  [ handlePage POST $ unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage ]
                , withCommand "delete"  [ handlePage GET  $ unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage,
                                          handlePage POST $ unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
                , handlePage GET showPage
-               , handleSourceCode
+               , handle isSourceCode GET showHighlightedSource
                , handleAny
                , handlePage GET  createPage
                , handlePage POST createPage  -- this will happen if they click Discard on a new page
@@ -163,12 +165,6 @@ wikiHandlers = [ handle isIndex          GET indexPage
 isIndex :: String -> Bool
 isIndex "_index" = True
 isIndex x        = "_index/" `isPrefixOf` x
-
-handleSourceCode :: Handler
-handleSourceCode = withData $ \com ->
-  case com of
-       Command (Just "showraw") -> handle isSourceCode GET showFileAsText
-       _                        -> handle isSourceCode GET showHighlightedSource
 
 handleAny :: Handler
 handleAny = 
@@ -197,7 +193,7 @@ showFileAsText :: String -> Params -> Web Response
 showFileAsText file params = do
   mContents <- rawContents file params
   case mContents of
-       Nothing   -> error "Unable to retrieve page contents."
+       Nothing   -> mzero  -- fail quietly if file not found
        Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ encodeString c
 
 randomPage :: String -> Params -> Web Response
@@ -396,7 +392,10 @@ showHistory file page params =  do
                                      else []) ++
                                  [stringToHtml "]"])]
        let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
-       formattedPage (defaultPageLayout { pgScripts = ["dragdiff.js"], pgSelectedTab = HistoryTab, pgTitle = ("Changes to " ++ page) }) page params contents
+       let tabs = if file == page  -- source file, not wiki page
+                     then [ViewTab,HistoryTab]
+                     else pgTabs defaultPageLayout
+       formattedPage (defaultPageLayout { pgScripts = ["dragdiff.js"], pgTabs = tabs, pgSelectedTab = HistoryTab, pgTitle = ("Changes to " ++ page) }) page params contents
 
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
@@ -707,7 +706,7 @@ showHighlightedSource :: String -> Params -> Web Response
 showHighlightedSource file params = do
   mbCached <- lookupCache file (pRevision params)
   case mbCached of
-         Just cp -> formattedPage defaultPageLayout file params cp
+         Just cp -> formattedPage defaultPageLayout{ pgTabs = [ViewTab,HistoryTab] } file params cp
          _ -> do
            contents <- rawContents file params
            case contents of
@@ -720,7 +719,7 @@ showHighlightedSource file params = do
                                            fs <- getFileStore
                                            rev <- liftIO $ latest fs file
                                            cacheContents file rev formattedContents
-                                         formattedPage defaultPageLayout file params $ formattedContents
+                                         formattedPage defaultPageLayout{ pgTabs = [ViewTab,HistoryTab] } file params $ formattedContents
                Nothing     -> mzero
 
 exportPage :: String -> Params -> Web Response
