@@ -25,8 +25,7 @@ import Gitit.Util (orIfNull)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
-import Gitit.Convert
-import Gitit.Export (exportFormats)
+import Gitit.ContentTransformer
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -41,17 +40,14 @@ import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersperse, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
 import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
-import Codec.Binary.UTF8.String (encodeString)
 import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
-import Text.Pandoc
 import Text.Pandoc.Shared (substitute)
 import Data.Char (isAlphaNum, isAlpha, toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars)
-import Text.Highlighting.Kate
 import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes)
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
@@ -186,16 +182,6 @@ debugHandler = do
             liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++ show params
             mzero
 
-showRawPage :: String -> Params -> Web Response
-showRawPage = showFileAsText . pathForPage
-
-showFileAsText :: String -> Params -> Web Response
-showFileAsText file params = do
-  mContents <- rawContents file params
-  case mContents of
-       Nothing   -> mzero  -- fail quietly if file not found
-       Just c    -> ok $ setContentType "text/plain; charset=utf-8" $ toResponse $ encodeString c
-
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
   fs <- getFileStore
@@ -212,35 +198,6 @@ showFrontPage :: String -> Params -> Web Response
 showFrontPage _ params = do
   cfg <- getConfig
   showPage (frontPage cfg) params
-
-showPage :: String -> Params -> Web Response
-showPage page params = do
-  jsMathExists <- queryAppState jsMath
-  mbCached <- lookupCache (pathForPage page) (pRevision params)
-  case mbCached of
-         Just cp ->
-           formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params cp
-         _ -> do
-           mDoc <- pageAsPandoc page params
-           case mDoc of
-                Just d  -> do
-                  let divify c = thediv ! [identifier "wikipage",
-                                            strAttr "onDblClick" ("window.location = '" ++ substitute "'" "\\x27" (urlForPage page) ++
-                                            "?edit" ++
-                                            (case (pRevision params) of
-                                                  Nothing -> ""
-                                                  Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++
-                                            "';")
-                                          ] << c
-                  c <- liftM divify $ pandocToHtml d
-                  when (isNothing (pRevision params)) $ do
-                    -- TODO not quite ideal, since page might have been modified after being retrieved by pageAsPandoc
-                    -- better to have pageAsPandoc return the revision ID too...
-                    fs <- getFileStore
-                    rev <- liftIO $ latest fs (pathForPage page)
-                    cacheContents (pathForPage page) rev c
-                  formattedPage (defaultPageLayout { pgScripts = ["jsMath/easy/load.js" | jsMathExists]}) page params c
-                Nothing -> mzero
 
 discussPage :: String -> Params -> Web Response
 discussPage page _ = seeOther (urlForPage discussionPage) $ toResponse "Redirecting to discussion page"
@@ -349,12 +306,6 @@ searchResults _ params = do
                       pre ! [theclass "matches"] << unlines contents])
                       (reverse $ sortBy (comparing relevance) matches)
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
-
-preview :: String -> Params -> Web Response
-preview _ params = do
-  pt <- getDefaultPageType -- should get the current page type instead
-  pandoc' <- textToPandoc pt $ pRaw params
-  pandocToHtml pandoc' >>= ok . toResponse . encodeString . renderHtmlFragment
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
@@ -701,51 +652,4 @@ registerUser _ params = do
      else registerForm >>=
           formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
                     "_register" (params { pMessages = errors })
-
-showHighlightedSource :: String -> Params -> Web Response
-showHighlightedSource file params = do
-  mbCached <- lookupCache file (pRevision params)
-  case mbCached of
-         Just cp -> formattedPage defaultPageLayout{ pgTabs = [ViewTab,HistoryTab] } file params cp
-         _ -> do
-           contents <- rawContents file params
-           case contents of
-               Just source -> let lang' = head $ languagesByExtension $ takeExtension file
-                              in case highlightAs lang' (filter (/='\r') source) of
-                                       Left _       -> mzero
-                                       Right res    -> do
-                                         let formattedContents = formatAsXHtml [OptNumberLines] lang' $! res
-                                         when (isNothing (pRevision params)) $ do
-                                           fs <- getFileStore
-                                           rev <- liftIO $ latest fs file
-                                           cacheContents file rev formattedContents
-                                         formattedPage defaultPageLayout{ pgTabs = [ViewTab,HistoryTab] } file params $ formattedContents
-               Nothing     -> mzero
-
-exportPage :: String -> Params -> Web Response
-exportPage page params = do
-  let format = pFormat params
-  mDoc <- pageAsPandoc page params
-  case mDoc of
-       Nothing  -> error "Unable to retrieve page contents."
-       Just doc -> case lookup format exportFormats of
-                        Nothing     -> error $ "Unknown export format: " ++ format
-                        Just writer -> writer page doc
-
-rawContents :: String -> Params -> Web (Maybe String)
-rawContents file params = do
-  let rev = pRevision params
-  fs <- getFileStore
-  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
-
-pageAsPandoc :: String -> Params -> Web (Maybe Pandoc)
-pageAsPandoc page params = do
-  pt <- getDefaultPageType
-  mDoc <- rawContents (pathForPage page) params
-  case mDoc of
-        Nothing -> return Nothing
-        Just d  -> do
-          (Pandoc _ blocks) <- textToPandoc pt d
-          return $ Just $ Pandoc (Meta [Str page] [] []) blocks
-
 

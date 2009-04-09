@@ -37,4 +37,4 @@ import Text.Pandoc.Definition
 import Data.FileStore
 import Gitit.State
 import Gitit.Server
-import Gitit.Convert
+import Gitit.ContentTransformer
