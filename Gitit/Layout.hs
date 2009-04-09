@@ -65,10 +65,9 @@ defaultPageLayout = PageLayout
 formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
 formattedPage layout page params htmlContents = do
   let rev = pRevision params
-  let path' = if isPage page then pathForPage page else page
   fs <- getFileStore
   sha1 <- case rev of
-             Nothing -> liftIO $ catch (latest fs path')
+             Nothing -> liftIO $ catch (latest fs $ pathForPage page)
                                        (\e -> if e == NotFound
                                                  then return ""
                                                  else throwIO e)
@@ -91,18 +90,13 @@ formattedPage layout page params htmlContents = do
                                  then Just $ tabli DiscussTab << anchor ! [href $ urlForPage $ origPage page] << "page"
                                  else Just $ tabli ViewTab << anchor ! [href $ urlForPage page ++
                                                                     case rev of { Just r -> "?revision=" ++ r; Nothing -> "" }] << "view"
-      linkForTab DiscussTab = if isDiscussPage page
-                                 then Just $ tabli ViewTab << anchor ! [href $ urlForPage page] << "discuss"
-                                 else if isPage page
-                                      then Just $ tabli DiscussTab << anchor ! [href $ urlForPage page ++ "?discuss"] << "discuss"
-                                      else Nothing
-      linkForTab EditTab    = if isPage page
-                                 then Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit" ++
+      linkForTab DiscussTab = Just $ tabli (if isDiscussPage page then ViewTab else DiscussTab) <<
+                                       anchor ! [href $ urlForPage page ++ if isDiscussPage page then "" else "?discuss"] << "discuss"
+      linkForTab EditTab    = Just $ tabli EditTab << anchor ! [href $ urlForPage page ++ "?edit" ++
                                               (case rev of
                                                     Just r   -> "&revision=" ++ r ++ "&" ++ urlEncodeVars [("logMsg", "Revert to " ++ r)]
                                                     Nothing  -> "")] <<
                                              if isNothing rev then "edit" else "revert"
-                                 else Nothing
   let tabs = ulist ! [theclass "tabs"] << mapMaybe linkForTab (pgTabs layout)
   let searchbox = gui ("/_search") ! [identifier "searchform"] <<
                          [ textfield "patterns"
@@ -137,7 +131,7 @@ formattedPage layout page params htmlContents = do
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 exportBox :: String -> Params -> Html
-exportBox page params | isPage page =
+exportBox page params | (not (isSourceCode page)) =
   let rev = pRevision params
   in  gui (urlForPage page) ! [identifier "exportbox"] << 
         ([ textfield "revision" ! [thestyle "display: none;", value (fromJust rev)] | isJust rev ] ++

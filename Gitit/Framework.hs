@@ -247,8 +247,7 @@ uriPath :: String -> String
 uriPath = unwords . words . drop 1 . takeWhile (/='?')
 
 isPage :: String -> Bool
-isPage ('_':_) = False
-isPage s = '.' `notElem` s
+isPage _ = True
 
 isDiscussPage :: String -> Bool
 isDiscussPage s = isPage s && ":discuss" `isSuffixOf` s
