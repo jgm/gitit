@@ -25,7 +25,7 @@ import Gitit.Util (orIfNull)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
-import Gitit.ContentTransformer
+import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage, exportPage, showHighlightedSource, preview)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
