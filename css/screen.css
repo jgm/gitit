@@ -1,6 +1,6 @@
-@import url("/css/reset-fonts-grids.css");
-@import url("/css/base-min.css");
-@import url("/css/hk-pyg.css");
+@import url("reset-fonts-grids.css");
+@import url("base-min.css");
+@import url("hk-pyg.css");
 
 html { background: #f9f9f9; color: black; } 
 
@@ -111,8 +111,8 @@ ul.tabs li.selected { border-bottom: 3px solid white; }
 ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin: 0; color: #36c; }
 .index ul { list-style: none; margin: 0; padding: 0; }
 .index li { list-style: none; background-position: 0 1px; background-repeat: no-repeat; padding-left: 20px; }
-.index li.page { background-image: url(/img/icons/page.png); }
-.index li.folder { background-image: url(/img/icons/folder.png); }
+.index li.page { background-image: url(../img/icons/page.png); }
+.index li.folder { background-image: url(../img/icons/folder.png); }
 .index a { color: #000000; cursor: pointer; text-decoration: none; }
 .index a:hover { text-decoration: underline; }
 a.updir { font-weight: bold; }
