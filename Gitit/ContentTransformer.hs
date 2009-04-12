@@ -392,7 +392,7 @@ convertWikiLinks (Link ref ("", "")) =
 convertWikiLinks x = x
 
 inlinesToURL :: [Inline] -> String
-inlinesToURL = escapeURIString isAllowedInURI  . inlinesToString
+inlinesToURL = escapeURIString isAllowedInURI  . encodeString . inlinesToString
 
 -- | Convert a list of inlines into a string.
 inlinesToString :: [Inline] -> String
