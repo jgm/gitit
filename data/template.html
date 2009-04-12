@@ -14,6 +14,29 @@
   </head>
   <body>
     <div id="doc3" class="yui-t1">
+        <div id="yui-main">
+          <div id="maincol" class="yui-b">
+            <div id="userbox">
+              $if(user)$
+              <a href="/_logout">Logout $user$</a>
+              $else$
+              <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+              $endif$
+            </div>
+            $tabs$ 
+            <div id="content">
+              $if(nothead)$
+              <h2 class="revision">Revision $revision$</h2>
+              $endif$
+              <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
+              $messages$
+              <div id="wikipage" ondblclick="window.location='/$pagename$?edit">
+                $content$
+              </div>
+            </div>
+            <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">gitit</a></div>
+          </div>
+        </div>
         <div id="sidebar" class="yui-b first">
           <div id="logo">
             <a href="/" title="Go to top page"><img src="/img/logo.png" /></a>
@@ -46,29 +69,6 @@
             </fieldset>
           </div>
           $endif$
-        </div>
-        <div id="yui-main">
-          <div id="maincol" class="yui-b">
-            <div id="userbox">
-              $if(user)$
-              <a href="/_logout">Logout $user$</a>
-              $else$
-              <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
-              $endif$
-            </div>
-            $tabs$ 
-            <div id="content">
-              $if(nothead)$
-              <h2 class="revision">Revision $revision$</h2>
-              $endif$
-              <h1 class="pageTitle"><a href="/$pagename$">$pagetitle$</a></h1>
-              $messages$
-              <div id="wikipage" ondblclick="window.location='/$pagename$?edit">
-                $content$
-              </div>
-            </div>
-            <div id="footer">powered by <a href="http://github.com/jgm/gitit/tree/master/">gitit</a></div>
-          </div>
         </div>
     </div>
     $javascripts$
