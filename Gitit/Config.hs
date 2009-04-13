@@ -197,9 +197,16 @@ extractConfig cp = do
         Right c                 -> return c
 
 readNumber :: (Read a) => String -> String -> a
-readNumber opt x = if all isDigit x
-                      then read x
-                      else error $ opt ++ " must be a number."
+readNumber opt "" = error $ opt ++ " must be a number."
+readNumber opt x  =
+  let x' = case last x of
+                'K'  -> init x ++ "000"
+                'M'  -> init x ++ "000000"
+                'G'  -> init x ++ "000000000"
+                _    -> x
+  in if all isDigit x'
+        then read x'
+        else error $ opt ++ " must be a number."
 
 splitCommaList :: String -> [String]
 splitCommaList l =
