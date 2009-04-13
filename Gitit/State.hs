@@ -112,31 +112,6 @@ data Config = Config {
   mimeTypesFile       :: FilePath                  -- path of file associating mime types with file extensions
   } deriving (Read, Show)
 
-defaultConfig :: Config
-defaultConfig = Config {
-  repository          = Git "wikidata",
-  defaultPageType     = Markdown,
-  userFile            = "gitit-users",
-  templateFile        = "template.html",
-  logFile             = "gitit.log",
-  logLevel            = INFO,
-  staticDir           = "static",
-  pluginModules       = [],
-  tableOfContents     = True,
-  maxUploadSize       = 10 * 1024 * 1024,
-  portNumber          = 5001,
-  debugMode           = False,
-  frontPage           = "Front Page",
-  noEdit              = ["Help"],
-  noDelete            = ["Help", "Front Page"],
-  accessQuestion      = Nothing,
-  useRecaptcha        = False,
-  recaptchaPublicKey  = "",
-  recaptchaPrivateKey = "",
-  maxCacheSize        = 2 * 1024 * 1024,
-  mimeTypesFile       = "/etc/mime.types"
-  }
-
 type SessionKey = Integer
 
 data SessionData = SessionData {
