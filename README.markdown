@@ -114,114 +114,12 @@ Configuration options
 ---------------------
 
 You can set some configuration options when starting gitit, using the
-option `-f [filename]`.  A configuration file takes the following form:
+option `-f [filename]`. To get a copy of the default configuration file,
+which you can customize, just type:
 
-    Config {
-    repository          = Git "wikidata",
-    defaultPageType     = Markdown,
-    userFile            = "gitit-users",
-    templateFile        = "template.html",
-    logFile             = "gitit.log",
-    logLevel            = WARNING,
-    staticDir           = "static",
-    pluginModules       = ["plugins/DotPlugin"],
-    tableOfContents     = False,
-    maxUploadSize       = 100000,
-    portNumber          = 5001,
-    debugMode           = True,
-    frontPage           = "Front Page",
-    noEdit              = ["Help", "Front Page"],
-    noDelete            = ["Help", "Front Page"],
-    accessQuestion      = Just ("Enter the access code (to request an access code, contact me@somewhere.org):", ["abcd"]),
-    useRecaptcha        = False,
-    recaptchaPublicKey  = "",
-    recaptchaPrivateKey = "",
-    maxCacheSize        = 2000000,
-    mimeTypesFile       = "/etc/mime.types"
-    }
+    gitit --print-default-config > default.conf
 
-- `repository` specifies the type and (relative) path of the repository
-  in which the wiki's pages will be stored. If it does not exist, gitit
-  will create it on startup.  Supported repository types are `Git` and
-  `Darcs`.
-
-- `defaultPageType` is the type of markup used to interpret pages in
-  the wiki. Two values are currently supported: `Markdown` and `RST`.
-  If `Markdown` is selected, [pandoc]'s syntax extensions (for footnotes,
-  delimited code blocks, etc.) will be enabled.  Note that pandoc's
-  reStructuredText parser is not complete, so some pages may
-  not be rendered correctly if `RST` is selected.
-
-- `userFile` is a file containing user login information (with hashed
-  passwords).  If it does not exist, gitit will start with an empty list
-  of users.  Gitit will write a new `userFile` on shutdown.
-
-- `templateFile` is a file containing an HTML template for the wiki pages.
-  If it does not exist, gitit will create a default template.  (For most
-  purposes, this can be used just as it is, but some users may wish to
-  customize the look of their wiki.)  `templateFile` is an
-  `HStringTemplate` template.
-
-- `logFile` is the path of gitit's log file.  The log file is in
-  [Apache combined log format].
-
-- `logLevel` controls how much is logged.  Possible values (from
-  most to least verbose) are `DEBUG`, `INFO`, `NOTICE`, `WARNING`,
-  `ERROR`, `CRITICAL`, `ALERT`, `EMERGENCY`.
-
-- `staticDir` is the (relative) path of a directory in which static content
-  (javascript, CSS, images) is stored.  If it does not exist, gitit will
-  create it on startup.
-
-- `pluginModules` is a list (possibly empty) of plugin modules to load.
-
-- `tableOfContents` is either `False` or `True`.  If it is `True`, a table
-  of contents (derived from the page's headers) will appear on each page.
-
-- `maxUploadSize` (in bytes) sets a limit to the size of file uploads.
-
-- `portNumber` is the number of the port on which the wiki will be served.
-
-- `debugMode` is either `True` or `False`. If it is `True`, debug information
-  will be printed to the console when gitit is running.
-
-- `frontPage` is the name of the page that is designated as the "front" or
-  "entrance" page of the wiki.  Any page may be designated.
-
-- `noEdit` is a list of pages that cannot be edited.
-
-- `noDelete` is a list of pages that cannot be deleted.
-
-- `accessQuestion` provides primitive access control.  It is either `Nothing`,
-  in which case anyone will be allowed to create an account and edit wiki pages,
-  or `Just (question, [answer1, answer2, ...])`, where question is a prompt
-  that will be displayed when a user tries to create an account, and
-  `answer1, answer2, ...` are the valid responses. The user must provide a
-  valid response in order to create an account. 
-
-- `useRecaptcha` is either `True` or `False`. It specifies whether to
-  use the [reCAPTCHA] service to provide captchas for user registration.
-
-- `recaptchaPublicKey` and `recaptchaPrivateKey` are
-  [reCAPTCHA] keys, which can be obtained free of charge at
-  <http://recaptcha.net/api/getkey>.  The values of these fields are ignored
-  if `useRecaptcha` is set to `False`.
-
-- `maxCacheSize` is the maximum size of the in-memory page cache (in bytes).
-
-- `mimeTypesFile` is the path of a file containing mime type associations.
-  Each line of the file should contain a mime type, followed by some space,
-  followed by a space-separated list of file extensions that map to that mime
-  type.  If the file is not found, some simple defaults will be used.
-
-[reCAPTCHA]: http://recaptcha.net
-[Apache combined log format]: http://httpd.apache.org/docs/2.2/logs.html#combined
-
-The easiest way to create a custom configuration file is to dump the default
-configuration and modify it:
-
-    gitit --print-default-config > myconf.hs
-    # edit myconf.hs
+The default configuration file is documented with comments throughout.
 
 Configuring gitit
 =================
