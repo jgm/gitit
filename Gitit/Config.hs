@@ -32,6 +32,7 @@ import Control.Monad.Error
 import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
+import Paths_gitit (getDataFileName)
 
 data Opt
     = Help
@@ -85,6 +86,7 @@ compileInfo =
 forceEither :: Show e => Either e a -> a
 forceEither = either (\e -> error (show e)) id
 
+{-
 setDefault :: MonadError CPError m => OptionSpec -> String -> ConfigParser -> m ConfigParser
 setDefault opt val cp = set cp "DEFAULT" opt val
 
@@ -104,7 +106,7 @@ defaultConfigParser = forceEither $
   setDefault "port" "5001" >>=
   setDefault "debug-mode" "no" >>=
   setDefault "front-page" "Front Page" >>=
-  setDefault "no-edit" "Front Page" >>=
+  setDefault "no-edit" "Help" >>=
   setDefault "no-delete" "Front Page, Help" >>=
   setDefault "access-question" "" >>=
   setDefault "access-question-answers" "" >>=
@@ -113,6 +115,7 @@ defaultConfigParser = forceEither $
   setDefault "recaptcha-private-key" "" >>=
   setDefault "max-cache-size" "2000000" >>=
   setDefault "mime-types-file" "/etc/mime.types"
+-}
 
 handleFlag :: Config -> Opt -> IO Config
 handleFlag conf opt = do
@@ -120,10 +123,12 @@ handleFlag conf opt = do
   case opt of
     Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version            -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
-    Debug              -> return $ conf { debugMode = True }
-    PrintDefaultConfig -> hPutStrLn stdout (to_string defaultConfigParser) >> exitWith ExitSuccess
-    Port p             -> return $ conf { portNumber = p }
-    ConfigFile fname   -> readfile defaultConfigParser fname >>= extractConfig . forceEither
+    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>= hPutStrLn stdout >> exitWith ExitSuccess
+    Debug              -> return conf{ debugMode = True }
+    Port p             -> return conf{ portNumber = p }
+    ConfigFile fname   -> do
+      defaultCP <- getDataFileName "data/default.conf" >>= readfile emptyCP
+      readfile (forceEither defaultCP) fname >>= extractConfig . forceEither
 
 extractConfig :: ConfigParser -> IO Config
 extractConfig cp = do
@@ -209,6 +214,6 @@ lrStrip = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do
-  defaultConfig <- extractConfig defaultConfigParser
+  defaultConfig <- getDataFileName "data/default.conf" >>= readfile emptyCP >>= extractConfig . forceEither
   getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
 
