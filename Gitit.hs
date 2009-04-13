@@ -86,6 +86,9 @@ main = do
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
 
+  -- log config file in DEBUG
+  logM "gitit" DEBUG (show conf)
+
   -- create template file if it doesn't exist
   let templatefile = templateFile conf
   templateExists <- doesFileExist templatefile

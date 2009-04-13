@@ -35,7 +35,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      js/jquery-ui.packed.js,
                      js/preview.js, js/search.js,
                      data/post-update, data/FrontPage.page, data/Help.page,
-                     data/template.html, data/SampleConfig.hs,
+                     data/template.html, data/default.conf,
                      plugins/CapitalizeEmphasisPlugin.hs,
                      plugins/DotPlugin.hs,
                      plugins/InterwikiPlugin.hs,
@@ -69,7 +69,7 @@ Executable           gitit
                      network, old-time, highlighting-kate, bytestring,
                      utf8-string, SHA > 1, HTTP, HStringTemplate, random,
                      network >= 2.1.0.0, recaptcha >= 0.1, filestore >= 0.3, datetime, zlib,
-                     happstack-server >= 0.2.1 && < 0.3, hslogger >= 1 && < 1.1
+                     happstack-server >= 0.2.1 && < 0.3, hslogger >= 1 && < 1.1, ConfigFile >= 1
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)
