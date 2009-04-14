@@ -121,7 +121,7 @@ formattedPage layout page params htmlContents = do
                    (if pPrintable params then T.setAttribute "printable" "true" else id) $
                    (if isJust rev then T.setAttribute "nothead" "true" else id) $
                    (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
-                   T.setAttribute "sha1" sha1 $
+                   (if pgSelectedTab layout == EditTab then T.setAttribute "sha1" sha1 else id) $
                    T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) $
                    T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
                    T.setAttribute "tabs" (renderHtmlFragment tabs) $
