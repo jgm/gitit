@@ -123,9 +123,10 @@ extractConfig cp = do
       cfUseRecaptcha <- get cp "DEFAULT" "use-recaptcha"
       cfRecaptchaPublicKey <- get cp "DEFAULT" "recaptcha-public-key"
       cfRecaptchaPrivateKey <- get cp "DEFAULT" "recaptcha-private-key"
+      cfCompressResponses <- get cp "DEFAULT" "compress-responses"
       cfMaxCacheSize <- get cp "DEFAULT" "max-cache-size"
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
-      return Config{
+      return $! Config{
           repository          = case (map toLower $ cfRepositoryType) of
                                      "git"   -> Git (cfRepositoryPath)
                                      "darcs" -> Darcs (cfRepositoryPath)
@@ -158,6 +159,7 @@ extractConfig cp = do
         , useRecaptcha        = cfUseRecaptcha 
         , recaptchaPublicKey  = cfRecaptchaPublicKey 
         , recaptchaPrivateKey = cfRecaptchaPrivateKey
+        , compressResponses   = cfCompressResponses
         , maxCacheSize        = readNumber "max-cache-size" cfMaxCacheSize
         , mimeTypesFile       = cfMimeTypesFile }
   case config of

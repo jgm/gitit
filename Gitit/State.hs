@@ -108,6 +108,7 @@ data Config = Config {
   useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
   recaptchaPublicKey  :: String,
   recaptchaPrivateKey :: String,
+  compressResponses   :: Bool,                     -- should responses be compressed?
   maxCacheSize        :: Integer,                  -- maximum size in bytes of in-memory page cache
   mimeTypesFile       :: FilePath                  -- path of file associating mime types with file extensions
   } deriving (Read, Show)
