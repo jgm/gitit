@@ -86,37 +86,6 @@ compileInfo =
 forceEither :: Show e => Either e a -> a
 forceEither = either (\e -> error (show e)) id
 
-{-
-setDefault :: MonadError CPError m => OptionSpec -> String -> ConfigParser -> m ConfigParser
-setDefault opt val cp = set cp "DEFAULT" opt val
-
-defaultConfigParser :: ConfigParser
-defaultConfigParser = forceEither $
-  setDefault "repository-type" "Git" emptyCP >>=
-  setDefault "repository-path" "wikidata" >>=
-  setDefault "default-page-type" "Markdown" >>=
-  setDefault "user-file" "gitit-users" >>=
-  setDefault "template-file" "template.html" >>=
-  setDefault "log-file" "gitit.log" >>=
-  setDefault "log-level" "WARNING" >>=
-  setDefault "static-dir" "static" >>=
-  setDefault "plugins" "" >>=
-  setDefault "table-of-contents" "yes" >>=
-  setDefault "max-upload-size" "100000" >>=
-  setDefault "port" "5001" >>=
-  setDefault "debug-mode" "no" >>=
-  setDefault "front-page" "Front Page" >>=
-  setDefault "no-edit" "Help" >>=
-  setDefault "no-delete" "Front Page, Help" >>=
-  setDefault "access-question" "" >>=
-  setDefault "access-question-answers" "" >>=
-  setDefault "use-recaptcha" "no" >>=
-  setDefault "recaptcha-public-key" "" >>=
-  setDefault "recaptcha-private-key" "" >>=
-  setDefault "max-cache-size" "2000000" >>=
-  setDefault "mime-types-file" "/etc/mime.types"
--}
-
 handleFlag :: Config -> Opt -> IO Config
 handleFlag conf opt = do
   progname <- getProgName
