@@ -66,12 +66,13 @@ formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
 formattedPage layout page params htmlContents = do
   let rev = pRevision params
   fs <- getFileStore
-  sha1 <- case rev of
-             Nothing -> liftIO $ catch (latest fs $ pathForPage page)
-                                       (\e -> if e == NotFound
-                                                 then return ""
-                                                 else throwIO e)
-             Just r  -> return r
+  sha1 <- case (pgSelectedTab layout, rev) of
+            (EditTab,Nothing) -> liftIO $ catch (latest fs $ pathForPage page)
+                                                (\e -> if e == NotFound
+                                                       then return ""
+                                                       else throwIO e)
+            (EditTab,Just r)  -> return r
+            _ -> return ""
   user <- getLoggedInUser params
   let javascriptlinks = if null (pgScripts layout)
                            then ""
@@ -121,7 +122,7 @@ formattedPage layout page params htmlContents = do
                    (if pPrintable params then T.setAttribute "printable" "true" else id) $
                    (if isJust rev then T.setAttribute "nothead" "true" else id) $
                    (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
-                   (if pgSelectedTab layout == EditTab then T.setAttribute "sha1" sha1 else id) $
+                   (if null sha1 then id else T.setAttribute "sha1" sha1) $
                    T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) $
                    T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
                    T.setAttribute "tabs" (renderHtmlFragment tabs) $
