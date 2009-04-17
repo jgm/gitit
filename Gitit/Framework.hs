@@ -214,7 +214,8 @@ handle pathtest meth responder = uriRest $ \uri ->
   let path' = decodeString $ uriPath uri
   in  if pathtest path'
          then do
-           compressedResponseFilter
+           cfg <- getConfig
+           if compressResponses cfg then compressedResponseFilter else return "" 
            withData $ \params ->
                withRequest $ \req ->
                  if rqMethod req == meth
