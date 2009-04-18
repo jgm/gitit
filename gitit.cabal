@@ -76,6 +76,5 @@ Executable           gitit
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
   ghc-options:       -Wall -threaded
-  cpp-options:       -D_VERSION="0.6.1"
   ghc-prof-options:  -auto-all -caf-all
 
