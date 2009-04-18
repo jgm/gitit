@@ -78,7 +78,7 @@ module Gitit.ContentTransformer
   )
 where
 
-import Prelude hiding (writeFile, readFile, putStrLn, putStr, catch)
+import Prelude hiding (catch)
 import Gitit.Server
 import Gitit.Framework
 import Gitit.State
