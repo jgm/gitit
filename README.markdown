@@ -33,17 +33,10 @@ install][] instructions.
 [here]: http://www.haskell.org/ghc/
 [cabal-install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall
 [quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick Installation on Unix
-[pcre]:  http://www.pcre.org/ 
 
-If you want the syntax highlighting feature, you need to make sure
-that pandoc is compiled with support for it.  First, make sure your system
-has the [pcre][] library installed.  Then:
+Once you've got cabal-install, installing gitit is trivial:
 
     cabal update
-    cabal install -fhighlighting pandoc gitit
-
-If you don't care about highlighting support, you can just do:
-
     cabal install gitit
 
 These commands will install the latest released version of gitit.
@@ -63,13 +56,31 @@ If that doesn't work, check to see that `gitit` is in your local
 cabal-install executable directory (usually `~/.cabal/bin`). And make
 sure `~/.cabal/bin` is in your system path.
 
+Optional syntax highlighting support
+------------------------------------
+
+If pandoc was compiled with optional syntax highlighting support,
+this will be available in gitit too.  This feature is recommended
+if you plan to display source code on your wiki.
+
+Highlighting support requires the [pcre][] library, so make sure that
+is installed before continuing.
+
+[pcre]:  http://www.pcre.org/ 
+
+To install gitit with highlighting support, first ensure that pandoc
+is compiled with highlighting support, then install gitit as above:
+
+    cabal install pandoc -fhighlighting --reinstall
+    cabal install gitit
+
 Optional plugins support
 ------------------------
 
 Plugins are small Haskell programs that transform a wiki page
 after it has been converted from Markdown or RST.  See the example
 plugins in the `plugins` directory. To enable a plugin, include the path
-to the plugin (or its module name) in the `pluginModules` field of a
+to the plugin (or its module name) in the `plugins` field of the 
 configuration file.  (If the plugin name starts with `Gitit.Plugin.`,
 gitit will assume that the plugin is an installed module and will not
 look for a source file.)
@@ -86,12 +97,13 @@ to load plugins will result in "internal error: PAP object entered!"
 Running gitit
 -------------
 
-To run gitit, you'll need [git][] in your system path. Check this by doing
+To run gitit, you'll need [git][] in your system path. (Or
+[darcs][], if you're using darcs to store the wiki data.)
 
-    git --version
-
-You should also make sure that you are using a UTF-8 locale.
-(To check this, type `locale`.)
+Gitit assumes that the page files (stored in the git repository) are
+encoded as UTF-8. Even page names may be UTF-8 if the file system
+supports this. So you should make sure that you are using a UTF-8 locale
+when running gitit. (To check this, type `locale`.)
 
 Switch to the directory where you want to run gitit.  This should be a directory
 where you have write access, since two directories, `static` and `wikidata`, and
@@ -103,12 +115,22 @@ start gitit, just type:
 If all goes well, gitit will do the following:
 
  1.  Create a git repository, `wikidata`, and add a default front page.
- 2.  Create a `static` directory containing the scripts and CSS used by gitit.
- 3.  Create a `template.html` file containing an (HStringTemplate) template
+ 2.  Create a `static` directory containing the scripts, images,
+     and stylesheets used by gitit.
+ 3.  Create a `template.html` file containing an HStringTemplate template
      for wiki pages.
  4.  Start a web server on port 5001.
 
-Check that it worked:  open a web browser and go to http://localhost:5001.
+Check that it worked:  open a web browser and go to <http://localhost:5001>.
+
+Wiki links and formatting
+-------------------------
+
+For instructions on editing pages and creating links, see the "Help" page.
+
+Gitit interprets links with empty URLs as wikilinks.  Thus, in markdown pages,
+`[Front Page]()` creates an internal wikilink to the page `Front Page`.
+In reStructuredText pages, `` `Front Page <>`_ `` has the same effect.
 
 Configuring gitit
 =================
@@ -143,11 +165,26 @@ interface, but they will be modifiable via git.
 Changing the theme
 ------------------
 
-To change the look of the wiki, modify `screen.css` in `static/css`.
+To change the look of the wiki, you can modify `screen.css` in
+`static/css`.  But a better approach is to add a line to `template.html`
+that imports your own custom stylesheet.  This line should go
+after the line that links to `/css/screen.css`:
+
+    <link href="/css/my-screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
+
+Then add `my-screen.css` to the `static/css` directory and customize
+it as you see fit.  The advantage of this approach is that you won't
+need to merge changes in `screen.css` when gitit is updated.  You can
+just copy the revised `screen.css` into your `static/css` directory.
+
 To change the look of printed pages, modify `print.css`.
+
 The logo picture can be changed by copying a new PNG file to
-`static/img/logo.png`. For more radical changes, one can modify
-`template.html`.
+`static/img/logo.png`.
+
+For more radical changes, you can modify `template.html`.
+Note that interpolated variables are surrounded by `$`s, so literal
+`$` must be backslash-escaped.
 
 Adding support for math
 -----------------------
@@ -207,22 +244,6 @@ options).  So you can interact with the wiki using git command line tools:
 
 If you now look at the Front Page on the wiki, you should see your changes
 reflected there.  Note that the pages all have the extension `.page`.
-
-Wiki links and formatting
-=========================
-
-For instructions on editing pages and creating links, see the "Help" page.
-
-Gitit interprets links with empty URLs as wikilinks.  Thus, in markdown pages,
-`[Front Page]()` creates an internal wikilink to the page `Front Page`.
-In reStructuredText pages, `` `Front Page <>`_ `` has the same effect.
-
-Character encodings
-===================
-
-Gitit assumes that the page files (stored in the git repository) are
-encoded as UTF-8.  Even page names may be UTF-8 if the file system supports
-this.  You should use a UTF-8 locale when running gitit.
 
 Using gitit with apache
 =======================
@@ -320,7 +341,7 @@ Acknowledgements
 ================
 
 Gwern Branwen helped to optimize Gitit.  Simon Michael contributed the patch for
-RST support.
+RST support.  Henry Laxen helped with the apache proxy instructions.
 
 The visual layout is shamelessly borrowed from Wikipedia.
 
