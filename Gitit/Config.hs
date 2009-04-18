@@ -32,7 +32,8 @@ import Control.Monad.Error
 import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
-import Paths_gitit (getDataFileName)
+import Data.Version (showVersion)
+import Paths_gitit (getDataFileName, version)
 
 data Opt
     = Help
@@ -91,7 +92,7 @@ handleFlag conf opt = do
   progname <- getProgName
   case opt of
     Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version            -> hPutStrLn stderr (progname ++ " version " ++ _VERSION ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
+    Version            -> hPutStrLn stderr (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
     PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>= hPutStrLn stdout >> exitWith ExitSuccess
     Debug              -> return conf{ debugMode = True }
     Port p             -> return conf{ portNumber = p }
