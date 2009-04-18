@@ -110,6 +110,9 @@ If all goes well, gitit will do the following:
 
 Check that it worked:  open a web browser and go to http://localhost:5001.
 
+Configuring gitit
+=================
+
 Configuration options
 ---------------------
 
@@ -120,9 +123,6 @@ which you can customize, just type:
     gitit --print-default-config > default.conf
 
 The default configuration file is documented with comments throughout.
-
-Configuring gitit
-=================
 
 The `static` directory
 ----------------------
@@ -223,6 +223,92 @@ Character encodings
 Gitit assumes that the page files (stored in the git repository) are
 encoded as UTF-8.  Even page names may be UTF-8 if the file system supports
 this.  You should use a UTF-8 locale when running gitit.
+
+Using gitit with apache
+=======================
+
+Most users who run a public-facing gitit will want gitit to appear
+at a nice URL like `http://wiki.mysite.com` or
+`http://mysite.com/wiki` rather than `http://mysite.com:5001`.
+This can be achieved using apache's `mod_proxy`.
+
+Proxying to `http://wiki.mysite.com`
+------------------------------------
+
+Set up your DNS so that `http://wiki.mysite.com` maps to
+your server's IP address. Make sure that the `mod_proxy` module is
+loaded, and set up a virtual host with the following configuration:
+
+    <VirtualHost *>
+        ServerName wiki.mysite.com
+        DocumentRoot /var/www/
+        RewriteEngine On
+        ProxyPreserveHost On
+        ProxyRequests Off
+    
+        <Proxy *>
+           Order deny,allow
+           Allow from all
+        </Proxy>
+    
+        ProxyPassReverse /    http://127.0.0.1:5001
+        RewriteRule ^(.*) http://127.0.0.1:5001$1 [P]
+    
+        ErrorLog /var/log/apache2/error.log
+        LogLevel warn
+    
+        CustomLog /var/log/apache2/access.log combined
+        ServerSignature On
+    
+    </VirtualHost>
+
+Reload your apache configuration and you should be all set.
+
+Proxying to `http://mysite.com/wiki`
+------------------------------------
+
+Make sure the `mod_proxy`, `mod_headers`, `mod_proxy_http`,
+and `mod_proxy_html` modules are loaded. `mod_proxy_html`
+is an external module, which can be obtained [here]
+(http://apache.webthing.com/mod_proxy_html/). It rewrites URLs that
+occur in web pages. Here we will use it to rewrite gitit's links so that
+they all begin with `/wiki/`.
+
+First, tell gitit not to compress pages, since `mod_proxy_html`
+needs uncompressed pages to parse.  You can do this by setting
+the gitit configuration option
+
+    compressResponses: no
+
+Restart gitit.
+
+Now add the following lines to the apache configuration file for the
+`mysite.com` server:
+
+    # These commands will proxy /wiki/ to port 5001
+
+    ProxyRequests Off
+
+    <Proxy *>
+      Order deny,allow
+      Allow from all
+    </Proxy>
+
+    ProxyPass /wiki/ http://127.0.0.1:5001/
+
+    <Location /wiki/>
+      SetOutputFilter  proxy-html
+      ProxyPassReverse /
+      ProxyHTMLURLMap  /   /wiki/
+      RequestHeader unset Accept-Encoding
+    </Location>
+
+Reload your apache configuration and you should be set.
+
+For further information on the use of `mod_proxy_http` to rewrite URLs,
+see the [`mod_proxy_html` guide].
+
+[`mod_proxy_html` guide]: http://apache.webthing.com/mod_proxy_html/guide.html
 
 Reporting bugs
 ==============
