@@ -86,7 +86,7 @@ import Gitit.Layout
 import Gitit.Export (exportFormats)
 import Data.FileStore
 import Text.Pandoc
-import Text.Pandoc.Shared (substitute, HTMLMathMethod(..))
+import Text.Pandoc.Shared (HTMLMathMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.Highlighting.Kate
 import Data.Maybe (isNothing)
@@ -325,16 +325,12 @@ applyPageTransforms c = lift $ do
 
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
-  page <- getPageName
   params <- getParams
   return $ thediv ! [identifier "wikipage",
-                      strAttr "onDblClick" ("window.location = '" ++ substitute "'" "\\x27" (urlForPage page) ++
-                      "?edit" ++
-                      (case pRevision params of
-                            Nothing -> ""
-                            Just r  -> urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)]) ++
-                            "';")
-                          ] << c
+                     strAttr "onDblClick" ("window.location = window.location + '?edit" ++
+                        case pRevision params of
+                             Nothing   -> "';"
+                             Just r    -> "&" ++ urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)] ++ "';")] << c
 
 addPageNameToPandoc :: Pandoc -> ContentTransformer Pandoc
 addPageNameToPandoc (Pandoc _ blocks) = do 
