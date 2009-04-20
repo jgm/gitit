@@ -126,8 +126,8 @@ main = do
 
 wikiHandlers :: [Handler]
 wikiHandlers = [ handle isIndex          GET indexPage
+               , handle isPreview        POST preview
                , handlePath "_activity"  GET  showActivity
-               , handlePath "_preview"   POST preview
                , handlePath "_go"        POST goToPage
                , handlePath "_search"    POST searchResults
                , handlePath "_search"    GET  searchResults
@@ -164,6 +164,13 @@ wikiHandlers = [ handle isIndex          GET indexPage
 isIndex :: String -> Bool
 isIndex "_index" = True
 isIndex x        = "_index/" `isPrefixOf` x
+
+isPreview :: String -> Bool
+isPreview x  = "___preview" `isSuffixOf` x
+-- We choose something that is unlikely to occur naturally as a suffix.
+-- Why suffix and not prefix?  Because the link is added by a script,
+-- and mod_proxy_html doesn't rewrite links in scripts.  So this is
+-- to make it possible to use gitit with an alterantive docroot.
 
 handleAny :: Handler
 handleAny = 
