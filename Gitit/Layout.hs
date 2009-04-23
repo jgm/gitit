@@ -110,23 +110,23 @@ formattedPage layout page params htmlContents = do
                         then noHtml
                         else ulist ! [theclass "messages"] << map (li <<) messages
   templ <- queryAppState template
-  let filledTemp = T.render $
-                   T.setAttribute "pagetitle" pageTitle $
-                   T.setAttribute "javascripts" javascriptlinks $
-                   T.setAttribute "pagename" page $
+  let filledTemp = T.render .
+                   T.setAttribute "pagetitle" pageTitle .
+                   T.setAttribute "javascripts" javascriptlinks .
+                   T.setAttribute "pagename" page .
                    (case user of
                          Just u     -> T.setAttribute "user" u
-                         Nothing    -> id) $
-                   (if isPage page then T.setAttribute "ispage" "true" else id) $
-                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) $
-                   (if pPrintable params then T.setAttribute "printable" "true" else id) $
-                   (if isJust rev then T.setAttribute "nothead" "true" else id) $
-                   (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) $
-                   (if null sha1 then id else T.setAttribute "sha1" sha1) $
-                   T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) $
-                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) $
-                   T.setAttribute "tabs" (renderHtmlFragment tabs) $
-                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) $
+                         Nothing    -> id) .
+                   (if isPage page then T.setAttribute "ispage" "true" else id) .
+                   (if pgShowPageTools layout then T.setAttribute "pagetools" "true" else id) .
+                   (if pPrintable params then T.setAttribute "printable" "true" else id) .
+                   (if isJust rev then T.setAttribute "nothead" "true" else id) .
+                   (if isJust rev then T.setAttribute "revision" (fromJust rev) else id) .
+                   (if null sha1 then id else T.setAttribute "sha1" sha1) .
+                   T.setAttribute "searchbox" (renderHtmlFragment (searchbox +++ gobox)) .
+                   T.setAttribute "exportbox" (renderHtmlFragment $  exportBox page params) .
+                   T.setAttribute "tabs" (renderHtmlFragment tabs) .
+                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp

@@ -99,6 +99,7 @@ data Params = Params { pUsername     :: String
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
                      , pPeer         :: String
+                     , pResetCode    :: String
                      }  deriving Show
 
 instance FromData Params where
@@ -134,6 +135,7 @@ instance FromData Params where
          sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
          rc <- look "recaptcha_challenge_field" `mplus` return ""
          rr <- look "recaptcha_response_field" `mplus` return ""
+         rk <- look "reset_code" `mplus` return ""
          return $ Params { pUsername     = un
                          , pPassword     = pw
                          , pPassword2    = p2
@@ -167,6 +169,7 @@ instance FromData Params where
                          , pSessionKey   = sk
                          , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
                          , pPeer         = ""  -- this gets set by handle...
+                         , pResetCode    = rk
                          }
 
 data Command = Command (Maybe String)
