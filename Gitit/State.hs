@@ -71,14 +71,14 @@ initializeAppState conf users' templ = do
                            , jsMath    = jsMathExists
                            , plugins   = [] }
 
-updateAppState :: MonadIO m => (AppState -> AppState) -> m () 
+updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
 
 queryAppState :: MonadIO m => (AppState -> a) -> m a
 queryAppState fn = liftIO $! readIORef appstate >>= return . fn
 
-data Repository = Git FilePath 
-                | Darcs FilePath 
+data Repository = Git FilePath
+                | Darcs FilePath
                 deriving (Read, Show)
 
 data PageType = Markdown | RST
@@ -86,31 +86,33 @@ data PageType = Markdown | RST
 
 -- | Data structure for information read from config file.
 data Config = Config {
-  repository          :: Repository,               -- file store for pages
-  defaultPageType     :: PageType,                 -- the default page markup type for this wiki
-  userFile            :: FilePath,                 -- path of users database 
-  templateFile        :: FilePath,                 -- path of page template file
-  logFile             :: FilePath,                 -- path of server log file
-  logLevel            :: Priority,                 -- severity filter for log messages (DEBUG, INFO, NOTICE,
-                                                   -- WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
-  staticDir           :: FilePath,                 -- path of static directory
-  pluginModules       :: [String],                 -- names of plugin modules to load
-  tableOfContents     :: Bool,                     -- should each page have an automatic table of contents?
-  maxUploadSize       :: Integer,                  -- maximum size of pages and file uploads
-  portNumber          :: Int,                      -- port number to serve content on
-  debugMode           :: Bool,                     -- should debug info be printed to the console?
-  frontPage           :: String,                   -- the front page of the wiki
-  noEdit              :: [String],                 -- pages that cannot be edited through the web interface
-  noDelete            :: [String],                 -- pages that cannot be deleted through the web interface
-  accessQuestion      :: Maybe (String, [String]), -- if Nothing, then anyone can register for an account.
-                                                   -- if Just (prompt, answers), then a user will be given the prompt
-                                                   -- and must give one of the answers in order to register.
-  useRecaptcha        :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
-  recaptchaPublicKey  :: String,
-  recaptchaPrivateKey :: String,
-  compressResponses   :: Bool,                     -- should responses be compressed?
-  maxCacheSize        :: Integer,                  -- maximum size in bytes of in-memory page cache
-  mimeTypesFile       :: FilePath                  -- path of file associating mime types with file extensions
+  repository           :: Repository,               -- file store for pages
+  defaultPageType      :: PageType,                 -- the default page markup type for this wiki
+  userFile             :: FilePath,                 -- path of users database
+  templateFile         :: FilePath,                 -- path of page template file
+  logFile              :: FilePath,                 -- path of server log file
+  logLevel             :: Priority,                 -- severity filter for log messages (DEBUG, INFO, NOTICE,
+                                                    -- WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
+  staticDir            :: FilePath,                 -- path of static directory
+  pluginModules        :: [String],                 -- names of plugin modules to load
+  tableOfContents      :: Bool,                     -- should each page have an automatic table of contents?
+  maxUploadSize        :: Integer,                  -- maximum size of pages and file uploads
+  portNumber           :: Int,                      -- port number to serve content on
+  debugMode            :: Bool,                     -- should debug info be printed to the console?
+  frontPage            :: String,                   -- the front page of the wiki
+  noEdit               :: [String],                 -- pages that cannot be edited through the web interface
+  noDelete             :: [String],                 -- pages that cannot be deleted through the web interface
+  accessQuestion       :: Maybe (String, [String]), -- if Nothing, then anyone can register for an account.
+                                                    -- if Just (prompt, answers), then a user will be given the prompt
+                                                    -- and must give one of the answers in order to register.
+  useRecaptcha         :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
+  recaptchaPublicKey   :: String,
+  recaptchaPrivateKey  :: String,
+  compressResponses    :: Bool,                     -- should responses be compressed?
+  maxCacheSize         :: Integer,                  -- maximum size in bytes of in-memory page cache
+  mimeTypesFile        :: FilePath,                 -- path of file associating mime types with file extensions
+  mailCommand          :: String,                   -- command to send notification emails
+  resetPasswordMessage :: String                    -- text of password reset email
   } deriving (Read, Show)
 
 type SessionKey = Integer
@@ -256,14 +258,19 @@ authUser name pass = do
          let salt = pSalt $ uPassword u
          let hashed = pHashed $ uPassword u
          return $ hashed == hashPassword salt pass
-       Nothing -> return False 
+       Nothing -> return False
 
 isUser :: MonadIO m => String -> m Bool
 isUser name = liftM (M.member name) $ queryAppState users
 
-addUser :: MonadIO m => String -> User -> m () 
+addUser :: MonadIO m => String -> User -> m ()
 addUser uname user = updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
                      liftIO writeUserFile
+
+adjustUser :: MonadIO m => String -> User -> m ()
+adjustUser uname user = updateAppState
+  (\s -> s  { users = M.adjust (const user) uname (users s) }) >>
+  liftIO writeUserFile
 
 delUser :: MonadIO m => String -> m ()
 delUser uname = updateAppState (\s -> s { users = M.delete uname (users s) }) >>

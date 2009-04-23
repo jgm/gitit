@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Functions for parsing command line options and reading the config file. 
+{- Functions for parsing command line options and reading the config file.
 -}
 
 module Gitit.Config ( getConfigFromOpts )
@@ -87,18 +87,17 @@ compileInfo =
 forceEither :: Show e => Either e a -> a
 forceEither = either (\e -> error (show e)) id
 
-handleFlag :: Config -> Opt -> IO Config
-handleFlag conf opt = do
+handleFlag :: ConfigParser -> Config -> Opt -> IO Config
+handleFlag cp conf opt = do
   progname <- getProgName
   case opt of
     Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
     Version            -> hPutStrLn stderr (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
-    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>= hPutStrLn stdout >> exitWith ExitSuccess
+    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>=
+                          hPutStrLn stdout >> exitWith ExitSuccess
     Debug              -> return conf{ debugMode = True }
     Port p             -> return conf{ portNumber = p }
-    ConfigFile fname   -> do
-      defaultCP <- getDataFileName "data/default.conf" >>= readfile emptyCP
-      readfile (forceEither defaultCP) fname >>= extractConfig . forceEither
+    ConfigFile fname   -> readfile cp fname >>= extractConfig . forceEither
 
 extractConfig :: ConfigParser -> IO Config
 extractConfig cp = do
@@ -127,46 +126,57 @@ extractConfig cp = do
       cfCompressResponses <- get cp "DEFAULT" "compress-responses"
       cfMaxCacheSize <- get cp "DEFAULT" "max-cache-size"
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
+      cfMailCommand <- get cp "DEFAULT" "mail-command"
+      cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
       return $! Config{
-          repository          = case (map toLower $ cfRepositoryType) of
-                                     "git"   -> Git (cfRepositoryPath)
-                                     "darcs" -> Darcs (cfRepositoryPath)
-                                     x       -> error $ "Unknown repository type: " ++ x
-        , defaultPageType     = case (map toLower cfDefaultPageType) of
-                                     "markdown"   -> Markdown
-                                     "rst"        -> RST
-                                     x            -> error $ "Unknown page type: " ++ x
-        , userFile            = cfUserFile 
-        , templateFile        = cfTemplateFile
-        , logFile             = cfLogFile
-        , logLevel            = let levelString = map toUpper cfLogLevel
-                                    levels = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",
-                                              "CRITICAL", "ALERT", "EMERGENCY"]
-                                in  if levelString `elem` levels
-                                       then read levelString
-                                       else error $ "Invalid log-level.\nLegal values are: " ++ (intercalate ", " levels)
-        , staticDir           = cfStaticDir
-        , pluginModules       = splitCommaList cfPlugins 
-        , tableOfContents     = cfTableOfContents 
-        , maxUploadSize       = readNumber "max-upload-size" cfMaxUploadSize
-        , portNumber          = readNumber "port" cfPort
-        , debugMode           = cfDebugMode
-        , frontPage           = cfFrontPage
-        , noEdit              = splitCommaList cfNoEdit
-        , noDelete            = splitCommaList cfNoDelete
-        , accessQuestion      = if null cfAccessQuestion
-                                   then Nothing
-                                   else Just (cfAccessQuestion, splitCommaList cfAccessQuestionAnswers)  
-        , useRecaptcha        = cfUseRecaptcha 
-        , recaptchaPublicKey  = cfRecaptchaPublicKey 
-        , recaptchaPrivateKey = cfRecaptchaPrivateKey
-        , compressResponses   = cfCompressResponses
-        , maxCacheSize        = readNumber "max-cache-size" cfMaxCacheSize
-        , mimeTypesFile       = cfMimeTypesFile }
+          repository           = case (map toLower $ cfRepositoryType) of
+                                      "git"   -> Git (cfRepositoryPath)
+                                      "darcs" -> Darcs (cfRepositoryPath)
+                                      x       -> error $ "Unknown repository type: " ++ x
+        , defaultPageType      = case (map toLower cfDefaultPageType) of
+                                      "markdown"   -> Markdown
+                                      "rst"        -> RST
+                                      x            -> error $ "Unknown page type: " ++ x
+        , userFile             = cfUserFile
+        , templateFile         = cfTemplateFile
+        , logFile              = cfLogFile
+        , logLevel             = let levelString = map toUpper cfLogLevel
+                                     levels = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",
+                                               "CRITICAL", "ALERT", "EMERGENCY"]
+                                 in  if levelString `elem` levels
+                                        then read levelString
+                                        else error $ "Invalid log-level.\nLegal values are: " ++ (intercalate ", " levels)
+        , staticDir            = cfStaticDir
+        , pluginModules        = splitCommaList cfPlugins
+        , tableOfContents      = cfTableOfContents
+        , maxUploadSize        = readNumber "max-upload-size" cfMaxUploadSize
+        , portNumber           = readNumber "port" cfPort
+        , debugMode            = cfDebugMode
+        , frontPage            = cfFrontPage
+        , noEdit               = splitCommaList cfNoEdit
+        , noDelete             = splitCommaList cfNoDelete
+        , accessQuestion       = if null cfAccessQuestion
+                                    then Nothing
+                                    else Just (cfAccessQuestion, splitCommaList cfAccessQuestionAnswers)
+        , useRecaptcha         = cfUseRecaptcha
+        , recaptchaPublicKey   = cfRecaptchaPublicKey
+        , recaptchaPrivateKey  = cfRecaptchaPrivateKey
+        , compressResponses    = cfCompressResponses
+        , maxCacheSize         = readNumber "max-cache-size" cfMaxCacheSize
+        , mimeTypesFile        = cfMimeTypesFile
+        , mailCommand          = cfMailCommand
+        , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage }
   case config of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
         Right c                 -> return c
+
+fromQuotedMultiline :: String -> String
+fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
+  where doline = dropWhile (`elem` " \t") . dropGt
+        dropGt ('>':' ':xs) = xs
+        dropGt ('>':xs) = xs
+        dropGt x = x
 
 readNumber :: (Read a) => String -> String -> a
 readNumber opt "" = error $ opt ++ " must be a number."
@@ -194,6 +204,8 @@ lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do
-  defaultConfig <- getDataFileName "data/default.conf" >>= readfile emptyCP >>= extractConfig . forceEither
-  getArgs >>= parseArgs >>= foldM handleFlag defaultConfig
+  cp <- getDataFileName "data/default.conf" >>= readfile emptyCP
+  let cp' = forceEither cp
+  defaultConfig <- extractConfig cp'
+  getArgs >>= parseArgs >>= foldM (handleFlag cp') defaultConfig
 

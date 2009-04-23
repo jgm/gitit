@@ -25,6 +25,7 @@ import Gitit.Util (orIfNull)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
+import Gitit.Authentication
 import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage, exportPage, showHighlightedSource, preview)
 import System.IO.UTF8
 import System.IO (stderr)
@@ -37,20 +38,18 @@ import System.FilePath
 import Gitit.State
 import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import qualified Text.XHtml as X ( password, method )
+import qualified Text.XHtml as X ( method )
 import Data.List (intersperse, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
-import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing, isJust)
+import Data.Maybe (fromMaybe, mapMaybe, isNothing, isJust)
 import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
-import Text.Pandoc.Shared (substitute)
-import Data.Char (isAlphaNum, isAlpha, toLower)
+import Data.Char (toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes)
-import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..), setLevel, setHandlers, getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
@@ -140,6 +139,10 @@ wikiHandlers = [ handle isIndex          GET indexPage
                , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
                , handlePath "_random"    GET  randomPage
                , handlePath ""           GET  showFrontPage
+               , handlePath "_resetPassword"   GET  resetPasswordRequestForm
+               , handlePath "_resetPassword"   POST resetPasswordRequest
+               , handlePath "_doResetPassword" GET  resetPassword
+               , handlePath "_doResetPassword" POST doResetPassword
                , withCommand "showraw" [ handlePage GET showRawPage
                                        , handle isSourceCode GET showFileAsText ]
                , withCommand "history" [ handlePage GET showPageHistory
@@ -173,7 +176,7 @@ isPreview x  = "___preview" `isSuffixOf` x
 -- to make it possible to use gitit with an alterantive docroot.
 
 handleAny :: Handler
-handleAny = 
+handleAny =
   uriRest $ \uri -> let path' = uriPath uri
                     in  do fs <- getFileStore
                            mimetype <- getMimeTypeForExtension (takeExtension path')
@@ -217,7 +220,7 @@ createPage :: String -> Params -> Web Response
 createPage page params =
   formattedPage (defaultPageLayout { pgTabs = [] }) page params $
      p << [ stringToHtml ("There is no page '" ++ page ++ "'.  You may create the page by ")
-          , anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ] 
+          , anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ]
 
 uploadForm :: String -> Params -> Web Response
 uploadForm _ params = do
@@ -335,7 +338,7 @@ showHistory file page params =  do
   if null hist
      then mzero
      else do
-       let versionToHtml rev pos = 
+       let versionToHtml rev pos =
               li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ revId rev] <<
                    [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
                     thespan ! [theclass "author"] <<
@@ -377,7 +380,7 @@ showActivity _ params = do
       fileFromChange (Deleted f) = f
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
                              (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
-                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes 
+                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes
   let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
   let contents = ulist ! [theclass "history"] << map (\rev -> li <<
                            [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
@@ -551,127 +554,4 @@ fileListToHtml prefix files =
                 in  foldr (\d accum ->  concatHtml [ anchor ! [theclass "updir", href $ "/_index" ++ joinPath d] <<
                                            last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
-
--- user authentication
-loginForm :: Html
-loginForm =
-  gui "/_login" ! [identifier "loginForm"] << fieldset <<
-     [ label << "Username ", textfield "username" ! [size "15"], stringToHtml " "
-     , label << "Password ", X.password "password" ! [size "15"], stringToHtml " "
-     , submit "login" "Login"] +++
-     p << [ stringToHtml "If you do not have an account, "
-          , anchor ! [href "/_register"] << "click here to get one." ]
-
-loginUserForm :: String -> Params -> Web Response
-loginUserForm page params =
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $ fromMaybe "/" $ pReferer params) >>
-  loginUserForm' page params
-
-loginUserForm' :: String -> Params -> Web Response
-loginUserForm' page params =
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Login" }) page params loginForm
-
-loginUser :: String -> Params -> Web Response
-loginUser page params = do
-  let uname = pUsername params
-  let pword = pPassword params
-  let destination = pDestination params
-  allowed <- authUser uname pword
-  if allowed
-    then do
-      key <- newSession (SessionData uname)
-      addCookie sessionTime (mkCookie "sid" (show key))
-      addCookie 0 (mkCookie "destination" "/")   -- remove unneeded destination cookie
-      seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
-    else
-      loginUserForm' page (params { pMessages = "Authentication failed." : pMessages params })
-
-logoutUser :: String -> Params -> Web Response
-logoutUser _ params = do
-  let key = pSessionKey params
-  let destination = substitute " " "%20" $ fromMaybe "/" $ pReferer params
-  case key of
-       Just k  -> do
-         delSession k
-         addCookie 0 (mkCookie "sid" "-1")  -- make cookie expire immediately, effectively deleting it
-       Nothing -> return ()
-  seeOther destination $ toResponse "You have been logged out."
-
-registerForm :: Web Html
-registerForm = do
-  cfg <- getConfig
-  let accessQ = case accessQuestion cfg of
-                      Nothing          -> noHtml
-                      Just (prompt, _) -> label << prompt +++ br +++
-                                          X.password "accessCode" ! [size "15"] +++ br
-  let captcha = if useRecaptcha cfg
-                   then captchaFields (recaptchaPublicKey cfg) Nothing
-                   else noHtml
-  return $ gui "" ! [identifier "loginForm"] << fieldset <<
-            [ accessQ
-            , label << "Username (at least 3 letters or digits):", br
-            , textfield "username" ! [size "20"], stringToHtml " ", br
-            , label << "Email (optional, will not be displayed on the Wiki):", br
-            , textfield "email" ! [size "20"], br
-            , textfield "full_name_1" ! [size "20", theclass "req"]
-            , label << "Password (at least 6 characters, including at least one non-letter):", br
-            , X.password "password" ! [size "20"], stringToHtml " ", br
-            , label << "Confirm Password:", br, X.password "password2" ! [size "20"], stringToHtml " ", br
-            , captcha
-            , submit "register" "Register" ]
-
-registerUserForm :: String -> Params -> Web Response
-registerUserForm _ params =
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $ fromMaybe "/" $ pReferer params) >>
-  registerForm >>=
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" }) "_register" params
-
-registerUser :: String -> Params -> Web Response
-registerUser _ params = do
-  let isValidUsername u = length u >= 3 && all isAlphaNum u
-  let isValidPassword pw = length pw >= 6 && not (all isAlpha pw)
-  let accessCode = pAccessCode params
-  let uname = pUsername params
-  let pword = pPassword params
-  let pword2 = pPassword2 params
-  let email = pEmail params
-  let fakeField = pFullName params
-  let recaptcha = pRecaptcha params
-  taken <- isUser uname
-  cfg <- getConfig
-  let isValidAccessCode = case accessQuestion cfg of
-        Nothing           -> True
-        Just (_, answers) -> accessCode `elem` answers
-  let isValidEmail e = length (filter (=='@') e) == 1
-  captchaResult  <- if useRecaptcha cfg
-                       then if null (recaptchaChallengeField recaptcha) || null (recaptchaResponseField recaptcha)
-                               then return $ Left "missing-challenge-or-response"  -- no need to bother captcha.net in this case
-                               else liftIO $ do
-                                      mbIPaddr <- lookupIPAddr $ pPeer params
-                                      let ipaddr = case mbIPaddr of
-                                                        Just ip -> ip
-                                                        Nothing -> error $ "Could not find ip address for " ++ pPeer params
-                                      ipaddr `seq` validateCaptcha (recaptchaPrivateKey cfg) ipaddr (recaptchaChallengeField recaptcha)
-                                                        (recaptchaResponseField recaptcha)
-                       else return $ Right ()
-  let (validCaptcha, captchaError) = case captchaResult of
-                                      Right () -> (True, Nothing)
-                                      Left err -> (False, Just err)
-  let errors = validate [ (taken, "Sorry, that username is already taken.")
-                        , (not isValidAccessCode, "Incorrect response to access prompt.")
-                        , (not (isValidUsername uname), "Username must be at least 3 charcaters, all letters or digits.")
-                        , (not (isValidPassword pword), "Password must be at least 6 characters, with at least one non-letter.")
-                        , (not (null email) && not (isValidEmail email), "Email address appears invalid.")
-                        , (pword /= pword2, "Password does not match confirmation.")
-                        , (not validCaptcha, "Failed CAPTCHA (" ++ fromJust captchaError ++ "). Are you really human?")
-                        , (not (null fakeField), "You do not seem human enough. If you're sure you are human, " ++
-                                                 "try turning off form auto-completion in your browser.") ] -- fakeField is hidden in CSS (honeypot)
-  if null errors
-     then do
-       user <- liftIO $ mkUser uname email pword
-       addUser uname user
-       loginUser "/" (params { pUsername = uname, pPassword = pword, pEmail = email })
-     else registerForm >>=
-          formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Register for an account" })
-                    "_register" (params { pMessages = errors })
 
