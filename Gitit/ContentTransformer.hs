@@ -96,7 +96,6 @@ import Control.Monad.State
 import Control.Exception (throwIO, catch)
 import Network.HTTP (urlEncodeVars)
 import Happstack.Server (WebT, ToMessage)
-import Data.Generics (everywhere, mkT)
 import Network.URI (isAllowedInURI, escapeURIString)
 
 data Context = Context { ctxPage   :: String
@@ -321,7 +320,7 @@ pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = lift $ do
   transforms <- getPageTransforms
-  foldM (\d pl -> queryAppState id >>= \st -> pl st d) c (wikiLinksTransform : transforms)
+  foldM (\x pl -> pl x) c (wikiLinksTransform : transforms)
 
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
@@ -378,8 +377,8 @@ readerFor pt = case pt of
                  RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
-wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
-wikiLinksTransform _ = return . everywhere (mkT convertWikiLinks)
+wikiLinksTransform :: Pandoc -> Web Pandoc
+wikiLinksTransform = return . processWith convertWikiLinks
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline

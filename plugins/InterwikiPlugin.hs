@@ -25,8 +25,8 @@ import Network.URI (escapeURIString, isAllowedInURI, unEscapeString)
 plugin :: Plugin
 plugin = PageTransform interwikiTransform
 
-interwikiTransform :: AppState -> Pandoc -> Web Pandoc
-interwikiTransform _ = return . processWith convertInterwikiLinks
+interwikiTransform :: Pandoc -> Web Pandoc
+interwikiTransform = return . processWith convertInterwikiLinks
 
 {- | A good interwiki link looks like '!Wookieepedia "Emperor Palpatine"'. So we check for a leading '!'.
      We strip it off, and now we have the canonical sitename (in this case, "Wookieepedia" and we look it up
