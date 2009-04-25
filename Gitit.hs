@@ -39,7 +39,7 @@ import Gitit.Config (getConfigFromOpts)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password, method )
 import Data.List (intersperse, nub, sortBy, isSuffixOf, find, isPrefixOf, inits)
-import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing)
+import Data.Maybe (fromMaybe, fromJust, mapMaybe, isNothing, isJust)
 import qualified Data.Map as M
 import Data.Ord (comparing)
 import Paths_gitit
@@ -424,36 +424,48 @@ showDiff file page params = do
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
-  let rev = pRevision params
-  let messages = pMessages params
+  let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
+  let getRevisionAndText = catch 
+                           (do c <- liftIO $ retrieve fs (pathForPage page) rev
+                               -- even if pRevision is set, we return revId of latest
+                               -- saved version (because we're doing a revert and
+                               -- we don't want gitit to merge the changes with the
+                               -- latest version)
+                               r <- liftIO $ latest fs (pathForPage page) >>= revision fs
+                               return (Just $ revId r, c))
+                           (\e -> if e == NotFound
+                                     then return (Nothing, "")
+                                     else throwIO e)
   (mbRev, raw) <- case pEditedText params of
-                       Nothing -> liftIO $ catch
-                                          (do c <- liftIO $ retrieve fs (pathForPage page) rev
-                                              r <- liftIO $ case rev of
-                                                                 Nothing  -> latest fs (pathForPage page) >>= revision fs
-                                                                 Just r   -> revision fs r
-                                              return $ (Just $ revId r, c))
-                                          (\e -> if e == NotFound
-                                                    then return (Nothing, "")
-                                                    else throwIO e)
-                       Just t -> return (if null (pSHA1 params) then Nothing else Just (pSHA1 params), t)
+                       Nothing -> liftIO getRevisionAndText 
+                       Just t  -> let r = if null (pSHA1 params)
+                                             then Nothing
+                                             else Just (pSHA1 params)
+                                  in return (r, t)
+  let messages = pMessages params
   let logMsg = pLogMsg params
   let sha1Box = case mbRev of
                  Just r  -> textfield "sha1" ! [thestyle "display: none", value r]
                  Nothing -> noHtml
+  let readonly = if isJust (pRevision params) -- disable editing of text box if it's a revert
+                    then [strAttr "readonly" "yes", strAttr "style" "color: gray"]
+                    else [] 
   let editForm = gui (urlForPage page) ! [identifier "editform"] <<
                    [sha1Box,
-                    textarea ! [cols "80", name "editedText", identifier "editedText"] << raw, br,
+                    textarea ! (readonly ++ [cols "80", name "editedText", identifier "editedText"]) <<
+                    raw, br,
                     label << "Description of changes:", br,
-                    textfield "logMsg" ! [value logMsg],
+                    textfield "logMsg" ! (readonly ++ [value logMsg]),
                     submit "update" "Save", primHtmlChar "nbsp",
                     submit "cancel" "Discard", primHtmlChar "nbsp",
                     input ! [thetype "button", theclass "editButton", identifier "previewButton",
-                             strAttr "onClick" "updatePreviewPane();", strAttr "style" "display: none;", value "Preview" ],
+                             strAttr "onClick" "updatePreviewPane();",
+                             strAttr "style" "display: none;", value "Preview" ],
                     thediv ! [ identifier "previewpane" ] << noHtml ]
   formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab,
-                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) }) page (params {pMessages = messages}) editForm
+                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) })
+                page (params {pMessages = messages}) editForm
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
