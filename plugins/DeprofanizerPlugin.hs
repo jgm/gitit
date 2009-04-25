@@ -1,5 +1,5 @@
--- Deprofanizer.hs
-module Deprofanizer (plugin) where
+-- DeprofanizerPlugin.hs
+module DeprofanizerPlugin (plugin) where
 
 -- This plugin replaces profane words with "XXXXX".
 
