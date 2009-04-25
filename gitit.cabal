@@ -40,7 +40,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      plugins/DotPlugin.hs,
                      plugins/ImgTexPlugin.hs,
                      plugins/InterwikiPlugin.hs,
-                     plugins/Deprofanizer.hs
+                     plugins/DeprofanizerPlugin.hs
                      CHANGES, README.markdown, YUI-LICENSE, BLUETRIP-LICENSE, TANGOICONS
 
 Flag plugins
