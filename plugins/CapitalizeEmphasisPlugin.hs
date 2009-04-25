@@ -8,10 +8,7 @@ import Gitit.Interface
 import Data.Char (toUpper)
 
 plugin :: Plugin
-plugin = PageTransform transform
-
-transform :: Pandoc -> Web Pandoc
-transform = return . processWith capsTransform
+plugin = mkPageTransform capsTransform
 
 capsTransform :: [Inline] -> [Inline]
 capsTransform ((Emph x):xs) = processWith capStr x ++ capsTransform xs

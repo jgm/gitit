@@ -35,7 +35,7 @@ import System.FilePath
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
-plugin = PageTransform dvipngTransform
+plugin = mkPageTransformM transformBlock
 
 tmpdir = "/var/tmp/"
 
@@ -52,9 +52,6 @@ templateFooter =
       ++ "\\]\n"
       ++ "\\end{document}\n"
     )
-
-dvipngTransform :: Pandoc -> Web Pandoc
-dvipngTransform = processWithM transformBlock
 
 transformBlock :: Block -> Web Block
 transformBlock (CodeBlock (id, classes, namevals) contents)
