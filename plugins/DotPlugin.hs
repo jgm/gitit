@@ -14,7 +14,8 @@ module DotPlugin (plugin) where
 
 import Gitit.Interface
 import Text.Pandoc.Shared
-import System.Process (readProcess)
+import System.Process
+import System.Exit
 import Data.Char (ord)
 -- from the utf8-string package on HackageDB:
 import Data.ByteString.Lazy.UTF8 (fromString)
@@ -24,10 +25,7 @@ import System.FilePath
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
-plugin = PageTransform dotTransform
-
-dotTransform :: Pandoc -> Web Pandoc
-dotTransform = processWithM transformBlock
+plugin = mkPageTransformM transformBlock
 
 transformBlock :: Block -> Web Block
 transformBlock (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
@@ -35,9 +33,12 @@ transformBlock (CodeBlock (id, classes, namevals) contents) | "dot" `elem` class
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
-  result <- liftIO $ readProcess "dot" ["-Tpng"] contents
-  liftIO $ writeFile (staticDir cfg </> "img" </> outfile) result
-  return $ Para [Image name ("/img" </> outfile, "")]
+  (ec, out, err) <- liftIO $ readProcessWithExitCode "dot" ["-Tpng"] contents
+  if ec == ExitSuccess
+     then do
+       liftIO $ writeFile (staticDir cfg </> "img" </> outfile) out
+       return $ Para [Image name ("/img" </> outfile, "")]
+     else error $ "dot returned an error status: " ++ err
 transformBlock x = return x
 
 -- | Generate a unique filename given the file's contents.
