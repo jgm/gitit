@@ -20,25 +20,25 @@ import Data.Char (ord)
 import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
 import Data.Digest.Pure.SHA
-import Data.Generics (everywhereM, mkM)
 import System.FilePath
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
 plugin = PageTransform dotTransform
 
-dotTransform :: AppState -> Pandoc -> Web Pandoc
-dotTransform st = everywhereM (mkM (transformBlock st))
+dotTransform :: Pandoc -> Web Pandoc
+dotTransform = processWithM transformBlock
 
-transformBlock :: AppState -> Block -> Web Block
-transformBlock st (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
+transformBlock :: Block -> Web Block
+transformBlock (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
+  cfg <- getConfig
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
   result <- liftIO $ readProcess "dot" ["-Tpng"] contents
-  liftIO $ writeFile (staticDir (config st) </> "img" </> outfile) result
+  liftIO $ writeFile (staticDir cfg </> "img" </> outfile) result
   return $ Para [Image name ("/img" </> outfile, "")]
-transformBlock _ x = return x
+transformBlock x = return x
 
 -- | Generate a unique filename given the file's contents.
 uniqueName :: String -> String

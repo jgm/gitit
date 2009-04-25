@@ -189,7 +189,8 @@ splitCommaList l =
          else first' : splitCommaList (tail rest)
 
 lrStrip :: String -> String
-lrStrip = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace
+    where isWhitespace = (`elem` " \t\n")
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do

@@ -31,7 +31,6 @@ import System.Directory
 import Data.Char (ord)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Digest.Pure.SHA
-import Data.Generics (everywhereM, mkM)
 import System.FilePath
 import Control.Monad.Trans (liftIO)
 
@@ -54,12 +53,13 @@ templateFooter =
       ++ "\\end{document}\n"
     )
 
-dvipngTransform :: AppState -> Pandoc -> Web Pandoc
-dvipngTransform st = everywhereM (mkM (transformBlock st))
+dvipngTransform :: Pandoc -> Web Pandoc
+dvipngTransform = processWithM transformBlock
 
-transformBlock :: AppState -> Block -> Web Block
-transformBlock st (CodeBlock (id, classes, namevals) contents)
+transformBlock :: Block -> Web Block
+transformBlock (CodeBlock (id, classes, namevals) contents)
     | "dvipng" `elem` classes = do
+  cfg <- getConfig
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
@@ -71,11 +71,11 @@ transformBlock st (CodeBlock (id, classes, namevals) contents)
     setCurrentDirectory curr
     system $ "dvipng -T tight -bd 1000 -freetype0 -Q 5 --gamma 1.3 "
            ++ tmpdir ++ "gitit-tmp-" ++ outfile ++ "/" ++ outfile ++ ".dvi"
-           ++ " -o " ++ (staticDir (config st) </> "img" </> outfile)
+           ++ " -o " ++ (staticDir cfg </> "img" </> outfile)
            ++ " > /dev/null"
     finishTempDir outfile
   return $ Para [Image name ("/img" </> outfile, "")]
-transformBlock _ x = return x
+transformBlock x = return x
 
 mkTempDirName :: String -> String
 mkTempDirName = \s -> tmpdir ++ "gitit-tmp-" ++ s
