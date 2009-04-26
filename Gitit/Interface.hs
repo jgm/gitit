@@ -99,10 +99,14 @@ import Gitit.ContentTransformer
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
 -- to a 'PageTransform' plugin.
 mkPageTransform :: Data a => (a -> a) -> Plugin
-mkPageTransform fn = PageTransform (return . processWith fn)
+mkPageTransform fn = PageTransform $ \st doc ->
+                      do updateAppState (const st)
+                         return $ processWith fn doc
 
 -- | Monadic version of 'mkPageTransform'.
 -- Lifts a function from @a -> Web a@ to a 'PageTransform' plugin.
 mkPageTransformM :: Data a => (a -> Web a) -> Plugin
-mkPageTransformM =  PageTransform . processWithM
+mkPageTransformM fn =  PageTransform $ \st doc ->
+                        do updateAppState (const st)
+                           processWithM fn doc
 

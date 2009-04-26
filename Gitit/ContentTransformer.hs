@@ -320,7 +320,9 @@ pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = lift $ do
   transforms <- getPageTransforms
-  foldM (\x pl -> pl x) c (wikiLinksTransform : transforms)
+  state <- queryAppState id
+  -- Note: each plugin has its own read-only copy of the state
+  foldM (\x pl -> pl state x) c (wikiLinksTransform : transforms)
 
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
@@ -377,8 +379,8 @@ readerFor pt = case pt of
                  RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
                  Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
 
-wikiLinksTransform :: Pandoc -> Web Pandoc
-wikiLinksTransform = return . processWith convertWikiLinks
+wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
+wikiLinksTransform _ = return . processWith convertWikiLinks
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
