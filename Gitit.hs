@@ -102,16 +102,16 @@ main = do
   -- initialize state
   initializeAppState conf users' templ
 
-  -- load plugins
-  let loadPluginAndLog plg = logM "gitit" WARNING ("Loading plugin '" ++ plg ++ "'...") >> loadPlugin plg
-  plugins' <- mapM loadPluginAndLog (pluginModules conf)
-  updateAppState $ \st -> plugins' `seq` st { plugins = plugins' }
-  unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
-
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf
   let staticdir = staticDir conf
   createStaticIfMissing staticdir
+
+  -- load plugins
+  let loadPluginAndLog plg = logM "gitit" WARNING ("Loading plugin '" ++ plg ++ "'...") >> loadPlugin plg
+  plugins' <- mapM loadPluginAndLog (pluginModules conf)
+  updateAppState $ \s -> s{ plugins = plugins' }
+  unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
 
   -- start the server
   tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ msum $
