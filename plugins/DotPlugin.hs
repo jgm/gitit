@@ -13,10 +13,8 @@ module DotPlugin (plugin) where
 -- of the file contents.
 
 import Gitit.Interface
-import Text.Pandoc.Shared
 import System.Process
 import System.Exit
-import Data.Char (ord)
 -- from the utf8-string package on HackageDB:
 import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
@@ -28,7 +26,7 @@ plugin :: Plugin
 plugin = mkPageTransformM transformBlock
 
 transformBlock :: Block -> Web Block
-transformBlock (CodeBlock (id, classes, namevals) contents) | "dot" `elem` classes = do
+transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classes = do
   cfg <- getConfig
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
