@@ -79,6 +79,7 @@ data Params = Params { pUsername     :: String
                      , pLimit        :: Int
                      , pPatterns     :: [String]
                      , pGotoPage     :: String
+                     , pFileToDelete :: String
                      , pEditedText   :: Maybe String
                      , pMessages     :: [String]
                      , pFrom         :: Maybe String
@@ -116,6 +117,7 @@ instance FromData Params where
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
          gt <- look "gotopage"       `mplus` return ""
+         ft <- look "filetodelete"   `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
          fm <- (look "from" >>= return . Just) `mplus` return Nothing
          to <- (look "to" >>= return . Just)   `mplus` return Nothing
@@ -149,6 +151,7 @@ instance FromData Params where
                          , pLimit        = read lt
                          , pPatterns     = words pa
                          , pGotoPage     = gt
+                         , pFileToDelete = ft
                          , pMessages     = me
                          , pFrom         = fm
                          , pTo           = to

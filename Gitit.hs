@@ -480,13 +480,30 @@ editPage page params = do
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
+  fs <- getFileStore
+  -- determine whether there is a corresponding page, and if not whether there
+  -- is a corresponding file
+  pageTest <- liftIO $ try $ latest fs (pathForPage page)
+  fileToDelete <- case pageTest of
+                       Right _        -> return $ pathForPage page  -- a page
+                       Left  NotFound -> do
+                         fileTest <- liftIO $ try $ latest fs page
+                         case fileTest of
+                              Right _       -> return page  -- a source file
+                              Left NotFound -> return "" 
+                              Left e        -> fail (show e)
+                       Left e        -> fail (show e)
   let confirmForm = gui "" <<
         [ p << "Are you sure you want to delete this page?"
+        , input ! [thetype "text", name "filetodelete", strAttr "style" "display: none;", value fileToDelete]
         , submit "confirm" "Yes, delete it!"
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  formattedPage defaultPageLayout page params confirmForm
+  formattedPage defaultPageLayout page params $ if null fileToDelete
+                                                   then ulist ! [theclass "messages"] << li <<
+                                                        "There is no file or page by that name." 
+                                                   else confirmForm
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
@@ -494,11 +511,13 @@ deletePage page params = do
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
+  let author = Author user email
+  let descrip = "Deleted using web interface."
   if pConfirm params
      then do
        fs <- getFileStore
-       liftIO $ delete fs (pathForPage page) (Author user email) "Deleted using web interface."
-       seeOther "/" $ toResponse $ p << "Page deleted"
+       liftIO $ delete fs (pFileToDelete params) author descrip
+       seeOther "/" $ toResponse $ p << "File deleted"
      else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
 
 updatePage :: String -> Params -> Web Response
