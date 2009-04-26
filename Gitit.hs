@@ -403,9 +403,18 @@ showDiff file page params = do
   let from = pFrom params
   let to = pTo params
   fs <- getFileStore
+  result <- liftIO $ try $ getDiff fs file from to
+  case result of   
+       Right htmlDiff -> formattedPage defaultPageLayout{ pgTabs = DiffTab : pgTabs defaultPageLayout,
+                             pgSelectedTab = DiffTab } page params{ pRevision = to } htmlDiff
+       Left NotFound  -> mzero
+       Left e         -> liftIO $ throwIO e
+ 
+getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId -> IO Html
+getDiff fs file from to = do
   from' <- case from of
               Nothing -> do
-                pageHist <- liftIO $ history fs [pathForPage page] (TimeRange Nothing Nothing)
+                pageHist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
                 if length pageHist < 2
                    then return Nothing
                    else case to of
@@ -416,14 +425,13 @@ showDiff file page params = do
                                               then Just $ revId $ upto !! 1  -- the immediately preceding revision
                                               else Nothing
               x       -> return x
-  rawDiff <- liftIO $ diff fs file from' to
+  rawDiff <- diff fs file from' to
   let diffLineToHtml (B, xs) = thespan << unlines xs
       diffLineToHtml (F, xs) = thespan ! [theclass "deleted"] << unlines xs
       diffLineToHtml (S, xs) = thespan ! [theclass "added"]   << unlines xs
-  let formattedDiff = h2 ! [theclass "revision"] << ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
-                      pre ! [theclass "diff"] << map diffLineToHtml rawDiff
-  formattedPage (defaultPageLayout { pgTabs = DiffTab : pgTabs defaultPageLayout, pgSelectedTab = DiffTab })
-                page (params { pRevision = to }) formattedDiff
+  return $ h2 ! [theclass "revision"] <<
+        ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
+        pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
