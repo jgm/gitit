@@ -374,6 +374,8 @@ A number of people have contributed patches:
 - Anton van Straaten made the process of page generation
   more modular by adding Gitit.ContentTransformer.
 - Robin Green helped improve the plugin API and interface.
+- Thomas Hartman helped improve the index page, making directory
+  browsing persistent.
 - Justin Bogner improved the appearance of the preview button.
 - Kohei Ozaki contributed the ImgTexPlugin.
 
