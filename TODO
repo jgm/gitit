@@ -1,51 +1,41 @@
-for release:
+_ document plugins in README (see old pandoc plugins docs)
+_ add new type of plugin that is applied before updates and operates
+  on raw source
+_ add new type of plugin that transforms generated HTML
+_ provide a way for a PageTransform plugin to tell gitit not to
+  cache the page?
 
-_ document (API haddock) for Gitit.Interface
-_ document plugins in README
+_ cleanup code for 80 cols; hlint
+
+_ clean up architecture to take advantage of the new happstack
+  architecture.
+  get rid of Params; instead, use getter functions
+  can also get rid of page parameter
+  make everything a ServerPart monad
+  take better advantage of happstack routing?
+
+_ or, rewrite to use hack?  (if we can get a happstack backend)
 
 ----------
 
-_ Add a Go box that goes to the specified page title;
-  if page does not exist, falls back to a normal search. Complements
-  existing Search box.
+_ paging for long histories, activity lists
 
-- add:  popular pages?  pages last visited?
-
-- add "related changes" to history page (like activity, but looks at
-  only pages linked from this one)
-
-- page for users to recover password (by getting an email), change email address,
-  change password.
-
-- paging for long histories, activity lists
-
-- handle logging: see http://groups.google.com/group/HAppS/browse_thread/thread/2b412f24c53f5aa/4ef39b57c6062a87?lnk=gst&q=logging#4ef39b57c6062a87
-
-- add literate haskell support to pandoc, and to gitit
+_ literate haskell support
   (By this is meant that the 'literate' part of the file should
   be interpreted and displayed as Markdown/ReST, and the code
   would be handled as it is now, inside delimited code blocks like
   ~~~~{.haskell}
+  need some way of indicating that a file is lhs... perhaps a leading
+  <!-- lhs -->?
 
-- add haddock support to pandoc & gitit; this is much like literate haskell
-  support, but in a sense the inverse as in literate haskell one marks the code
-  and in haddock mode the 'literate' part is not merely all the comments but rather
-  all the comments which are marked as being haddock (with '-- |' syntax).
+_ rss feed for individual page changes & Recent Activity?  
+  see the rss library (Text.RSS) on HackageDB.  see gwern's partial patch.
 
-- does debugFilter still work?
+_ add signature? (-- ~~~~)  (pre-update plugin)
 
-- rss feed for individual page changes & Recent Activity?  
-  see the rss library (Text.RSS) on HackageDB
-
-- add signature? (-- ~~~~)
-
-- need some way of indicating that a file is lhs... perhaps a leading <!-- lhs -->?
-
-- improve use of string templates:  different components of pages should
+_ improve use of string templates:  different components of pages should
   have their own templates.
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
-
-- figure out how Pandoc plugins could be useful for gitit
 
 - add support for categories:
   an example of a category:
