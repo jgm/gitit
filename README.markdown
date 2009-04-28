@@ -1,15 +1,16 @@
 Gitit
 =====
 
-Gitit is a wiki program written in Haskell. It uses [Happstack][] for the
-web server and [pandoc][] for markup processing. Pages and uploaded
-files are stored in a [git][] or [darcs][] repository and may be modified either
-by using the VCS's command-line tools or through the wiki's web interface.
-By default, pandoc's extended version of markdown is used as a markup language,
-but reStructuredText can also be used.  Pages can be exported in a
-number of different formats, including LaTeX, RTF, OpenOffice ODT, and
-MediaWiki markup. Gitit can be configured to display TeX math (using
-[jsMath][]) and highlighted source code (using [highlighting-kate][]).
+Gitit is a wiki program written in Haskell. It uses [Happstack][]
+for the web server and [pandoc][] for markup processing. Pages and
+uploaded files are stored in a [git][] or [darcs][] repository and may
+be modified either by using the VCS's command-line tools or through the
+wiki's web interface. By default, pandoc's extended version of markdown
+is used as a markup language, but reStructuredText can also be used.
+Pages can be exported in a number of different formats, including LaTeX,
+RTF, OpenOffice ODT, and MediaWiki markup. Gitit can be configured to
+display TeX math (using [jsMath][]) and highlighted source code (using
+[highlighting-kate][]).
 
 [git]: http://git.or.cz  
 [darcs]: http://darcs.net
@@ -77,13 +78,12 @@ is compiled with highlighting support, then install gitit as above:
 Optional plugins support
 ------------------------
 
-Plugins are small Haskell programs that transform a wiki page
-after it has been converted from Markdown or RST.  See the example
-plugins in the `plugins` directory. To enable a plugin, include the path
-to the plugin (or its module name) in the `plugins` field of the 
-configuration file.  (If the plugin name starts with `Gitit.Plugin.`,
-gitit will assume that the plugin is an installed module and will not
-look for a source file.)
+Plugins are small Haskell programs that transform a wiki page after it
+has been converted from Markdown or RST. See the example plugins in the
+`plugins` directory. To enable a plugin, include the path to the plugin
+(or its module name) in the `plugins` field of the configuration file.
+(If the plugin name starts with `Gitit.Plugin.`, gitit will assume that
+the plugin is an installed module and will not look for a source file.)
 
 The gitit executable will be much larger if plugins support is compiled
 in. Plugin support is disabled by default. To enable support for
@@ -105,10 +105,10 @@ encoded as UTF-8. Even page names may be UTF-8 if the file system
 supports this. So you should make sure that you are using a UTF-8 locale
 when running gitit. (To check this, type `locale`.)
 
-Switch to the directory where you want to run gitit.  This should be a directory
-where you have write access, since two directories, `static` and `wikidata`, and
-two files, `gitit-users` and `template.html`, will be created here. To
-start gitit, just type:
+Switch to the directory where you want to run gitit. This should be a
+directory where you have write access, since two directories, `static`
+and `wikidata`, and two files, `gitit-users` and `template.html`, will
+be created here. To start gitit, just type:
 
     gitit
 
@@ -121,16 +121,18 @@ If all goes well, gitit will do the following:
      for wiki pages.
  4.  Start a web server on port 5001.
 
-Check that it worked:  open a web browser and go to <http://localhost:5001>.
+Check that it worked: open a web browser and go to
+<http://localhost:5001>.
 
 Wiki links and formatting
 -------------------------
 
 For instructions on editing pages and creating links, see the "Help" page.
 
-Gitit interprets links with empty URLs as wikilinks.  Thus, in markdown pages,
-`[Front Page]()` creates an internal wikilink to the page `Front Page`.
-In reStructuredText pages, `` `Front Page <>`_ `` has the same effect.
+Gitit interprets links with empty URLs as wikilinks. Thus, in markdown
+pages, `[Front Page]()` creates an internal wikilink to the page `Front
+Page`. In reStructuredText pages, `` `Front Page <>`_ `` has the same
+effect.
 
 Configuring gitit
 =================
@@ -149,12 +151,12 @@ The default configuration file is documented with comments throughout.
 The `static` directory
 ----------------------
 
-If there is no wiki page or uploaded file corresponding to a request, gitit
-always looks last in the `static` directory. So, for example, a file
-`foo.jpg` in the `img` subdirectory of the `static` directory will be
-accessible at the url `/img/foo.jpg`. Pandoc creates three subdirectories
-of `static`, `css`, `img`, and `js`, which include the icons, stylesheets,
-and javascripts it uses.
+If there is no wiki page or uploaded file corresponding to a request,
+gitit always looks last in the `static` directory. So, for example,
+a file `foo.jpg` in the `img` subdirectory of the `static` directory
+will be accessible at the url `/img/foo.jpg`. Pandoc creates three
+subdirectories of `static`, `css`, `img`, and `js`, which include the
+icons, stylesheets, and javascripts it uses.
 
 Note:  if you set `static-dir` to be a subdirectory of `repository-path`,
 and then add the files in the static directory to your repository, you
@@ -201,17 +203,16 @@ Note that interpolated variables are surrounded by `$`s, so literal
 Adding support for math
 -----------------------
 
-Gitit is designed to work with [jsMath][] to display LaTeX math in HTML. 
-Download `jsMath` and `jsMath Image Fonts` from the [jsMath download page][].
-You'll have two `.zip` archives. Unzip them both in the
-`static/js` directory (a new subdirectory, `jsMath`, will be
-created).  You can test to see if math is working properly by clicking
-"help" on the top navigation bar and looking for the math example
-(the quadratic formula).  Note that if you copied the `jsMath` directory
-into `static` *after* starting gitit, you will have to restart gitit
-for the change to be noticed.  Gitit checks for the existence of the
-jsMath files when it starts, and will not include links to them unless
-they exist.
+Gitit is designed to work with [jsMath][] to display LaTeX math in
+HTML. Download `jsMath` and `jsMath Image Fonts` from the [jsMath
+download page][]. You'll have two `.zip` archives. Unzip them both
+in the `static/js` directory (a new subdirectory, `jsMath`, will be
+created). You can test to see if math is working properly by clicking
+"help" on the top navigation bar and looking for the math example (the
+quadratic formula). Note that if you copied the `jsMath` directory into
+`static` *after* starting gitit, you will have to restart gitit for the
+change to be noticed. Gitit checks for the existence of the jsMath files
+when it starts, and will not include links to them unless they exist.
 
 To write math on a wiki page, just enclose it in dollar signs, as in LaTeX:
 
@@ -226,8 +227,9 @@ You can write display math by enclosing it in double dollar signs:
 Highlighted source code
 -----------------------
 
-If gitit was compiled against a version of pandoc that has highlighting support
-(see above), you can get highlighted source code by using [delimited code blocks][]:
+If gitit was compiled against a version of pandoc that has highlighting
+support (see above), you can get highlighted source code by using
+[delimited code blocks][]:
 
     ~~~ {.haskell .numberLines}
     qsort []     = []
@@ -308,9 +310,9 @@ is an external module, which can be obtained [here]
 occur in web pages. Here we will use it to rewrite gitit's links so that
 they all begin with `/wiki/`.
 
-First, tell gitit not to compress pages, since `mod_proxy_html`
-needs uncompressed pages to parse.  You can do this by setting
-the gitit configuration option
+First, tell gitit not to compress pages, since `mod_proxy_html` needs
+uncompressed pages to parse. You can do this by setting the gitit
+configuration option
 
     compress-responses: no
 
@@ -362,8 +364,9 @@ Bugs may be reported (and feature requests filed) at
 Acknowledgements
 ================
 
-Gwern Branwen helped to optimize Gitit.  Simon Michael contributed the patch for
-RST support.  Henry Laxen helped with the apache proxy instructions.
+Gwern Branwen helped to optimize Gitit. Simon Michael contributed
+the patch for RST support. Henry Laxen helped with the apache proxy
+instructions.
 
 The visual layout is shamelessly borrowed from Wikipedia.
 
