@@ -364,12 +364,18 @@ Bugs may be reported (and feature requests filed) at
 Acknowledgements
 ================
 
-Gwern Branwen helped to optimize Gitit. Simon Michael contributed
-the patch for RST support. Henry Laxen helped with the apache proxy
-instructions.
+A number of people have contributed patches:
 
-The visual layout is shamelessly borrowed from Wikipedia.
+- Gwern Branwen helped to optimize gitit.
+- Simon Michael contributed the patch adding RST support.
+- Henry Laxen added support for password resets and helped with
+  the apache proxy instructions.
+- Anton van Straaten made the process of page generation
+  more modular by adding Gitit.ContentTransformer.
+- Robin Green helped improve the plugin API and interface.
+- Justin Bogner improved the appearance of the preview button.
 
+Gitit's default visual layout is shamelessly borrowed from Wikipedia.
 The stylesheets are influenced by Wikipedia's stylesheets and by the
 bluetrip CSS framework (see BLUETRIP-LICENSE). Some of the icons in
 `img/icons` come from bluetrip as well.
