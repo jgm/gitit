@@ -25,7 +25,7 @@ where
 import Gitit.State
 import System.FilePath
 #ifdef _PLUGINS
-import Control.Monad (when)
+import Control.Monad (unless)
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
 import GHC.Paths
@@ -33,12 +33,12 @@ import DynFlags
 import Unsafe.Coerce
 
 loadPlugin :: FilePath -> IO Plugin
-loadPlugin pluginName = do
-  plugin <- defaultCleanupHandler defaultDynFlags $ do
+loadPlugin pluginName =
+  defaultCleanupHandler defaultDynFlags $
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
-      when (not $ "Gitit.Plugin." `isPrefixOf` pluginName)
+      unless ("Gitit.Plugin." `isPrefixOf` pluginName)
         $ do
             addTarget =<< guessTarget pluginName Nothing
             r <- load LoadAllTargets
@@ -47,10 +47,10 @@ loadPlugin pluginName = do
               Succeeded -> return ()
       let modName =
             if "Gitit.Plugin" `isPrefixOf` pluginName
-            then pluginName
-            else
-              (if "Gitit/Plugin/" `isInfixOf` pluginName then ("Gitit.Plugin." ++) else id)
-              $ takeBaseName pluginName
+               then pluginName
+               else if "Gitit/Plugin/" `isInfixOf` pluginName
+                       then "Gitit.Plugin." ++ takeBaseName pluginName
+                       else takeBaseName pluginName
       pr <- findModule (mkModuleName "Prelude") Nothing
       i <- findModule (mkModuleName "Gitit.Interface") Nothing
       m <- findModule (mkModuleName modName) Nothing
@@ -58,13 +58,13 @@ loadPlugin pluginName = do
       value <- compileExpr (modName ++ ".plugin :: Plugin")
       let value' = (unsafeCoerce value) :: Plugin
       return value'
-  return plugin
 
 #else
 
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
-  error $ "Cannot load plugin '" ++ pluginName ++ "'. gitit was not compiled with plugin support."
+  error $ "Cannot load plugin '" ++ pluginName ++
+          "'. gitit was not compiled with plugin support."
   return undefined
 
 #endif
