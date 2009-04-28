@@ -53,19 +53,19 @@ of the basic types used by Pandoc (for example, 'Inline', 'Block',
 
 > -- DeprofanizerPlugin.hs
 > module DeprofanizerPlugin (plugin) where
-> 
+>
 > -- This plugin replaces profane words with "XXXXX".
-> 
+>
 > import Gitit.Interface
 > import Data.Char (toLower)
-> 
+>
 > plugin :: Plugin
 > plugin = mkPageTransform deprofanize
-> 
+>
 > deprofanize :: Inline -> Inline
 > deprofanize (Str x) | isBadWord x = Str "XXXXX"
 > deprofanize x                     = x
-> 
+>
 > isBadWord :: String -> Bool
 > isBadWord x = (map toLower x) `elem` ["darn", "blasted", "stinker"]
 > -- there are more, but this is a family program
@@ -100,13 +100,13 @@ import Gitit.ContentTransformer
 -- to a 'PageTransform' plugin.
 mkPageTransform :: Data a => (a -> a) -> Plugin
 mkPageTransform fn = PageTransform $ \st doc ->
-                      do updateAppState (const st)
-                         return $ processWith fn doc
+                       do updateAppState (const st)
+                          return $ processWith fn doc
 
 -- | Monadic version of 'mkPageTransform'.
 -- Lifts a function from @a -> Web a@ to a 'PageTransform' plugin.
 mkPageTransformM :: Data a => (a -> Web a) -> Plugin
 mkPageTransformM fn =  PageTransform $ \st doc ->
-                        do updateAppState (const st)
-                           processWithM fn doc
+                         do updateAppState (const st)
+                            processWithM fn doc
 
