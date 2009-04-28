@@ -26,7 +26,8 @@ import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Layout
 import Gitit.Authentication
-import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage, exportPage, showHighlightedSource, preview)
+import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
+        exportPage, showHighlightedSource, preview)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -51,9 +52,9 @@ import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
 import Data.DateTime (getCurrentTime, addMinutes)
 import Data.FileStore
-import System.Log.Logger (logM, Priority(..), setLevel, setHandlers, getLogger, saveGlobalLogger)
+import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
+        getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
-
 
 main :: IO ()
 main = do
@@ -80,7 +81,8 @@ main = do
   -- set up logging
   let level = logLevel conf
   logFileHandler <- fileHandler (logFile conf) level
-  serverLogger <- getLogger "Happstack.Server" -- changes to "Happstack.Server.AccessLog.Combined" for 0.3
+  serverLogger <- getLogger "Happstack.Server"
+  -- TODO changes to "Happstack.Server.AccessLog.Combined" for 0.3
   gititLogger <- getLogger "gitit"
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
@@ -113,9 +115,13 @@ main = do
   updateAppState $ \s -> s{ plugins = plugins' }
   unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
 
+  let serverConf = Conf { validator = Nothing, port = portNumber conf }
+  let staticHandler d = dir d $ withExpiresHeaders $ fileServe [] $
+                                staticdir </> d 
+
   -- start the server
-  tid <- forkIO $ simpleHTTP (Conf { validator = Nothing, port = portNumber conf }) $ msum $
-          map (\d -> dir d (withExpiresHeaders $ fileServe [] $ staticdir </> d)) ["css", "img", "js"] ++
+  tid <- forkIO $ simpleHTTP serverConf $ msum $
+          [ staticHandler d | d <- ["css", "img", "js"]] ++
           [ debugHandler | debugMode conf ] ++
           wikiHandlers
   waitForTermination
@@ -124,45 +130,50 @@ main = do
   killThread tid
 
 wikiHandlers :: [Handler]
-wikiHandlers = [ handle isIndex          GET indexPage
-               , handle isPreview        POST preview
-               , handlePath "_activity"  GET  showActivity
-               , handlePath "_go"        POST goToPage
-               , handlePath "_search"    POST searchResults
-               , handlePath "_search"    GET  searchResults
-               , handlePath "_register"  GET  registerUserForm
-               , handlePath "_register"  POST registerUser
-               , handlePath "_login"     GET  loginUserForm
-               , handlePath "_login"     POST loginUser
-               , handlePath "_logout"    GET  logoutUser
-               , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
-               , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
-               , handlePath "_random"    GET  randomPage
-               , handlePath ""           GET  showFrontPage
-               , handlePath "_resetPassword"   GET  resetPasswordRequestForm
-               , handlePath "_resetPassword"   POST resetPasswordRequest
-               , handlePath "_doResetPassword" GET  resetPassword
-               , handlePath "_doResetPassword" POST doResetPassword
-               , withCommand "showraw" [ handlePage GET showRawPage
-                                       , handle isSourceCode GET showFileAsText ]
-               , withCommand "history" [ handlePage GET showPageHistory
-                                       , handle isSourceCode GET showFileHistory ]
-               , withCommand "edit"    [ handlePage GET $ unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage ]
-               , withCommand "diff"    [ handlePage GET showPageDiff
-                                       , handle isSourceCode GET showFileDiff ]
-               , withCommand "export"  [ handlePage POST exportPage
-                                       , handlePage GET exportPage ]
-               , withCommand "cancel"  [ handlePage POST showPage ]
-               , withCommand "discuss" [ handlePage GET discussPage ]
-               , withCommand "update"  [ handlePage POST $ unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage ]
-               , withCommand "delete"  [ handlePage GET  $ unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage,
-                                         handlePage POST $ unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
-               , handlePage GET showPage
-               , handle isSourceCode GET showHighlightedSource
-               , handleAny
-               , handlePage GET  createPage
-               , handlePage POST createPage  -- this will happen if they click Discard on a new page
-               ]
+wikiHandlers =
+  [ handle isIndex          GET indexPage
+  , handle isPreview        POST preview
+  , handlePath "_activity"  GET  showActivity
+  , handlePath "_go"        POST goToPage
+  , handlePath "_search"    POST searchResults
+  , handlePath "_search"    GET  searchResults
+  , handlePath "_register"  GET  registerUserForm
+  , handlePath "_register"  POST registerUser
+  , handlePath "_login"     GET  loginUserForm
+  , handlePath "_login"     POST loginUser
+  , handlePath "_logout"    GET  logoutUser
+  , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
+  , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
+  , handlePath "_random"    GET  randomPage
+  , handlePath ""           GET  showFrontPage
+  , handlePath "_resetPassword"   GET  resetPasswordRequestForm
+  , handlePath "_resetPassword"   POST resetPasswordRequest
+  , handlePath "_doResetPassword" GET  resetPassword
+  , handlePath "_doResetPassword" POST doResetPassword
+  , withCommand "showraw" [ handlePage GET showRawPage
+                          , handle isSourceCode GET showFileAsText ]
+  , withCommand "history" [ handlePage GET showPageHistory
+                          , handle isSourceCode GET showFileHistory ]
+  , withCommand "edit"    [ handlePage GET $ unlessNoEdit
+                              (ifLoggedIn editPage loginUserForm) showPage ]
+  , withCommand "diff"    [ handlePage GET showPageDiff
+                          , handle isSourceCode GET showFileDiff ]
+  , withCommand "export"  [ handlePage POST exportPage
+                          , handlePage GET exportPage ]
+  , withCommand "cancel"  [ handlePage POST showPage ]
+  , withCommand "discuss" [ handlePage GET discussPage ]
+  , withCommand "update"  [ handlePage POST $ unlessNoEdit
+                              (ifLoggedIn updatePage loginUserForm) showPage ]
+  , withCommand "delete"  [ handlePage GET  $ unlessNoDelete
+                              (ifLoggedIn confirmDelete loginUserForm) showPage,
+                            handlePage POST $ unlessNoDelete
+                              (ifLoggedIn deletePage loginUserForm) showPage ]
+  , handlePage GET showPage
+  , handle isSourceCode GET showHighlightedSource
+  , handleAny
+  , handlePage GET  createPage
+  , handlePage POST createPage  -- if they click Discard on a new page
+  ]
 
 isIndex :: String -> Bool
 isIndex "_index" = True
@@ -176,36 +187,44 @@ isPreview x  = "___preview" `isSuffixOf` x
 -- to make it possible to use gitit with an alterantive docroot.
 
 handleAny :: Handler
-handleAny =
-  uriRest $ \uri -> let path' = uriPath uri
-                    in  do fs <- getFileStore
-                           mimetype <- getMimeTypeForExtension (takeExtension path')
-                           res <- liftIO $ try $ (retrieve fs path' Nothing  :: IO B.ByteString)
-                           case res of
-                                  Right contents -> anyRequest $ ok $ setContentType mimetype $
-                                                               (toResponse noHtml) {rsBody = contents} -- ugly hack
-                                  Left NotFound  -> anyRequest mzero
-                                  Left e         -> error (show e)
+handleAny = uriRest $ \uri ->
+  let path' = uriPath uri
+  in  do fs <- getFileStore
+         mimetype <- getMimeTypeForExtension
+                      (takeExtension path')
+         res <- liftIO $ try $
+                (retrieve fs path' Nothing :: IO B.ByteString)
+         case res of
+                Right contents -> anyRequest $ ok $ setContentType mimetype $
+                                    (toResponse noHtml) {rsBody = contents}
+                                    -- ugly hack
+                Left NotFound  -> anyRequest mzero
+                Left e         -> error (show e)
 
 debugHandler :: Handler
 debugHandler = do
   withRequest $ \req -> liftIO $ logM "gitit" DEBUG (show req)
-  msum [ handle (const True) GET showParams, handle (const True) POST showParams ]
+  msum [ handle (const True) GET showParams,
+         handle (const True) POST showParams ]
     where showParams page params = do
-            liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++ show params
+            liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++
+              show params
             mzero
 
 randomPage :: String -> Params -> Web Response
 randomPage _ _ = do
   fs <- getFileStore
   files <- liftIO $ index fs
-  let pages = map dropExtension $ filter (\f -> takeExtension f == ".page" && not (":discuss.page" `isSuffixOf` f)) files
+  let pages = map dropExtension $
+                filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   if null pages
      then error "No pages found!"
      else do
        TOD _ picosecs <- liftIO getClockTime
-       let newPage = pages !! ((fromIntegral picosecs `div` 1000000) `mod` length pages)
-       seeOther (urlForPage newPage) $ toResponse $ p << "Redirecting to a random page"
+       let newPage = pages !! 
+                     ((fromIntegral picosecs `div` 1000000) `mod` length pages)
+       seeOther (urlForPage newPage) $ toResponse $
+         p << "Redirecting to a random page"
 
 showFrontPage :: String -> Params -> Web Response
 showFrontPage _ params = do
@@ -213,14 +232,18 @@ showFrontPage _ params = do
   showPage (frontPage cfg) params
 
 discussPage :: String -> Params -> Web Response
-discussPage page _ = seeOther (urlForPage discussionPage) $ toResponse "Redirecting to discussion page"
-    where discussionPage = if isDiscussPage page then page else page ++ ":discuss"
+discussPage page _ = seeOther (urlForPage discussionPage) $
+                     toResponse "Redirecting to discussion page"
+    where discussionPage = if isDiscussPage page
+                              then page
+                              else page ++ ":discuss"
 
 createPage :: String -> Params -> Web Response
 createPage page params =
   formattedPage (defaultPageLayout { pgTabs = [] }) page params $
-     p << [ stringToHtml ("There is no page '" ++ page ++ "'.  You may create the page by ")
-          , anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ]
+     p << [ stringToHtml ("There is no page '" ++ page ++
+               "'.  You may create the page by "),
+             anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ]
 
 uploadForm :: String -> Params -> Web Response
 uploadForm _ params = do
@@ -228,15 +251,30 @@ uploadForm _ params = do
   let origPath = pFilename params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
-  let upForm = form ! [X.method "post", enctype "multipart/form-data"] << fieldset <<
-        [ p << [label << "File to upload:", br, afile "file" ! [value origPath] ]
-        , p << [label << "Name on wiki, including extension",
-                noscript << " (leave blank to use the same filename)", stringToHtml ":", br,
-                textfield "wikiname" ! [value wikiname],
-                primHtmlChar "nbsp", checkbox "overwrite" "yes", label << "Overwrite existing file"]
-        , p << [label << "Description of content or changes:", br, textfield "logMsg" ! [size "60", value logMsg],
-                submit "upload" "Upload"] ]
-  formattedPage (defaultPageLayout { pgScripts = ["uploadForm.js"], pgShowPageTools = False, pgTabs = [], pgTitle = "Upload a file"} ) page params upForm
+  let upForm = form ! [X.method "post", enctype "multipart/form-data"] <<
+       fieldset <<
+       [ p << [label << "File to upload:"
+              , br
+              , afile "file" ! [value origPath] ]
+       , p << [ label << "Name on wiki, including extension"
+              , noscript << " (leave blank to use the same filename)"
+              , stringToHtml ":"
+              , br
+              , textfield "wikiname" ! [value wikiname]
+              , primHtmlChar "nbsp"
+              , checkbox "overwrite" "yes"
+              , label << "Overwrite existing file" ]
+       , p << [ label << "Description of content or changes:"
+              , br
+              , textfield "logMsg" ! [size "60", value logMsg]
+              , submit "upload" "Upload" ]
+       ]
+  formattedPage defaultPageLayout{
+                   pgScripts = ["uploadForm.js"],
+                   pgShowPageTools = False,
+                   pgTabs = [],
+                   pgTitle = "Upload a file"}
+                page params upForm
 
 uploadFile :: String -> Params -> Web Response
 uploadFile _ params = do
@@ -252,43 +290,61 @@ uploadFile _ params = do
                         Just u  -> return (uUsername u, uEmail u)
   let overwrite = pOverwrite params
   fs <- getFileStore
-  exists <- liftIO $ catch (latest fs wikiname >> return True) (\e -> if e == NotFound then return False else throwIO e >> return True)
+  exists <- liftIO $ catch (latest fs wikiname >> return True) $ \e ->
+                      if e == NotFound
+                         then return False
+                         else throwIO e >> return True
   let imageExtensions = [".png", ".jpg", ".gif"]
-  let errors = validate [ (null logMsg, "Description cannot be empty.")
-                        , (null origPath, "File not found.")
-                        , (not overwrite && exists, "A file named '" ++ wikiname ++
-                           "' already exists in the repository: choose a new name " ++
-                           "or check the box to overwrite the existing file existing file.")
-                        , (B.length fileContents > fromIntegral (maxUploadSize cfg),
-                           "File exceeds maximum upload size.")
-                        , (takeExtension wikiname == ".page",
-                           "This file extension is reserved for wiki pages.")
-                        ]
+  let errors = validate
+                 [ (null logMsg, "Description cannot be empty.")
+                 , (null origPath, "File not found.")
+                 , (not overwrite && exists, "A file named '" ++ wikiname ++
+                    "' already exists in the repository: choose a new name " ++
+                    "or check the box to overwrite the existing file.")
+                 , (B.length fileContents > fromIntegral (maxUploadSize cfg),
+                    "File exceeds maximum upload size.")
+                 , (isPageFile wikiname,
+                    "This file extension is reserved for wiki pages.")
+                 ]
   if null errors
      then do
        liftIO $ save fs wikiname (Author user email) logMsg fileContents
-       formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Upload successful" }) page params $
-                     thediv << [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
-                               , if takeExtension wikiname `elem` imageExtensions
-                                    then p << "To add this image to a page, use:" +++
-                                         pre << ("![alt text](/" ++ wikiname ++ ")")
-                                    else p << "To link to this resource from a page, use:" +++
-                                         pre << ("[link label](/" ++ wikiname ++ ")") ]
-     else uploadForm page (params { pMessages = errors })
+       let contents = thediv <<
+             [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
+             , if takeExtension wikiname `elem` imageExtensions
+                  then p << "To add this image to a page, use:" +++
+                       pre << ("![alt text](/" ++ wikiname ++ ")")
+                  else p << "To link to this resource from a page, use:" +++
+                       pre << ("[link label](/" ++ wikiname ++ ")") ]
+       formattedPage defaultPageLayout{
+                       pgShowPageTools = False,
+                       pgTabs = [],
+                       pgTitle = "Upload successful"}
+                     page params contents 
+     else uploadForm page params{ pMessages = errors }
 
 goToPage :: String -> Params -> Web Response
 goToPage _ params = do
   let gotopage = pGotoPage params
   fs <- getFileStore
-  allPageNames <- liftM (map dropExtension . filter (".page" `isSuffixOf`)) $ liftIO $ index fs
+  allPageNames <- liftM (map dropExtension . filter isPageFile) $
+                   liftIO $ index fs
   let findPage f = find f allPageNames
-  case findPage (gotopage ==) of
-       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to exact match"
-       Nothing -> case findPage (\n -> (map toLower gotopage) == (map toLower n)) of
-                       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to case-insensitive match"
-                       Nothing -> case findPage (\n -> (map toLower gotopage) `isPrefixOf` (map toLower n)) of
-                                       Just m  -> seeOther (urlForPage m) $ toResponse "Redirecting to partial match"
-                                       Nothing -> searchResults "" params{ pPatterns = words gotopage }
+  let exactMatch f = gotopage == f
+  let insensitiveMatch f = (map toLower gotopage) == (map toLower f)
+  let prefixMatch f = (map toLower gotopage) `isPrefixOf` (map toLower f)
+  case findPage exactMatch of
+       Just m  -> seeOther (urlForPage m) $ toResponse
+                     "Redirecting to exact match"
+       Nothing -> case findPage insensitiveMatch of
+                       Just m  -> seeOther (urlForPage m) $ toResponse
+                                    "Redirecting to case-insensitive match"
+                       Nothing -> case findPage prefixMatch of
+                                       Just m  -> seeOther (urlForPage m) $
+                                                  toResponse $ "Redirecting" ++
+                                                    " to partial match"
+                                       Nothing -> searchResults "" params{
+                                                    pPatterns = words gotopage}
 
 searchResults :: String -> Params -> Web Response
 searchResults _ params = do
@@ -298,12 +354,13 @@ searchResults _ params = do
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
-                   else liftM (take limit) $ liftIO $ search fs defaultSearchQuery{queryPatterns = patterns}
+                   else liftM (take limit) $ liftIO $
+                          search fs defaultSearchQuery{queryPatterns = patterns}
   let contentMatches = map matchResourceName matchLines
-  allPages <- liftM (filter (".page" `isSuffixOf`)) $ liftIO $ index fs
+  allPages <- liftM (filter isPageFile) $ liftIO $ index fs
   let matchesPatterns pageName = all (`elem` (words $ map toLower $ dropExtension pageName)) $ map (map toLower) patterns
   let pageNameMatches = filter matchesPatterns allPages
-  let allMatchedFiles = nub $ filter (".page" `isSuffixOf`) contentMatches ++ pageNameMatches
+  let allMatchedFiles = nub $ filter isPageFile contentMatches ++ pageNameMatches
   let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) allMatchedFiles
   let relevance (f, ms) = length ms + if f `elem` pageNameMatches then 100 else 0
   let preamble = if null matches
@@ -380,7 +437,7 @@ showActivity _ params = do
       fileFromChange (Deleted f) = f
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
                              (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
-                             (\file -> if ".page" `isSuffixOf` file then dropExtension file else file) $ map fileFromChange changes
+                             (\file -> if isPageFile file then dropExtension file else file) $ map fileFromChange changes
   let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
   let contents = ulist ! [theclass "history"] << map (\rev -> li <<
                            [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
@@ -564,7 +621,7 @@ indexPage page params = do
   let prefix'  = dropWhile (=='/') . drop 6 $ page   -- drop the "_index/" part
   let prefix'' = if null prefix' then "" else prefix' ++ "/"
   listing <- liftIO $ directory fs prefix'
-  let isDiscussionPage (FSFile f) = ":discuss.page" `isSuffixOf` f
+  let isDiscussionPage (FSFile f) = isDiscussPageFile f
       isDiscussionPage (FSDirectory _) = False
   let prunedListing = filter (not . isDiscussionPage) listing
   let htmlIndex = fileListToHtml prefix'' prunedListing
@@ -573,7 +630,7 @@ indexPage page params = do
 fileListToHtml :: String -> [Resource] -> Html
 
 fileListToHtml prefix files =
-  let fileLink (FSFile f) | takeExtension f == ".page" =
+  let fileLink (FSFile f) | isPageFile f =
                  li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
       fileLink (FSFile f) = li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
       fileLink (FSDirectory f) = li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
