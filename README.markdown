@@ -366,7 +366,8 @@ Acknowledgements
 
 A number of people have contributed patches:
 
-- Gwern Branwen helped to optimize gitit.
+- Gwern Branwen helped to optimize gitit and wrote the
+  InterwikiPlugin.
 - Simon Michael contributed the patch adding RST support.
 - Henry Laxen added support for password resets and helped with
   the apache proxy instructions.
@@ -374,6 +375,7 @@ A number of people have contributed patches:
   more modular by adding Gitit.ContentTransformer.
 - Robin Green helped improve the plugin API and interface.
 - Justin Bogner improved the appearance of the preview button.
+- Kohei Ozaki contributed the ImgTexPlugin.
 
 Gitit's default visual layout is shamelessly borrowed from Wikipedia.
 The stylesheets are influenced by Wikipedia's stylesheets and by the
