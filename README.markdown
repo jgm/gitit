@@ -156,11 +156,23 @@ accessible at the url `/img/foo.jpg`. Pandoc creates three subdirectories
 of `static`, `css`, `img`, and `js`, which include the icons, stylesheets,
 and javascripts it uses.
 
-Note:  if you set `staticDir` to be a subdirectory of `repositoryPath`,
+Note:  if you set `static-dir` to be a subdirectory of `repository-path`,
 and then add the files in the static directory to your repository, you
 can ensure that others who clone your wiki repository get these files
 as well.  It will not be possible to modify these files using the web
 interface, but they will be modifiable via git.
+
+Using darcs instead of git
+--------------------------
+
+By default, gitit will store wiki pages in a git repository in the
+`wikidata` directory.  If you'd prefer to use darcs instead of git,
+you need to add the following field to the configuration file:
+
+    repository-type: Darcs
+
+This program may be called "darcsit" instead of "gitit" when a darcs
+backend is used.
 
 Changing the theme
 ------------------
@@ -229,12 +241,13 @@ To see what languages are available:
 
 [delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
 
-Accessing the wiki via git
-==========================
+Accessing the wiki via git or darcs
+===================================
 
-All the pages and uploaded files are stored in a git repository. By default, this
-lives in the `wikidata` directory (though this can be changed through configuration
-options).  So you can interact with the wiki using git command line tools:
+All the pages and uploaded files are stored in a git or darcs
+repository. By default, this lives in the `wikidata` directory (though
+this can be changed through configuration options). So you can interact
+with the wiki using git command line tools:
 
     git clone ssh://my.server.edu/path/of/wiki/wikidata
     cd wikidata
@@ -299,7 +312,16 @@ First, tell gitit not to compress pages, since `mod_proxy_html`
 needs uncompressed pages to parse.  You can do this by setting
 the gitit configuration option
 
-    compressResponses: no
+    compress-responses: no
+
+Second, modify the link in the `reset-password-message` in the
+configuration file:  instead of
+
+    http://$hostname$:$port$$resetlink$
+
+set it to
+
+    http://$hostname$/wiki$resetlink$
 
 Restart gitit.
 
