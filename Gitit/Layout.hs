@@ -91,10 +91,10 @@ formattedPage layout page params htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli page rev) (pgTabs layout)
-  let searchbox = gui ("/_search") ! [identifier "searchform"] <<
+  let searchbox = gui "/_search" ! [identifier "searchform"] <<
                          [ textfield "patterns"
                          , submit "search" "Search" ]
-  let gobox     = gui ("/_go") ! [identifier "goform"] <<
+  let gobox     = gui "/_go" ! [identifier "goform"] <<
                          [ textfield "gotopage"
                          , submit "go" "Go" ]
   let messages = pMessages params
@@ -139,7 +139,7 @@ formattedPage layout page params htmlContents = do
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 exportBox :: String -> Params -> Html
-exportBox page params | (not (isSourceCode page)) =
+exportBox page params | not (isSourceCode page) =
   let rev = pRevision params
   in  gui (urlForPage page) ! [identifier "exportbox"] <<
         ([ textfield "revision" ! [thestyle "display: none;",
