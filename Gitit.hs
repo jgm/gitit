@@ -358,28 +358,44 @@ searchResults _ params = do
                           search fs defaultSearchQuery{queryPatterns = patterns}
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
-  let inPageNames x = x `elem` (words $ map toLower $ dropExtension pageName)
-  let matchesPatterns pageName = all inPageNames $ map (map toLower) patterns
+  let inPageName pageName x = x `elem` (words $ map toLower $
+                                         dropExtension pageName)
+  let matchesPatterns pageName = all (inPageName pageName) $
+                                   map (map toLower) patterns
   let pageNameMatches = filter matchesPatterns allPages
-  let allMatchedFiles = nub $ filter isPageFile contentMatches ++ pageNameMatches
+  let allMatchedFiles = nub $ filter isPageFile contentMatches ++
+                              pageNameMatches
   let matchesInFile f =  mapMaybe (\x -> if matchResourceName x == f
                                             then Just (matchLine x)
                                             else Nothing) matchLines
   let matches = map (\f -> (f, matchesInFile f)) allMatchedFiles
-  let relevance (f, ms) = length ms + if f `elem` pageNameMatches then 100 else 0
+  let relevance (f, ms) = length ms + if f `elem` pageNameMatches
+                                         then 100
+                                         else 0
   let preamble = if null matches
                     then h3 << if null patterns
                                   then ["Please enter a search term."]
-                                  else ["No matches found for '", unwords patterns, "':"]
-                    else h3 << [(show $ length matches), " matches found for '", unwords patterns, "':"]
-  let htmlMatches = preamble +++ olist << map
-                      (\(file, contents) -> li << [anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file,
-                      stringToHtml (" (" ++ show (length contents) ++ " matching lines)"),
-                      stringToHtml " ", anchor ! [href "#", theclass "showmatch", thestyle "display: none;"] <<
-                      if length contents > 0 then "[show matches]" else "",
-                      pre ! [theclass "matches"] << unlines contents])
-                      (reverse $ sortBy (comparing relevance) matches)
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = ["search.js"], pgTitle = "Search results"}) page params htmlMatches
+                                  else ["No matches found for '",
+                                         unwords patterns, "':"]
+                    else h3 << [(show $ length matches),
+                                " matches found for '", unwords patterns, "':"]
+  let toMatchListItem (file, contents) = li <<
+        [ anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file
+        , stringToHtml (" (" ++ show (length contents) ++ " matching lines)")
+        , stringToHtml " "
+        , anchor ! [href "#", theclass "showmatch",
+                    thestyle "display: none;"] <<
+                      if length contents > 0 then "[show matches]" else ""
+        , pre ! [theclass "matches"] << unlines contents]
+  let htmlMatches = preamble +++
+                    olist << map toMatchListItem
+                             (reverse $ sortBy (comparing relevance) matches)
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgScripts = ["search.js"],
+                  pgTitle = "Search results"}
+                page params htmlMatches
 
 showPageHistory :: String -> Params -> Web Response
 showPageHistory page params = showHistory (pathForPage page) page params
