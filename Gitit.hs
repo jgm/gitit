@@ -117,7 +117,7 @@ main = do
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf }
   let staticHandler d = dir d $ withExpiresHeaders $ fileServe [] $
-                                staticdir </> d 
+                                staticdir </> d
 
   -- start the server
   tid <- forkIO $ simpleHTTP serverConf $ msum $
@@ -192,7 +192,7 @@ handleAny = uriRest $ \uri ->
   in  do fs <- getFileStore
          mimetype <- getMimeTypeForExtension
                       (takeExtension path')
-         res <- liftIO $ try $
+         res <- liftIO $ try
                 (retrieve fs path' Nothing :: IO B.ByteString)
          case res of
                 Right contents -> anyRequest $ ok $ setContentType mimetype $
@@ -221,7 +221,7 @@ randomPage _ _ = do
      then error "No pages found!"
      else do
        TOD _ picosecs <- liftIO getClockTime
-       let newPage = pages !! 
+       let newPage = pages !!
                      ((fromIntegral picosecs `div` 1000000) `mod` length pages)
        seeOther (urlForPage newPage) $ toResponse $
          p << "Redirecting to a random page"
@@ -320,7 +320,7 @@ uploadFile _ params = do
                        pgShowPageTools = False,
                        pgTabs = [],
                        pgTitle = "Upload successful"}
-                     page params contents 
+                     page params contents
      else uploadForm page params{ pMessages = errors }
 
 goToPage :: String -> Params -> Web Response
@@ -399,7 +399,7 @@ searchResults _ params = do
                 page params htmlMatches
 
 showPageHistory :: String -> Params -> Web Response
-showPageHistory page params = showHistory (pathForPage page) page params
+showPageHistory page = showHistory (pathForPage page) page
 
 showFileHistory :: String -> Params -> Web Response
 showFileHistory file = showHistory file file
@@ -446,7 +446,7 @@ showHistory file page params =  do
        let tabs = if file == page  -- source file, not wiki page
                      then [ViewTab,HistoryTab]
                      else pgTabs defaultPageLayout
-       formattedPage defaultPageLayout{ 
+       formattedPage defaultPageLayout{
                         pgScripts = ["dragdiff.js"],
                         pgTabs = tabs,
                         pgSelectedTab = HistoryTab,
@@ -471,7 +471,7 @@ showActivity _ params = do
   let fileFromChange (Added f)    = f
       fileFromChange (Modified f) = f
       fileFromChange (Deleted f)  = f
-  let dropDotPage file = if isPageFile file 
+  let dropDotPage file = if isPageFile file
                             then dropExtension file
                             else file
   let fileAnchor revis file =
@@ -493,7 +493,7 @@ showActivity _ params = do
         , stringToHtml ")"
         ]
   let contents = ulist ! [theclass "history"] << map revToListItem hist'
-  formattedPage defaultPageLayout{ 
+  formattedPage defaultPageLayout{
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgTitle = "Recent changes"
@@ -512,7 +512,7 @@ showDiff file page params = do
   let to = pTo params
   fs <- getFileStore
   result <- liftIO $ try $ getDiff fs file from to
-  case result of   
+  case result of
        Left NotFound  -> mzero
        Left e         -> liftIO $ throwIO e
        Right htmlDiff -> formattedPage defaultPageLayout{
@@ -521,7 +521,7 @@ showDiff file page params = do
                                           pgSelectedTab = DiffTab
                                           }
                                        page params{ pRevision = to } htmlDiff
- 
+
 getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
         -> IO Html
 getDiff fs file from to = do
@@ -557,19 +557,19 @@ editPage :: String -> Params -> Web Response
 editPage page params = do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
-  let getRevisionAndText = catch 
-                           (do c <- liftIO $ retrieve fs (pathForPage page) rev
-                               -- even if pRevision is set, we return revId of latest
-                               -- saved version (because we're doing a revert and
-                               -- we don't want gitit to merge the changes with the
-                               -- latest version)
-                               r <- liftIO $ latest fs (pathForPage page) >>= revision fs
-                               return (Just $ revId r, c))
-                           (\e -> if e == NotFound
-                                     then return (Nothing, "")
-                                     else throwIO e)
+  let getRevisionAndText = catch
+        (do c <- liftIO $ retrieve fs (pathForPage page) rev
+            -- even if pRevision is set, we return revId of latest
+            -- saved version (because we're doing a revert and
+            -- we don't want gitit to merge the changes with the
+            -- latest version)
+            r <- liftIO $ latest fs (pathForPage page) >>= revision fs
+            return (Just $ revId r, c))
+        (\e -> if e == NotFound
+                  then return (Nothing, "")
+                  else throwIO e)
   (mbRev, raw) <- case pEditedText params of
-                       Nothing -> liftIO getRevisionAndText 
+                       Nothing -> liftIO getRevisionAndText
                        Just t  -> let r = if null (pSHA1 params)
                                              then Nothing
                                              else Just (pSHA1 params)
@@ -577,26 +577,40 @@ editPage page params = do
   let messages = pMessages params
   let logMsg = pLogMsg params
   let sha1Box = case mbRev of
-                 Just r  -> textfield "sha1" ! [thestyle "display: none", value r]
+                 Just r  -> textfield "sha1" ! [thestyle "display: none",
+                                                value r]
                  Nothing -> noHtml
-  let readonly = if isJust (pRevision params) -- disable editing of text box if it's a revert
-                    then [strAttr "readonly" "yes", strAttr "style" "color: gray"]
-                    else [] 
+  let readonly = if isJust (pRevision params)
+                    -- disable editing of text box if it's a revert
+                    then [strAttr "readonly" "yes",
+                          strAttr "style" "color: gray"]
+                    else []
   let editForm = gui (urlForPage page) ! [identifier "editform"] <<
-                   [sha1Box,
-                    textarea ! (readonly ++ [cols "80", name "editedText", identifier "editedText"]) <<
-                    raw, br,
-                    label << "Description of changes:", br,
-                    textfield "logMsg" ! (readonly ++ [value logMsg]),
-                    submit "update" "Save", primHtmlChar "nbsp",
-                    submit "cancel" "Discard", primHtmlChar "nbsp",
-                    input ! [thetype "button", theclass "editButton", identifier "previewButton",
-                             strAttr "onClick" "updatePreviewPane();",
-                             strAttr "style" "display: none;", value "Preview" ],
-                    thediv ! [ identifier "previewpane" ] << noHtml ]
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgSelectedTab = EditTab,
-                                     pgScripts = ["preview.js"], pgTitle = ("Editing " ++ page) })
-                page (params {pMessages = messages}) editForm
+                   [ sha1Box
+                   , textarea ! (readonly ++ [cols "80", name "editedText",
+                                  identifier "editedText"]) << raw
+                   , br
+                   , label << "Description of changes:"
+                   , br
+                   , textfield "logMsg" ! (readonly ++ [value logMsg])
+                   , submit "update" "Save"
+                   , primHtmlChar "nbsp"
+                   , submit "cancel" "Discard"
+                   , primHtmlChar "nbsp"
+                   , input ! [thetype "button", theclass "editButton",
+                              identifier "previewButton",
+                              strAttr "onClick" "updatePreviewPane();",
+                              strAttr "style" "display: none;",
+                              value "Preview" ]
+                   , thediv ! [ identifier "previewpane" ] << noHtml
+                   ]
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgSelectedTab = EditTab,
+                  pgScripts = ["preview.js"],
+                  pgTitle = ("Editing " ++ page)
+                  }
+                page params{pMessages = messages} editForm
 
 confirmDelete :: String -> Params -> Web Response
 confirmDelete page params = do
@@ -610,20 +624,22 @@ confirmDelete page params = do
                          fileTest <- liftIO $ try $ latest fs page
                          case fileTest of
                               Right _       -> return page  -- a source file
-                              Left NotFound -> return "" 
+                              Left NotFound -> return ""
                               Left e        -> fail (show e)
                        Left e        -> fail (show e)
   let confirmForm = gui "" <<
         [ p << "Are you sure you want to delete this page?"
-        , input ! [thetype "text", name "filetodelete", strAttr "style" "display: none;", value fileToDelete]
+        , input ! [thetype "text", name "filetodelete",
+                   strAttr "style" "display: none;", value fileToDelete]
         , submit "confirm" "Yes, delete it!"
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  formattedPage defaultPageLayout page params $ if null fileToDelete
-                                                   then ulist ! [theclass "messages"] << li <<
-                                                        "There is no file or page by that name." 
-                                                   else confirmForm
+  formattedPage defaultPageLayout page params $
+    if null fileToDelete
+       then ulist ! [theclass "messages"] << li <<
+            "There is no file or page by that name."
+       else confirmForm
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
@@ -653,30 +669,41 @@ updatePage page params = do
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
   if null logMsg
-     then editPage page (params { pMessages = ["Description cannot be empty."] })
+     then editPage page params{ pMessages = ["Description cannot be empty."] }
      else do
        cfg <- getConfig
-       if length editedText > fromIntegral (maxUploadSize cfg)
-          then error "Page exceeds maximum size."
-          else return ()
+       when (length editedText > fromIntegral (maxUploadSize cfg)) $
+          error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
-       modifyRes <-    if null oldSHA1
-                          then liftIO $ create fs (pathForPage page) (Author user email) logMsg editedText >> return (Right ())
-                          else liftIO $ catch (modify fs (pathForPage page) oldSHA1 (Author user email) logMsg editedText)
-                                     (\e -> if e == Unchanged then return (Right ()) else throwIO e)
+       modifyRes <- if null oldSHA1
+                       then liftIO $ create fs (pathForPage page)
+                                       (Author user email) logMsg editedText >>
+                                     return (Right ())
+                       else liftIO $ catch (modify fs (pathForPage page)
+                                            oldSHA1 (Author user email) logMsg
+                                            editedText)
+                                     (\e -> if e == Unchanged
+                                               then return (Right ())
+                                               else throwIO e)
        case modifyRes of
-            Right ()       -> seeOther (urlForPage page) $ toResponse $ p << "Page updated"
+            Right () -> seeOther (urlForPage page) $ toResponse $
+               p << "Page updated"
             Left (MergeInfo mergedWithRev False mergedText) ->
-                              updatePage page params{ pMessages = ("Merged with revision " ++ revId mergedWithRev) : pMessages params,
-                                                      pEditedText = Just mergedText,
-                                                      pSHA1 = revId mergedWithRev }
+               updatePage page params{
+                 pMessages = ("Merged with revision " ++ revId mergedWithRev) :
+                   pMessages params,
+                 pEditedText = Just mergedText,
+                 pSHA1 = revId mergedWithRev }
             Left (MergeInfo mergedWithRev True mergedText) -> do
-               let mergeMsg = "The page has been edited since you checked it out. " ++
-                              "Changes have been merged into your edits below. " ++
-                              "Please resolve conflicts and Save."
-               editPage page (params { pEditedText = Just mergedText
-                                     , pSHA1 = revId mergedWithRev
-                                     , pMessages = [mergeMsg] })
+               let mergeMsg =
+                     "The page has been edited since you checked it out. " ++
+                     "Changes have been merged into your edits below. " ++
+                     "Please resolve conflicts and Save."
+               editPage page params{
+                                pEditedText = Just mergedText
+                                , pSHA1 = revId mergedWithRev
+                                , pMessages = [mergeMsg]
+                                }
 
 indexPage :: String -> Params -> Web Response
 indexPage page params = do
@@ -688,17 +715,26 @@ indexPage page params = do
       isDiscussionPage (FSDirectory _) = False
   let prunedListing = filter (not . isDiscussionPage) listing
   let htmlIndex = fileListToHtml prefix'' prunedListing
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgScripts = [], pgTitle = "Contents"}) page params htmlIndex
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgScripts = [],
+                  pgTitle = "Contents"}
+                page params htmlIndex
 
 fileListToHtml :: String -> [Resource] -> Html
-
 fileListToHtml prefix files =
   let fileLink (FSFile f) | isPageFile f =
-                 li ! [theclass "page"  ] << anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
-      fileLink (FSFile f) = li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
-      fileLink (FSDirectory f) = li ! [theclass "folder"] << anchor ! [href $ "/_index/" ++ prefix ++ f] << f
-      uplink =  let updirs = drop 1 $ inits $ splitPath $ "/" ++ prefix
-                in  foldr (\d accum ->  concatHtml [ anchor ! [theclass "updir", href $ "/_index" ++ joinPath d] <<
-                                           last d, accum]) noHtml updirs
+        li ! [theclass "page"  ] <<
+          anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
+      fileLink (FSFile f) =
+        li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
+      fileLink (FSDirectory f) =
+        li ! [theclass "folder"] <<
+          anchor ! [href $ "/_index/" ++ prefix ++ f] << f
+      updirs = drop 1 $ inits $ splitPath $ '/' : prefix
+      uplink = foldr (\d accum ->
+                  concatHtml [ anchor ! [theclass "updir",
+                                         href $ "/_index" ++ joinPath d] <<
+                  last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
-
