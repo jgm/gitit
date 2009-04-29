@@ -384,8 +384,9 @@ searchResults _ params = do
         , stringToHtml (" (" ++ show (length contents) ++ " matching lines)")
         , stringToHtml " "
         , anchor ! [href "#", theclass "showmatch",
-                    thestyle "display: none;"] <<
-                      if length contents > 0 then "[show matches]" else ""
+                    thestyle "display: none;"] << if length contents > 0
+                                                     then "[show matches]"
+                                                     else ""
         , pre ! [theclass "matches"] << unlines contents]
   let htmlMatches = preamble +++
                     olist << map toMatchListItem
@@ -412,31 +413,46 @@ showHistory file page params =  do
                    Just t  -> Just t
   fs <- getFileStore
   hist <- liftIO $ history fs [file] (TimeRange since Nothing)
+  let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
+                                    strAttr "revision" $ revId rev] <<
+        [ thespan ! [theclass "date"] << (show $ revDateTime rev)
+        , stringToHtml " ("
+        , thespan ! [theclass "author"] << anchor ! [href $ "/_activity?" ++
+            urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
+              (authorName $ revAuthor rev)
+        , stringToHtml "): "
+        , anchor ! [href (urlForPage page ++ "?revision=" ++ revId rev)] <<
+           thespan ! [theclass "subject"] <<  revDescription rev
+        , noscript <<
+            ([ stringToHtml " [compare with "
+             , anchor ! [href $ urlForPage page ++ "?diff&to=" ++ revId rev] <<
+                  "previous" ] ++
+             (if pos /= 1
+                  then [ primHtmlChar "nbsp"
+                       , primHtmlChar "bull"
+                       , primHtmlChar "nbsp"
+                       , anchor ! [href $ urlForPage page ++ "?diff&from=" ++
+                                  revId rev] << "current"
+                       ]
+                  else []) ++
+             [stringToHtml "]"])
+        ]
   if null hist
      then mzero
      else do
-       let versionToHtml rev pos =
-              li ! [theclass "difflink", intAttr "order" pos, strAttr "revision" $ revId rev] <<
-                   [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
-                    thespan ! [theclass "author"] <<
-                            anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
-                                       (authorName $ revAuthor rev), stringToHtml ")", stringToHtml ": ",
-                    anchor ! [href (urlForPage page ++ "?revision=" ++ revId rev)] <<
-                    thespan ! [theclass "subject"] <<  revDescription rev,
-                    noscript << ([stringToHtml " [compare with ",
-                    anchor ! [href $ urlForPage page ++ "?diff&to=" ++ revId rev] << "previous"] ++
-                                 (if pos /= 1
-                                     then [primHtmlChar "nbsp", primHtmlChar "bull",
-                                           primHtmlChar "nbsp",
-                                           anchor ! [href $ urlForPage page ++ "?diff&from=" ++
-                                                     revId rev] << "current" ]
-                                     else []) ++
-                                 [stringToHtml "]"])]
-       let contents = ulist ! [theclass "history"] << zipWith versionToHtml hist [(length hist), (length hist - 1)..1]
+       let contents = ulist ! [theclass "history"] <<
+                        zipWith versionToHtml hist
+                        [(length hist), (length hist - 1)..1]
        let tabs = if file == page  -- source file, not wiki page
                      then [ViewTab,HistoryTab]
                      else pgTabs defaultPageLayout
-       formattedPage (defaultPageLayout { pgScripts = ["dragdiff.js"], pgTabs = tabs, pgSelectedTab = HistoryTab, pgTitle = ("Changes to " ++ page) }) page params contents
+       formattedPage defaultPageLayout{ 
+                        pgScripts = ["dragdiff.js"],
+                        pgTabs = tabs,
+                        pgSelectedTab = HistoryTab,
+                        pgTitle = ("Changes to " ++ page)
+                        }
+                     page params contents
 
 showActivity :: String -> Params -> Web Response
 showActivity _ params = do
@@ -452,22 +468,37 @@ showActivity _ params = do
   let hist' = case forUser of
                    Nothing -> hist
                    Just u  -> filter (\r -> authorName (revAuthor r) == u) hist
-  let fileFromChange (Added f) = f
+  let fileFromChange (Added f)    = f
       fileFromChange (Modified f) = f
-      fileFromChange (Deleted f) = f
-  let filesFor changes revis = intersperse (primHtmlChar "nbsp") $ map
-                             (\file -> anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file) $ map
-                             (\file -> if isPageFile file then dropExtension file else file) $ map fileFromChange changes
+      fileFromChange (Deleted f)  = f
+  let dropDotPage file = if isPageFile file 
+                            then dropExtension file
+                            else file
+  let fileAnchor revis file =
+        anchor ! [href $ urlForPage file ++ "?diff&to=" ++ revis] << file
+  let filesFor changes revis = intersperse (primHtmlChar "nbsp") $
+        map (fileAnchor revis . dropDotPage . fileFromChange) changes
   let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
-  let contents = ulist ! [theclass "history"] << map (\rev -> li <<
-                           [thespan ! [theclass "date"] << (show $ revDateTime rev), stringToHtml " (",
-                            thespan ! [theclass "author"] <<
-                                    anchor ! [href $ "/_activity?" ++ urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
-                                               (authorName $ revAuthor rev), stringToHtml "): ",
-                            thespan ! [theclass "subject"] << revDescription rev, stringToHtml " (",
-                            thespan ! [theclass "files"] << filesFor (revChanges rev) (revId rev),
-                            stringToHtml ")"]) hist'
-  formattedPage (defaultPageLayout { pgShowPageTools = False, pgTabs = [], pgTitle = "Recent changes" }) page params (heading +++ contents)
+  let revToListItem rev = li <<
+        [ thespan ! [theclass "date"] << (show $ revDateTime rev)
+        , stringToHtml " ("
+        , thespan ! [theclass "author"] <<
+            anchor ! [href $ "/_activity?" ++
+              urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
+                (authorName $ revAuthor rev)
+        , stringToHtml "): "
+        , thespan ! [theclass "subject"] << revDescription rev
+        , stringToHtml " ("
+        , thespan ! [theclass "files"] << filesFor (revChanges rev) (revId rev)
+        , stringToHtml ")"
+        ]
+  let contents = ulist ! [theclass "history"] << map revToListItem hist'
+  formattedPage defaultPageLayout{ 
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgTitle = "Recent changes"
+                  }
+                page params (heading +++ contents)
 
 showPageDiff :: String -> Params -> Web Response
 showPageDiff page = showDiff (pathForPage page) page
@@ -482,12 +513,17 @@ showDiff file page params = do
   fs <- getFileStore
   result <- liftIO $ try $ getDiff fs file from to
   case result of   
-       Right htmlDiff -> formattedPage defaultPageLayout{ pgTabs = DiffTab : pgTabs defaultPageLayout,
-                             pgSelectedTab = DiffTab } page params{ pRevision = to } htmlDiff
        Left NotFound  -> mzero
        Left e         -> liftIO $ throwIO e
+       Right htmlDiff -> formattedPage defaultPageLayout{
+                                          pgTabs = DiffTab :
+                                                   pgTabs defaultPageLayout,
+                                          pgSelectedTab = DiffTab
+                                          }
+                                       page params{ pRevision = to } htmlDiff
  
-getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId -> IO Html
+getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
+        -> IO Html
 getDiff fs file from to = do
   from' <- case from of
               Nothing -> do
