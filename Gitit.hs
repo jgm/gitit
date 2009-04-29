@@ -526,25 +526,32 @@ getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
         -> IO Html
 getDiff fs file from to = do
   from' <- case from of
+              Just x  -> return $ Just x
               Nothing -> do
-                pageHist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
+                pageHist <- liftIO $ history fs [file]
+                                     (TimeRange Nothing Nothing)
                 if length pageHist < 2
                    then return Nothing
                    else case to of
                             Nothing -> return Nothing
-                            Just t  -> let (_, upto) = break (\r -> idsMatch fs (revId r) t) pageHist
+                            Just t  -> let (_, upto) = break
+                                             (\r -> idsMatch fs (revId r) t)
+                                             pageHist
                                        in  return $
                                            if length upto >= 2
-                                              then Just $ revId $ upto !! 1  -- the immediately preceding revision
+                                              -- immediately preceding revision
+                                              then Just $ revId $ upto !! 1
                                               else Nothing
-              x       -> return x
   rawDiff <- diff fs file from' to
   let diffLineToHtml (B, xs) = thespan << unlines xs
       diffLineToHtml (F, xs) = thespan ! [theclass "deleted"] << unlines xs
       diffLineToHtml (S, xs) = thespan ! [theclass "added"]   << unlines xs
   return $ h2 ! [theclass "revision"] <<
-        ("Changes from " ++ case from' of { Just r -> r; Nothing -> "beginning" }) +++
-        pre ! [theclass "diff"] << map diffLineToHtml rawDiff
+             ("Changes from " ++
+               case from' of
+                    Just r  -> r
+                    Nothing -> "beginning") +++
+           pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
 editPage :: String -> Params -> Web Response
 editPage page params = do
