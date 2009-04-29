@@ -358,10 +358,14 @@ searchResults _ params = do
                           search fs defaultSearchQuery{queryPatterns = patterns}
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
-  let matchesPatterns pageName = all (`elem` (words $ map toLower $ dropExtension pageName)) $ map (map toLower) patterns
+  let inPageNames x = x `elem` (words $ map toLower $ dropExtension pageName)
+  let matchesPatterns pageName = all inPageNames $ map (map toLower) patterns
   let pageNameMatches = filter matchesPatterns allPages
   let allMatchedFiles = nub $ filter isPageFile contentMatches ++ pageNameMatches
-  let matches = map (\f -> (f, mapMaybe (\x -> if matchResourceName x == f then Just (matchLine x) else Nothing) matchLines)) allMatchedFiles
+  let matchesInFile f =  mapMaybe (\x -> if matchResourceName x == f
+                                            then Just (matchLine x)
+                                            else Nothing) matchLines
+  let matches = map (\f -> (f, matchesInFile f)) allMatchedFiles
   let relevance (f, ms) = length ms + if f `elem` pageNameMatches then 100 else 0
   let preamble = if null matches
                     then h3 << if null patterns
