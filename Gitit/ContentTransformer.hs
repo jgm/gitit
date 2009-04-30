@@ -34,7 +34,7 @@ module Gitit.ContentTransformer
   , showFile
   , preview
   -- Cache-aware transformer combinators
-  , maybeTextToWikiPandocPageCached
+  , mbTextToWikiPandocPageCached
   , pandocToWikiDivCached
   , highlightSourceCached
   -- Cache support for transformers
@@ -53,7 +53,7 @@ module Gitit.ContentTransformer
   , htmlResponse
   , utf8Response
   -- Content-type transformation combinators
-  , maybeTextToWikiPandocPage
+  , mbTextToWikiPandocPage
   , textToWikiPandocPage
   , textToWikiPandoc
   , textToPandoc
@@ -98,23 +98,32 @@ import Network.HTTP (urlEncodeVars)
 import Happstack.Server (WebT, ToMessage)
 import Network.URI (isAllowedInURI, escapeURIString)
 
-data Context = Context { ctxPage   :: String
-                       , ctxFile   :: String
-                       , ctxLayout :: PageLayout
-                       , ctxParams :: Params
+data Context = Context { ctxPage      :: String
+                       , ctxFile      :: String
+                       , ctxLayout    :: PageLayout
+                       , ctxParams    :: Params
+                       , ctxCacheable :: Bool
                        }
 
-type ContentTransformer a = StateT Context (WebT IO) a     -- Web a = WebT IO a
+type ContentTransformer = StateT Context (WebT IO)  -- Web a = WebT IO a
 
 --
 -- ContentTransformer runners
 --
 
-runPageTransformer :: ContentTransformer Response -> String -> Params -> Web Response
-runPageTransformer xform page params = evalStateT xform (Context page (pathForPage page) defaultPageLayout params)
+runPageTransformer :: ContentTransformer Response
+                   -> String
+                   -> Params
+                   -> Web Response
+runPageTransformer xform page params = evalStateT xform $
+  Context page (pathForPage page) defaultPageLayout params True
 
-runFileTransformer :: ContentTransformer Response -> FilePath -> Params -> Web Response
-runFileTransformer xform file params = evalStateT xform (Context file file defaultPageLayout params) 
+runFileTransformer :: ContentTransformer Response
+                   -> FilePath
+                   -> Params
+                   -> Web Response
+runFileTransformer xform file params = evalStateT xform $
+  Context file file defaultPageLayout params True
 
 --
 -- Gitit responders
@@ -139,7 +148,11 @@ showFile :: FilePath -> Params -> Web Response
 showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
 preview :: String -> Params -> Web Response
-preview = runPageTransformer $ getParams >>= textToWikiPandoc . pRaw >>= pandocToHtml >>= utf8Response . renderHtmlFragment
+preview = runPageTransformer $
+          getParams >>=
+          textToWikiPandoc . pRaw >>=
+          pandocToHtml >>=
+          utf8Response . renderHtmlFragment
 
 --
 -- Top level, composed transformers
@@ -149,10 +162,14 @@ rawTextResponse :: ContentTransformer Response
 rawTextResponse = rawContents >>= textResponse
 
 exportViaPandoc :: ContentTransformer Response
-exportViaPandoc = rawContents >>= maybeTextToWikiPandocPage >>= exportPandoc
+exportViaPandoc = rawContents >>= mbTextToWikiPandocPage >>= exportPandoc
 
 htmlViaPandoc :: ContentTransformer Response
-htmlViaPandoc = cachedContents >>= maybeTextToWikiPandocPageCached >>= pandocToWikiDivCached >>= addMathSupport >>= applyWikiTemplate
+htmlViaPandoc = cachedContents >>=
+                mbTextToWikiPandocPageCached >>=
+                pandocToWikiDivCached >>=
+                addMathSupport >>=
+                applyWikiTemplate
 
 highlightRawSource :: ContentTransformer Response
 highlightRawSource = do
@@ -163,8 +180,9 @@ highlightRawSource = do
 -- Cache-aware transformer combinators
 --
 
-maybeTextToWikiPandocPageCached :: Either (Maybe String) Html -> ContentTransformer (Either (Maybe Pandoc) Html)
-maybeTextToWikiPandocPageCached = skipIfCached maybeTextToWikiPandocPage
+mbTextToWikiPandocPageCached :: Either (Maybe String) Html
+                             -> ContentTransformer (Either (Maybe Pandoc) Html)
+mbTextToWikiPandocPageCached = skipIfCached mbTextToWikiPandocPage
 
 pandocToWikiDivCached :: Either (Maybe Pandoc) Html -> ContentTransformer Html
 pandocToWikiDivCached = useCache pandocToWikiDiv
@@ -188,7 +206,9 @@ skipIfCached _ (Right c) = return (Right c)
 -- transformer either returns the contents of the cache, if any, or applies the
 -- provided transformer to the uncached content, and caches and returns the
 -- result.
-useCache :: (a -> ContentTransformer Html) -> Either a Html -> ContentTransformer Html
+useCache :: (a -> ContentTransformer Html)
+         -> Either a Html
+         -> ContentTransformer Html
 useCache f (Left c)  = f c >>= cacheHtml
 useCache _ (Right c) = return c
 
@@ -196,8 +216,10 @@ cacheHtml :: Html -> ContentTransformer Html
 cacheHtml c = do
   params <- getParams
   file <- getFileName
-  when (isNothing $ pRevision params) $ do
-    -- TODO not quite ideal, since page might have been modified after being retrieved by pageAsPandoc
+  cacheable <- getCacheable
+  when (isNothing (pRevision params) && cacheable) $ do
+    -- TODO not ideal, since page might have been modified
+    -- after being retrieved by pageAsPandoc...
     -- better to have pageAsPandoc return the revision ID too...
     fs <- getFileStore
     rev <- liftIO $ latest fs file
@@ -215,7 +237,8 @@ rawContents = do
   file <- getFileName
   fs <- getFileStore
   let rev = pRevision params
-  liftIO $ catch (retrieve fs file rev >>= return . Just) (\e -> if e == NotFound then return Nothing else throwIO e)
+  liftIO $ catch (liftM Just $ retrieve fs file rev)
+                 (\e -> if e == NotFound then return Nothing else throwIO e)
 
 -- | Returns cached page if available, otherwise raw file contents
 cachedContents :: ContentTransformer (Either (Maybe String) Html)
@@ -235,10 +258,12 @@ textResponse (Just c) = mimeResponse c "text/plain; charset=utf-8"
 
 mimeFileResponse :: Maybe String -> ContentTransformer Response
 mimeFileResponse Nothing = error "Unable to retrieve file contents."
-mimeFileResponse (Just c) = mimeResponse c =<< getMimeTypeForExtension . takeExtension =<< getFileName
+mimeFileResponse (Just c) =
+  mimeResponse c =<< getMimeTypeForExtension . takeExtension =<< getFileName
 
 mimeResponse :: Monad m => String -> String -> m Response
-mimeResponse c mimeType = return . setContentType mimeType . toResponse . encodeString $ c
+mimeResponse c mimeType =
+  return . setContentType mimeType . toResponse . encodeString $ c
 
 -- | Exports Pandoc as Response using format specified in Params
 exportPandoc :: Maybe Pandoc -> ContentTransformer Response
@@ -269,9 +294,9 @@ utf8Response = return . toResponse . encodeString
 --
 
 -- | Same as textToWikiPandocPage, with support for Maybe values
-maybeTextToWikiPandocPage :: Maybe String -> ContentTransformer (Maybe Pandoc)
-maybeTextToWikiPandocPage Nothing  = mzero
-maybeTextToWikiPandocPage (Just c) = return . Just =<< textToWikiPandocPage c
+mbTextToWikiPandocPage :: Maybe String -> ContentTransformer (Maybe Pandoc)
+mbTextToWikiPandocPage Nothing  = mzero
+mbTextToWikiPandocPage (Just c) = return . Just =<< textToWikiPandocPage c
 
 -- | Converts source text to Pandoc, applies page transforms, and adds page
 -- name to Pandoc meta info
@@ -296,10 +321,12 @@ maybePandocToHtml = maybe mzero pandocToHtml
 pandocToHtml :: MonadIO m => Pandoc -> m Html
 pandocToHtml pandocContents = do
   cfg <- getConfig
-  return $ writeHtml (defaultWriterOptions { writerStandalone = False
-                                           , writerHTMLMathMethod = JsMath (Just "/_static/js/jsMath/easy/load.js")
-                                           , writerTableOfContents = tableOfContents cfg
-                                           }) pandocContents
+  return $ writeHtml defaultWriterOptions{
+                        writerStandalone = False
+                      , writerHTMLMathMethod = JsMath
+                               (Just "/_static/js/jsMath/easy/load.js")
+                      , writerTableOfContents = tableOfContents cfg
+                      } pandocContents
 
 highlightSource :: Maybe String -> ContentTransformer Html
 highlightSource Nothing = mzero
@@ -327,14 +354,16 @@ applyPageTransforms c = lift $ do
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
   params <- getParams
+  let dblClickJs = "window.location = window.location + '?edit" ++
+                   case pRevision params of
+                        Nothing   -> "';"
+                        Just r    -> ("&" ++ urlEncodeVars [("revision", r),
+                              ("logMsg", "Revert to " ++ r)] ++ "';")
   return $ thediv ! [identifier "wikipage",
-                     strAttr "onDblClick" ("window.location = window.location + '?edit" ++
-                        case pRevision params of
-                             Nothing   -> "';"
-                             Just r    -> "&" ++ urlEncodeVars [("revision", r),("logMsg", "Revert to " ++ r)] ++ "';")] << c
+                     strAttr "onDblClick" dblClickJs] << c
 
 addPageNameToPandoc :: Pandoc -> ContentTransformer Pandoc
-addPageNameToPandoc (Pandoc _ blocks) = do 
+addPageNameToPandoc (Pandoc _ blocks) = do
   page <- getPageName
   return $ Pandoc (Meta [Str page] [] []) blocks
 
@@ -345,23 +374,27 @@ addMathSupport c = do
   return c
 
 addScripts :: PageLayout -> [String] -> PageLayout
-addScripts layout scriptPaths = layout { pgScripts = scriptPaths ++ pgScripts layout }
+addScripts layout scriptPaths =
+  layout{ pgScripts = scriptPaths ++ pgScripts layout }
 
 --
 -- ContentTransformer context API
--- 
+--
 
 getParams :: ContentTransformer Params
-getParams = return . ctxParams =<< get
+getParams = liftM ctxParams get
 
 getPageName :: ContentTransformer String
-getPageName = get >>= return . ctxPage
+getPageName = liftM ctxPage get
 
 getFileName :: ContentTransformer FilePath
-getFileName = get >>= return . ctxFile
+getFileName = liftM ctxFile get
 
 getLayout :: ContentTransformer PageLayout
-getLayout = get >>= return . ctxLayout
+getLayout = liftM ctxLayout get
+
+getCacheable :: ContentTransformer Bool
+getCacheable = liftM ctxCacheable get
 
 -- | Updates the layout with the result of applying f to the current layout
 updateLayout :: (PageLayout -> PageLayout) -> ContentTransformer ()
@@ -376,8 +409,14 @@ updateLayout f = do
 
 readerFor :: PageType -> (String -> Pandoc)
 readerFor pt = case pt of
-                 RST      -> readRST (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
-                 Markdown -> readMarkdown (defaultParserState { stateSanitizeHTML = True, stateSmart = True })
+                 RST      -> readRST defaultParserState{
+                                       stateSanitizeHTML = True,
+                                       stateSmart = True
+                                       }
+                 Markdown -> readMarkdown defaultParserState{
+                                            stateSanitizeHTML = True,
+                                            stateSmart = True
+                                            }
 
 wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
 wikiLinksTransform _ = return . processWith convertWikiLinks
