@@ -116,14 +116,12 @@ main = do
   unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf }
-  let staticHandler d = dir d $ withExpiresHeaders $ fileServe [] $
-                                staticdir </> d
+  let staticHandler = dir "_static" $
+                      withExpiresHeaders $ fileServe [] staticdir
 
   -- start the server
   tid <- forkIO $ simpleHTTP serverConf $ msum $
-          [ staticHandler d | d <- ["css", "img", "js"]] ++
-          [ debugHandler | debugMode conf ] ++
-          wikiHandlers
+         staticHandler : ([ debugHandler | debugMode conf ] ++ wikiHandlers)
   waitForTermination
 
   -- shut down the server
