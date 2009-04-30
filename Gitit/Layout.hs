@@ -80,7 +80,7 @@ formattedPage layout page params htmlContents = do
             _ -> return ""
   user <- getLoggedInUser params
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
-  let scriptLink x = script ! [src ("/js/" ++ x),
+  let scriptLink x = script ! [src ("/_static/js/" ++ x),
         thetype "text/javascript"] << noHtml
   let javascriptlinks = if null (pgScripts layout)
                            then ""

@@ -297,7 +297,7 @@ pandocToHtml :: MonadIO m => Pandoc -> m Html
 pandocToHtml pandocContents = do
   cfg <- getConfig
   return $ writeHtml (defaultWriterOptions { writerStandalone = False
-                                           , writerHTMLMathMethod = JsMath (Just "/js/jsMath/easy/load.js")
+                                           , writerHTMLMathMethod = JsMath (Just "/_static/js/jsMath/easy/load.js")
                                            , writerTableOfContents = tableOfContents cfg
                                            }) pandocContents
 
