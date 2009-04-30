@@ -143,7 +143,6 @@ wikiHandlers =
   , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
   , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
   , handlePath "_random"    GET  randomPage
-  , handlePath ""           GET  showFrontPage
   , handlePath "_resetPassword"   GET  resetPasswordRequestForm
   , handlePath "_resetPassword"   POST resetPasswordRequest
   , handlePath "_doResetPassword" GET  resetPassword
@@ -223,11 +222,6 @@ randomPage _ _ = do
                      ((fromIntegral picosecs `div` 1000000) `mod` length pages)
        seeOther (urlForPage newPage) $ toResponse $
          p << "Redirecting to a random page"
-
-showFrontPage :: String -> Params -> Web Response
-showFrontPage _ params = do
-  cfg <- getConfig
-  showPage (frontPage cfg) params
 
 discussPage :: String -> Params -> Web Response
 discussPage page _ = seeOther (urlForPage discussionPage) $
