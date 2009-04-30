@@ -223,6 +223,7 @@ handle pathtest meth responder = uriRest $ \uri ->
   in  if pathtest path'
          then do
            cfg <- getConfig
+           let path'' = if null path' then frontPage cfg else path'
            if compressResponses cfg then compressedResponseFilter else return "" 
            withData $ \params ->
                withRequest $ \req ->
@@ -232,9 +233,10 @@ handle pathtest meth responder = uriRest $ \uri ->
                                          Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                          _       -> Nothing
                       let peer = fst $ rqPeer req
-                      responder path' (params { pReferer = referer,
-                                                pUri = uri,
-                                                pPeer = peer })
+
+                      responder path'' (params { pReferer = referer,
+                                                 pUri = uri,
+                                                 pPeer = peer })
                     else mzero
          else anyRequest mzero
 
