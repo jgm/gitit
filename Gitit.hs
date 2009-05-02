@@ -28,7 +28,7 @@ import Gitit.Framework
 import Gitit.Layout
 import Gitit.Authentication
 import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
-        exportPage, showHighlightedSource, preview)
+        exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import System.IO.UTF8
 import System.IO (stderr)
 import Control.Exception (throwIO, catch, try)
@@ -655,9 +655,9 @@ updatePage page params = do
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
-  let editedText = case pEditedText params of
-                      Nothing -> error "No body text in POST request"
-                      Just b  -> b
+  editedText <- case pEditedText params of
+                     Nothing -> error "No body text in POST request"
+                     Just b  -> applyPreCommitPlugins page params b
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
   fs <- getFileStore

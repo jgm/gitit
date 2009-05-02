@@ -110,7 +110,6 @@ data AppState = AppState {
 
 type ContentTransformer = StateT Context (WebT IO)
 
--- later other types of plugin can be added
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
