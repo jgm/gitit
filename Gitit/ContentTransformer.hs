@@ -33,6 +33,7 @@ module Gitit.ContentTransformer
   , showHighlightedSource
   , showFile
   , preview
+  , applyPreCommitPlugins
   -- Cache-aware transformer combinators
   , mbTextToWikiPandocPageCached
   , pandocToWikiDivCached
@@ -105,19 +106,21 @@ import Network.URI (isAllowedInURI, escapeURIString)
 -- ContentTransformer runners
 --
 
-runPageTransformer :: ContentTransformer Response
+runPageTransformer :: ToMessage a
+                   => ContentTransformer a
                    -> String
                    -> Params
-                   -> Web Response
+                   -> Web a
 runPageTransformer xform page params = do
   pt <- getDefaultPageType
   evalStateT xform $
     Context page (pathForPage page) pt defaultPageLayout params True
 
-runFileTransformer :: ContentTransformer Response
+runFileTransformer :: ToMessage a
+                   => ContentTransformer a
                    -> FilePath
                    -> Params
-                   -> Web Response
+                   -> Web a
 runFileTransformer xform file params = do
   pt <- getDefaultPageType
   evalStateT xform $
@@ -151,6 +154,10 @@ preview = runPageTransformer $
           textToWikiPandoc . pRaw >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
+
+applyPreCommitPlugins :: String -> Params -> String -> Web String
+applyPreCommitPlugins page params rawtext =
+  runPageTransformer (applyPreCommitTransforms rawtext) page params
 
 --
 -- Top level, composed transformers
@@ -303,7 +310,8 @@ textToWikiPandocPage = textToWikiPandoc >=> addPageNameToPandoc
 
 -- | Converts source text to Pandoc and applies page transforms
 textToWikiPandoc :: String -> ContentTransformer Pandoc
-textToWikiPandoc = textToPandoc >=> applyPageTransforms
+textToWikiPandoc = applyPreParseTransforms >=>
+                     textToPandoc >=> applyPageTransforms
 
 -- | Converts source text to Pandoc using default page type
 textToPandoc :: String -> ContentTransformer Pandoc
@@ -339,7 +347,7 @@ pandocToWikiDiv :: Maybe Pandoc -> ContentTransformer Html
 pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 
 --
--- Content or context augmentation combinators
+-- Plugin combinators
 --
 
 getPageTransforms :: ContentTransformer [Pandoc -> PluginM Pandoc]
@@ -347,20 +355,41 @@ getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
   where pageTransform (PageTransform x) = Just x
         pageTransform _                 = Nothing
 
--- TODO  - factor out into a generic 'apply a plugin' combinator
--- with type a -> ContentTransformer a
--- but then we'll have to include wikiLinksTransform as default?
--- then getPageTransforms >>= foldM appylPlugin
-applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
-applyPageTransforms c = do
+getPreParseTransforms :: ContentTransformer [String -> PluginM String]
+getPreParseTransforms = liftM (mapMaybe preParseTransform) $
+                          queryAppState plugins
+  where preParseTransform (PreParseTransform x) = Just x
+        preParseTransform _                     = Nothing
+
+getPreCommitTransforms :: ContentTransformer [String -> PluginM String]
+getPreCommitTransforms = liftM (mapMaybe preCommitTransform) $
+                          queryAppState plugins
+  where preCommitTransform (PreCommitTransform x) = Just x
+        preCommitTransform _                      = Nothing
+
+applyTransform :: a -> (a -> PluginM a) -> ContentTransformer a
+applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
   user <- lift $ getLoggedInUser (ctxParams context)
-  transforms <- getPageTransforms
-  let combined = foldM (flip ($)) c (wikiLinksTransform:transforms)
-  (result, context') <- liftIO $ runPluginM combined conf user context
+  (result, context') <- liftIO $
+                        runPluginM (transform inp) conf user context
   put context'
   return result
+
+applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
+applyPageTransforms c = liftM (wikiLinksTransform : ) getPageTransforms >>=
+                        foldM applyTransform c
+
+applyPreParseTransforms :: String -> ContentTransformer String
+applyPreParseTransforms c = getPreParseTransforms >>= foldM applyTransform c
+
+applyPreCommitTransforms :: String -> ContentTransformer String
+applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
+
+--
+-- Content or context augmentation combinators
+--
 
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
