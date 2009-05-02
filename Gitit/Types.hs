@@ -112,11 +112,11 @@ data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
 
-type PluginM = ReaderT Config (StateT Context IO)
+type PluginM = ReaderT (Config, Maybe String) (StateT Context IO)
 
-runPluginM :: PluginM a -> Config -> Context -> IO (a, Context)
-runPluginM plugin conf plstate =
-  runStateT (runReaderT plugin conf) plstate
+runPluginM :: PluginM a -> Config -> Maybe String -> Context -> IO (a, Context)
+runPluginM plugin conf user plstate =
+  runStateT (runReaderT plugin (conf, user)) plstate
 
 data Context = Context { ctxPage      :: String
                        , ctxFile      :: String

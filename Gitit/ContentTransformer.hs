@@ -350,13 +350,18 @@ getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
   where pageTransform (PageTransform x) = Just x
         pageTransform _                 = Nothing
 
+-- TODO  - factor out into a generic 'apply a plugin' combinator
+-- with type a -> ContentTransformer a
+-- but then we'll have to include wikiLinksTransform as default?
+-- then getPageTransforms >>= foldM appylPlugin
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = do
   context <- get
   conf <- lift getConfig
+  user <- lift $ getLoggedInUser (ctxParams context)
   transforms <- getPageTransforms
   let combined = foldM (flip ($)) c (wikiLinksTransform:transforms)
-  (result, context') <- liftIO $ runPluginM combined conf context
+  (result, context') <- liftIO $ runPluginM combined conf user context
   put context'
   return result
 
