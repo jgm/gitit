@@ -96,7 +96,7 @@ askConfig = ask
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
 -- to a 'PageTransform' plugin.
 mkPageTransform :: Data a => (a -> a) -> Plugin
-mkPageTransform fn = PageTransform $ \doc -> return $ processWith fn doc
+mkPageTransform fn = PageTransform $ return . processWith fn
 
 -- | Monadic version of 'mkPageTransform'.
 -- Lifts a function from @a -> Web a@ to a 'PageTransform' plugin.
