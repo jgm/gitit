@@ -50,7 +50,8 @@ Flag plugins
 Library
   hs-source-dirs:    .
   exposed-modules:   Gitit.Interface
-  other-modules:     Gitit.State, Gitit.Server, Gitit.ContentTransformer, Gitit.Layout,
+  other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
+                     Gitit.ContentTransformer, Gitit.Layout,
                      Gitit.Export, Gitit.Framework, Gitit.Util
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
@@ -63,8 +64,10 @@ Library
 Executable           gitit
   hs-source-dirs:    .
   main-is:           Gitit.hs 
-  other-modules:     Gitit.State, Gitit.Server, Gitit.Util, Gitit.Export, Gitit.Layout,
-                     Gitit.ContentTransformer, Gitit.Initialize, Gitit.Config, Gitit.Framework,
+  other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
+                     Gitit.Util, Gitit.Export, Gitit.Layout,
+                     Gitit.ContentTransformer, Gitit.Initialize,
+                     Gitit.Config, Gitit.Framework,
                      Gitit.Plugins, Paths_gitit, Gitit.Authentication
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.2, process, filepath, directory, mtl, cgi,

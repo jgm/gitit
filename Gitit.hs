@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Main where
 
 import Gitit.Plugins ( loadPlugin )
+import Gitit.Types
 import Gitit.Server
 import Gitit.Util (orIfNull)
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)

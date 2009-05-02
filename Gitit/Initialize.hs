@@ -21,6 +21,7 @@ where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
 import Gitit.State
+import Gitit.Types
 import Paths_gitit (getDataFileName)
 import qualified Data.ByteString.Lazy as B
 import Control.Exception (throwIO, try)

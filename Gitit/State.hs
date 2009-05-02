@@ -25,8 +25,8 @@ import qualified Data.Map as M
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
-import qualified Data.ByteString.UTF8 as B (ByteString, fromString, toString, length)
-import System.Time (getClockTime, ClockTime)
+import qualified Data.ByteString.UTF8 as B (fromString, toString, length)
+import System.Time (getClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import System.Directory (doesFileExist)
@@ -37,12 +37,10 @@ import Control.Exception (try, throwIO)
 import Data.FileStore
 import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
-import Data.Maybe (mapMaybe)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import qualified Text.StringTemplate as T
-import Gitit.Server (readMimeTypesFile, Web)
-import Text.Pandoc (Pandoc)
 import System.Log.Logger (Priority(..), logM)
+import Gitit.Types
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
@@ -71,99 +69,49 @@ initializeAppState conf users' templ = do
                            , jsMath    = jsMathExists
                            , plugins   = [] }
 
+-- | Read a file associating mime types with extensions, and return a
+-- map from extensions to types. Each line of the file consists of a
+-- mime type, followed by space, followed by a list of zero or more
+-- extensions, separated by spaces. Example: text/plain txt text
+readMimeTypesFile :: FilePath -> IO (M.Map String String)
+readMimeTypesFile f = catch (readFile f >>= return . foldr go M.empty . map words . lines) $
+                            handleMimeTypesFileNotFound
+     where go []     m = m  -- skip blank lines
+           go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
+           handleMimeTypesFileNotFound e = do
+             logM "gitit" WARNING $ "Could not read mime types file: " ++ f ++ "\n" ++
+               show e ++ "\n" ++ "Using defaults instead."
+             return mimeTypes
+
+-- | Ready collection of common mime types. (Copied from
+-- Happstack.Server.HTTP.FileServe.)
+mimeTypes :: M.Map String String
+mimeTypes = M.fromList
+        [("xml","application/xml")
+        ,("xsl","application/xml")
+        ,("js","text/javascript")
+        ,("html","text/html")
+        ,("htm","text/html")
+        ,("css","text/css")
+        ,("gif","image/gif")
+        ,("jpg","image/jpeg")
+        ,("png","image/png")
+        ,("txt","text/plain")
+        ,("doc","application/msword")
+        ,("exe","application/octet-stream")
+        ,("pdf","application/pdf")
+        ,("zip","application/zip")
+        ,("gz","application/x-gzip")
+        ,("ps","application/postscript")
+        ,("rtf","application/rtf")
+        ,("wav","application/x-wav")
+        ,("hs","text/plain")]
+
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
 
 queryAppState :: MonadIO m => (AppState -> a) -> m a
 queryAppState fn = liftIO $! readIORef appstate >>= return . fn
-
-data Repository = Git FilePath
-                | Darcs FilePath
-                deriving (Read, Show)
-
-data PageType = Markdown | RST
-                deriving (Read, Show)
-
--- | Data structure for information read from config file.
-data Config = Config {
-  repository           :: Repository,               -- file store for pages
-  defaultPageType      :: PageType,                 -- the default page markup type for this wiki
-  userFile             :: FilePath,                 -- path of users database
-  templateFile         :: FilePath,                 -- path of page template file
-  logFile              :: FilePath,                 -- path of server log file
-  logLevel             :: Priority,                 -- severity filter for log messages (DEBUG, INFO, NOTICE,
-                                                    -- WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
-  staticDir            :: FilePath,                 -- path of static directory
-  pluginModules        :: [String],                 -- names of plugin modules to load
-  tableOfContents      :: Bool,                     -- should each page have an automatic table of contents?
-  maxUploadSize        :: Integer,                  -- maximum size of pages and file uploads
-  portNumber           :: Int,                      -- port number to serve content on
-  debugMode            :: Bool,                     -- should debug info be printed to the console?
-  frontPage            :: String,                   -- the front page of the wiki
-  noEdit               :: [String],                 -- pages that cannot be edited through the web interface
-  noDelete             :: [String],                 -- pages that cannot be deleted through the web interface
-  accessQuestion       :: Maybe (String, [String]), -- if Nothing, then anyone can register for an account.
-                                                    -- if Just (prompt, answers), then a user will be given the prompt
-                                                    -- and must give one of the answers in order to register.
-  useRecaptcha         :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
-  recaptchaPublicKey   :: String,
-  recaptchaPrivateKey  :: String,
-  compressResponses    :: Bool,                     -- should responses be compressed?
-  maxCacheSize         :: Integer,                  -- maximum size in bytes of in-memory page cache
-  mimeTypesFile        :: FilePath,                 -- path of file associating mime types with file extensions
-  mailCommand          :: String,                   -- command to send notification emails
-  resetPasswordMessage :: String                    -- text of password reset email
-  } deriving (Read, Show)
-
-type SessionKey = Integer
-
-data SessionData = SessionData {
-  sessionUser :: String
-} deriving (Read,Show,Eq)
-
-data Sessions a = Sessions {unsession::M.Map SessionKey a}
-  deriving (Read,Show,Eq)
-
--- Password salt hashedPassword
-data Password = Password { pSalt :: String, pHashed :: String }
-  deriving (Read,Show,Eq)
-
-data User = User {
-  uUsername :: String,
-  uPassword :: Password,
-  uEmail    :: String
-} deriving (Show,Read)
-
-data AppState = AppState {
-  sessions       :: Sessions SessionData,
-  users          :: M.Map String User,
-  config         :: Config,
-  filestore      :: FileStore,
-  mimeMap        :: M.Map String String,
-  cache          :: Cache,
-  template       :: T.StringTemplate String,
-  jsMath         :: Bool,
-  plugins        :: [Plugin]
-}
-
--- later other types of plugin can be added
-data Plugin = PageTransform (AppState -> Pandoc -> Web Pandoc)
-
-getPageTransforms :: Web [AppState -> Pandoc -> Web Pandoc]
-getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
-  where pageTransform (PageTransform x) = Just x
-        -- pageTransform _                 = Nothing
-
-data CachedPage = CachedPage {
-    cpContents        :: B.ByteString
-  , cpRevisionId      :: RevisionId
-  , cpLastAccessTime  :: ClockTime
-  } deriving Show
-
-data Cache = Cache {
-    cachePages :: M.Map String CachedPage
-  , cacheSize  :: Integer
-}
 
 emptyCache :: Cache
 emptyCache = Cache M.empty 0

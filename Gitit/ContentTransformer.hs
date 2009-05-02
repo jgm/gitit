@@ -82,9 +82,11 @@ import Prelude hiding (catch)
 import Gitit.Server
 import Gitit.Framework
 import Gitit.State
+import Gitit.Types
 import Gitit.Layout
 import Gitit.Export (exportFormats)
 import Data.FileStore
+import Data.Maybe (mapMaybe)
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
@@ -98,13 +100,6 @@ import Network.HTTP (urlEncodeVars)
 import Happstack.Server (WebT, ToMessage)
 import Network.URI (isAllowedInURI, escapeURIString)
 
-data Context = Context { ctxPage      :: String
-                       , ctxFile      :: String
-                       , ctxLayout    :: PageLayout
-                       , ctxParams    :: Params
-                       , ctxCacheable :: Bool
-                       }
-
 type ContentTransformer = StateT Context (WebT IO)  -- Web a = WebT IO a
 
 --
@@ -115,15 +110,19 @@ runPageTransformer :: ContentTransformer Response
                    -> String
                    -> Params
                    -> Web Response
-runPageTransformer xform page params = evalStateT xform $
-  Context page (pathForPage page) defaultPageLayout params True
+runPageTransformer xform page params = do
+  pt <- getDefaultPageType
+  evalStateT xform $
+    Context page (pathForPage page) pt defaultPageLayout params True
 
 runFileTransformer :: ContentTransformer Response
                    -> FilePath
                    -> Params
                    -> Web Response
-runFileTransformer xform file params = evalStateT xform $
-  Context file file defaultPageLayout params True
+runFileTransformer xform file params = do
+  pt <- getDefaultPageType
+  evalStateT xform $
+    Context file file pt defaultPageLayout params True
 
 --
 -- Gitit responders
@@ -173,8 +172,8 @@ htmlViaPandoc = cachedContents >>=
 
 highlightRawSource :: ContentTransformer Response
 highlightRawSource = do
-  updateLayout $ \l -> l { pgTabs = [ViewTab,HistoryTab] }
-  cachedContents >>= highlightSourceCached >>= applyWikiTemplate
+    updateLayout $ \l -> l { pgTabs = [ViewTab,HistoryTab] }
+    cachedContents >>= highlightSourceCached >>= applyWikiTemplate
 
 --
 -- Cache-aware transformer combinators
@@ -310,7 +309,7 @@ textToWikiPandoc = textToPandoc >=> applyPageTransforms
 -- | Converts source text to Pandoc using default page type
 textToPandoc :: String -> ContentTransformer Pandoc
 textToPandoc s = do
-  pt <- getDefaultPageType -- should get the current page type instead
+  pt <- getPageType -- should get the current page type instead
   return $ readerFor pt $ filter (/= '\r') s
 
 -- | Same as pandocToHtml, with support for Maybe values
@@ -344,12 +343,20 @@ pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 -- Content or context augmentation combinators
 --
 
+getPageTransforms :: ContentTransformer [Pandoc -> PluginM Pandoc]
+getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
+  where pageTransform (PageTransform x) = Just x
+        -- pageTransform _                 = Nothing
+
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
-applyPageTransforms c = lift $ do
+applyPageTransforms c = do
+  context <- get
+  conf <- lift getConfig
   transforms <- getPageTransforms
-  state <- queryAppState id
-  -- Note: each plugin has its own read-only copy of the state
-  foldM (\x pl -> pl state x) c (wikiLinksTransform : transforms)
+  let combined = foldM (flip ($)) c (wikiLinksTransform:transforms)
+  (result, context') <- liftIO $ runPluginM combined conf context
+  put context'
+  return result
 
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
@@ -387,6 +394,9 @@ getParams = liftM ctxParams get
 getPageName :: ContentTransformer String
 getPageName = liftM ctxPage get
 
+getPageType :: ContentTransformer PageType
+getPageType = liftM ctxPageType get
+
 getFileName :: ContentTransformer FilePath
 getFileName = liftM ctxFile get
 
@@ -418,8 +428,8 @@ readerFor pt = case pt of
                                             stateSmart = True
                                             }
 
-wikiLinksTransform :: AppState -> Pandoc -> Web Pandoc
-wikiLinksTransform _ = return . processWith convertWikiLinks
+wikiLinksTransform :: Pandoc -> PluginM Pandoc
+wikiLinksTransform = return . processWith convertWikiLinks
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline

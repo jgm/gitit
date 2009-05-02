@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Gitit.Authentication where
 
 import Gitit.State
+import Gitit.Types
 import Gitit.Framework
 import Gitit.Layout
 import Gitit.Server

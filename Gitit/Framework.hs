@@ -16,12 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- General framework for defining wiki actions. 
 -}
 
-module Gitit.Framework (
-                         Handler
-                       , Recaptcha(..)
-                       , Params(..)
-                       , Command(..)
-                       , getLoggedInUser
+module Gitit.Framework ( getLoggedInUser
                        , sessionTime
                        , unlessNoEdit
                        , unlessNoDelete
@@ -45,148 +40,19 @@ module Gitit.Framework (
 where
 import Gitit.Server
 import Gitit.State
+import Gitit.Types
 import Text.Pandoc.Shared (substitute)
-import Control.Monad.Reader (mplus)
 import Data.Char (toLower)
-import Data.DateTime
 import Control.Monad.Trans (MonadIO)
 import Control.Monad (msum, mzero)
-import qualified Data.ByteString.Lazy as B
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (fromString, toString)
-import Data.Maybe (fromMaybe, fromJust)
-import Data.List (intersect, intercalate, isSuffixOf)
+import Data.Maybe (fromJust)
+import Data.List (intercalate, isSuffixOf)
 import System.FilePath ((<.>), takeExtension, dropExtension)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
 import Text.Highlighting.Kate
 import Network.HTTP (urlEncode)
-
-type Handler = ServerPart Response
-
-data Recaptcha = Recaptcha {
-    recaptchaChallengeField :: String
-  , recaptchaResponseField  :: String
-  } deriving (Read, Show)
-
-data Params = Params { pUsername     :: String
-                     , pPassword     :: String
-                     , pPassword2    :: String
-                     , pRevision     :: Maybe String
-                     , pDestination  :: String
-                     , pReferer      :: Maybe String
-                     , pUri          :: String
-                     , pForUser      :: Maybe String
-                     , pSince        :: Maybe DateTime
-                     , pRaw          :: String
-                     , pLimit        :: Int
-                     , pPatterns     :: [String]
-                     , pGotoPage     :: String
-                     , pFileToDelete :: String
-                     , pEditedText   :: Maybe String
-                     , pMessages     :: [String]
-                     , pFrom         :: Maybe String
-                     , pTo           :: Maybe String
-                     , pFormat       :: String
-                     , pSHA1         :: String
-                     , pLogMsg       :: String
-                     , pEmail        :: String
-                     , pFullName     :: String
-                     , pAccessCode   :: String
-                     , pWikiname     :: String
-                     , pPrintable    :: Bool
-                     , pOverwrite    :: Bool
-                     , pFilename     :: String
-                     , pFileContents :: B.ByteString
-                     , pUser         :: String
-                     , pConfirm      :: Bool 
-                     , pSessionKey   :: Maybe SessionKey
-                     , pRecaptcha    :: Recaptcha
-                     , pPeer         :: String
-                     , pResetCode    :: String
-                     }  deriving Show
-
-instance FromData Params where
-     fromData = do
-         un <- look "username"       `mplus` return ""
-         pw <- look "password"       `mplus` return ""
-         p2 <- look "password2"      `mplus` return ""
-         rv <- (look "revision" >>= \s ->
-                 return (if null s then Nothing else Just s)) `mplus` return Nothing
-         fu <- (look "forUser" >>= return . Just) `mplus` return Nothing
-         si <- (look "since" >>= return . parseDateTime "%Y-%m-%d") `mplus` return Nothing  -- YYYY-mm-dd format
-         ds <- (lookCookieValue "destination") `mplus` return "/"
-         ra <- look "raw"            `mplus` return ""
-         lt <- look "limit"          `mplus` return "100"
-         pa <- look "patterns"       `mplus` return ""
-         gt <- look "gotopage"       `mplus` return ""
-         ft <- look "filetodelete"   `mplus` return ""
-         me <- lookRead "messages"   `mplus` return [] 
-         fm <- (look "from" >>= return . Just) `mplus` return Nothing
-         to <- (look "to" >>= return . Just)   `mplus` return Nothing
-         et <- (look "editedText" >>= return . Just . filter (/= '\r')) `mplus` return Nothing
-         fo <- look "format"         `mplus` return ""
-         sh <- look "sha1"           `mplus` return ""
-         lm <- look "logMsg"         `mplus` return ""
-         em <- look "email"          `mplus` return ""
-         na <- look "full_name_1"    `mplus` return ""
-         wn <- look "wikiname"       `mplus` return ""
-         pr <- (look "printable" >> return True) `mplus` return False
-         ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
-         fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
-         fc <- (lookInput "file" >>= return . inputValue) `mplus` return B.empty
-         ac <- look "accessCode"     `mplus` return ""
-         cn <- (look "confirm" >> return True) `mplus` return False
-         sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
-         rc <- look "recaptcha_challenge_field" `mplus` return ""
-         rr <- look "recaptcha_response_field" `mplus` return ""
-         rk <- look "reset_code" `mplus` return ""
-         return $ Params { pUsername     = un
-                         , pPassword     = pw
-                         , pPassword2    = p2
-                         , pRevision     = rv
-                         , pForUser      = fu
-                         , pSince        = si
-                         , pDestination  = ds
-                         , pReferer      = Nothing  -- this gets set by handle...
-                         , pUri          = ""       -- this gets set by handle...
-                         , pRaw          = ra
-                         , pLimit        = read lt
-                         , pPatterns     = words pa
-                         , pGotoPage     = gt
-                         , pFileToDelete = ft
-                         , pMessages     = me
-                         , pFrom         = fm
-                         , pTo           = to
-                         , pEditedText   = et
-                         , pFormat       = fo 
-                         , pSHA1         = sh
-                         , pLogMsg       = lm
-                         , pEmail        = em
-                         , pFullName     = na 
-                         , pWikiname     = wn
-                         , pPrintable    = pr 
-                         , pOverwrite    = ow
-                         , pFilename     = fn
-                         , pFileContents = fc
-                         , pAccessCode   = ac
-                         , pUser         = ""  -- this gets set by ifLoggedIn...
-                         , pConfirm      = cn
-                         , pSessionKey   = sk
-                         , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
-                         , pPeer         = ""  -- this gets set by handle...
-                         , pResetCode    = rk
-                         }
-
-data Command = Command (Maybe String)
-
-instance FromData Command where
-     fromData = do
-       pairs <- lookPairs
-       return $ case map fst pairs `intersect` commandList of
-                 []          -> Command Nothing
-                 (c:_)       -> Command $ Just c
-               where commandList = ["page", "request", "params", "edit", "showraw", "history",
-                                    "export", "diff", "cancel", "update", "delete", "discuss"]
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do

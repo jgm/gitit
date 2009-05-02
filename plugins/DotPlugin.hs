@@ -25,9 +25,9 @@ import Control.Monad.Trans (liftIO)
 plugin :: Plugin
 plugin = mkPageTransformM transformBlock
 
-transformBlock :: Block -> Web Block
+transformBlock :: Block -> PluginM Block
 transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classes = do
-  cfg <- getConfig
+  cfg <- askConfig
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
@@ -35,7 +35,7 @@ transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classe
   if ec == ExitSuccess
      then do
        liftIO $ writeFile (staticDir cfg </> "img" </> outfile) out
-       return $ Para [Image name ("/img" </> outfile, "")]
+       return $ Para [Image name ("/_static/img" </> outfile, "")]
      else error $ "dot returned an error status: " ++ err
 transformBlock x = return x
 
