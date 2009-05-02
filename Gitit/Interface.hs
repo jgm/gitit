@@ -81,6 +81,10 @@ module Gitit.Interface ( askConfig
                        , inlinesToString
                        , mkPageTransform
                        , mkPageTransformM
+                       , doNotCache
+                       , getContext
+                       , modifyContext
+                       , Context
                        )
 where
 import Text.Pandoc.Definition
@@ -88,9 +92,19 @@ import Data.Data
 import Gitit.Types
 import Gitit.ContentTransformer
 import Control.Monad.Reader (ask)
+import Control.Monad.State (get, modify)
 
 askConfig :: PluginM Config
 askConfig = ask
+
+doNotCache :: PluginM ()
+doNotCache = modify (\ctx -> ctx{ ctxCacheable = False })
+
+getContext :: PluginM Context
+getContext = get
+
+modifyContext :: (Context -> Context) -> PluginM ()
+modifyContext = modify
 
 -- | Lifts a function from @a -> a@ (for example, @Inline -> Inline@,
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)

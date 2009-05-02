@@ -70,8 +70,10 @@ module Gitit.ContentTransformer
   -- ContentTransformer context API
   , getPageName
   , getFileName
+  , getPageType
   , getLayout
   , getParams
+  , getCacheable
   -- Pandoc and wiki content conversion support
   , inlinesToURL
   , inlinesToString
@@ -85,7 +87,7 @@ import Gitit.State
 import Gitit.Types
 import Gitit.Layout
 import Gitit.Export (exportFormats)
-import Data.FileStore
+import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
@@ -221,7 +223,7 @@ cacheHtml c = do
     -- after being retrieved by pageAsPandoc...
     -- better to have pageAsPandoc return the revision ID too...
     fs <- getFileStore
-    rev <- liftIO $ latest fs file
+    rev <- liftIO $ FS.latest fs file
     cacheContents file rev c
   return c
 
@@ -236,8 +238,8 @@ rawContents = do
   file <- getFileName
   fs <- getFileStore
   let rev = pRevision params
-  liftIO $ catch (liftM Just $ retrieve fs file rev)
-                 (\e -> if e == NotFound then return Nothing else throwIO e)
+  liftIO $ catch (liftM Just $ FS.retrieve fs file rev)
+                 (\e -> if e == FS.NotFound then return Nothing else throwIO e)
 
 -- | Returns cached page if available, otherwise raw file contents
 cachedContents :: ContentTransformer (Either (Maybe String) Html)
