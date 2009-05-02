@@ -109,6 +109,8 @@ data AppState = AppState {
 
 -- later other types of plugin can be added
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
+            | PreParseTransform (String -> PluginM String)
+            | PreCommitTransform (String -> PluginM String)
 
 type PluginM = ReaderT Config (StateT Context IO)
 

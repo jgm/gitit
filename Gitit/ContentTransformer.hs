@@ -348,7 +348,7 @@ pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 getPageTransforms :: ContentTransformer [Pandoc -> PluginM Pandoc]
 getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
   where pageTransform (PageTransform x) = Just x
-        -- pageTransform _                 = Nothing
+        pageTransform _                 = Nothing
 
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = do
