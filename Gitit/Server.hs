@@ -42,6 +42,8 @@ module Gitit.Server
           , Input(..)
           , HeaderPair(..)
           , Web
+          , WebT
+          , ToMessage
           , ServerPart
           , FromData(..)
           , waitForTermination

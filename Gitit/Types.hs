@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
 Anton van Straaten <anton@appsolutions.com>
@@ -24,7 +25,7 @@ module Gitit.Types where
 
 import System.Time (ClockTime)
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
-import Control.Monad.State (StateT, runStateT)
+import Control.Monad.State (StateT, runStateT, get, modify)
 import qualified Text.StringTemplate as T
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
@@ -107,6 +108,8 @@ data AppState = AppState {
   plugins        :: [Plugin]
 }
 
+type ContentTransformer = StateT Context (WebT IO)
+
 -- later other types of plugin can be added
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
@@ -125,6 +128,18 @@ data Context = Context { ctxPage      :: String
                        , ctxParams    :: Params
                        , ctxCacheable :: Bool
                        }
+
+class (Monad m) => HasContext m where
+  getContext    :: m Context
+  modifyContext :: (Context -> Context) -> m ()
+
+instance HasContext ContentTransformer where
+  getContext    = get
+  modifyContext = modify
+
+instance HasContext PluginM where
+  getContext    = get
+  modifyContext = modify
 
 -- | Abstract representation of page layout (tabs, scripts, etc.)
 data PageLayout = PageLayout
