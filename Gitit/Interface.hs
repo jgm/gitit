@@ -72,15 +72,16 @@ of the basic types used by Pandoc (for example, 'Inline', 'Block',
 
 -}
 
-module Gitit.Interface ( askConfig
-                       , Config(..)
-                       , PluginM 
+module Gitit.Interface ( Config(..)
+                       , PluginM
                        , module Text.Pandoc.Definition
                        , Plugin(..)
                        , inlinesToURL
                        , inlinesToString
                        , mkPageTransform
                        , mkPageTransformM
+                       , askConfig
+                       , askUsername
                        , doNotCache
                        , getContext
                        , modifyContext
@@ -92,13 +93,16 @@ import Data.Data
 import Gitit.Types
 import Gitit.ContentTransformer
 import Control.Monad.Reader (ask)
-import Control.Monad.State (get, modify)
+import Control.Monad (liftM)
 
 askConfig :: PluginM Config
-askConfig = ask >>= return . fst
+askConfig = liftM fst ask
+
+askUsername :: PluginM (Maybe String)
+askUsername = liftM snd ask
 
 doNotCache :: PluginM ()
-doNotCache = modify (\ctx -> ctx{ ctxCacheable = False })
+doNotCache = modifyContext (\ctx -> ctx{ ctxCacheable = False })
 
 -- | Lifts a function from @a -> a@ (for example, @Inline -> Inline@,
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
