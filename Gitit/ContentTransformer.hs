@@ -99,10 +99,7 @@ import System.FilePath
 import Control.Monad.State
 import Control.Exception (throwIO, catch)
 import Network.HTTP (urlEncodeVars)
-import Happstack.Server (WebT, ToMessage)
 import Network.URI (isAllowedInURI, escapeURIString)
-
-type ContentTransformer = StateT Context (WebT IO)  -- Web a = WebT IO a
 
 --
 -- ContentTransformer runners

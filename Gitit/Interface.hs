@@ -100,12 +100,6 @@ askConfig = ask >>= return . fst
 doNotCache :: PluginM ()
 doNotCache = modify (\ctx -> ctx{ ctxCacheable = False })
 
-getContext :: PluginM Context
-getContext = get
-
-modifyContext :: (Context -> Context) -> PluginM ()
-modifyContext = modify
-
 -- | Lifts a function from @a -> a@ (for example, @Inline -> Inline@,
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
 -- to a 'PageTransform' plugin.
