@@ -95,7 +95,7 @@ import Control.Monad.Reader (ask)
 import Control.Monad.State (get, modify)
 
 askConfig :: PluginM Config
-askConfig = ask
+askConfig = ask >>= return . fst
 
 doNotCache :: PluginM ()
 doNotCache = modify (\ctx -> ctx{ ctxCacheable = False })
