@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Plugins ( loadPlugin )
 where
-import Gitit.State
+import Gitit.Types
 import System.FilePath
 #ifdef _PLUGINS
 import Control.Monad (unless)

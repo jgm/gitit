@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Gitit.Config ( getConfigFromOpts )
 where
-import Gitit.State (Config(..), Repository(..), PageType(..))
+import Gitit.Types
 import System.Environment
 import System.Exit
 import System.IO (stdout, stderr, hPutStrLn)
@@ -101,7 +101,7 @@ handleFlag cp conf opt = do
 
 extractConfig :: ConfigParser -> IO Config
 extractConfig cp = do
-  config <- runErrorT $ do
+  config' <- runErrorT $ do
       cfRepositoryType <- get cp "DEFAULT" "repository-type"
       cfRepositoryPath <- get cp "DEFAULT" "repository-path"
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"
@@ -166,7 +166,7 @@ extractConfig cp = do
         , mimeTypesFile        = cfMimeTypesFile
         , mailCommand          = cfMailCommand
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage }
-  case config of
+  case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
         Right c                 -> return c

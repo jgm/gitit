@@ -19,9 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions and data structures for wiki page layout.
 -}
 
-module Gitit.Layout ( PageLayout(..)
-                    , Tab(..)
-                    , defaultPageLayout
+module Gitit.Layout ( defaultPageLayout
                     , formattedPage
                     )
 where
@@ -29,6 +27,7 @@ import Data.FileStore
 import Gitit.Server
 import Gitit.Framework
 import Gitit.State
+import Gitit.Types
 import Gitit.Util (orIfNull)
 import Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
@@ -40,22 +39,6 @@ import Data.List (isSuffixOf)
 import Prelude hiding (catch)
 import Control.Exception (throwIO, catch)
 import Control.Monad.Trans (liftIO)
-
--- | Abstract representation of page layout (tabs, scripts, etc.)
-data PageLayout = PageLayout
-  { pgTitle          :: String
-  , pgScripts        :: [String]
-  , pgShowPageTools  :: Bool
-  , pgTabs           :: [Tab]
-  , pgSelectedTab    :: Tab
-  }
-
-data Tab = ViewTab
-         | EditTab
-         | HistoryTab
-         | DiscussTab
-         | DiffTab
-         deriving (Eq, Show)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout

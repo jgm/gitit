@@ -26,6 +26,7 @@ import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Gitit.Server
 import Gitit.Util (withTempDir)
 import Gitit.State
+import Gitit.Types
 import Control.Monad.Trans (liftIO)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString.Lazy as B

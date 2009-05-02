@@ -72,14 +72,9 @@ of the basic types used by Pandoc (for example, 'Inline', 'Block',
 
 -}
 
-module Gitit.Interface ( getConfig
+module Gitit.Interface ( askConfig
                        , Config(..)
-                       , AppState(..)
-                       , User(..)
-                       , FileStore(..)
-                       , getFileStore
-                       , Web
-                       , look
+                       , PluginM 
                        , module Text.Pandoc.Definition
                        , Plugin(..)
                        , inlinesToURL
@@ -89,24 +84,22 @@ module Gitit.Interface ( getConfig
                        )
 where
 import Text.Pandoc.Definition
-import Data.FileStore
 import Data.Data
-import Gitit.State
-import Gitit.Server
+import Gitit.Types
 import Gitit.ContentTransformer
+import Control.Monad.Reader (ask)
+
+askConfig :: PluginM Config
+askConfig = ask
 
 -- | Lifts a function from @a -> a@ (for example, @Inline -> Inline@,
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
 -- to a 'PageTransform' plugin.
 mkPageTransform :: Data a => (a -> a) -> Plugin
-mkPageTransform fn = PageTransform $ \st doc ->
-                       do updateAppState (const st)
-                          return $ processWith fn doc
+mkPageTransform fn = PageTransform $ \doc -> return $ processWith fn doc
 
 -- | Monadic version of 'mkPageTransform'.
 -- Lifts a function from @a -> Web a@ to a 'PageTransform' plugin.
-mkPageTransformM :: Data a => (a -> Web a) -> Plugin
-mkPageTransformM fn =  PageTransform $ \st doc ->
-                         do updateAppState (const st)
-                            processWithM fn doc
+mkPageTransformM :: Data a => (a -> PluginM a) -> Plugin
+mkPageTransformM =  PageTransform . processWithM
 
