@@ -105,6 +105,7 @@ extractConfig cp = do
       cfRepositoryType <- get cp "DEFAULT" "repository-type"
       cfRepositoryPath <- get cp "DEFAULT" "repository-path"
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"
+      cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
       cfUserFile <- get cp "DEFAULT" "user-file"
       cfTemplateFile <- get cp "DEFAULT" "template-file"
       cfLogFile <- get cp "DEFAULT" "log-file"
@@ -144,6 +145,7 @@ extractConfig cp = do
                                       x       -> error $ "Unknown repository type: " ++ x
         , defaultPageType      = pt
         , defaultLHS           = lhs
+        , showLHSBirdTracks    = cfShowLHSBirdTracks
         , userFile             = cfUserFile
         , templateFile         = cfTemplateFile
         , logFile              = cfLogFile
