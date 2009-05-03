@@ -23,11 +23,14 @@ import Data.FileStore
 import Gitit.State
 import Gitit.Types
 import Paths_gitit (getDataFileName)
-import qualified Data.ByteString.Lazy as B
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents)
-import System.IO (stderr, hPutStrLn)
 import Control.Monad (unless, forM_, liftM)
+import Prelude hiding (readFile)
+import System.IO.UTF8
+import System.IO (stderr)
+import Text.Pandoc
+import Text.Pandoc.Shared (HTMLMathMethod(..))
 
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
@@ -38,14 +41,33 @@ createRepoIfMissing conf = do
          Right _               -> return False
          Left RepositoryExists -> return True
          Left e                -> throwIO e >> return False
+  let pt = defaultPageType conf
+  let toPandoc = readMarkdown
+                 defaultParserState{ stateSanitizeHTML = True
+                                   , stateSmart = True }
+  let defOpts = defaultWriterOptions{
+                        writerStandalone = False
+                      , writerHTMLMathMethod = JsMath
+                               (Just "/_static/js/jsMath/easy/load.js")
+                      , writerLiterateHaskell = showLHSBirdTracks conf
+                      }
+  -- note: we convert this (markdown) to the default page format
+  let converter = case defaultPageType conf of
+                     Markdown -> id
+                     LaTeX    -> writeLaTeX defOpts . toPandoc
+                     HTML     -> writeHtmlString defOpts . toPandoc
+                     RST      -> writeRST defOpts . toPandoc
   unless repoExists $ do
-    welcomepath <- getDataFileName $ "data" </> "FrontPage.page"
-    welcomecontents <- B.readFile welcomepath
-    helppath <- getDataFileName $ "data" </> "Help.page"
-    helpcontents <- B.readFile helppath
+    welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
+    welcomecontents <- liftM converter $ readFile welcomepath
+    helppath <- getDataFileName $ "data" </> "Help" <.> "page"
+    helpcontentsInitial <- liftM converter $ readFile helppath
+    markuppath <- getDataFileName $ "data" </> "markup" <.> show pt
+    helpcontentsMarkup <- liftM converter $ readFile markuppath
+    let helpcontents = helpcontentsInitial ++ "\n\n" ++ helpcontentsMarkup
     -- add front page and help page
     create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
-    create fs "Help.page" (Author "Gitit" "") "Default front page" helpcontents
+    create fs "Help.page" (Author "Gitit" "") "Default help page" helpcontents
     hPutStrLn stderr "Created repository"
 
 -- | Create static directory unless it exists.
