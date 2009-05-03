@@ -5,7 +5,7 @@ web server and [pandoc][] for markup processing. Pages and uploaded
 files are stored in a [git][] or [darcs][] repository and may be modified either
 by using the VCS's command-line tools or through the wiki's web interface.
 By default, pandoc's extended version of markdown is used as a markup language,
-but reStructuredText can also be used.  Pages can be exported in a
+but reStructuredText, HTML, or LaTeX can also be used.  Pages can be exported in a
 number of different formats, including LaTeX, RTF, OpenOffice ODT, and
 MediaWiki markup. Gitit can be configured to display TeX math (using
 [jsMath][]) and highlighted source code (using [highlighting-kate][]).
@@ -13,16 +13,9 @@ MediaWiki markup. Gitit can be configured to display TeX math (using
 You can edit this page by double-clicking on it, or by clicking on the
 "edit" tab at the top of the screen.
 
-You can make a link to another wiki page like this:
-`[French Cheeses]()`.
-This will produce a link like this:  [French Cheeses]().  Note that
-the names of wiki pages need not be in CamelCase, and they may contain
-spaces.  Wiki pages may be organized into directories.  Use the
-slash ("/") character between directories and page names or
-subdirectories: `[Wines/Pinot Noir]()`.
-
-To create a new wiki page, just create a link to it and follow
-the link.
+For instructions on how to make a link to another wiki page, see [the
+Help page](/Help#wiki-links). To create a new wiki page, just create a
+link to it and follow the link.
 
 Help is always available through the "Help" link in the sidebar.
 
