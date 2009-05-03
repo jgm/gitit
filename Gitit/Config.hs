@@ -136,6 +136,8 @@ extractConfig cp = do
         , defaultPageType      = case (map toLower cfDefaultPageType) of
                                       "markdown"   -> Markdown
                                       "rst"        -> RST
+                                      "html"       -> HTML
+                                      "latex"      -> LaTeX
                                       x            -> error $ "Unknown page type: " ++ x
         , userFile             = cfUserFile
         , templateFile         = cfTemplateFile

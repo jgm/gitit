@@ -460,6 +460,14 @@ readerFor pt = case pt of
                                             stateSanitizeHTML = True,
                                             stateSmart = True
                                             }
+                 LaTeX    -> readLaTeX defaultParserState{
+                                       stateSanitizeHTML = True,
+                                       stateSmart = True
+                                       }
+                 HTML     -> readHtml defaultParserState{
+                                       stateSanitizeHTML = True,
+                                       stateSmart = True
+                                       }
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform = return . processWith convertWikiLinks

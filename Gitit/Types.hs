@@ -43,7 +43,7 @@ data Repository = Git FilePath
                 | Darcs FilePath
                 deriving (Read, Show)
 
-data PageType = Markdown | RST
+data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show)
 
 -- | Data structure for information read from config file.
