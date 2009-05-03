@@ -110,7 +110,8 @@ module Gitit.Interface ( Config(..)
                        , mkPageTransform
                        , mkPageTransformM
                        , askConfig
-                       , askUsername
+                       , askUser
+                       , User(..)
                        , doNotCache
                        , getContext
                        , modifyContext
@@ -131,8 +132,8 @@ import Control.Monad.Trans (liftIO)
 askConfig :: PluginM Config
 askConfig = liftM fst ask
 
-askUsername :: PluginM (Maybe String)
-askUsername = liftM snd ask
+askUser :: PluginM (Maybe User)
+askUser = liftM snd ask
 
 doNotCache :: PluginM ()
 doNotCache = modifyContext (\ctx -> ctx{ ctxCacheable = False })

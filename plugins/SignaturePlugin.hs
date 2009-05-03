@@ -15,7 +15,10 @@ replacedate :: String -> PluginM String
 replacedate [] = return ""
 replacedate ('$':'S':'I':'G':'$':xs) = do
   datetime <- liftIO $ getCurrentTime
-  username <- liftM (fromMaybe "???") askUsername
+  mbuser <- askUser
+  let username = case mbuser of
+                   Nothing  -> "???"
+                   Just u   -> uUsername u
   let sig = "-- " ++ username ++ " (" ++ formatDateTime "%c" datetime ++ ")"
   liftM (sig ++ ) $ replacedate xs
 replacedate (x:xs) = liftM (x : ) $ replacedate xs

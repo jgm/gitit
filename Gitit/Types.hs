@@ -114,9 +114,9 @@ data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
 
-type PluginM = ReaderT (Config, Maybe String) (StateT Context IO)
+type PluginM = ReaderT (Config, Maybe User) (StateT Context IO)
 
-runPluginM :: PluginM a -> Config -> Maybe String -> Context -> IO (a, Context)
+runPluginM :: PluginM a -> Config -> Maybe User -> Context -> IO (a, Context)
 runPluginM plugin conf user plstate =
   runStateT (runReaderT plugin (conf, user)) plstate
 
