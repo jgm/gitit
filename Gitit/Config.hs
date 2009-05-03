@@ -128,17 +128,22 @@ extractConfig cp = do
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
       cfMailCommand <- get cp "DEFAULT" "mail-command"
       cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
+      let (pt, lhs) = case map toLower cfDefaultPageType of
+                           "markdown"     -> (Markdown,False)
+                           "markdown+lhs" -> (Markdown,True)
+                           "rst"          -> (RST,False)
+                           "rst+lhs"      -> (RST,True)
+                           "html"         -> (HTML,False)
+                           "latex"        -> (LaTeX,False)
+                           "latex+lhs"    -> (LaTeX,True)
+                           x              -> error $ "Unknown page type: " ++ x
       return $! Config{
           repository           = case (map toLower $ cfRepositoryType) of
                                       "git"   -> Git (cfRepositoryPath)
                                       "darcs" -> Darcs (cfRepositoryPath)
                                       x       -> error $ "Unknown repository type: " ++ x
-        , defaultPageType      = case (map toLower cfDefaultPageType) of
-                                      "markdown"   -> Markdown
-                                      "rst"        -> RST
-                                      "html"       -> HTML
-                                      "latex"      -> LaTeX
-                                      x            -> error $ "Unknown page type: " ++ x
+        , defaultPageType      = pt
+        , defaultLHS           = lhs
         , userFile             = cfUserFile
         , templateFile         = cfTemplateFile
         , logFile              = cfLogFile
