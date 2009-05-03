@@ -50,6 +50,7 @@ data PageType = Markdown | RST | LaTeX | HTML
 data Config = Config {
   repository           :: Repository,               -- file store for pages
   defaultPageType      :: PageType,                 -- the default page markup type for this wiki
+  defaultLHS           :: Bool,                     -- treat as literate haskell by default?
   userFile             :: FilePath,                 -- path of users database
   templateFile         :: FilePath,                 -- path of page template file
   logFile              :: FilePath,                 -- path of server log file
@@ -120,12 +121,13 @@ runPluginM :: PluginM a -> Config -> Maybe User -> Context -> IO (a, Context)
 runPluginM plugin conf user plstate =
   runStateT (runReaderT plugin (conf, user)) plstate
 
-data Context = Context { ctxPage      :: String
-                       , ctxFile      :: String
-                       , ctxPageType  :: PageType
-                       , ctxLayout    :: PageLayout
-                       , ctxParams    :: Params
-                       , ctxCacheable :: Bool
+data Context = Context { ctxPage            :: String
+                       , ctxFile            :: String
+                       , ctxPageType        :: PageType
+                       , ctxLiterateHaskell :: Bool
+                       , ctxLayout          :: PageLayout
+                       , ctxParams          :: Params
+                       , ctxCacheable       :: Bool
                        }
 
 class (Monad m) => HasContext m where

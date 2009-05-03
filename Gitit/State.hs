@@ -278,3 +278,6 @@ getFileStore = queryAppState filestore
 
 getDefaultPageType :: MonadIO m => m PageType
 getDefaultPageType = liftM defaultPageType (queryAppState config)
+
+getDefaultLHS :: MonadIO m => m Bool
+getDefaultLHS = liftM defaultLHS (queryAppState config)

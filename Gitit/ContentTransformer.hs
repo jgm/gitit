@@ -72,6 +72,7 @@ module Gitit.ContentTransformer
   , getPageName
   , getFileName
   , getPageType
+  , getLiterateHaskell
   , getLayout
   , getParams
   , getCacheable
@@ -113,18 +114,28 @@ runPageTransformer :: ToMessage a
                    -> Web a
 runPageTransformer xform page params = do
   pt <- getDefaultPageType
-  evalStateT xform $
-    Context page (pathForPage page) pt defaultPageLayout params True
+  lhs <- getDefaultLHS
+  evalStateT xform  Context{ ctxPage = page
+                           , ctxFile = pathForPage page
+                           , ctxPageType = pt
+                           , ctxLiterateHaskell = lhs
+                           , ctxLayout = defaultPageLayout
+                           , ctxParams = params
+                           , ctxCacheable = True }
 
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> FilePath
                    -> Params
                    -> Web a
-runFileTransformer xform file params = do
-  pt <- getDefaultPageType
-  evalStateT xform $
-    Context file file pt defaultPageLayout params True
+runFileTransformer xform file params =
+  evalStateT xform  Context{ ctxPage = file
+                           , ctxFile = file
+                           , ctxPageType = Markdown     -- doesn't mater
+                           , ctxLiterateHaskell = False -- doesn't matter
+                           , ctxLayout = defaultPageLayout
+                           , ctxParams = params
+                           , ctxCacheable = True }
 
 --
 -- Gitit responders
@@ -317,7 +328,8 @@ textToWikiPandoc = applyPreParseTransforms >=>
 textToPandoc :: String -> ContentTransformer Pandoc
 textToPandoc s = do
   pt <- getPageType -- should get the current page type instead
-  return $ readerFor pt $ filter (/= '\r') s
+  lhs <- getLiterateHaskell
+  return $ readerFor pt lhs $ filter (/= '\r') s
 
 -- | Same as pandocToHtml, with support for Maybe values
 maybePandocToHtml :: (MonadPlus m, MonadIO m) => Maybe Pandoc -> m Html
@@ -433,6 +445,9 @@ getPageName = liftM ctxPage get
 getPageType :: ContentTransformer PageType
 getPageType = liftM ctxPageType get
 
+getLiterateHaskell :: ContentTransformer Bool
+getLiterateHaskell = liftM ctxLiterateHaskell get
+
 getFileName :: ContentTransformer FilePath
 getFileName = liftM ctxFile get
 
@@ -453,24 +468,16 @@ updateLayout f = do
 -- Pandoc and wiki content conversion support
 --
 
-readerFor :: PageType -> (String -> Pandoc)
-readerFor pt = case pt of
-                 RST      -> readRST defaultParserState{
-                                       stateSanitizeHTML = True,
-                                       stateSmart = True
-                                       }
-                 Markdown -> readMarkdown defaultParserState{
-                                            stateSanitizeHTML = True,
-                                            stateSmart = True
-                                            }
-                 LaTeX    -> readLaTeX defaultParserState{
-                                       stateSanitizeHTML = True,
-                                       stateSmart = True
-                                       }
-                 HTML     -> readHtml defaultParserState{
-                                       stateSanitizeHTML = True,
-                                       stateSmart = True
-                                       }
+readerFor :: PageType -> Bool -> (String -> Pandoc)
+readerFor pt lhs =
+  let defPS = defaultParserState{ stateSanitizeHTML = True
+                                , stateSmart = True
+                                , stateLiterateHaskell = lhs }
+  in case pt of
+       RST      -> readRST defPS
+       Markdown -> readMarkdown defPS
+       LaTeX    -> readLaTeX defPS
+       HTML     -> readHtml defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform = return . processWith convertWikiLinks
