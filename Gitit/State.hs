@@ -43,20 +43,25 @@ import System.Log.Logger (Priority(..), logM)
 import Gitit.Types
 
 appstate :: IORef AppState
-appstate = unsafePerformIO $  newIORef $ AppState { sessions = undefined
-                                                  , users = undefined
-                                                  , config = undefined
-                                                  , filestore = undefined
-                                                  , mimeMap = undefined
-                                                  , cache = undefined
-                                                  , template = undefined
-                                                  , jsMath = undefined
-                                                  , plugins = undefined }
+appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
+                                                 , users = undefined
+                                                 , config = undefined
+                                                 , filestore = undefined
+                                                 , mimeMap = undefined
+                                                 , cache = undefined
+                                                 , template = undefined
+                                                 , jsMath = undefined
+                                                 , plugins = undefined }
 
-initializeAppState :: MonadIO m => Config -> M.Map String User -> T.StringTemplate String -> m ()
+initializeAppState :: MonadIO m
+                   => Config
+                   -> M.Map String User
+                   -> T.StringTemplate String
+                   -> m ()
 initializeAppState conf users' templ = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
-  jsMathExists <- liftIO $ doesFileExist $ staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
+  jsMathExists <- liftIO $ doesFileExist $
+                  staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , config    = conf
@@ -74,13 +79,14 @@ initializeAppState conf users' templ = do
 -- mime type, followed by space, followed by a list of zero or more
 -- extensions, separated by spaces. Example: text/plain txt text
 readMimeTypesFile :: FilePath -> IO (M.Map String String)
-readMimeTypesFile f = catch (readFile f >>= return . foldr go M.empty . map words . lines) $
-                            handleMimeTypesFileNotFound
+readMimeTypesFile f = catch
+  (liftM (foldr go M.empty . map words . lines) $ readFile f)
+  handleMimeTypesFileNotFound
      where go []     m = m  -- skip blank lines
            go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
            handleMimeTypesFileNotFound e = do
-             logM "gitit" WARNING $ "Could not read mime types file: " ++ f ++ "\n" ++
-               show e ++ "\n" ++ "Using defaults instead."
+             logM "gitit" WARNING $ "Could not read mime types file: " ++
+               f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
              return mimeTypes
 
 -- | Ready collection of common mime types. (Copied from
@@ -111,7 +117,7 @@ updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
 
 queryAppState :: MonadIO m => (AppState -> a) -> m a
-queryAppState fn = liftIO $! readIORef appstate >>= return . fn
+queryAppState fn = liftM fn $ liftIO $! readIORef appstate
 
 emptyCache :: Cache
 emptyCache = Cache M.empty 0
@@ -126,7 +132,8 @@ updateCachedPageTimestamp cache' page = do
   now <- liftIO getClockTime
   let setTimeStamp Nothing   = Nothing
       setTimeStamp (Just cp) = Just cp{ cpLastAccessTime = now }
-  let newcache = cache'{ cachePages = M.alter setTimeStamp page (cachePages cache') }
+  let newcache = cache'{ cachePages = 
+                     M.alter setTimeStamp page (cachePages cache') }
   updateAppState $ \s -> s {cache = newcache }
 
 lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe Html)
@@ -157,15 +164,18 @@ cacheContents file revid contents = do
   let newsize = fromIntegral (B.length contentsBS)
   maxCacheSize' <- liftM maxCacheSize getConfig
   if newsize > maxCacheSize'
-     then debugMessage $ "Not caching page " ++ file ++ " because it is bigger than the maximum cache size."
+     then debugMessage $ "Not caching page " ++ file ++
+                        " because it is bigger than the maximum cache size."
      else do
        now <- liftIO getClockTime
        let newpage = CachedPage { cpContents       = contentsBS
                                 , cpRevisionId     = revid
                                 , cpLastAccessTime = now }
-       let newcache = c{ cachePages = M.insert file newpage (cachePages c), cacheSize  = cacheSize c + newsize - oldsize }
+       let newcache = c{ cachePages = M.insert file newpage (cachePages c),
+                         cacheSize  = cacheSize c + newsize - oldsize }
        newcachePruned <- pruneCache maxCacheSize' newcache
-       debugMessage $ "Updating cache with " ++ file ++ ".  Total cache size = " ++ show (cacheSize newcachePruned)
+       debugMessage $ "Updating cache with " ++ file ++
+                     ".  Total cache size = " ++ show (cacheSize newcachePruned)
        updateAppState $ \s -> s { cache = newcachePruned }
 
 pruneCache :: MonadIO m => Integer -> Cache -> m Cache
@@ -177,10 +187,13 @@ pruneCache maxSize c =
 dropOldest :: MonadIO m => Cache -> m Cache
 dropOldest c = do
   let pgs    = M.toList $ cachePages c
-  let (oldestFile, oldestCp) = minimumBy (comparing (cpLastAccessTime . snd)) pgs
+  let (oldestFile, oldestCp) = minimumBy (comparing (cpLastAccessTime . snd))
+                                pgs
   let oldestSize = fromIntegral $ B.length $ cpContents oldestCp
-  debugMessage $ "Removing " ++ oldestFile ++ " (" ++ show oldestSize ++ " bytes) from cache to keep size under limit."
-  return $ c{ cachePages = M.delete oldestFile (cachePages c), cacheSize = cacheSize c - oldestSize }
+  debugMessage $ "Removing " ++ oldestFile ++ " (" ++ show oldestSize ++
+                 " bytes) from cache to keep size under limit."
+  return $ c{ cachePages = M.delete oldestFile (cachePages c),
+              cacheSize = cacheSize c - oldestSize }
 
 mkUser :: String   -- username
        -> String   -- email
@@ -188,9 +201,10 @@ mkUser :: String   -- username
        -> IO User
 mkUser uname email pass = do
   salt <- genSalt
-  return $ User { uUsername = uname,
-                  uPassword = Password { pSalt = salt, pHashed = hashPassword salt pass },
-                  uEmail = email }
+  return  User { uUsername = uname,
+                 uPassword = Password { pSalt = salt,
+                                        pHashed = hashPassword salt pass },
+                 uEmail = email }
 
 genSalt :: IO String
 genSalt = replicateM 32 $ randomRIO ('0','z')
@@ -212,8 +226,9 @@ isUser :: MonadIO m => String -> m Bool
 isUser name = liftM (M.member name) $ queryAppState users
 
 addUser :: MonadIO m => String -> User -> m ()
-addUser uname user = updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
-                     liftIO writeUserFile
+addUser uname user =
+  updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
+  liftIO writeUserFile
 
 adjustUser :: MonadIO m => String -> User -> m ()
 adjustUser uname user = updateAppState
@@ -221,14 +236,16 @@ adjustUser uname user = updateAppState
   liftIO writeUserFile
 
 delUser :: MonadIO m => String -> m ()
-delUser uname = updateAppState (\s -> s { users = M.delete uname (users s) }) >>
-                liftIO writeUserFile
+delUser uname =
+  updateAppState (\s -> s { users = M.delete uname (users s) }) >>
+  liftIO writeUserFile
 
 writeUserFile :: IO ()
 writeUserFile = do
   conf <- getConfig
   usrs <- queryAppState users
-  liftIO $ writeFile (userFile conf) $ "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
+  liftIO $ writeFile (userFile conf) $
+           "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
 
 getUser :: MonadIO m => String -> m (Maybe User)
 getUser uname = liftM (M.lookup uname) $ queryAppState users
@@ -237,7 +254,8 @@ isSession :: MonadIO m => SessionKey -> m Bool
 isSession key = liftM (M.member key . unsession) $ queryAppState sessions
 
 setSession :: MonadIO m => SessionKey -> SessionData -> m ()
-setSession key u = updateAppState $ \s -> s { sessions = Sessions . M.insert key u . unsession $ sessions s }
+setSession key u = updateAppState $ \s ->
+  s { sessions = Sessions . M.insert key u . unsession $ sessions s }
 
 newSession :: MonadIO m => SessionData -> m SessionKey
 newSession u = do
@@ -246,7 +264,8 @@ newSession u = do
   return key
 
 delSession :: MonadIO m => SessionKey -> m ()
-delSession key = updateAppState $ \s -> s { sessions = Sessions . M.delete key . unsession $ sessions s }
+delSession key = updateAppState $ \s ->
+  s { sessions = Sessions . M.delete key . unsession $ sessions s }
 
 getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
