@@ -344,6 +344,7 @@ pandocToHtml pandocContents = do
                       , writerHTMLMathMethod = JsMath
                                (Just "/_static/js/jsMath/easy/load.js")
                       , writerTableOfContents = tableOfContents cfg
+                      , writerLiterateHaskell = showLHSBirdTracks cfg
                       } pandocContents
 
 highlightSource :: Maybe String -> ContentTransformer Html

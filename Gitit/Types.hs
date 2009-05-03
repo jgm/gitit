@@ -51,6 +51,7 @@ data Config = Config {
   repository           :: Repository,               -- file store for pages
   defaultPageType      :: PageType,                 -- the default page markup type for this wiki
   defaultLHS           :: Bool,                     -- treat as literate haskell by default?
+  showLHSBirdTracks    :: Bool,                     -- show Haskell code blocks with bird tracks
   userFile             :: FilePath,                 -- path of users database
   templateFile         :: FilePath,                 -- path of page template file
   logFile              :: FilePath,                 -- path of server log file
