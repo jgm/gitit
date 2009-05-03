@@ -12,6 +12,9 @@ plugin = mkPageTransformM showuser
 showuser :: Inline -> PluginM Inline
 showuser (Math InlineMath x) | x == "USER"  = do
   doNotCache  -- tell gitit not to cache this page, as it has dynamic content
-  askUsername >>= return . Str . fromMaybe ""
+  mbUser <- askUser
+  case mbUser of
+       Nothing -> return $ Str ""
+       Just u  -> return $ Str $ uUsername u
 showuser x = return x
 
