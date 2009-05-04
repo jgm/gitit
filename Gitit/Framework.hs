@@ -48,7 +48,7 @@ import Control.Monad (msum, mzero)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (fromString, toString)
 import Data.Maybe (fromJust)
-import Data.List (intercalate, isSuffixOf)
+import Data.List (intercalate, isSuffixOf, (\\))
 import System.FilePath ((<.>), takeExtension, dropExtension)
 import Codec.Binary.UTF8.String (decodeString, encodeString)
 import Text.Highlighting.Kate
@@ -136,7 +136,10 @@ isDiscussPageFile :: FilePath -> Bool
 isDiscussPageFile f = isPageFile f && ":discuss" `isSuffixOf` (dropExtension f)
 
 isSourceCode :: String -> Bool
-isSourceCode = not . null . languagesByExtension . takeExtension
+isSourceCode path =
+  let ext   = map toLower $ takeExtension path
+      langs = languagesByExtension ext \\ ["Postscript"]
+  in  not . null $ langs
 
 urlForPage :: String -> String
 urlForPage page = '/' : (substitute "%2f" "/" $ substitute "%3a" ":" $ urlEncode $ encodeString page)
