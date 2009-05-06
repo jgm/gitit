@@ -26,6 +26,7 @@ module Gitit.Types where
 import System.Time (ClockTime)
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
+import Control.Monad (liftM)
 import qualified Text.StringTemplate as T
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
@@ -48,35 +49,38 @@ data PageType = Markdown | RST | LaTeX | HTML
 
 -- | Data structure for information read from config file.
 data Config = Config {
-  repository           :: Repository,               -- file store for pages
-  defaultPageType      :: PageType,                 -- the default page markup type for this wiki
-  defaultLHS           :: Bool,                     -- treat as literate haskell by default?
-  showLHSBirdTracks    :: Bool,                     -- show Haskell code blocks with bird tracks
-  userFile             :: FilePath,                 -- path of users database
-  templateFile         :: FilePath,                 -- path of page template file
-  logFile              :: FilePath,                 -- path of server log file
-  logLevel             :: Priority,                 -- severity filter for log messages (DEBUG, INFO, NOTICE,
-                                                    -- WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
-  staticDir            :: FilePath,                 -- path of static directory
-  pluginModules        :: [String],                 -- names of plugin modules to load
-  tableOfContents      :: Bool,                     -- should each page have an automatic table of contents?
-  maxUploadSize        :: Integer,                  -- maximum size of pages and file uploads
-  portNumber           :: Int,                      -- port number to serve content on
-  debugMode            :: Bool,                     -- should debug info be printed to the console?
-  frontPage            :: String,                   -- the front page of the wiki
-  noEdit               :: [String],                 -- pages that cannot be edited through the web interface
-  noDelete             :: [String],                 -- pages that cannot be deleted through the web interface
-  accessQuestion       :: Maybe (String, [String]), -- if Nothing, then anyone can register for an account.
-                                                    -- if Just (prompt, answers), then a user will be given the prompt
-                                                    -- and must give one of the answers in order to register.
-  useRecaptcha         :: Bool,                     -- use ReCAPTCHA service to provide captchas for user registration.
+  repository           :: Repository,  -- file store for pages
+  defaultPageType      :: PageType,    -- default page markup type for this wiki
+  defaultLHS           :: Bool,        -- treat as literate haskell by default?
+  showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
+  userFile             :: FilePath,    -- path of users database
+  templateFile         :: FilePath,    -- path of page template file
+  logFile              :: FilePath,    -- path of server log file
+  logLevel             :: Priority,    -- severity filter for log messages
+                                       -- (DEBUG, INFO, NOTICE, WARNING, ERROR,
+                                       -- CRITICAL, ALERT, EMERGENCY)
+  staticDir            :: FilePath,    -- path of static directory
+  pluginModules        :: [String],    -- names of plugin modules to load
+  tableOfContents      :: Bool,        -- show table of contents on each page?
+  maxUploadSize        :: Integer,     -- max size of pages and file uploads
+  portNumber           :: Int,         -- port number to serve content on
+  debugMode            :: Bool,        -- print debug info to the console?
+  frontPage            :: String,      -- the front page of the wiki
+  noEdit               :: [String],    -- pages that cannot be edited via web
+  noDelete             :: [String],    -- pages that cannot be deleted via web
+  accessQuestion       :: Maybe (String, [String]),
+                                       -- Nothing -> anyone can register
+                                       -- Just (prompt, answers) -> a user will
+                                       -- be given the prompt and must give
+                                       -- one of the answers to register.
+  useRecaptcha         :: Bool,        -- use ReCAPTCHA for user registration.
   recaptchaPublicKey   :: String,
   recaptchaPrivateKey  :: String,
-  compressResponses    :: Bool,                     -- should responses be compressed?
-  maxCacheSize         :: Integer,                  -- maximum size in bytes of in-memory page cache
-  mimeTypesFile        :: FilePath,                 -- path of file associating mime types with file extensions
-  mailCommand          :: String,                   -- command to send notification emails
-  resetPasswordMessage :: String                    -- text of password reset email
+  compressResponses    :: Bool,        -- should responses be compressed?
+  maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
+  mimeTypesFile        :: FilePath,    -- file assoc mime types with file exts
+  mailCommand          :: String,      -- command to send notification emails
+  resetPasswordMessage :: String       -- text of password reset email
   } deriving (Read, Show)
 
 type SessionKey = Integer
@@ -119,8 +123,7 @@ data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
 type PluginM = ReaderT (Config, Maybe User) (StateT Context IO)
 
 runPluginM :: PluginM a -> Config -> Maybe User -> Context -> IO (a, Context)
-runPluginM plugin conf user plstate =
-  runStateT (runReaderT plugin (conf, user)) plstate
+runPluginM plugin conf user = runStateT (runReaderT plugin (conf, user))
 
 data Context = Context { ctxPage            :: String
                        , ctxFile            :: String
@@ -207,19 +210,22 @@ instance FromData Params where
          pw <- look "password"       `mplus` return ""
          p2 <- look "password2"      `mplus` return ""
          rv <- (look "revision" >>= \s ->
-                 return (if null s then Nothing else Just s)) `mplus` return Nothing
-         fu <- (look "forUser" >>= return . Just) `mplus` return Nothing
-         si <- (look "since" >>= return . parseDateTime "%Y-%m-%d") `mplus` return Nothing  -- YYYY-mm-dd format
-         ds <- (lookCookieValue "destination") `mplus` return "/"
+                 return (if null s then Nothing else Just s))
+                 `mplus` return Nothing
+         fu <- (liftM Just $ look "forUser") `mplus` return Nothing
+         si <- (liftM (parseDateTime "%Y-%m-%d") $ look "since")
+                 `mplus` return Nothing  -- YYYY-mm-dd format
+         ds <- lookCookieValue "destination" `mplus` return "/"
          ra <- look "raw"            `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
          gt <- look "gotopage"       `mplus` return ""
          ft <- look "filetodelete"   `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
-         fm <- (look "from" >>= return . Just) `mplus` return Nothing
-         to <- (look "to" >>= return . Just)   `mplus` return Nothing
-         et <- (look "editedText" >>= return . Just . filter (/= '\r')) `mplus` return Nothing
+         fm <- (liftM Just $ look "from") `mplus` return Nothing
+         to <- (liftM Just $ look "to")   `mplus` return Nothing
+         et <- (liftM (Just . filter (/='\r')) $ look "editedText")
+                 `mplus` return Nothing
          fo <- look "format"         `mplus` return ""
          sh <- look "sha1"           `mplus` return ""
          lm <- look "logMsg"         `mplus` return ""
@@ -227,24 +233,25 @@ instance FromData Params where
          na <- look "full_name_1"    `mplus` return ""
          wn <- look "wikiname"       `mplus` return ""
          pr <- (look "printable" >> return True) `mplus` return False
-         ow <- (look "overwrite" >>= return . (== "yes")) `mplus` return False
-         fn <- (lookInput "file" >>= return . fromMaybe "" . inputFilename) `mplus` return ""
-         fc <- (lookInput "file" >>= return . inputValue) `mplus` return L.empty
+         ow <- (liftM (=="yes") $ look "overwrite") `mplus` return False
+         fn <- (liftM (fromMaybe "" . inputFilename) $ lookInput "file")
+                 `mplus` return ""
+         fc <- (liftM inputValue $ lookInput "file") `mplus` return L.empty
          ac <- look "accessCode"     `mplus` return ""
          cn <- (look "confirm" >> return True) `mplus` return False
-         sk <- (readCookieValue "sid" >>= return . Just) `mplus` return Nothing
+         sk <- (liftM Just $ readCookieValue "sid") `mplus` return Nothing
          rc <- look "recaptcha_challenge_field" `mplus` return ""
          rr <- look "recaptcha_response_field" `mplus` return ""
          rk <- look "reset_code" `mplus` return ""
-         return $ Params { pUsername     = un
+         return   Params { pUsername     = un
                          , pPassword     = pw
                          , pPassword2    = p2
                          , pRevision     = rv
                          , pForUser      = fu
                          , pSince        = si
                          , pDestination  = ds
-                         , pReferer      = Nothing  -- this gets set by handle...
-                         , pUri          = ""       -- this gets set by handle...
+                         , pReferer      = Nothing  -- gets set by handle...
+                         , pUri          = ""       -- gets set by handle...
                          , pRaw          = ra
                          , pLimit        = read lt
                          , pPatterns     = words pa
@@ -265,11 +272,13 @@ instance FromData Params where
                          , pFilename     = fn
                          , pFileContents = fc
                          , pAccessCode   = ac
-                         , pUser         = ""  -- this gets set by ifLoggedIn...
+                         , pUser         = ""  -- gets set by ifLoggedIn...
                          , pConfirm      = cn
                          , pSessionKey   = sk
-                         , pRecaptcha    = Recaptcha { recaptchaChallengeField = rc, recaptchaResponseField = rr }
-                         , pPeer         = ""  -- this gets set by handle...
+                         , pRecaptcha    = Recaptcha {
+                              recaptchaChallengeField = rc,
+                              recaptchaResponseField = rr }
+                         , pPeer         = ""  -- gets set by handle...
                          , pResetCode    = rk
                          }
 
@@ -281,8 +290,9 @@ instance FromData Command where
        return $ case map fst pairs `intersect` commandList of
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
-               where commandList = ["page", "request", "params", "edit", "showraw", "history",
-                                    "export", "diff", "cancel", "update", "delete", "discuss"]
+               where commandList = ["page", "request", "params", "edit",
+                                    "showraw", "history", "export", "diff",
+                                    "cancel", "update", "delete", "discuss"]
 
 type Handler = ServerPart Response
 
@@ -296,6 +306,3 @@ data Cache = Cache {
     cachePages :: M.Map String CachedPage
   , cacheSize  :: Integer
 }
-
-
-
