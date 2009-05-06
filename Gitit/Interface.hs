@@ -71,8 +71,8 @@ one time to another (such as the time or currently logged-in user).
 
 You can use the helper functions 'mkPageTransform' and 'mkPageTransformM'
 to create 'PageTransform' plugins from a transformation of any
-of the basic types used by Pandoc (for example, 'Inline', 'Block',
-'[Inline]', even 'String'). Here is a simple (if silly) example:
+of the basic types used by Pandoc (for example, @Inline@, @Block@,
+@[Inline]@, even @String@). Here is a simple (if silly) example:
 
 > -- DeprofanizerPlugin.hs
 > module DeprofanizerPlugin (plugin) where
@@ -96,8 +96,8 @@ of the basic types used by Pandoc (for example, 'Inline', 'Block',
 Further examples can be found in the @plugins@ directory in
 the source distribution.  If you have installed gitit using Cabal,
 you can also find them in the directory
-@CABALDIR/share/gitit-X.Y.Z/plugins@, where @CABALDIR@ is the cabal
-install directory.
+@CABALDIR\/share\/gitit-X.Y.Z\/plugins@, where @CABALDIR@ is the cabal
+install directory and @X.Y.Z@ is the version number of gitit.
 
 -}
 
