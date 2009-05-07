@@ -101,14 +101,12 @@ install directory and @X.Y.Z@ is the version number of gitit.
 
 -}
 
-module Gitit.Interface ( Config(..)
+module Gitit.Interface ( Plugin(..)
                        , PluginM
-                       , module Text.Pandoc.Definition
-                       , Plugin(..)
-                       , inlinesToURL
-                       , inlinesToString
                        , mkPageTransform
                        , mkPageTransformM
+                       , module Text.Pandoc.Definition
+                       , Config(..)
                        , askConfig
                        , askUser
                        , User(..)
@@ -118,6 +116,8 @@ module Gitit.Interface ( Config(..)
                        , Context(..)
                        , PageType(..)
                        , PageLayout(..)
+                       , inlinesToURL
+                       , inlinesToString
                        , liftIO
                        )
 where
@@ -145,7 +145,7 @@ mkPageTransform :: Data a => (a -> a) -> Plugin
 mkPageTransform fn = PageTransform $ return . processWith fn
 
 -- | Monadic version of 'mkPageTransform'.
--- Lifts a function from @a -> Web a@ to a 'PageTransform' plugin.
+-- Lifts a function from @a -> m a@ to a 'PageTransform' plugin.
 mkPageTransformM :: Data a => (a -> PluginM a) -> Plugin
 mkPageTransformM =  PageTransform . processWithM
 
