@@ -174,8 +174,9 @@ wikiHandlers =
   ]
 
 isIndex :: String -> Bool
+isIndex "" = False
 isIndex "_index" = True
-isIndex x        = "_index/" `isPrefixOf` x
+isIndex x  = last x == '/'
 
 isPreview :: String -> Bool
 isPreview x  = "___preview" `isSuffixOf` x
@@ -700,14 +701,13 @@ updatePage page params = do
 
 indexPage :: String -> Params -> Web Response
 indexPage page params = do
+  let prefix' = if page == "_index" then "" else page
   fs <- getFileStore
-  let prefix'  = dropWhile (=='/') . drop 6 $ page   -- drop the "_index/" part
-  let prefix'' = if null prefix' then "" else prefix' ++ "/"
   listing <- liftIO $ directory fs prefix'
   let isDiscussionPage (FSFile f) = isDiscussPageFile f
       isDiscussionPage (FSDirectory _) = False
   let prunedListing = filter (not . isDiscussionPage) listing
-  let htmlIndex = fileListToHtml prefix'' prunedListing
+  let htmlIndex = fileListToHtml prefix' prunedListing
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
                   pgTabs = [],
@@ -724,10 +724,12 @@ fileListToHtml prefix files =
         li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
       fileLink (FSDirectory f) =
         li ! [theclass "folder"] <<
-          anchor ! [href $ "/_index/" ++ prefix ++ f] << f
+          anchor ! [href $ "/" ++ prefix ++ f ++ "/"] << f
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
                   concatHtml [ anchor ! [theclass "updir",
-                                         href $ "/_index" ++ joinPath d] <<
+                                         href $ if length d == 1
+                                                   then "/_index"
+                                                   else joinPath d] <<
                   last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
