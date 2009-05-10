@@ -134,6 +134,10 @@ pages, `[Front Page]()` creates an internal wikilink to the page `Front
 Page`. In reStructuredText pages, `` `Front Page <>`_ `` has the same
 effect.
 
+If you want to link to a directory listing for a subdirectory, use a
+trailing slash:  `[foo/bar/]()` creates a link to the directory for
+`foo/bar`.
+
 Configuring gitit
 =================
 

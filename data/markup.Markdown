@@ -194,3 +194,5 @@ directory will link to `Wine/Burgundy`, and not to `Burgundy`.
 To link to a top-level page called `Burgundy`, you'd have to use
 `[Burgundy](/Burgundy)`.
 
+To link to a directory listing for a subdirectory, use a trailing
+slash: `[Wine/]()` will link to a listing of the `Wine` subdirectory.
