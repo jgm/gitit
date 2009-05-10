@@ -41,8 +41,7 @@ where
 import Gitit.Server
 import Gitit.State
 import Gitit.Types
-import Text.Pandoc.Shared (substitute)
-import Data.Char (toLower)
+import Data.Char (toLower, isAscii, isDigit, isLetter)
 import Control.Monad.Trans (MonadIO)
 import Control.Monad (msum, mzero)
 import qualified Data.Map as M
@@ -50,9 +49,8 @@ import Data.ByteString.UTF8 (fromString, toString)
 import Data.Maybe (fromJust)
 import Data.List (intercalate, isSuffixOf, (\\))
 import System.FilePath ((<.>), takeExtension, dropExtension)
-import Codec.Binary.UTF8.String (decodeString, encodeString)
 import Text.Highlighting.Kate
-import Network.HTTP (urlEncode)
+import Network.URL (decString, encString)
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
@@ -86,8 +84,8 @@ unlessNoDelete responder fallback =
 handle :: (String -> Bool) -> Method -> (String -> Params -> Web Response) -> Handler
 handle pathtest meth responder = do
   req <- askRq
-  let uri = rqUri req
-  let path' = decodeString $ uriPath uri
+  let uri = rqUri req ++ rqQuery req
+  let path' = fromJust $ decString True $ uriPath uri
   if pathtest path'
      then do
        cfg <- getConfig
@@ -142,8 +140,8 @@ isSourceCode path =
   in  not . null $ langs
 
 urlForPage :: String -> String
-urlForPage page = '/' : (substitute "%2f" "/" $ substitute "%3a" ":" $ urlEncode $ encodeString page)
--- this is needed so that browsers recognize relative URLs correctly
+urlForPage page = '/' : encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/:")) page
+-- / and : are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
