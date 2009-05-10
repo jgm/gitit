@@ -41,6 +41,7 @@ module Gitit.Server
           , Request(..)
           , Input(..)
           , HeaderPair(..)
+          , askRq
           , Web
           , WebT
           , ToMessage
