@@ -86,6 +86,7 @@ formattedPage layout page params htmlContents = do
                         else ulist ! [theclass "messages"] <<
                           map (li <<) messages
   templ <- queryAppState template
+  cfg <- getConfig
   let filledTemp = T.render .
                    T.setAttribute "pagetitle" pageTitle .
                    T.setAttribute "javascripts" javascriptlinks .
@@ -93,6 +94,9 @@ formattedPage layout page params htmlContents = do
                    (case user of
                          Just u     -> T.setAttribute "user" u
                          Nothing    -> id) .
+                   (case authenticationMethod cfg of
+                         FormAuth        -> T.setAttribute "showLogin" "true"
+                         HTTPDigestAuth  -> T.setAttribute "showLogin" "false") .
                    (if isPage page
                        then T.setAttribute "ispage" "true"
                        else id) .
