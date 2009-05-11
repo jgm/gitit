@@ -47,12 +47,17 @@ data Repository = Git FilePath
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show)
 
+data AuthenticationMethod = FormAuth
+                          | HTTPDigestAuth
+                          deriving (Read, Show)
+
 -- | Data structure for information read from config file.
 data Config = Config {
   repository           :: Repository,  -- file store for pages
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
+  authenticationMethod :: AuthenticationMethod, -- use forms or HTTP digest?
   userFile             :: FilePath,    -- path of users database
   templateFile         :: FilePath,    -- path of page template file
   logFile              :: FilePath,    -- path of server log file
@@ -202,6 +207,7 @@ data Params = Params { pUsername     :: String
                      , pRecaptcha    :: Recaptcha
                      , pPeer         :: String
                      , pResetCode    :: String
+                     , pAuthHeader   :: Maybe String
                      }  deriving Show
 
 instance FromData Params where
@@ -280,6 +286,7 @@ instance FromData Params where
                               recaptchaResponseField = rr }
                          , pPeer         = ""  -- gets set by handle...
                          , pResetCode    = rk
+                         , pAuthHeader   = Nothing -- gets set by handle...
                          }
 
 data Command = Command (Maybe String)
@@ -306,3 +313,4 @@ data Cache = Cache {
     cachePages :: M.Map String CachedPage
   , cacheSize  :: Integer
 }
+

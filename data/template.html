@@ -17,10 +17,12 @@
         <div id="yui-main">
           <div id="maincol" class="yui-b">
             <div id="userbox">
-              $if(user)$
-              <a href="/_logout">Logout $user$</a>
-              $else$
-              <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+              $if(showLogin)$
+                $if(user)$
+                <a href="/_logout">Logout $user$</a>
+                $else$
+                <a href="/_login">Login</a> &bull; <a href="/_register">Get an account</a>
+                $endif$
               $endif$
             </div>
             $tabs$ 

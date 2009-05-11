@@ -50,15 +50,32 @@ import Data.Maybe (fromJust)
 import Data.List (intercalate, isSuffixOf, (\\))
 import System.FilePath ((<.>), takeExtension, dropExtension)
 import Text.Highlighting.Kate
+import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
-  mbSd <- maybe (return Nothing) getSession $ pSessionKey params
-  let user = case mbSd of
-       Nothing    -> Nothing
-       Just sd    -> Just $ sessionUser sd
-  return $! user
+  cfg <- getConfig
+  case authenticationMethod cfg of
+       HTTPDigestAuth -> do
+         case pAuthHeader params of
+              Just authHeader -> case parse pAuthorizationHeader "" authHeader of
+                                 Left _  -> return Nothing
+                                 Right u -> return (Just u)
+              Nothing         -> return Nothing
+       FormAuth -> do
+         mbSd <- maybe (return Nothing) getSession $ pSessionKey params
+         let user = case mbSd of
+              Nothing    -> Nothing
+              Just sd    -> Just $ sessionUser sd
+         return $! user
+
+pAuthorizationHeader :: GenParser Char st String
+pAuthorizationHeader = do
+  string "Digest username=\""
+  result <- many (noneOf "\"")
+  char '"'
+  return result
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
@@ -98,9 +115,13 @@ handle pathtest meth responder = do
                                  Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                  _       -> Nothing
               let peer = fst $ rqPeer req
+              let authHeader = case M.lookup (fromString "Authorization") (rqHeaders req) of
+                                 Just r  -> Just $ toString $ head $ hValue r
+                                 Nothing -> Nothing
               responder path'' (params { pReferer = referer,
                                          pUri = uri,
-                                         pPeer = peer })
+                                         pPeer = peer,
+                                         pAuthHeader = authHeader })
             else mzero
      else anyRequest mzero
 
