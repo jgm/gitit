@@ -115,7 +115,7 @@ handle pathtest meth responder = do
                                  Just r | not (null (hValue r)) -> Just $ toString $ head $ hValue r
                                  _       -> Nothing
               let peer = fst $ rqPeer req
-              let authHeader = case M.lookup (fromString "Authorization") (rqHeaders req) of
+              let authHeader = case M.lookup (fromString "authorization") (rqHeaders req) of
                                  Just r  -> Just $ toString $ head $ hValue r
                                  Nothing -> Nothing
               responder path'' (params { pReferer = referer,
