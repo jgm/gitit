@@ -52,6 +52,7 @@ import System.FilePath ((<.>), takeExtension, dropExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
+import Happstack.Crypto.Base64 (decode)
 
 getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
@@ -71,11 +72,20 @@ getLoggedInUser params = do
          return $! user
 
 pAuthorizationHeader :: GenParser Char st String
-pAuthorizationHeader = do
+pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
+
+pDigestHeader :: GenParser Char st String
+pDigestHeader = do
   string "Digest username=\""
   result <- many (noneOf "\"")
   char '"'
   return result
+
+pBasicHeader :: GenParser Char st String
+pBasicHeader = do
+  string "Basic "
+  result <- many (noneOf " \t\n")
+  return $ takeWhile (/=':') $ decode result
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
