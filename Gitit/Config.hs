@@ -148,10 +148,10 @@ extractConfig cp = do
         , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
         , authenticationMethod = case (map toLower cfAuthenticationMethod) of
-                                      "form"    -> FormAuth
-                                      "digest"  -> HTTPDigestAuth
-                                      _         -> error
-                                                    "Invalid authentication-method.\nLegal values are: form, digest"
+                                      "form" -> FormAuth
+                                      "http" -> HTTPAuth
+                                      _      -> error
+                                                 "Invalid authentication-method.\nLegal values are: form, http"
         , userFile             = cfUserFile
         , templateFile         = cfTemplateFile
         , logFile              = cfLogFile

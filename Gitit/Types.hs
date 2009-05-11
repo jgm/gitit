@@ -48,7 +48,7 @@ data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show)
 
 data AuthenticationMethod = FormAuth
-                          | HTTPDigestAuth
+                          | HTTPAuth
                           deriving (Read, Show)
 
 -- | Data structure for information read from config file.
