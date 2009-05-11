@@ -57,7 +57,7 @@ getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
 getLoggedInUser params = do
   cfg <- getConfig
   case authenticationMethod cfg of
-       HTTPDigestAuth -> do
+       HTTPAuth -> do
          case pAuthHeader params of
               Just authHeader -> case parse pAuthorizationHeader "" authHeader of
                                  Left _  -> return Nothing
