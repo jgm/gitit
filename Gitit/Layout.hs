@@ -96,7 +96,7 @@ formattedPage layout page params htmlContents = do
                          Nothing    -> id) .
                    (case authenticationMethod cfg of
                          FormAuth        -> T.setAttribute "showLogin" "true"
-                         HTTPDigestAuth  -> T.setAttribute "showLogin" "false") .
+                         HTTPDigestAuth  -> id) .
                    (if isPage page
                        then T.setAttribute "ispage" "true"
                        else id) .
