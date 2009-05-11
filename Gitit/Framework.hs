@@ -196,7 +196,9 @@ ifLoggedIn responder fallback =
                                            Just usr    -> uEmail usr
                                            Nothing     -> error $ "User '" ++ u ++ "' not found."
                              -- give the user another hour...
-                             addCookie sessionTime (mkCookie "sid" (show $ fromJust $ pSessionKey params))
+                             case pSessionKey params of
+                                  Just sk   -> addCookie sessionTime (mkCookie "sid" (show sk))
+                                  Nothing   -> return ()
                              responder page (params { pUser = u, pEmail = e })
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
