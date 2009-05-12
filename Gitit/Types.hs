@@ -201,7 +201,6 @@ data Params = Params { pUsername     :: String
                      , pOverwrite    :: Bool
                      , pFilename     :: String
                      , pFileContents :: L.ByteString
-                     , pUser         :: String
                      , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
@@ -278,7 +277,6 @@ instance FromData Params where
                          , pFilename     = fn
                          , pFileContents = fc
                          , pAccessCode   = ac
-                         , pUser         = ""  -- gets set by ifLoggedIn...
                          , pConfirm      = cn
                          , pSessionKey   = sk
                          , pRecaptcha    = Recaptcha {

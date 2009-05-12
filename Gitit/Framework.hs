@@ -54,7 +54,7 @@ import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Happstack.Crypto.Base64 (decode)
 
-getLoggedInUser :: MonadIO m => Params -> m (Maybe String)
+getLoggedInUser :: MonadIO m => Params -> m (Maybe User)
 getLoggedInUser params = do
   cfg <- getConfig
   case authenticationMethod cfg of
@@ -62,14 +62,16 @@ getLoggedInUser params = do
          case pAuthHeader params of
               Just authHeader -> case parse pAuthorizationHeader "" authHeader of
                                  Left _  -> return Nothing
-                                 Right u -> return (Just u)
+                                 Right u -> return $ Just $
+                                              User{ uUsername = u,
+                                                    uPassword = undefined,
+                                                    uEmail    = "" }
               Nothing         -> return Nothing
        FormAuth -> do
          mbSd <- maybe (return Nothing) getSession $ pSessionKey params
-         let user = case mbSd of
-              Nothing    -> Nothing
-              Just sd    -> Just $ sessionUser sd
-         return $! user
+         case mbSd of
+              Nothing    -> return Nothing
+              Just sd    -> getUser $! sessionUser sd
 
 pAuthorizationHeader :: GenParser Char st String
 pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
@@ -200,16 +202,12 @@ ifLoggedIn responder fallback =
                      case user of
                           Nothing  -> do
                              fallback page (params { pReferer = Just $ pUri params })
-                          Just u   -> do
-                             usrs <- queryAppState users
-                             let e = case M.lookup u usrs of
-                                           Just usr    -> uEmail usr
-                                           Nothing     -> error $ "User '" ++ u ++ "' not found."
+                          Just _   -> do
                              -- give the user another hour...
                              case pSessionKey params of
                                   Just sk   -> addCookie sessionTime (mkCookie "sid" (show sk))
                                   Nothing   -> return ()
-                             responder page (params { pUser = u, pEmail = e })
+                             responder page params
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages
