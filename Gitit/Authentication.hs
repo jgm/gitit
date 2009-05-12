@@ -380,14 +380,16 @@ logoutUser _ params = do
   seeOther destination $ toResponse "You have been logged out."
 
 registerUserForm :: String -> Params -> Web Response
-registerUserForm _ params =
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $
-                         fromMaybe "/" $ pReferer params) >>
+registerUserForm _ params = do
+  let destination = case pDestination params of
+                          ""  -> fromMaybe "/" $ pReferer params
+                          x   -> x   -- came from login page, preserve prev dest
+  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" destination)
   registerForm >>=
-  formattedPage defaultPageLayout{
-                  pgShowPageTools = False,
-                  pgTabs = [],
-                  pgTitle = "Register for an account"
-                  }
-                "_register" params
+    formattedPage defaultPageLayout{
+                    pgShowPageTools = False,
+                    pgTabs = [],
+                    pgTitle = "Register for an account"
+                    }
+                  "_register" params
 
