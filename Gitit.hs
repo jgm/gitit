@@ -278,7 +278,7 @@ uploadFile _ params = do
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
-  mbUser <- getUser $ pUser params
+  mbUser <- getLoggedInUser params
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
@@ -637,7 +637,7 @@ confirmDelete page params = do
 
 deletePage :: String -> Params -> Web Response
 deletePage page params = do
-  mbUser <- getUser $ pUser params
+  mbUser <- getLoggedInUser params
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
@@ -652,7 +652,7 @@ deletePage page params = do
 
 updatePage :: String -> Params -> Web Response
 updatePage page params = do
-  mbUser <- getUser $ pUser params
+  mbUser <- getLoggedInUser params
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)

@@ -92,7 +92,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "javascripts" javascriptlinks .
                    T.setAttribute "pagename" page .
                    (case user of
-                         Just u     -> T.setAttribute "user" u
+                         Just u     -> T.setAttribute "user" (uUsername u)
                          Nothing    -> id) .
                    (case authenticationMethod cfg of
                          FormAuth        -> T.setAttribute "showLogin" "true"

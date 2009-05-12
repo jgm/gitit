@@ -384,10 +384,7 @@ applyTransform :: a -> (a -> PluginM a) -> ContentTransformer a
 applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
-  mbUname <- lift $ getLoggedInUser (ctxParams context)
-  user <- case mbUname of
-               Nothing  -> return Nothing
-               Just un  -> getUser un
+  user <- lift $ getLoggedInUser (ctxParams context)
   (result, context') <- liftIO $
                         runPluginM (transform inp) conf user context
   put context'
