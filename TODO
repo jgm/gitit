@@ -1,5 +1,6 @@
 _ document HTTP auth setup in README
-
+_ show mrkup default format when editing
+  + links to instructions
 _ document plugins in README (see old pandoc plugins docs)
 
 _ cleanup code for 80 cols; hlint
