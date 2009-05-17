@@ -336,10 +336,13 @@ loginForm = do
                  ]
 
 loginUserForm :: String -> Params -> Web Response
-loginUserForm page params =
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $
-                        fromMaybe "/" $ pReferer params) >>
-  loginUserForm' page params
+loginUserForm page params = do
+  cfg <- getConfig
+  case authenticationMethod cfg of
+       FormAuth -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $
+                                        fromMaybe "/" $ pReferer params) >>
+                   loginUserForm' page params
+       HTTPAuth -> error "You must be logged in through HTTP authentication."
 
 loginUserForm' :: String -> Params -> Web Response
 loginUserForm' page params =

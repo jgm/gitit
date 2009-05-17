@@ -120,34 +120,43 @@ main = do
   let staticHandler = dir "_static" $
                       withExpiresHeaders $ fileServe [] staticdir
 
+  let handlers = case authenticationMethod conf of
+                    FormAuth -> authHandler : wikiHandlers
+                    _        -> wikiHandlers
+
   -- start the server
   tid <- forkIO $ simpleHTTP serverConf $ msum $
-         staticHandler : ([ debugHandler | debugMode conf ] ++ wikiHandlers)
+         staticHandler : ([ debugHandler | debugMode conf ] ++ handlers)
   waitForTermination
 
   -- shut down the server
   killThread tid
 
-wikiHandlers :: [Handler]
-wikiHandlers =
-  [ handle isIndex          GET indexPage
-  , handle isPreview        POST preview
-  , handlePath "_activity"  GET  showActivity
-  , handlePath "_go"        POST goToPage
-  , handlePath "_search"    POST searchResults
-  , handlePath "_search"    GET  searchResults
-  , handlePath "_register"  GET  registerUserForm
+authHandler :: Handler
+authHandler = msum $
+  [ handlePath "_register"  GET  registerUserForm
   , handlePath "_register"  POST registerUser
   , handlePath "_login"     GET  loginUserForm
   , handlePath "_login"     POST loginUser
   , handlePath "_logout"    GET  logoutUser
-  , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
-  , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
-  , handlePath "_random"    GET  randomPage
   , handlePath "_resetPassword"   GET  resetPasswordRequestForm
   , handlePath "_resetPassword"   POST resetPasswordRequest
   , handlePath "_doResetPassword" GET  resetPassword
   , handlePath "_doResetPassword" POST doResetPassword
+  ]
+
+wikiHandlers :: [Handler]
+wikiHandlers =
+  [ handlePath "_activity"  GET  showActivity
+  , handlePath "_go"        POST goToPage
+  , handlePath "_search"    POST searchResults
+  , handlePath "_search"    GET  searchResults
+  , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
+  , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
+  , handlePath "_random"    GET  randomPage
+  , handlePath "_index"     GET  (\_ -> indexPage "")
+  , handle isIndex          GET indexPage
+  , handle isPreview        POST preview
   , withCommand "showraw" [ handlePage GET showRawPage
                           , handle isSourceCode GET showFileAsText ]
   , withCommand "history" [ handlePage GET showPageHistory
@@ -175,7 +184,6 @@ wikiHandlers =
 
 isIndex :: String -> Bool
 isIndex "" = False
-isIndex "_index" = True
 isIndex x  = last x == '/'
 
 isPreview :: String -> Bool
@@ -701,7 +709,7 @@ updatePage page params = do
 
 indexPage :: String -> Params -> Web Response
 indexPage page params = do
-  let prefix' = if page == "_index" then "" else page
+  let prefix' = page
   fs <- getFileStore
   listing <- liftIO $ directory fs prefix'
   let isDiscussionPage (FSFile f) = isDiscussPageFile f
