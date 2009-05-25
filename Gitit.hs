@@ -154,8 +154,7 @@ wikiHandlers =
   , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
   , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
   , handlePath "_random"    GET  randomPage
-  , handlePath "_index"     GET  (\_ -> indexPage "")
-  , handle isIndex          GET indexPage
+  , handle isIndex          GET  indexPage
   , handle isPreview        POST preview
   , withCommand "showraw" [ handlePage GET showRawPage
                           , handle isSourceCode GET showFileAsText ]
@@ -183,8 +182,9 @@ wikiHandlers =
   ]
 
 isIndex :: String -> Bool
-isIndex "" = False
-isIndex x  = last x == '/'
+isIndex ""       = False
+isIndex "_index" = True
+isIndex x        = "_index/" `isPrefixOf` x || last x == '/'
 
 isPreview :: String -> Bool
 isPreview x  = "___preview" `isSuffixOf` x
@@ -709,7 +709,9 @@ updatePage page params = do
 
 indexPage :: String -> Params -> Web Response
 indexPage page params = do
-  let prefix' = page
+  let prefix' = if "_index" `isPrefixOf` page
+                   then dropWhile (=='/') $ drop 6 page
+                   else page
   fs <- getFileStore
   listing <- liftIO $ directory fs prefix'
   let isDiscussionPage (FSFile f) = isDiscussPageFile f
