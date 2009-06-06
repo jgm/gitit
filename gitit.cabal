@@ -69,7 +69,7 @@ Library
 
 Executable           gitit
   hs-source-dirs:    .
-  main-is:           Gitit.hs 
+  main-is:           Gitit.hs
   other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
                      Gitit.Util, Gitit.Export, Gitit.Layout,
                      Gitit.ContentTransformer, Gitit.Initialize,

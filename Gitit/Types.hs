@@ -85,7 +85,8 @@ data Config = Config {
   maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
   mimeTypesFile        :: FilePath,    -- file assoc mime types with file exts
   mailCommand          :: String,      -- command to send notification emails
-  resetPasswordMessage :: String       -- text of password reset email
+  resetPasswordMessage :: String,      -- text of password reset email
+  markupHelp           :: String       -- markup syntax help for edit sidebar
   } deriving (Read, Show)
 
 type SessionKey = Integer
