@@ -1,0 +1,61 @@
+~~~~~~~~
+Section heading
+===============
+
+Subsection
+----------
+
+Formatting: *italics*, *bold*.
+A line break
+can be forced with 2 spaces  
+at the end of the line.
+
+    Indented quotation
+
+
+Links:
+`external <http://foo.org>`_,
+`Wiki Link <>`_, |image|,
+`heading <#subsection>`_.
+
+.. |image| image::
+     /img/gitit-banner.png
+
+::
+
+    let a = 1:a in head a
+
+> -- bird-tracks literate Haskell
+> fibs = 1 : 1 : zipWith (+)
+>   fibs (tail fibs)
+
+-  bulleted
+-  list
+
+-  ordered
+-  list
+   
+   a. sublist (indent four spaces)
+   b. another
+
+-  item three
+
+   continuation of 3 (indent)
+
+
+term
+    definition
+orange
+    orange fruit
+
+Horizontal line:
+
+--------------
+~~~~~~~~
+
+For more: [reST primer],
+[quick reference guide].
+
+[reST primer]: http://docutils.sourceforge.net/docs/user/rst/quickstart.html
+[quick reference guide]: http://docutils.sourceforge.net/docs/user/rst/quickref.html
+
