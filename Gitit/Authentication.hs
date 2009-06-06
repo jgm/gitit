@@ -71,7 +71,7 @@ resetPasswordRequestForm :: String -> Params -> Web Response
 resetPasswordRequestForm _ params = do
   let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
               [ label << "Username: "
-              , textfield "username" ! [size "20"], stringToHtml " "
+              , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
               , submit "resetPassword" "Reset Password" ]
   cfg <- getConfig
   let contents = if null (mailCommand cfg)
@@ -220,7 +220,7 @@ sharedForm mbUser = do
                       Nothing    -> label <<
                                      "Username (at least 3 letters or digits):"
                                     +++ br +++
-                                    textfield "username" ! [size "20"] +++ br
+                                    textfield "username" ! [size "20", intAttr "tabindex" 1] +++ br
                       Just user  -> label << ("Username (cannot be changed): "
                                                ++ uUsername user) +++ br
   let submitField = case mbUser of
@@ -232,17 +232,17 @@ sharedForm mbUser = do
             , userNameField
             , label << "Email (optional, will not be displayed on the Wiki):"
             , br
-            , textfield "email" ! [size "20", value (initField uEmail)], br
+            , textfield "email" ! [size "20", intAttr "tabindex" 2, value (initField uEmail)], br
             , textfield "full_name_1" ! [size "20", theclass "req"]
             , label << ("Password (at least 6 characters," ++
                         " including at least one non-letter):")
             , br
-            , X.password "password" ! [size "20"]
+            , X.password "password" ! [size "20", intAttr "tabindex" 3]
             , stringToHtml " "
             , br
             , label << "Confirm Password:"
             , br
-            , X.password "password2" ! [size "20"]
+            , X.password "password2" ! [size "20", intAttr "tabindex" 4]
             , stringToHtml " "
             , br
             , captcha
@@ -318,10 +318,10 @@ loginForm = do
   return $ gui "/_login" ! [identifier "loginForm"] <<
     fieldset <<
       [ label << "Username "
-      , textfield "username" ! [size "15"]
+      , textfield "username" ! [size "15", intAttr "tabindex" 1]
       , stringToHtml " "
       , label << "Password "
-      , X.password "password" ! [size "15"]
+      , X.password "password" ! [size "15", intAttr "tabindex" 2]
       , stringToHtml " "
       , submit "login" "Login"
       ] +++
