@@ -6,12 +6,8 @@ Subsection
 ----------
 
 Formatting: *italics*, *bold*.
-A line break
-can be forced with 2 spaces  
-at the end of the line.
 
     Indented quotation
-
 
 Links:
 `external <http://foo.org>`_,
@@ -25,29 +21,24 @@ Links:
 
     let a = 1:a in head a
 
-
 -  bulleted
 -  list
 
--  ordered
--  list
+---------------
+
+1.  ordered
+2.  list
    
-   a. sublist (indent four spaces)
-   b. another
+    a. sublist (indent 4 spaces)
+    b. another
 
--  item three
-
-   continuation of 3 (indent)
-
+3.  item three
 
 term
     definition
 orange
     orange fruit
 
-Horizontal line:
-
---------------
 ~~~~~~~~
 
 For more: [reST primer],

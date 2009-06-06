@@ -1,0 +1,50 @@
+~~~~~~~~
+<h1>Section heading</h1>
+<h2>Subsection</h2>
+<p>Formatting:
+<em>italics</em>,
+<em>bold</em>,
+super<sup>script</sup>,
+sub<sub>script</sub>,
+line<br/>break.
+</p>
+<blockquote>
+<p>Indented quotation</p>
+</blockquote>
+<p>Links:
+<a href="http://foo.bar">
+external</a>,
+<a href="">Wiki Link</a>,
+<img src="/img/banner.png"
+ alt="image"/>,
+</p>
+<p>Indented code block:</p>
+<pre><code>
+#include &lt;stdbool.h&gt;
+</code></pre>
+<ul>
+<li>bulleted</li>
+<li>list</li>
+</ul>
+<hr/>
+<ol>
+<li>ordered</li>
+<li>list
+<ol>
+<li>sublist</li>
+<li>another</li>
+</ol>
+</li>
+<li>item three</li>
+</ol>
+<dl>
+<dt>term</dt>
+<dd>definition</dd>
+<dt>orange</dt>
+<dd>orange fruit</dd>
+</dl>
+~~~~~~~~
+
+For more: [xhtml tutorial](http://www.w3schools.com/Xhtml/),
+[pandoc](http://johnmacfarlane.net/pandoc/README.html).
+
