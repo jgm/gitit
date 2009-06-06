@@ -2,8 +2,8 @@
 <h1>Section heading</h1>
 <h2>Subsection</h2>
 <p>Formatting:
-<em>italics</em>,
-<em>bold</em>,
+<i>italics</i>,
+<b>bold</b>,
 super<sup>script</sup>,
 sub<sub>script</sub>,
 line<br/>break.

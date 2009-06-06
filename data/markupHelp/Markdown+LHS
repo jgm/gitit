@@ -3,17 +3,18 @@
 
 ## Subsection
 
-Formatting:  *italics*, *bold*,
-super^script^, sub~script~,
-~~strikeout~~.  A line break  
+Formatting:  *italics*,
+**bold**, super^script^,
+sub~script~, ~~strikeout~~.
+A line break  
 can be forced with two spaces
- at the end of the line.
+at the end of the line.
 
  > Indented quotation:
-   note: the '>' must not
-   be flush with the margin
-   or what follows will be
-   treated as Haskell code
+ > note: the '>' must not
+ > be flush with the margin
+ > or what follows will be
+ > treated as Haskell code
 
 > -- bird-tracks Haskell:
 > fibs = 0 : 1 :
