@@ -1,0 +1,51 @@
+~~~~~~~~
+# Section heading
+
+## Subsection
+
+Formatting:  *italics*, *bold*,
+super^script^, sub~script~,
+~~strikeout~~.  A line break  
+can be forced with two spaces
+ at the end of the line.
+
+> Indented quotation
+
+Links:
+[external](http://google.com),
+[Wiki Link](),
+![image](/img/gitit-banner.png),
+[to heading](#section-heading).
+
+    let x = "code indented 4"
+
+Or use a delimited code block:
+
+~~~ { .haskell }
+let a = 1:a in head a
+~~~
+
+- bulleted
+- list
+
+1.  ordered
+2.  list
+    a. sublist (indent four spaces)
+    b. another
+3.  item three
+
+    continuation of 3 (indent)
+
+term
+:   definition
+orange
+:   orange fruit
+
+Horizontal line:
+
+* * * * *
+~~~~~~~~
+
+For more: [markdown syntax](http://daringfireball.net/projects/markdown),
+[pandoc extensions](http://johnmacfarlane.net/pandoc/README.html).
+
