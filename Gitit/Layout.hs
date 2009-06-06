@@ -33,16 +33,11 @@ import Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Text.StringTemplate as T
-import Prelude hiding (catch, readFile)
-import System.IO.UTF8 (readFile)
+import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import Text.Pandoc
-import System.FilePath ((</>))
-import Paths_gitit (getDataFileName)
 import Data.Maybe (isNothing, isJust, fromJust)
 import Data.List (isSuffixOf)
 import Control.Exception (throwIO, catch)
-import Control.Monad (liftM)
 import Control.Monad.Trans (liftIO)
 
 defaultPageLayout :: PageLayout
@@ -94,10 +89,6 @@ formattedPage layout page params htmlContents = do
                           map (li <<) messages
   templ <- queryAppState template
   cfg <- getConfig
-  let markupHelpFile = show (defaultPageType cfg) ++ if defaultLHS cfg then "+LHS" else ""
-  markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
-  markupHelp <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
-                 liftIO $ readFile markupHelpPath
   let filledTemp = T.render .
                    T.setAttribute "pagetitle" pageTitle .
                    T.setAttribute "javascripts" javascriptlinks .
@@ -118,7 +109,7 @@ formattedPage layout page params htmlContents = do
                        then T.setAttribute "sitenav" "true"
                        else id) .
                    (if pgShowMarkupHelp layout
-                       then T.setAttribute "markuphelp" markupHelp
+                       then T.setAttribute "markuphelp" (markupHelp cfg)
                        else id) .
                    (if pPrintable params
                        then T.setAttribute "printable" "true"

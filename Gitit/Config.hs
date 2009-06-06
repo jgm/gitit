@@ -34,6 +34,11 @@ import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Data.Version (showVersion)
 import Paths_gitit (getDataFileName, version)
+import Prelude hiding (readFile)
+import System.IO.UTF8 (readFile)
+import System.FilePath ((</>))
+import Control.Monad (liftM)
+import Text.Pandoc
 
 data Opt
     = Help
@@ -139,6 +144,10 @@ extractConfig cp = do
                            "latex"        -> (LaTeX,False)
                            "latex+lhs"    -> (LaTeX,True)
                            x              -> error $ "Unknown page type: " ++ x
+      let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
+      markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
+      markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
+                          liftIO $ readFile markupHelpPath
       return $! Config{
           repository           = case (map toLower $ cfRepositoryType) of
                                       "git"   -> Git (cfRepositoryPath)
@@ -180,7 +189,8 @@ extractConfig cp = do
         , maxCacheSize         = readNumber "max-cache-size" cfMaxCacheSize
         , mimeTypesFile        = cfMimeTypesFile
         , mailCommand          = cfMailCommand
-        , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage }
+        , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
+        , markupHelp           = markupHelpText }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
