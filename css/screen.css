@@ -134,6 +134,4 @@ pre.matches { margin: 0; padding: 0; }
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
 #footer { padding: 1em; color: #888; text-align: center; font-size: 93%; }
-.markupHelp { border: 1px solid #ccc; padding: 5px; background-color: white; }
-.markupHelp pre { font-size: 80%; }
-.markupHelp code { font-family: Arial, sans-serif; }
+.markupHelp pre { font-size: 70%; font-family: Monaco, Lucida Sans Mono, monospace; }
