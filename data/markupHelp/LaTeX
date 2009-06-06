@@ -1,0 +1,54 @@
+~~~~~~~~
+\section{Section heading}
+
+\subsection{Subsection}
+
+Formatting: \emph{italics},
+\emph{bold},
+super\textsuperscript{script},
+sub\textsubscr{script},
+\sout{strikeout}. A line break\\
+can be forced with \\ at
+the end of the line.
+
+\begin{quote}
+Indented quotation
+\end{quote}
+
+Links:
+\href{http://foo.bar}{external},
+\href{}{Wiki Link},
+\includegraphics{/img/banner.png},
+\href{#subsection}{to heading}.
+
+\begin{verbatim}
+#include <stdbool.h>
+\end{verbatim}
+
+\begin{itemize}
+\item bulleted
+\item list
+\end{itemize}
+
+\begin{enumerate}
+\item ordered
+\item list
+ \begin{enumerate}[a.]
+  \item sublist
+  \item another
+ \end{enumerate}
+\item item three
+\end{enumerate}
+
+\begin{description}
+\item[term] definition
+\item[orange] orange fruit
+\end{description}
+
+~~~~~~~~
+
+For more: [LaTeX], [pandoc].
+
+[LaTeX]: http://www.latex-project.org/
+[pandoc]: http://johnmacfarlane.net/pandoc/README.html
+

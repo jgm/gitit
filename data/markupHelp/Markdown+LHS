@@ -25,7 +25,9 @@ Links:
 ![image](/img/gitit-banner.png),
 [to heading](#section-heading).
 
-    let x = "code indented 4"
+Indented code block:
+
+    #include <stdbool.h>
 
 Or use a delimited code block:
 
@@ -36,22 +38,19 @@ let a = 1:a in head a
 - bulleted
 - list
 
+* * * * *
+
 1.  ordered
 2.  list
-    a. sublist (indent four spaces)
+    a. sublist (indent 4 spaces)
     b. another
 3.  item three
-
-    continuation of 3 (indent)
 
 term
 :   definition
 orange
 :   orange fruit
 
-Horizontal line:
-
-* * * * *
 ~~~~~~~~
 
 For more: [markdown syntax](http://daringfireball.net/projects/markdown),
