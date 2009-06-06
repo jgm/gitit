@@ -156,6 +156,8 @@ data PageLayout = PageLayout
   { pgTitle          :: String
   , pgScripts        :: [String]
   , pgShowPageTools  :: Bool
+  , pgShowSiteNav    :: Bool
+  , pgShowMarkupHelp :: Bool
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   }

@@ -45,6 +45,8 @@ defaultPageLayout = PageLayout
   { pgTitle          = ""
   , pgScripts        = []
   , pgShowPageTools  = True
+  , pgShowSiteNav    = True
+  , pgShowMarkupHelp = False
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   }
@@ -87,6 +89,7 @@ formattedPage layout page params htmlContents = do
                           map (li <<) messages
   templ <- queryAppState template
   cfg <- getConfig
+  let markupHelp = "placeholder"
   let filledTemp = T.render .
                    T.setAttribute "pagetitle" pageTitle .
                    T.setAttribute "javascripts" javascriptlinks .
@@ -102,6 +105,12 @@ formattedPage layout page params htmlContents = do
                        else id) .
                    (if pgShowPageTools layout
                        then T.setAttribute "pagetools" "true"
+                       else id) .
+                   (if pgShowSiteNav layout
+                       then T.setAttribute "sitenav" "true"
+                       else id) .
+                   (if pgShowMarkupHelp layout
+                       then T.setAttribute "markuphelp" markupHelp
                        else id) .
                    (if pPrintable params
                        then T.setAttribute "printable" "true"
