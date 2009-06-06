@@ -4,7 +4,7 @@
 \subsection{Subsection}
 
 Formatting: \emph{italics},
-\emph{bold},
+\textbf{bold},
 super\textsuperscript{script},
 sub\textsubscr{script},
 \sout{strikeout}. A line break\\

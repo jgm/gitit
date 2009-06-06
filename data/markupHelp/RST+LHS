@@ -5,10 +5,8 @@ Section heading
 Subsection
 ----------
 
-Formatting: *italics*, *bold*.
-A line break
-can be forced with 2 spaces  
-at the end of the line.
+Formatting: *italics*,
+**bold**.
 
     Indented quotation
 
