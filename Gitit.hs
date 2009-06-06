@@ -608,6 +608,8 @@ editPage page params = do
                    ]
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
+                  pgShowSiteNav = False,
+                  pgShowMarkupHelp = True,
                   pgSelectedTab = EditTab,
                   pgScripts = ["preview.js"],
                   pgTitle = ("Editing " ++ page)
