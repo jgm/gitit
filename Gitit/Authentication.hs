@@ -72,7 +72,7 @@ resetPasswordRequestForm _ params = do
   let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
               [ label << "Username: "
               , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
-              , submit "resetPassword" "Reset Password" ]
+              , submit "resetPassword" "Reset Password" ! [intAttr "tabindex" 2]]
   cfg <- getConfig
   let contents = if null (mailCommand cfg)
                     then p << "Sorry, password reset not available."
@@ -246,7 +246,7 @@ sharedForm mbUser = do
             , stringToHtml " "
             , br
             , captcha
-            , submitField ]
+            , submitField ! [intAttr "tabindex" 5]]
 
 
 sharedValidation :: MonadIO m => ValidationType -> Params
@@ -323,7 +323,7 @@ loginForm = do
       , label << "Password "
       , X.password "password" ! [size "15", intAttr "tabindex" 2]
       , stringToHtml " "
-      , submit "login" "Login"
+      , submit "login" "Login" ! [intAttr "tabindex" 3]
       ] +++
     p << [ stringToHtml "If you do not have an account, "
          , anchor ! [href "/_register"] << "click here to get one."
