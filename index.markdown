@@ -13,8 +13,7 @@ display TeX math (using jsMath) and highlighted source code (using
 highlighting-kate).
 
 - [Live demo](http://gitit.johnmacfarlane.net)
-- [README](http://github.com/jgm/gitit/README.markdown)
-- [Repository](http://github.com/jgm/gitit)
+- [README](http://github.com/jgm/gitit)
 - [Bug reports](http://code.google.com/p/gitit/issues/list?can=2&q=&colspec=ID+Type+Status+Priority+Milestone+Owner+Summary&cells=tiles)
 - [Mailing list](http://groups.google.com/group/gitit-discuss)
 - [Releases](http://hackage.haskell.org/cgi-bin/hackage-scripts/package/gitit)
