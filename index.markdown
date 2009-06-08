@@ -1,1 +1,3 @@
-My github page
+My github page.
+
+[gitit repository](http://github.com/jgm/gitit)
