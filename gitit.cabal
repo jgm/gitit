@@ -73,7 +73,7 @@ Executable           gitit
   other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
                      Gitit.Util, Gitit.Export, Gitit.Layout,
                      Gitit.ContentTransformer, Gitit.Initialize,
-                     Gitit.Config, Gitit.Framework,
+                     Gitit.Config, Gitit.Framework, Gitit.Handlers,
                      Gitit.Plugins, Paths_gitit, Gitit.Authentication
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.2, process, filepath, directory, mtl, cgi,
