@@ -55,17 +55,15 @@ Flag plugins
 
 Library
   hs-source-dirs:    .
-  exposed-modules:   Gitit.Interface
+  exposed-modules:   Gitit.Happstack
+  if flag(plugins)
+    exposed-modules: Gitit.Interface
   other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
                      Gitit.ContentTransformer, Gitit.Layout,
-                     Gitit.Export, Gitit.Framework, Gitit.Util
+                     Gitit.Export, Gitit.Framework, Gitit.Util, Gitit.Handlers
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
-  if flag(plugins)
-    Buildable:      True
-  else
-    Buildable:      False
 
 Executable           gitit
   hs-source-dirs:    .
