@@ -272,7 +272,7 @@ searchResults _ params = do
                     else h3 << [(show $ length matches),
                                 " matches found for '", unwords patterns, "':"]
   let toMatchListItem (file, contents) = li <<
-        [ anchor ! [href $ urlForPage $ takeBaseName file] << takeBaseName file
+        [ anchor ! [href $ urlForPage $ dropExtension file] << dropExtension file
         , stringToHtml (" (" ++ show (length contents) ++ " matching lines)")
         , stringToHtml " "
         , anchor ! [href "#", theclass "showmatch",
