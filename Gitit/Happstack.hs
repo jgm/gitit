@@ -32,6 +32,7 @@ module Gitit.Happstack ( initializeAppState
                        , module Gitit.Handlers
                        )
 where
+import Gitit.Types
 import Gitit.State
 import Gitit.Plugins (loadPlugin)
 import Gitit.Handlers
