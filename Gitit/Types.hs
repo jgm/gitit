@@ -51,6 +51,9 @@ data AuthenticationMethod = FormAuth
                           | HTTPAuth
                           deriving (Read, Show)
 
+instance Show (T.StringTemplate a) where
+  show _ = "[compiled string template]"
+
 -- | Data structure for information read from config file.
 data Config = Config {
   repository           :: Repository,  -- file store for pages
@@ -59,7 +62,7 @@ data Config = Config {
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
   authenticationMethod :: AuthenticationMethod, -- use forms or HTTP digest?
   userFile             :: FilePath,    -- path of users database
-  templateFile         :: FilePath,    -- path of page template file
+  template             :: T.StringTemplate String,  -- compiled page template
   logFile              :: FilePath,    -- path of server log file
   logLevel             :: Priority,    -- severity filter for log messages
                                        -- (DEBUG, INFO, NOTICE, WARNING, ERROR,
@@ -87,7 +90,7 @@ data Config = Config {
   mailCommand          :: String,      -- command to send notification emails
   resetPasswordMessage :: String,      -- text of password reset email
   markupHelp           :: String       -- markup syntax help for edit sidebar
-  } deriving (Read, Show)
+  } deriving (Show)
 
 type SessionKey = Integer
 
@@ -115,7 +118,6 @@ data AppState = AppState {
   filestore      :: FileStore,
   mimeMap        :: M.Map String String,
   cache          :: Cache,
-  template       :: T.StringTemplate String,
   jsMath         :: Bool,
   plugins        :: [Plugin]
 }

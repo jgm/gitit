@@ -25,8 +25,9 @@ where
 import Gitit.Types
 import System.Environment
 import System.Exit
-import System.IO (stdout, stderr, hPutStrLn)
+import System.IO (stdout, stderr)
 import System.Console.GetOpt
+import System.Directory
 import Data.ConfigFile
 import Control.Monad.Error
 import System.Log.Logger ()
@@ -35,10 +36,11 @@ import Data.Char (toLower, toUpper, isDigit)
 import Data.Version (showVersion)
 import Paths_gitit (getDataFileName, version)
 import Prelude hiding (readFile)
-import System.IO.UTF8 (readFile)
+import System.IO.UTF8
 import System.FilePath ((</>))
 import Control.Monad (liftM)
 import Text.Pandoc
+import qualified Text.StringTemplate as T
 
 data Opt
     = Help
@@ -148,6 +150,17 @@ extractConfig cp = do
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
       markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
                           liftIO $ readFile markupHelpPath
+
+      -- create template file if it doesn't exist
+      liftIO $ do
+        templateExists <- doesFileExist cfTemplateFile
+        unless templateExists $ do
+          templatePath <- getDataFileName $ "data" </> "template.html"
+          copyFile templatePath cfTemplateFile
+          hPutStrLn stderr $ "Created default " ++ cfTemplateFile
+
+      compiledTemplate <- liftM T.newSTMP $ liftIO $ readFile cfTemplateFile
+
       return $! Config{
           repository           = case (map toLower $ cfRepositoryType) of
                                       "git"   -> Git (cfRepositoryPath)
@@ -162,7 +175,7 @@ extractConfig cp = do
                                       _      -> error
                                                  "Invalid authentication-method.\nLegal values are: form, http"
         , userFile             = cfUserFile
-        , templateFile         = cfTemplateFile
+        , template             = compiledTemplate
         , logFile              = cfLogFile
         , logLevel             = let levelString = map toUpper cfLogLevel
                                      levels = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",

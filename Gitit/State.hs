@@ -38,7 +38,6 @@ import Data.FileStore
 import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
-import qualified Text.StringTemplate as T
 import System.Log.Logger (Priority(..), logM)
 import Gitit.Types
 
@@ -49,16 +48,14 @@ appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , filestore = undefined
                                                  , mimeMap = undefined
                                                  , cache = undefined
-                                                 , template = undefined
                                                  , jsMath = undefined
                                                  , plugins = undefined }
 
 initializeAppState :: MonadIO m
                    => Config
                    -> M.Map String User
-                   -> T.StringTemplate String
                    -> m ()
-initializeAppState conf users' templ = do
+initializeAppState conf users' = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
   jsMathExists <- liftIO $ doesFileExist $
                   staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
@@ -70,7 +67,6 @@ initializeAppState conf users' templ = do
                                               Darcs fs -> darcsFileStore fs
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
-                           , template  = templ
                            , jsMath    = jsMathExists
                            , plugins   = [] }
 

@@ -87,7 +87,6 @@ formattedPage layout page params htmlContents = do
                         then noHtml
                         else ulist ! [theclass "messages"] <<
                           map (li <<) messages
-  templ <- queryAppState template
   cfg <- getConfig
   let filledTemp = T.render .
                    T.setAttribute "pagetitle" pageTitle .
@@ -130,7 +129,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
-                   templ
+                   template cfg
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 exportBox :: String -> Params -> Html
