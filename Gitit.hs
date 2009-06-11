@@ -25,20 +25,16 @@ import Gitit.Server
 import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Gitit.Framework
 import Gitit.Handlers
-import System.IO.UTF8
-import System.IO (stderr)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
 import Control.Concurrent
-import System.FilePath
 import Gitit.State
 import Gitit.Config (getConfigFromOpts)
 import Data.List (isSuffixOf, isPrefixOf)
 import Data.Maybe (isNothing)
 import qualified Data.Map as M
-import Paths_gitit
+import System.IO.UTF8 (readFile)
 import Control.Monad.Reader
-import qualified Text.StringTemplate as T
 import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
@@ -77,19 +73,8 @@ main = do
   -- log config file in DEBUG
   logM "gitit" DEBUG (show conf)
 
-  -- create template file if it doesn't exist
-  let templatefile = templateFile conf
-  templateExists <- doesFileExist templatefile
-  unless templateExists $ do
-    templatePath <- getDataFileName $ "data" </> "template.html"
-    copyFile templatePath templatefile
-    hPutStrLn stderr $ "Created " ++ templatefile
-
-  -- read template file
-  templ <- liftM T.newSTMP $ liftIO $ readFile templatefile
-
   -- initialize state
-  initializeAppState conf users' templ
+  initializeAppState conf users'
 
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf
