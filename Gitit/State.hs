@@ -29,8 +29,6 @@ import qualified Data.ByteString.UTF8 as B (fromString, toString, length)
 import System.Time (getClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import System.Directory (doesFileExist)
-import System.FilePath ((</>))
 import Control.Monad.Trans (MonadIO(), liftIO)
 import Control.Monad (replicateM, liftM, when)
 import Control.Exception (try, throwIO)
@@ -47,7 +45,6 @@ appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , config = undefined
                                                  , mimeMap = undefined
                                                  , cache = undefined
-                                                 , jsMath = undefined
                                                  , plugins = undefined }
 
 initializeAppState :: MonadIO m
@@ -56,14 +53,11 @@ initializeAppState :: MonadIO m
                    -> m ()
 initializeAppState conf users' = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
-  jsMathExists <- liftIO $ doesFileExist $
-                  staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , config    = conf
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
-                           , jsMath    = jsMathExists
                            , plugins   = [] }
 
 -- | Read a file associating mime types with extensions, and return a

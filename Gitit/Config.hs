@@ -206,6 +206,7 @@ extractConfig cp = do
         , compressResponses    = cfCompressResponses
         , maxCacheSize         = readNumber "max-cache-size" cfMaxCacheSize
         , mimeTypesFile        = cfMimeTypesFile
+        , jsMath               = False
         , mailCommand          = cfMailCommand
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
         , markupHelp           = markupHelpText }

@@ -27,6 +27,7 @@ import Gitit.Framework
 import Gitit.Handlers
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
+import System.FilePath ((</>))
 import Control.Concurrent
 import Gitit.State
 import Gitit.Config (getConfigFromOpts)
@@ -43,8 +44,7 @@ main :: IO ()
 main = do
 
   -- parse options to get config file
-  conf' <- getConfigFromOpts
-  let conf = if debugMode conf' then conf'{logLevel = DEBUG} else conf'
+  conf <- getConfigFromOpts
 
   -- check for external programs that are needed
   let prereqs = ["grep", repositoryType conf]
@@ -60,7 +60,7 @@ main = do
                else return M.empty
 
   -- set up logging
-  let level = logLevel conf
+  let level = if debugMode conf then DEBUG else logLevel conf
   logFileHandler <- fileHandler (logFile conf) level
   serverLogger <- getLogger "Happstack.Server"
   -- TODO changes to "Happstack.Server.AccessLog.Combined" for 0.3
@@ -68,8 +68,15 @@ main = do
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
 
+  jsMathExists <- liftIO $ doesFileExist $
+                  staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
+  logM "gitit" NOTICE $
+    if jsMathExists
+       then "Found jsMath scripts -- using jsMath"
+       else "Did not find jsMath scripts -- not using jsMath"
+
   -- initialize state
-  initializeAppState conf users'
+  initializeAppState conf{jsMath = jsMathExists, logLevel = level} users'
 
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf

@@ -82,6 +82,7 @@ data Config = Config {
   compressResponses    :: Bool,        -- should responses be compressed?
   maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
   mimeTypesFile        :: FilePath,    -- file assoc mime types with file exts
+  jsMath               :: Bool,        -- true if jsMath files are present
   mailCommand          :: String,      -- command to send notification emails
   resetPasswordMessage :: String,      -- text of password reset email
   markupHelp           :: String       -- markup syntax help for edit sidebar
@@ -112,7 +113,6 @@ data AppState = AppState {
   config         :: Config,
   mimeMap        :: M.Map String String,
   cache          :: Cache,
-  jsMath         :: Bool,
   plugins        :: [Plugin]
 }
 
