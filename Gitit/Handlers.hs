@@ -215,8 +215,8 @@ uploadFile _ params = do
                      page params contents
      else uploadForm page params{ pMessages = errors }
 
-goToPage :: String -> Params -> Web Response
-goToPage _ params = do
+goToPage :: Params -> Handler
+goToPage params = do
   let gotopage = pGotoPage params
   fs <- getFileStore
   allPageNames <- liftM (map dropExtension . filter isPageFile) $
@@ -235,11 +235,11 @@ goToPage _ params = do
                                        Just m  -> seeOther (urlForPage m) $
                                                   toResponse $ "Redirecting" ++
                                                     " to partial match"
-                                       Nothing -> searchResults "" params{
+                                       Nothing -> searchResults params{
                                                     pPatterns = words gotopage}
 
-searchResults :: String -> Params -> Web Response
-searchResults _ params = do
+searchResults :: Params -> Handler
+searchResults params = do
   let page = "_search"
   let patterns = pPatterns params
   let limit = pLimit params
