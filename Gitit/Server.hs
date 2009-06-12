@@ -33,36 +33,8 @@ module Gitit.Server
           , setContentType
           , setFilename
           , lookupIPAddr
-          -- re-exported Happstack functions
-          , ok
-          , toResponse
-          , Response(..)
-          , Method(..)
-          , Request(..)
-          , Input(..)
-          , HeaderPair(..)
-          , askRq
-          , Web
-          , WebT
-          , ToMessage
-          , ServerPart
-          , FromData(..)
           , waitForTermination
-          , Conf(..)
-          , simpleHTTP
-          , fileServe
-          , dir
-          , multi
-          , seeOther
-          , withData
-          , withRequest
-          , anyRequest
-          , noHandle
-          , uriRest
-          , lookInput
-          , addCookie
-          , lookCookieValue
-          , readCookieValue
+          , module Happstack.Server
           , compressedResponseFilter
           )
 where
