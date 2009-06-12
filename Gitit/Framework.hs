@@ -79,15 +79,15 @@ pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
 pDigestHeader :: GenParser Char st String
 pDigestHeader = do
   string "Digest username=\""
-  result <- many (noneOf "\"")
+  result' <- many (noneOf "\"")
   char '"'
-  return result
+  return result'
 
 pBasicHeader :: GenParser Char st String
 pBasicHeader = do
   string "Basic "
-  result <- many (noneOf " \t\n")
-  return $ takeWhile (/=':') $ decode result
+  result' <- many (noneOf " \t\n")
+  return $ takeWhile (/=':') $ decode result'
 
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
@@ -167,8 +167,8 @@ isDiscussPageFile :: FilePath -> Bool
 isDiscussPageFile f = isPageFile f && ":discuss" `isSuffixOf` (dropExtension f)
 
 isSourceCode :: String -> Bool
-isSourceCode path =
-  let ext   = map toLower $ takeExtension path
+isSourceCode path' =
+  let ext   = map toLower $ takeExtension path'
       langs = languagesByExtension ext \\ ["Postscript"]
   in  not . null $ langs
 

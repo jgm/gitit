@@ -346,8 +346,8 @@ showHistory file page params =  do
                         }
                      page params contents
 
-showActivity :: String -> Params -> Web Response
-showActivity _ params = do
+showActivity :: Params -> Handler
+showActivity params = do
   let page = "_activity"
   currTime <- liftIO getCurrentTime
   let oneMonthAgo = addMinutes (-1 * 60 * 24 * 30) currTime
@@ -403,8 +403,8 @@ showDiff file page params = do
   let from = pFrom params
   let to = pTo params
   fs <- getFileStore
-  result <- liftIO $ try $ getDiff fs file from to
-  case result of
+  result' <- liftIO $ try $ getDiff fs file from to
+  case result' of
        Left NotFound  -> mzero
        Left e         -> liftIO $ throwIO e
        Right htmlDiff -> formattedPage defaultPageLayout{
