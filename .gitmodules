@@ -1,0 +1,3 @@
+[submodule "website"]
+	path = website
+	url = git@github.com:jgm/gitit.git
