@@ -40,10 +40,6 @@ import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Gitit.Server
 
-data Repository = Git FilePath
-                | Darcs FilePath
-                deriving (Read, Show)
-
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show)
 
@@ -51,12 +47,9 @@ data AuthenticationMethod = FormAuth
                           | HTTPAuth
                           deriving (Read, Show)
 
-instance Show (T.StringTemplate a) where
-  show _ = "[compiled string template]"
-
 -- | Data structure for information read from config file.
 data Config = Config {
-  repository           :: Repository,  -- file store for pages
+  filestore            :: FileStore,   -- filestore for pages
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
@@ -90,7 +83,7 @@ data Config = Config {
   mailCommand          :: String,      -- command to send notification emails
   resetPasswordMessage :: String,      -- text of password reset email
   markupHelp           :: String       -- markup syntax help for edit sidebar
-  } deriving (Show)
+  }
 
 type SessionKey = Integer
 
@@ -115,7 +108,6 @@ data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
   config         :: Config,
-  filestore      :: FileStore,
   mimeMap        :: M.Map String String,
   cache          :: Cache,
   jsMath         :: Bool,

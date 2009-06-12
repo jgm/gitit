@@ -45,7 +45,6 @@ appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , users = undefined
                                                  , config = undefined
-                                                 , filestore = undefined
                                                  , mimeMap = undefined
                                                  , cache = undefined
                                                  , jsMath = undefined
@@ -62,9 +61,6 @@ initializeAppState conf users' = do
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , config    = conf
-                           , filestore = case repository conf of
-                                              Git fs   -> gitFileStore fs
-                                              Darcs fs -> darcsFileStore fs
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
                            , jsMath    = jsMathExists
@@ -270,7 +266,7 @@ getConfig :: MonadIO m => m Config
 getConfig = queryAppState config
 
 getFileStore :: MonadIO m => m FileStore
-getFileStore = queryAppState filestore
+getFileStore = liftM filestore getConfig
 
 getDefaultPageType :: MonadIO m => m PageType
 getDefaultPageType = liftM defaultPageType (queryAppState config)
