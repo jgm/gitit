@@ -50,8 +50,8 @@ data ValidationType = Register
 
 registerUser :: String -> Params -> Web Response
 registerUser _ params = do
-  result <- sharedValidation Register params
-  case result of
+  result' <- sharedValidation Register params
+  case result' of
     Left errors -> registerForm >>=
           formattedPage defaultPageLayout{
                           pgShowPageTools = False,
@@ -177,8 +177,8 @@ doResetPassword _ params = do
   let uname = pUsername params
   users' <- queryAppState users
   let mbUser = M.lookup uname users'
-  result <- sharedValidation ResetPassword params
-  case result of
+  result' <- sharedValidation ResetPassword params
+  case result' of
     Left errors ->
       resetPasswordForm mbUser >>=
           formattedPage defaultPageLayout{

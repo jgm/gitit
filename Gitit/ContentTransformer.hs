@@ -385,10 +385,10 @@ applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
   user <- lift $ getLoggedInUser (ctxParams context)
-  (result, context') <- liftIO $
+  (result', context') <- liftIO $
                         runPluginM (transform inp) conf user context
   put context'
-  return result
+  return result'
 
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
 applyPageTransforms c = liftM (wikiLinksTransform : ) getPageTransforms >>=

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -38,7 +39,7 @@ import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Data.Maybe (isNothing, isJust, fromJust)
 import Data.List (isSuffixOf)
 import Control.Exception (throwIO, catch)
-import Control.Monad.Trans (liftIO)
+import Control.Monad.Trans (liftIO, MonadIO)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -52,7 +53,8 @@ defaultPageLayout = PageLayout
   }
 
 -- | Returns formatted page
-formattedPage :: PageLayout -> String -> Params -> Html -> Web Response
+formattedPage :: (MonadIO m, FilterMonad Response m, WebMonad Response m)
+              => PageLayout -> String -> Params -> Html -> m Response
 formattedPage layout page params htmlContents = do
   let rev = pRevision params
   fs <- getFileStore

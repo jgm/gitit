@@ -107,7 +107,7 @@ main = do
 
 wikiHandlers :: [Handler]
 wikiHandlers =
-  [ handlePath "_activity"  GET  showActivity
+  [ dir "_activity" $ withData showActivity
   , handlePath "_go"        POST goToPage
   , handlePath "_search"    POST searchResults
   , handlePath "_search"    GET  searchResults
