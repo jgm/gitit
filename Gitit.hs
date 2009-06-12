@@ -108,9 +108,8 @@ main = do
 wikiHandlers :: [Handler]
 wikiHandlers =
   [ dir "_activity" $ withData showActivity
-  , handlePath "_go"        POST goToPage
-  , handlePath "_search"    POST searchResults
-  , handlePath "_search"    GET  searchResults
+  , dir "_go"       $ withData goToPage
+  , dir "_search"   $ withData searchResults
   , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
   , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
   , handlePath "_random"    GET  randomPage
