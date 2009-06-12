@@ -50,6 +50,8 @@ data AuthenticationMethod = FormAuth
 -- | Data structure for information read from config file.
 data Config = Config {
   filestore            :: FileStore,   -- filestore for pages
+  repositoryPath       :: FilePath,    -- path of repository containing filestore
+  repositoryType       :: String,      -- type of repository ("git" or "darcs")
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks

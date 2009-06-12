@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Gitit.Config ( getConfigFromOpts )
 where
 import Gitit.Types
+import Data.FileStore
 import System.Environment
 import System.Exit
 import System.IO (stdout, stderr)
@@ -161,11 +162,15 @@ extractConfig cp = do
 
       compiledTemplate <- liftM T.newSTMP $ liftIO $ readFile cfTemplateFile
 
+      let (filestore', repotype') = case (map toLower cfRepositoryType) of
+                                         "git"   -> (gitFileStore cfRepositoryPath, "git")
+                                         "darcs" -> (darcsFileStore cfRepositoryPath, "darcs")
+                                         x       -> error $ "Unknown repository type: " ++ x
+
       return $! Config{
-          repository           = case (map toLower $ cfRepositoryType) of
-                                      "git"   -> Git (cfRepositoryPath)
-                                      "darcs" -> Darcs (cfRepositoryPath)
-                                      x       -> error $ "Unknown repository type: " ++ x
+          filestore            = filestore'
+        , repositoryPath       = cfRepositoryPath
+        , repositoryType       = repotype'
         , defaultPageType      = pt
         , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
