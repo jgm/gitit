@@ -422,8 +422,8 @@ addPageNameToPandoc (Pandoc _ blocks) = do
 
 addMathSupport :: a -> ContentTransformer a
 addMathSupport c = do
-  jsMathExists <- queryAppState jsMath
-  updateLayout $ \l -> addScripts l ["jsMath/easy/load.js" | jsMathExists]
+  conf <- getConfig
+  updateLayout $ \l -> addScripts l ["jsMath/easy/load.js" | jsMath conf]
   return c
 
 addScripts :: PageLayout -> [String] -> PageLayout
