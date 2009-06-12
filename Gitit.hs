@@ -112,7 +112,7 @@ wikiHandlers =
   , dir "_search"   $ withData searchResults
   , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
   , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
-  , handlePath "_random"    GET  randomPage
+  , dir "_random"   $ methodSP GET randomPage
   , handle isIndex          GET  indexPage
   , handle isPreview        POST preview
   , withCommand "showraw" [ handlePage GET showRawPage
