@@ -92,10 +92,7 @@ respondODT page doc = do
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
                 conf <- getConfig
-                let repoPath = case repository conf of
-                                Git path'   -> path'
-                                Darcs path' -> path'
-                saveOpenDocumentAsODT tempfile repoPath openDoc
+                saveOpenDocumentAsODT tempfile (repositoryPath conf) openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}

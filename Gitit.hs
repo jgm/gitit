@@ -47,9 +47,7 @@ main = do
   let conf = if debugMode conf' then conf'{logLevel = DEBUG} else conf'
 
   -- check for external programs that are needed
-  let prereqs = "grep" : case repository conf of
-                      Git _        -> ["git"]
-                      Darcs _      -> ["darcs"]
+  let prereqs = ["grep", repositoryType conf]
   forM_ prereqs $ \prog ->
     findExecutable prog >>= \mbFind ->
     when (isNothing mbFind) $ error $
@@ -69,9 +67,6 @@ main = do
   gititLogger <- getLogger "gitit"
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
-
-  -- log config file in DEBUG
-  logM "gitit" DEBUG (show conf)
 
   -- initialize state
   initializeAppState conf users'
