@@ -307,7 +307,7 @@ data CachedPage = CachedPage {
   } deriving Show
 
 data Cache = Cache {
-    cachePages :: M.Map String CachedPage
+    cachePages :: M.Map (String, String) CachedPage
   , cacheSize  :: Integer
 }
 

@@ -30,7 +30,7 @@ import System.Time (getClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.Trans (MonadIO(), liftIO)
-import Control.Monad (replicateM, liftM, when)
+import Control.Monad (replicateM, liftM)
 import Control.Exception (try, throwIO)
 import Data.FileStore
 import Data.List (intercalate, minimumBy)
@@ -109,26 +109,27 @@ emptyCache :: Cache
 emptyCache = Cache M.empty 0
 
 debugMessage :: MonadIO m => String -> m ()
-debugMessage msg = do
-  level <- liftM logLevel getConfig
-  when (level == DEBUG) $ liftIO $ logM "gitit" DEBUG msg
+debugMessage msg = liftIO $ logM "gitit" DEBUG msg
 
 updateCachedPageTimestamp :: MonadIO m => Cache -> String -> m ()
 updateCachedPageTimestamp cache' page = do
   now <- liftIO getClockTime
+  repo <- liftM repositoryPath getConfig
   let setTimeStamp Nothing   = Nothing
       setTimeStamp (Just cp) = Just cp{ cpLastAccessTime = now }
   let newcache = cache'{ cachePages = 
-                     M.alter setTimeStamp page (cachePages cache') }
+                     M.alter setTimeStamp (repo, page) (cachePages cache') }
   updateAppState $ \s -> s {cache = newcache }
 
 lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe Html)
 lookupCache file (Just revid) = do
   c <- queryAppState cache
   fs <- getFileStore
-  case M.lookup file (cachePages c) of
+  repo <- liftM repositoryPath getConfig
+  case M.lookup (repo, file) (cachePages c) of
        Just cp | idsMatch fs (cpRevisionId cp) revid -> do
-                   debugMessage $ "Retrieving " ++ file ++ " from cache."
+                   debugMessage $ "Retrieving " ++ file ++
+                      " from cache for " ++ repo
                    updateCachedPageTimestamp c file
                    return $ Just $ primHtml $ B.toString $ cpContents cp
        _        -> return Nothing
@@ -136,31 +137,33 @@ lookupCache file Nothing = do
   fs <- getFileStore
   latestRes <- liftIO $ try (latest fs file)
   case latestRes of
-       Right latestid -> lookupCache file (Just latestid)
+       Right latestid  -> lookupCache file (Just latestid)
        Left NotFound   -> return Nothing
        Left e          -> liftIO $ throwIO e
 
 cacheContents :: MonadIO m => String -> RevisionId -> Html -> m ()
 cacheContents file revid contents = do
   c <- queryAppState cache
-  let oldsize = case M.lookup file (cachePages c) of
+  repo <- liftM repositoryPath getConfig
+  let oldsize = case M.lookup (repo, file) (cachePages c) of
                      Just cp  -> fromIntegral $ B.length $ cpContents cp
                      Nothing  -> 0
   let contentsBS = B.fromString $! renderHtmlFragment contents
   let newsize = fromIntegral (B.length contentsBS)
   maxCacheSize' <- liftM maxCacheSize getConfig
   if newsize > maxCacheSize'
-     then debugMessage $ "Not caching page " ++ file ++
+     then debugMessage $ "Not caching page " ++ file ++ " in " ++ repo ++
                         " because it is bigger than the maximum cache size."
      else do
        now <- liftIO getClockTime
        let newpage = CachedPage { cpContents       = contentsBS
                                 , cpRevisionId     = revid
                                 , cpLastAccessTime = now }
-       let newcache = c{ cachePages = M.insert file newpage (cachePages c),
+       let newcache = c{ cachePages = M.insert (repo, file) newpage
+                                        (cachePages c),
                          cacheSize  = cacheSize c + newsize - oldsize }
        newcachePruned <- pruneCache maxCacheSize' newcache
-       debugMessage $ "Updating cache with " ++ file ++
+       debugMessage $ "Updating cache with " ++ file ++ " in " ++ repo ++
                      ".  Total cache size = " ++ show (cacheSize newcachePruned)
        updateAppState $ \s -> s { cache = newcachePruned }
 
@@ -173,12 +176,13 @@ pruneCache maxSize c =
 dropOldest :: MonadIO m => Cache -> m Cache
 dropOldest c = do
   let pgs    = M.toList $ cachePages c
-  let (oldestFile, oldestCp) = minimumBy (comparing (cpLastAccessTime . snd))
-                                pgs
+  let ((oldestRepo, oldestFile), oldestCp) = minimumBy
+        (comparing (cpLastAccessTime . snd)) pgs
   let oldestSize = fromIntegral $ B.length $ cpContents oldestCp
-  debugMessage $ "Removing " ++ oldestFile ++ " (" ++ show oldestSize ++
+  debugMessage $ "Removing " ++ oldestFile ++ " in " ++ oldestRepo ++
+                 " (" ++ show oldestSize ++
                  " bytes) from cache to keep size under limit."
-  return $ c{ cachePages = M.delete oldestFile (cachePages c),
+  return $ c{ cachePages = M.delete (oldestRepo, oldestFile) (cachePages c),
               cacheSize = cacheSize c - oldestSize }
 
 mkUser :: String   -- username
