@@ -108,8 +108,8 @@ debugHandler = do
               show params
             mzero
 
-randomPage :: String -> Params -> Web Response
-randomPage _ _ = do
+randomPage :: Handler
+randomPage = do
   fs <- getFileStore
   files <- liftIO $ index fs
   let pages = map dropExtension $
