@@ -116,7 +116,7 @@ data AppState = AppState {
   plugins        :: [Plugin]
 }
 
-type ContentTransformer = StateT Context (WebT IO)
+type ContentTransformer = StateT Context (ServerPartT IO)
 
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
@@ -171,12 +171,14 @@ data Recaptcha = Recaptcha {
   , recaptchaResponseField  :: String
   } deriving (Read, Show)
 
+instance FromData SessionKey where
+     fromData = readCookieValue "sid"
+
 data Params = Params { pUsername     :: String
                      , pPassword     :: String
                      , pPassword2    :: String
                      , pRevision     :: Maybe String
                      , pDestination  :: String
-                     , pReferer      :: Maybe String
                      , pUri          :: String
                      , pForUser      :: Maybe String
                      , pSince        :: Maybe DateTime
@@ -203,9 +205,7 @@ data Params = Params { pUsername     :: String
                      , pConfirm      :: Bool 
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
-                     , pPeer         :: String
                      , pResetCode    :: String
-                     , pAuthHeader   :: Maybe String
                      }  deriving Show
 
 instance FromData Params where
@@ -254,7 +254,6 @@ instance FromData Params where
                          , pForUser      = fu
                          , pSince        = si
                          , pDestination  = ds
-                         , pReferer      = Nothing  -- gets set by handle...
                          , pUri          = ""       -- gets set by handle...
                          , pRaw          = ra
                          , pLimit        = read lt
@@ -281,12 +280,10 @@ instance FromData Params where
                          , pRecaptcha    = Recaptcha {
                               recaptchaChallengeField = rc,
                               recaptchaResponseField = rr }
-                         , pPeer         = ""  -- gets set by handle...
                          , pResetCode    = rk
-                         , pAuthHeader   = Nothing -- gets set by handle...
                          }
 
-data Command = Command (Maybe String)
+data Command = Command (Maybe String) deriving Show
 
 instance FromData Command where
      fromData = do

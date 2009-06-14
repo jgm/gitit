@@ -98,15 +98,14 @@ handleAny = uriRest $ \uri ->
                 Left NotFound  -> anyRequest mzero
                 Left e         -> error (show e)
 
-debugHandler :: Handler
-debugHandler = do
-  withRequest $ \req -> liftIO $ logM "gitit" DEBUG (show req)
-  msum [ handle (const True) GET showParams,
-         handle (const True) POST showParams ]
-    where showParams page params = do
-            liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++
+debugHandler :: Params -> Handler
+debugHandler params = do
+  req <- askRq
+  liftIO $ logM "gitit" DEBUG (show req)
+  page <- getPage
+  liftIO $ logM "gitit" DEBUG $ "Page = '" ++ page ++ "'\n" ++
               show params
-            mzero
+  mzero
 
 randomPage :: Handler
 randomPage = do
@@ -123,23 +122,22 @@ randomPage = do
        seeOther (urlForPage newPage) $ toResponse $
          p << "Redirecting to a random page"
 
-discussPage :: String -> Params -> Web Response
-discussPage page _ = seeOther (urlForPage discussionPage) $
+discussPage :: Params -> Handler
+discussPage _ = do
+  page <- getPage
+  seeOther (urlForPage $ if isDiscussPage page then page else page ++ ":discuss") $
                      toResponse "Redirecting to discussion page"
-    where discussionPage = if isDiscussPage page
-                              then page
-                              else page ++ ":discuss"
 
-createPage :: String -> Params -> Web Response
-createPage page params =
+createPage :: Params -> Handler
+createPage params = do
+  page <- getPage
   formattedPage (defaultPageLayout { pgTabs = [] }) page params $
      p << [ stringToHtml ("There is no page '" ++ page ++
                "'.  You may create the page by "),
              anchor ! [href $ urlForPage page ++ "?edit"] << "clicking here." ]
 
-uploadForm :: String -> Params -> Web Response
-uploadForm _ params = do
-  let page = "_upload"
+uploadForm :: Params -> Handler
+uploadForm params = do
   let origPath = pFilename params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
@@ -166,17 +164,17 @@ uploadForm _ params = do
                    pgShowPageTools = False,
                    pgTabs = [],
                    pgTitle = "Upload a file"}
-                page params upForm
+                "" params upForm
 
-uploadFile :: String -> Params -> Web Response
-uploadFile _ params = do
+uploadFile :: Params -> Handler
+uploadFile params = do
   let page = "_upload"
   let origPath = pFilename params
   let fileContents = pFileContents params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
-  mbUser <- getLoggedInUser params
+  mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
@@ -213,7 +211,7 @@ uploadFile _ params = do
                        pgTabs = [],
                        pgTitle = "Upload successful"}
                      page params contents
-     else uploadForm page params{ pMessages = errors }
+     else uploadForm params{ pMessages = errors }
 
 goToPage :: Params -> Handler
 goToPage params = do
@@ -290,13 +288,17 @@ searchResults params = do
                   pgTitle = "Search results"}
                 page params htmlMatches
 
-showPageHistory :: String -> Params -> Web Response
-showPageHistory page = showHistory (pathForPage page) page
+showPageHistory :: Params -> Handler
+showPageHistory params = do
+  page <- getPage
+  showHistory (pathForPage page) page params
 
-showFileHistory :: String -> Params -> Web Response
-showFileHistory file = showHistory file file
+showFileHistory :: Params -> Handler
+showFileHistory params = do
+  file <- getPage
+  showHistory file file params
 
-showHistory :: String -> String -> Params -> Web Response
+showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
   currTime <- liftIO getCurrentTime
   let oneYearAgo = addMinutes (-1 * 60 * 24 * 365) currTime
@@ -392,13 +394,17 @@ showActivity params = do
                   }
                 page params (heading +++ contents)
 
-showPageDiff :: String -> Params -> Web Response
-showPageDiff page = showDiff (pathForPage page) page
+showPageDiff :: Params -> Handler
+showPageDiff params = do
+  page <- getPage
+  showDiff (pathForPage page) page params
 
-showFileDiff :: String -> Params -> Web Response
-showFileDiff page = showDiff page page
+showFileDiff :: Params -> Handler
+showFileDiff params = do
+  page <- getPage
+  showDiff page page params
 
-showDiff :: String -> String -> Params -> Web Response
+showDiff :: String -> String -> Params -> Handler
 showDiff file page params = do
   let from = pFrom params
   let to = pTo params
@@ -445,10 +451,11 @@ getDiff fs file from to = do
                     Nothing -> "beginning") +++
            pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
-editPage :: String -> Params -> Web Response
-editPage page params = do
+editPage :: Params -> Handler
+editPage params = do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
+  page <- getPage
   let getRevisionAndText = catch
         (do c <- liftIO $ retrieve fs (pathForPage page) rev
             -- even if pRevision is set, we return revId of latest
@@ -506,8 +513,9 @@ editPage page params = do
                   }
                 page params{pMessages = messages} editForm
 
-confirmDelete :: String -> Params -> Web Response
-confirmDelete page params = do
+confirmDelete :: Params -> Handler
+confirmDelete params = do
+  page <- getPage
   fs <- getFileStore
   -- determine whether there is a corresponding page, and if not whether there
   -- is a corresponding file
@@ -535,9 +543,10 @@ confirmDelete page params = do
             "There is no file or page by that name."
        else confirmForm
 
-deletePage :: String -> Params -> Web Response
-deletePage page params = do
-  mbUser <- getLoggedInUser params
+deletePage :: Params -> Handler
+deletePage params = do
+  page <- getPage
+  mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
@@ -550,20 +559,21 @@ deletePage page params = do
        seeOther "/" $ toResponse $ p << "File deleted"
      else seeOther (urlForPage page) $ toResponse $ p << "Page not deleted"
 
-updatePage :: String -> Params -> Web Response
-updatePage page params = do
-  mbUser <- getLoggedInUser params
+updatePage :: Params -> Handler
+updatePage params = do
+  page <- getPage
+  mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
                         Just u  -> return (uUsername u, uEmail u)
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
-                     Just b  -> applyPreCommitPlugins page params b
+                     Just b  -> applyPreCommitPlugins params b
   let logMsg = pLogMsg params
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
   if null logMsg
-     then editPage page params{ pMessages = ["Description cannot be empty."] }
+     then editPage params{ pMessages = ["Description cannot be empty."] }
      else do
        cfg <- getConfig
        when (length editedText > fromIntegral (maxUploadSize cfg)) $
@@ -583,7 +593,7 @@ updatePage page params = do
             Right () -> seeOther (urlForPage page) $ toResponse $
                p << "Page updated"
             Left (MergeInfo mergedWithRev False mergedText) ->
-               updatePage page params{
+               updatePage params{
                  pMessages = ("Merged with revision " ++ revId mergedWithRev) :
                    pMessages params,
                  pEditedText = Just mergedText,
@@ -593,17 +603,15 @@ updatePage page params = do
                      "The page has been edited since you checked it out. " ++
                      "Changes have been merged into your edits below. " ++
                      "Please resolve conflicts and Save."
-               editPage page params{
-                                pEditedText = Just mergedText
-                                , pSHA1 = revId mergedWithRev
-                                , pMessages = [mergeMsg]
-                                }
+               editPage params{ pEditedText = Just mergedText
+                              , pSHA1 = revId mergedWithRev
+                              , pMessages = [mergeMsg]
+                              }
 
-indexPage :: String -> Params -> Web Response
-indexPage page params = do
-  let prefix' = if "_index" `isPrefixOf` page
-                   then dropWhile (=='/') $ drop 6 page
-                   else page
+indexPage :: Params -> Handler
+indexPage params = do
+  path' <- getPath
+  let prefix' = if null path' then "" else path' ++ "/"
   fs <- getFileStore
   listing <- liftIO $ directory fs prefix'
   let isDiscussionPage (FSFile f) = isDiscussPageFile f
@@ -615,7 +623,7 @@ indexPage page params = do
                   pgTabs = [],
                   pgScripts = [],
                   pgTitle = "Contents"}
-                page params htmlIndex
+                prefix' params htmlIndex
 
 fileListToHtml :: String -> [Resource] -> Html
 fileListToHtml prefix files =
@@ -638,15 +646,14 @@ fileListToHtml prefix files =
 
 authHandler :: Handler
 authHandler = msum $
-  [ handlePath "_register"  GET  registerUserForm
-  , handlePath "_register"  POST registerUser
-  , handlePath "_login"     GET  loginUserForm
-  , handlePath "_login"     POST loginUser
-  , handlePath "_logout"    GET  logoutUser
-  , handlePath "_resetPassword"   GET  resetPasswordRequestForm
-  , handlePath "_resetPassword"   POST resetPasswordRequest
-  , handlePath "_doResetPassword" GET  resetPassword
-  , handlePath "_doResetPassword" POST doResetPassword
+  [ dir "_register"  $ methodSP GET  $ withData registerUserForm
+  , dir "_register"  $ methodSP POST $ withData registerUser
+  , dir "_login"     $ methodSP GET  $ withData loginUserForm
+  , dir "_login"     $ methodSP POST $ withData loginUser
+  , dir "_logout"    $ methodSP GET  $ withData logoutUser
+  , dir "_resetPassword"   $ methodSP GET  $ withData resetPasswordRequestForm
+  , dir "_resetPassword"   $ methodSP POST $ withData resetPasswordRequest
+  , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
+  , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
   ]
-
 

@@ -31,7 +31,6 @@ import System.FilePath ((</>))
 import Control.Concurrent
 import Gitit.State
 import Gitit.Config (getConfigFromOpts)
-import Data.List (isSuffixOf, isPrefixOf)
 import Data.Maybe (isNothing)
 import qualified Data.Map as M
 import System.IO.UTF8 (readFile)
@@ -93,13 +92,18 @@ main = do
   let staticHandler = dir "_static" $
                       withExpiresHeaders $ fileServe [] staticdir
 
-  let handlers = case authenticationMethod conf of
+  let handlers = [ withData debugHandler | debugMode conf] ++
+                 case authenticationMethod conf of
                     FormAuth -> authHandler : wikiHandlers
                     _        -> wikiHandlers
+  -- TODO - rearrange so handleAny doesn't get compressed
+  let wikiHandler = if compressResponses conf
+                       then compressedResponseFilter >> msum handlers
+                       else msum handlers
 
   -- start the server
   tid <- forkIO $ simpleHTTP serverConf $ msum $
-         staticHandler : ([ debugHandler | debugMode conf ] ++ handlers)
+         [staticHandler, wikiHandler]
   waitForTermination
 
   -- shut down the server
@@ -110,46 +114,36 @@ wikiHandlers =
   [ dir "_activity" $ withData showActivity
   , dir "_go"       $ withData goToPage
   , dir "_search"   $ withData searchResults
-  , handlePath "_upload"    GET  (ifLoggedIn uploadForm loginUserForm)
-  , handlePath "_upload"    POST (ifLoggedIn uploadFile loginUserForm)
-  , dir "_random"   $ methodSP GET randomPage
-  , handle isIndex          GET  indexPage
-  , handle isPreview        POST preview
-  , withCommand "showraw" [ handlePage GET showRawPage
-                          , handle isSourceCode GET showFileAsText ]
-  , withCommand "history" [ handlePage GET showPageHistory
-                          , handle isSourceCode GET showFileHistory ]
-  , withCommand "edit"    [ handlePage GET $ unlessNoEdit
-                              (ifLoggedIn editPage loginUserForm) showPage ]
-  , withCommand "diff"    [ handlePage GET showPageDiff
-                          , handle isSourceCode GET showFileDiff ]
-  , withCommand "export"  [ handlePage POST exportPage
-                          , handlePage GET exportPage ]
-  , withCommand "cancel"  [ handlePage POST showPage ]
-  , withCommand "discuss" [ handlePage GET discussPage ]
-  , withCommand "update"  [ handlePage POST $ unlessNoEdit
-                              (ifLoggedIn updatePage loginUserForm) showPage ]
-  , withCommand "delete"  [ handlePage GET  $ unlessNoDelete
-                              (ifLoggedIn confirmDelete loginUserForm) showPage,
-                            handlePage POST $ unlessNoDelete
-                              (ifLoggedIn deletePage loginUserForm) showPage ]
-  , handlePage GET showPage
-  , handle isSourceCode GET showHighlightedSource
+  , dir "_upload"   $ methodOnly GET  >> withData (ifLoggedIn uploadForm loginUserForm)
+  , dir "_upload"   $ methodOnly POST >> withData (ifLoggedIn uploadFile loginUserForm)
+  , dir "_random"   $ methodOnly GET  >> randomPage
+  , dir "_index"    $ withData indexPage
+  , guardCommand "showraw" >> msum
+      [ withData showRawPage
+      , guardPath isSourceCode >> withData showFileAsText ]
+  , guardCommand "history" >> msum
+      [ withData showPageHistory
+      , guardPath isSourceCode >> withData showFileHistory ]
+  , guardCommand "edit" >>
+      withData (unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage)
+  , guardCommand "diff" >> msum
+      [ withData showPageDiff
+      , guardPath isSourceCode >> withData showFileDiff ]
+  , guardCommand "export"  >> withData exportPage
+  , guardCommand "cancel"  >> withData showPage
+  , guardCommand "discuss" >> withData discussPage
+  , guardCommand "update"  >> methodOnly POST >>
+      withData (unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage)
+  , guardCommand "delete"  >> msum
+      [ methodOnly GET  >>
+          withData (unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage)
+      , methodOnly POST >>
+          withData (unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage) ]
+  , guardPath isIndex >> withData indexPage
+  , guardPath isPreview >> withData preview
+  , withData showPage
+  , guardPath isSourceCode >> withData showHighlightedSource
   , handleAny
-  , handlePage GET  createPage
-  , handlePage POST createPage  -- if they click Discard on a new page
+  , withData createPage
   ]
-
-isIndex :: String -> Bool
-isIndex ""       = False
-isIndex "_index" = True
-isIndex x        = "_index/" `isPrefixOf` x || last x == '/'
-
-isPreview :: String -> Bool
-isPreview x  = "___preview" `isSuffixOf` x
--- We choose something that is unlikely to occur naturally as a suffix.
--- Why suffix and not prefix?  Because the link is added by a script,
--- and mod_proxy_html doesn't rewrite links in scripts.  So this is
--- to make it possible to use gitit with an alterantive docroot.
-
 

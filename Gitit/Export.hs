@@ -42,49 +42,49 @@ respond :: String
         -> (Pandoc -> String)
         -> String
         -> Pandoc
-        -> Web Response
+        -> Handler
 respond mimetype ext fn page = ok . setContentType mimetype .
   (if null ext then id else setFilename (page ++ "." ++ ext)) .
   toResponse . encodeString . fn
 
-respondLaTeX :: String -> Pandoc -> Web Response
+respondLaTeX :: String -> Pandoc -> Handler
 respondLaTeX = respond "application/x-latex" "tex" $
   writeLaTeX (defaultRespOptions {writerHeader = defaultLaTeXHeader})
 
-respondConTeXt :: String -> Pandoc -> Web Response
+respondConTeXt :: String -> Pandoc -> Handler
 respondConTeXt = respond "application/x-context" "tex" $
   writeConTeXt (defaultRespOptions {writerHeader = defaultConTeXtHeader})
 
-respondRTF :: String -> Pandoc -> Web Response
+respondRTF :: String -> Pandoc -> Handler
 respondRTF = respond "application/rtf" "rtf" $
   writeRTF (defaultRespOptions {writerHeader = defaultRTFHeader})
 
-respondRST :: String -> Pandoc -> Web Response
+respondRST :: String -> Pandoc -> Handler
 respondRST = respond "text/plain; charset=utf-8" "" $
   writeRST (defaultRespOptions {writerHeader = "", writerReferenceLinks = True})
 
-respondMan :: String -> Pandoc -> Web Response
+respondMan :: String -> Pandoc -> Handler
 respondMan = respond "text/plain; charset=utf-8" "" $
   writeMan (defaultRespOptions {writerHeader = ""})
 
-respondS5 :: String -> Pandoc -> Web Response
+respondS5 :: String -> Pandoc -> Handler
 respondS5 _ = ok . toResponse .
   writeS5 (defaultRespOptions {writerHeader = defaultS5Header,
             writerS5 = True, writerIncremental = True})
 
-respondTexinfo :: String -> Pandoc -> Web Response
+respondTexinfo :: String -> Pandoc -> Handler
 respondTexinfo = respond "application/x-texinfo" "texi" $
   writeTexinfo (defaultRespOptions {writerHeader = ""})
 
-respondDocbook :: String -> Pandoc -> Web Response
+respondDocbook :: String -> Pandoc -> Handler
 respondDocbook = respond "application/docbook+xml" "xml" $
   writeDocbook (defaultRespOptions {writerHeader = defaultDocbookHeader})
 
-respondMediaWiki :: String -> Pandoc -> Web Response
+respondMediaWiki :: String -> Pandoc -> Handler
 respondMediaWiki = respond "text/plain; charset=utf-8" "" $
   writeMediaWiki (defaultRespOptions {writerHeader = ""})
 
-respondODT :: String -> Pandoc -> Web Response
+respondODT :: String -> Pandoc -> Handler
 respondODT page doc = do
   let openDoc = writeOpenDocument
                 (defaultRespOptions {writerHeader = defaultOpenDocumentHeader})
@@ -97,7 +97,7 @@ respondODT page doc = do
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
 
-exportFormats :: [(String, String -> Pandoc -> Web Response)]
+exportFormats :: [(String, String -> Pandoc -> Handler)]
 exportFormats = [ ("LaTeX",     respondLaTeX)     -- (description, writer)
                 , ("ConTeXt",   respondConTeXt)
                 , ("Texinfo",   respondTexinfo)
