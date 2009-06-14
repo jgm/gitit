@@ -31,7 +31,7 @@ import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
 import System.Process (readProcessWithExitCode)
-import Control.Monad (unless)
+import Control.Monad (unless, liftM)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import System.IO
 import System.Exit
@@ -39,7 +39,7 @@ import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import Data.Char (isAlphaNum, isAlpha)
 import Text.Pandoc.Shared (substitute)
-import Data.Maybe (isJust, fromMaybe, fromJust)
+import Data.Maybe (isJust, fromJust)
 import Network.URL
 import Network.BSD (getHostName)
 import qualified Text.StringTemplate as T
@@ -48,8 +48,8 @@ data ValidationType = Register
                     | ResetPassword
                     deriving (Show,Read)
 
-registerUser :: String -> Params -> Web Response
-registerUser _ params = do
+registerUser :: Params -> Handler
+registerUser params = do
   result' <- sharedValidation Register params
   case result' of
     Left errors -> registerForm >>=
@@ -62,13 +62,12 @@ registerUser _ params = do
     Right (uname, email, pword) -> do
        user <- liftIO $ mkUser uname email pword
        addUser uname user
-       loginUser "/" params{
-                       pUsername = uname,
-                       pPassword = pword,
-                       pEmail = email }
+       loginUser params{ pUsername = uname,
+                         pPassword = pword,
+                         pEmail = email }
 
-resetPasswordRequestForm :: String -> Params -> Web Response
-resetPasswordRequestForm _ params = do
+resetPasswordRequestForm :: Params -> Handler
+resetPasswordRequestForm params = do
   let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
               [ label << "Username: "
               , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
@@ -83,8 +82,8 @@ resetPasswordRequestForm _ params = do
                   pgTitle = "Reset your password" }
                 "_resetPassword" params contents
 
-resetPasswordRequest :: String -> Params -> Web Response
-resetPasswordRequest _ params = do
+resetPasswordRequest :: Params -> Handler
+resetPasswordRequest params = do
   let uname = pUsername params
   mbUser <- getUser uname
   let errors = case mbUser of
@@ -144,8 +143,8 @@ sendReregisterEmail user = do
   unless (exitCode == ExitSuccess) $
     logM "gitit" WARNING $ mailcommand ++ " failed. " ++ pErr
 
-resetPassword :: String -> Params -> Web Response
-resetPassword _ params = do
+resetPassword :: Params -> Handler
+resetPassword params = do
   users' <- queryAppState users
   let uname = pUsername params
   let user = M.lookup uname users'
@@ -172,8 +171,8 @@ resetPassword _ params = do
                           }
                         "_register" params{ pMessages = [errors] }
 
-doResetPassword :: String -> Params -> Web Response
-doResetPassword _ params = do
+doResetPassword :: Params -> Handler
+doResetPassword params = do
   let uname = pUsername params
   users' <- queryAppState users
   let mbUser = M.lookup uname users'
@@ -192,17 +191,17 @@ doResetPassword _ params = do
        adjustUser uname' user
        liftIO $ logM "gitit" WARNING $
             "Successfully reset password and email for " ++ uUsername user
-       loginUser "/" params{ pUsername = uname',
-                             pPassword = pword,
-                             pEmail = email }
+       loginUser params{ pUsername = uname',
+                         pPassword = pword,
+                         pEmail = email }
 
-registerForm :: Web Html
+registerForm :: ServerPart Html
 registerForm = sharedForm Nothing
 
-resetPasswordForm :: Maybe User -> Web Html
+resetPasswordForm :: Maybe User -> ServerPart Html
 resetPasswordForm = sharedForm  -- synonym for now
 
-sharedForm :: Maybe User -> Web Html
+sharedForm :: Maybe User -> ServerPart Html
 sharedForm mbUser = do
   cfg <- getConfig
   let accessQ = case accessQuestion cfg of
@@ -249,7 +248,9 @@ sharedForm mbUser = do
             , submitField ! [intAttr "tabindex" 5]]
 
 
-sharedValidation :: MonadIO m => ValidationType -> Params
+sharedValidation :: (ServerMonad m, MonadIO m)
+                 => ValidationType
+                 -> Params
                  -> m (Either [String] (String,String,String))
 sharedValidation validationType params = do
   let isValidUsername u = length u >= 3 && all isAlphaNum u
@@ -270,6 +271,7 @@ sharedValidation validationType params = do
         Nothing           -> True
         Just (_, answers) -> accessCode `elem` answers
   let isValidEmail e = length (filter (=='@') e) == 1
+  peer <- liftM (fst . rqPeer) askRq
   captchaResult <-
     if useRecaptcha cfg
        then if null (recaptchaChallengeField recaptcha) ||
@@ -277,12 +279,12 @@ sharedValidation validationType params = do
                -- no need to bother captcha.net in this case
                then return $ Left "missing-challenge-or-response"
                else liftIO $ do
-                      mbIPaddr <- lookupIPAddr $ pPeer params
+                      mbIPaddr <- lookupIPAddr peer
                       let ipaddr = case mbIPaddr of
                                         Just ip -> ip
                                         Nothing -> error $
                                           "Could not find ip address for " ++
-                                          pPeer params
+                                          peer
                       ipaddr `seq` validateCaptcha (recaptchaPrivateKey cfg)
                               ipaddr (recaptchaChallengeField recaptcha)
                               (recaptchaResponseField recaptcha)
@@ -312,7 +314,7 @@ sharedValidation validationType params = do
   return $ if null errors then Right (uname, email, pword) else Left errors
 
 -- user authentication
-loginForm :: Web Html
+loginForm :: ServerPart Html
 loginForm = do
   cfg <- getConfig
   return $ gui "/_login" ! [identifier "loginForm"] <<
@@ -335,26 +337,26 @@ loginForm = do
                      "click here to get a new one."
                  ]
 
-loginUserForm :: String -> Params -> Web Response
-loginUserForm page params = do
+loginUserForm :: Params -> Handler
+loginUserForm params = do
   cfg <- getConfig
+  referer <- getReferer
   case authenticationMethod cfg of
-       FormAuth -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" $
-                                        fromMaybe "/" $ pReferer params) >>
-                   loginUserForm' page params
+       FormAuth -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer) >>
+                   loginUserForm' params
        HTTPAuth -> error "You must be logged in through HTTP authentication."
 
-loginUserForm' :: String -> Params -> Web Response
-loginUserForm' page params =
+loginUserForm' :: Params -> Handler
+loginUserForm' params =
   loginForm >>= formattedPage defaultPageLayout{
                                 pgShowPageTools = False,
                                 pgTabs = [],
                                 pgTitle = "Login"
                                 }
-                              page params
+                              "" params
 
-loginUser :: String -> Params -> Web Response
-loginUser page params = do
+loginUser :: Params -> Handler
+loginUser params = do
   let uname = pUsername params
   let pword = pPassword params
   let destination = pDestination params
@@ -367,13 +369,14 @@ loginUser page params = do
       addCookie 0 (mkCookie "destination" "/")
       seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      loginUserForm' page
+      loginUserForm'
          params{ pMessages = "Authentication failed." : pMessages params }
 
-logoutUser :: String -> Params -> Web Response
-logoutUser _ params = do
+logoutUser :: Params -> Handler
+logoutUser params = do
   let key = pSessionKey params
-  let destination = substitute " " "%20" $ fromMaybe "/" $ pReferer params
+  referer <- getReferer
+  let destination = substitute " " "%20" referer
   case key of
        Just k  -> do
          delSession k
@@ -382,10 +385,11 @@ logoutUser _ params = do
        Nothing -> return ()
   seeOther destination $ toResponse "You have been logged out."
 
-registerUserForm :: String -> Params -> Web Response
-registerUserForm _ params = do
+registerUserForm :: Params -> Handler
+registerUserForm params = do
+  referer <- getReferer
   let destination = case pDestination params of
-                          ""  -> fromMaybe "/" $ pReferer params
+                          ""  -> referer
                           x   -> x   -- came from login page, preserve prev dest
   addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" destination)
   registerForm >>=

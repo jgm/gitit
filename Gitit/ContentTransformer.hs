@@ -109,10 +109,10 @@ import Network.URI (isAllowedInURI, escapeURIString)
 
 runPageTransformer :: ToMessage a
                    => ContentTransformer a
-                   -> String
                    -> Params
-                   -> Web a
-runPageTransformer xform page params = do
+                   -> ServerPart a 
+runPageTransformer xform params = do
+  page <- getPage
   pt <- getDefaultPageType
   lhs <- getDefaultLHS
   evalStateT xform  Context{ ctxPage = page
@@ -125,10 +125,10 @@ runPageTransformer xform page params = do
 
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
-                   -> FilePath
                    -> Params
-                   -> Web a
-runFileTransformer xform file params =
+                   -> ServerPart a
+runFileTransformer xform params = do
+  file <- getPage
   evalStateT xform  Context{ ctxPage = file
                            , ctxFile = file
                            , ctxPageType = Markdown     -- doesn't mater
@@ -141,34 +141,34 @@ runFileTransformer xform file params =
 -- Gitit responders
 --
 
-showRawPage :: String -> Params -> Web Response
+showRawPage :: Params -> Handler
 showRawPage = runPageTransformer rawTextResponse
 
-showFileAsText :: FilePath -> Params -> Web Response
+showFileAsText :: Params -> Handler
 showFileAsText = runFileTransformer rawTextResponse
 
-showPage :: String -> Params -> Web Response
+showPage :: Params -> Handler
 showPage = runPageTransformer htmlViaPandoc
 
-exportPage :: String -> Params -> Web Response
+exportPage :: Params -> Handler 
 exportPage = runPageTransformer exportViaPandoc
 
-showHighlightedSource :: FilePath -> Params -> Web Response
+showHighlightedSource :: Params -> Handler
 showHighlightedSource = runFileTransformer highlightRawSource
 
-showFile :: FilePath -> Params -> Web Response
+showFile :: Params -> Handler
 showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
-preview :: String -> Params -> Web Response
+preview :: Params -> Handler
 preview = runPageTransformer $
           getParams >>=
           textToWikiPandoc . pRaw >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
 
-applyPreCommitPlugins :: String -> Params -> String -> Web String
-applyPreCommitPlugins page params rawtext =
-  runPageTransformer (applyPreCommitTransforms rawtext) page params
+applyPreCommitPlugins :: Params -> String -> ServerPart String
+applyPreCommitPlugins params rawtext =
+  runPageTransformer (applyPreCommitTransforms rawtext) params
 
 --
 -- Top level, composed transformers
@@ -384,7 +384,7 @@ applyTransform :: a -> (a -> PluginM a) -> ContentTransformer a
 applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
-  user <- lift $ getLoggedInUser (ctxParams context)
+  user <- lift getLoggedInUser
   (result', context') <- liftIO $
                         runPluginM (transform inp) conf user context
   put context'
