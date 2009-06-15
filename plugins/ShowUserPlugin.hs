@@ -3,7 +3,7 @@ module ShowUserPlugin (plugin) where
 -- This plugin replaces $USER$ with the name of the currently logged in
 -- user, or the empty string if no one is logged in.
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Data.Maybe (fromMaybe)
 
 plugin :: Plugin

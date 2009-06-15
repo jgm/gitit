@@ -3,7 +3,7 @@ module SignaturePlugin (plugin) where
 -- This plugin replaces $SIG$ with the username and timestamp
 -- of the last edit, prior to saving the page in the repository.
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Data.Maybe (fromMaybe)
 import Data.DateTime
 import Control.Monad

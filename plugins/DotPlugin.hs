@@ -12,7 +12,7 @@ module DotPlugin (plugin) where
 -- If no name is specified, a unique name will be generated from a hash
 -- of the file contents.
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import System.Process
 import System.Exit
 -- from the utf8-string package on HackageDB:
