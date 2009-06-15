@@ -335,8 +335,8 @@ loginForm = do
                      "click here to get a new one."
                  ]
 
-loginUserForm :: Params -> Handler
-loginUserForm params = do
+loginUserForm :: Handler
+loginUserForm = withData $ \params -> do
   cfg <- getConfig
   referer <- getReferer
   case authenticationMethod cfg of
