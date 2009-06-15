@@ -161,11 +161,11 @@ isSourceCode path' =
 
 isIndex :: String -> Bool
 isIndex ""       = False
+isIndex "/"      = False
 isIndex x        = last x == '/'
 
 isPreview :: String -> Bool
-isPreview "___preview" = True
-isPreview _ = False
+isPreview x = "/___preview" `isSuffixOf` x
 -- We choose something that is unlikely to occur naturally as a suffix.
 -- Why suffix and not prefix?  Because the link is added by a script,
 -- and mod_proxy_html doesn't rewrite links in scripts.  So this is
@@ -212,4 +212,4 @@ guardCommand command = withData $ \(com :: Command) ->
        _                               -> mzero
 
 guardPath :: (String -> Bool) -> GititServerPart ()
-guardPath pred' = guardRq $ \rq -> not (null $ rqPaths rq) && pred' (last (rqPaths rq))
+guardPath pred' = guardRq (pred' . rqUri)
