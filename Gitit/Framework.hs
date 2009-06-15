@@ -40,6 +40,7 @@ module Gitit.Framework ( getLoggedInUser
                        , guardCommand
                        , guardPath
                        , guardIndex
+                       , withInput
                        )
 where
 import Gitit.Server
@@ -50,6 +51,7 @@ import Control.Monad.Trans (MonadIO)
 import Control.Monad (mzero, liftM, MonadPlus)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
+import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
 import Data.List (intercalate, isSuffixOf, (\\))
 import System.FilePath ((<.>), takeExtension, dropExtension)
@@ -231,4 +233,17 @@ guardIndex = do
   if uri' /= base && last uri' == '/'
      then return ()
      else mzero
+
+withInput :: String -> String -> Handler -> Handler
+withInput name val handler = do
+  req <- askRq
+  let inps = filter (\(n,_) -> n /= name) $ rqInputs req
+  let newInp = (name, Input { inputValue = fromString val
+                            , inputFilename = Nothing
+                            , inputContentType = ContentType {
+                                    ctType = "text"
+                                  , ctSubtype = "plain"
+                                  , ctParameters = [] }
+                            })
+  localRq (\rq -> rq{ rqInputs = newInp : inps }) handler
 
