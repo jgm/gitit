@@ -31,7 +31,6 @@ module Gitit.Framework ( getLoggedInUser
                        , isDiscussPage
                        , isDiscussPageFile
                        , isSourceCode
-                       , isIndex
                        , isPreview
                        , urlForPage
                        , pathForPage
@@ -40,6 +39,7 @@ module Gitit.Framework ( getLoggedInUser
                        , validate
                        , guardCommand
                        , guardPath
+                       , guardIndex
                        )
 where
 import Gitit.Server
@@ -174,11 +174,6 @@ isSourceCode path' =
       langs = languagesByExtension ext \\ ["Postscript"]
   in  not . null $ langs
 
-isIndex :: String -> Bool
-isIndex ""       = False
-isIndex "/"      = False
-isIndex x        = last x == '/'
-
 isPreview :: String -> Bool
 isPreview x = "/___preview" `isSuffixOf` x
 -- We choose something that is unlikely to occur naturally as a suffix.
@@ -228,3 +223,12 @@ guardCommand command = withData $ \(com :: Command) ->
 
 guardPath :: (String -> Bool) -> GititServerPart ()
 guardPath pred' = guardRq (pred' . rqUri)
+
+guardIndex :: GititServerPart ()
+guardIndex = do
+  base <- getWikiBase
+  uri' <- liftM rqUri askRq
+  if uri' /= base && last uri' == '/'
+     then return ()
+     else mzero
+
