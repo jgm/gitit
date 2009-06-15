@@ -24,6 +24,7 @@ module Gitit.Framework ( getLoggedInUser
                        , getPath
                        , getPage
                        , getReferer
+                       , getWikiBase
                        , uriPath
                        , isPage
                        , isPageFile
@@ -135,6 +136,20 @@ getReferer = do
                                  ""  -> "/"
                                  s   -> s
                  Nothing -> "/"
+
+-- | Returns the base URL of the wiki in the happstack server.
+-- So, if the wiki handlers are behind a dir "foo", getWikiBase will
+-- return '/foo/'.  getWikiBase doesn't know anything about HTTP
+-- proxies, so if you use proxies to map a gitit wiki to /foo/,
+-- you'll still need to follow the instructions in README.
+getWikiBase :: ServerMonad m => m String
+getWikiBase = do
+  path' <- getPath
+  uri <- liftM rqUri askRq
+  let path'' = if last uri == '/' then path' ++ "/" else path'
+  if path'' `isSuffixOf` uri
+     then return $ take (length uri - length path'') uri
+     else error $ "Could not getWikiBase: (path, uri) = " ++ show (path'',uri)
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
