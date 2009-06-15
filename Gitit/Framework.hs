@@ -133,11 +133,12 @@ getPage = do
 getReferer :: ServerMonad m => m String
 getReferer = do
   req <- askRq
+  base' <- getWikiBase
   return $ case getHeader "referer" req of
                  Just r  -> case toString r of
-                                 ""  -> "/"
+                                 ""  -> base'
                                  s   -> s
-                 Nothing -> "/"
+                 Nothing -> base'
 
 -- | Returns the base URL of the wiki in the happstack server.
 -- So, if the wiki handlers are behind a dir "foo", getWikiBase will

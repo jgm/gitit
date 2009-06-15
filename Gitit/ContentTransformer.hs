@@ -337,10 +337,11 @@ maybePandocToHtml = maybe mzero pandocToHtml
 pandocToHtml :: Pandoc -> ContentTransformer Html
 pandocToHtml pandocContents = do
   cfg <- lift getConfig
+  base' <- lift getWikiBase
   return $ writeHtml defaultWriterOptions{
                         writerStandalone = False
                       , writerHTMLMathMethod = JsMath
-                               (Just "/_static/js/jsMath/easy/load.js")
+                               (Just $ base' ++ "_static/js/jsMath/easy/load.js")
                       , writerTableOfContents = tableOfContents cfg
                       , writerLiterateHaskell = showLHSBirdTracks cfg
                       } pandocContents
