@@ -79,7 +79,7 @@ of the basic types used by Pandoc (for example, @Inline@, @Block@,
 >
 > -- This plugin replaces profane words with "XXXXX".
 >
-> import Gitit.Interface
+> import Network.Gitit.Interface
 > import Data.Char (toLower)
 >
 > plugin :: Plugin
@@ -101,7 +101,7 @@ install directory and @X.Y.Z@ is the version number of gitit.
 
 -}
 
-module Gitit.Interface ( Plugin(..)
+module Network.Gitit.Interface ( Plugin(..)
                        , PluginM
                        , mkPageTransform
                        , mkPageTransformM
@@ -123,8 +123,8 @@ module Gitit.Interface ( Plugin(..)
 where
 import Text.Pandoc.Definition
 import Data.Data
-import Gitit.Types
-import Gitit.ContentTransformer
+import Network.Gitit.Types
+import Network.Gitit.ContentTransformer
 import Control.Monad.Reader (ask)
 import Control.Monad (liftM)
 import Control.Monad.Trans (liftIO)

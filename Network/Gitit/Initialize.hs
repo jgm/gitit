@@ -16,11 +16,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for initializing a Gitit wiki.
 -}
 
-module Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing )
+module Network.Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing )
 where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
-import Gitit.Types
+import Network.Gitit.Types
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents)

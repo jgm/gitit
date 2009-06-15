@@ -19,18 +19,18 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Main where
 
-import Gitit.Plugins ( loadPlugin )
-import Gitit.Types
-import Gitit.Server
-import Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
-import Gitit.Framework
-import Gitit.Handlers
+import Network.Gitit.Plugins ( loadPlugin )
+import Network.Gitit.Types
+import Network.Gitit.Server
+import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
+import Network.Gitit.Framework
+import Network.Gitit.Handlers
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
 import System.FilePath ((</>))
 import Control.Concurrent
-import Gitit.State
-import Gitit.Config (getConfigFromOpts)
+import Network.Gitit.State
+import Network.Gitit.Config (getConfigFromOpts)
 import Data.Maybe (isNothing)
 import qualified Data.Map as M
 import System.IO.UTF8 (readFile)

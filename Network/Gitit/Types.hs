@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Types for Gitit modules.
 -}
 
-module Gitit.Types where
+module Network.Gitit.Types where
 
 import System.Time (ClockTime)
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
@@ -38,7 +38,7 @@ import Data.DateTime
 import Data.List (intersect)
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
-import Gitit.Server
+import Network.Gitit.Server
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show)

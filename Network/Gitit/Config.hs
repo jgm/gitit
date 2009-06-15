@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for parsing command line options and reading the config file.
 -}
 
-module Gitit.Config ( getConfigFromOpts )
+module Network.Gitit.Config ( getConfigFromOpts )
 where
-import Gitit.Types
+import Network.Gitit.Types
 import Data.FileStore
 import System.Environment
 import System.Exit

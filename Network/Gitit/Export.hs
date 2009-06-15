@@ -19,14 +19,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for exporting wiki pages in various formats.
 -}
 
-module Gitit.Export ( exportFormats )
+module Network.Gitit.Export ( exportFormats )
 where
 import Text.Pandoc
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
-import Gitit.Server
-import Gitit.Util (withTempDir)
-import Gitit.State
-import Gitit.Types
+import Network.Gitit.Server
+import Network.Gitit.Util (withTempDir)
+import Network.Gitit.State
+import Network.Gitit.Types
 import Control.Monad.Trans (liftIO)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString.Lazy as B

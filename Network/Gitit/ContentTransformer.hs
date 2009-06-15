@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for content conversion.
 -}
 
-module Gitit.ContentTransformer
+module Network.Gitit.ContentTransformer
   (
   -- ContentTransformer runners
     runPageTransformer
@@ -83,12 +83,12 @@ module Gitit.ContentTransformer
 where
 
 import Prelude hiding (catch)
-import Gitit.Server
-import Gitit.Framework
-import Gitit.State
-import Gitit.Types
-import Gitit.Layout
-import Gitit.Export (exportFormats)
+import Network.Gitit.Server
+import Network.Gitit.Framework
+import Network.Gitit.State
+import Network.Gitit.Types
+import Network.Gitit.Layout
+import Network.Gitit.Export (exportFormats)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc

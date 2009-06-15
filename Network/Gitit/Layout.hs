@@ -20,17 +20,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions and data structures for wiki page layout.
 -}
 
-module Gitit.Layout ( defaultPageLayout
+module Network.Gitit.Layout ( defaultPageLayout
                     , formattedPage
                     )
 where
 import Data.FileStore
-import Gitit.Server
-import Gitit.Framework
-import Gitit.State
-import Gitit.Types
-import Gitit.Util (orIfNull)
-import Gitit.Export (exportFormats)
+import Network.Gitit.Server
+import Network.Gitit.Framework
+import Network.Gitit.State
+import Network.Gitit.Types
+import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import Codec.Binary.UTF8.String (encodeString)
 import qualified Text.StringTemplate as T

@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Handlers for wiki functions.
 -}
 
-module Gitit.Handlers ( handleAny
+module Network.Gitit.Handlers ( handleAny
                       , debugHandler
                       , randomPage
                       , discussPage
@@ -57,20 +57,20 @@ module Gitit.Handlers ( handleAny
                       )
 where
 import Data.FileStore
-import Gitit.Server
-import Gitit.Framework
-import Gitit.Layout
-import Gitit.State
-import Gitit.Types
-import Gitit.Util (orIfNull)
-import Gitit.Authentication
-import Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
+import Network.Gitit.Server
+import Network.Gitit.Framework
+import Network.Gitit.Layout
+import Network.Gitit.State
+import Network.Gitit.Types
+import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Authentication
+import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Control.Exception (throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Time
 import System.FilePath
-import Gitit.State
+import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
 import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits)

@@ -20,13 +20,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Handlers for registering and authenticating users.
 -}
 
-module Gitit.Authentication where
+module Network.Gitit.Authentication where
 
-import Gitit.State
-import Gitit.Types
-import Gitit.Framework
-import Gitit.Layout
-import Gitit.Server
+import Network.Gitit.State
+import Network.Gitit.Types
+import Network.Gitit.Framework
+import Network.Gitit.Layout
+import Network.Gitit.Server
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
