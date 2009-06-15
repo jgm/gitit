@@ -45,7 +45,7 @@ data PageType = Markdown | RST | LaTeX | HTML
 
 data AuthenticationMethod = FormAuth
                           | HTTPAuth
-                          deriving (Read, Show)
+                          | CustomAuth (GititServerPart (Maybe User)) 
 
 -- | Data structure for information read from config file.
 data Config = Config {

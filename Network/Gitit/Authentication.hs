@@ -342,9 +342,10 @@ loginUserForm = withData $ \params -> do
   cfg <- getConfig
   referer <- getReferer
   case authenticationMethod cfg of
-       FormAuth -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer) >>
-                   loginUserForm' params
-       HTTPAuth -> error "You must be logged in through HTTP authentication."
+       FormAuth     -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer) >>
+                       loginUserForm' params
+       HTTPAuth     -> error "You must be logged in through HTTP authentication."
+       CustomAuth _ -> error "You must be logged in through custom authentication."
 
 loginUserForm' :: Params -> Handler
 loginUserForm' params =

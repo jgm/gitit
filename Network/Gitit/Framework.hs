@@ -18,30 +18,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Framework ( getLoggedInUser
-                       , sessionTime
-                       , unlessNoEdit
-                       , unlessNoDelete
-                       , getPath
-                       , getPage
-                       , getReferer
-                       , getWikiBase
-                       , uriPath
-                       , isPage
-                       , isPageFile
-                       , isDiscussPage
-                       , isDiscussPageFile
-                       , isSourceCode
-                       , isPreview
-                       , urlForPage
-                       , pathForPage
-                       , getMimeTypeForExtension
-                       , ifLoggedIn
-                       , validate
-                       , guardCommand
-                       , guardPath
-                       , guardIndex
-                       , withInput
-                       )
+                               , sessionTime
+                               , unlessNoEdit
+                               , unlessNoDelete
+                               , getPath
+                               , getPage
+                               , getReferer
+                               , getWikiBase
+                               , uriPath
+                               , isPage
+                               , isPageFile
+                               , isDiscussPage
+                               , isDiscussPageFile
+                               , isSourceCode
+                               , isPreview
+                               , urlForPage
+                               , pathForPage
+                               , getMimeTypeForExtension
+                               , ifLoggedIn
+                               , validate
+                               , guardCommand
+                               , guardPath
+                               , guardIndex
+                               , withInput
+                               )
 where
 import Network.Gitit.Server
 import Network.Gitit.State
@@ -63,9 +63,9 @@ import Happstack.Crypto.Base64 (decode)
 getLoggedInUser :: GititServerPart (Maybe User)
 getLoggedInUser = withData $ \(sk :: Maybe SessionKey) -> do
   cfg <- getConfig
-  req <- askRq
   case authenticationMethod cfg of
        HTTPAuth -> do
+         req <- askRq
          case (getHeader "authorization" req) of
               Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
                                  Left _  -> return Nothing
@@ -79,6 +79,7 @@ getLoggedInUser = withData $ \(sk :: Maybe SessionKey) -> do
          case mbSd of
               Nothing    -> return Nothing
               Just sd    -> getUser $! sessionUser sd
+       CustomAuth customGetLoggedInUser -> customGetLoggedInUser
 
 pAuthorizationHeader :: GenParser Char st String
 pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
@@ -216,7 +217,7 @@ ifLoggedIn responder fallback = withData $ \(sk :: Maybe SessionKey) -> do
        Nothing  -> do
           localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) fallback
        Just _   -> do
-          -- give the user another hour...
+          -- give the user more time...
           case sk of
                Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
                Nothing   -> return ()
