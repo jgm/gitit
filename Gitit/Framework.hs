@@ -147,7 +147,7 @@ getReferer = do
 getWikiBase :: ServerMonad m => m String
 getWikiBase = do
   path' <- getPath
-  uri <- liftM rqUri askRq
+  uri <- liftM (fromJust . decString True . rqUri) askRq
   let path'' = if last uri == '/' then path' ++ "/" else path'
   if path'' `isSuffixOf` uri
      then return $ take (length uri - length path'') uri
