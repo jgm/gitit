@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit ( initializeAppState
+                     , getDefaultConfig
                      , Config(..)
                      , User(..)
                      , Cache(..)
@@ -35,10 +36,9 @@ import Network.Gitit.State
 import Network.Gitit.Server
 import Network.Gitit.Plugins (loadPlugin)
 import Network.Gitit.Handlers
-import Network.Gitit.Config (readMimeTypesFile)
+import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
 import Control.Monad.Reader
 
--- TODO: parameterize on getLoggedInUser
 wikiHandler :: Config -> ServerPart Response
 wikiHandler conf = do
   let staticHandler = dir "_static" $

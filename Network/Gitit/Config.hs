@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for parsing command line options and reading the config file.
 -}
 
-module Network.Gitit.Config ( getConfigFromOpts, readMimeTypesFile )
+module Network.Gitit.Config ( getConfigFromOpts
+                            , readMimeTypesFile
+                            , getDefaultConfig )
 where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
@@ -150,10 +152,12 @@ extractConfig cp = do
                            "latex"        -> (LaTeX,False)
                            "latex+lhs"    -> (LaTeX,True)
                            x              -> error $ "Unknown page type: " ++ x
+
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
       markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
-                          liftIO $ readFile markupHelpPath
+                            liftIO $ readFile markupHelpPath
+
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
 
       -- create template file if it doesn't exist
@@ -249,6 +253,12 @@ splitCommaList l =
 lrStrip :: String -> String
 lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace
     where isWhitespace = (`elem` " \t\n")
+
+getDefaultConfig :: IO Config
+getDefaultConfig = do
+  cp <- getDataFileName "data/default.conf" >>= readfile emptyCP
+  let cp' = forceEither cp
+  extractConfig cp'
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do
