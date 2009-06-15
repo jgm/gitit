@@ -92,7 +92,7 @@ main = do
   let staticHandler = dir "_static" $
                       withExpiresHeaders $ fileServe [] staticdir
 
-  let handlers = [ withData debugHandler | debugMode conf] ++
+  let handlers = [ debugHandler | debugMode conf] ++
                  case authenticationMethod conf of
                     FormAuth -> authHandler : wikiHandlers
                     _        -> wikiHandlers
@@ -112,40 +112,40 @@ main = do
 
 wikiHandlers :: [Handler]
 wikiHandlers =
-  [ dir "_activity" $ withData showActivity
-  , dir "_go"       $ withData goToPage
-  , dir "_search"   $ withData searchResults
-  , dir "_upload"   $ methodOnly GET  >> withData (ifLoggedIn uploadForm loginUserForm)
-  , dir "_upload"   $ methodOnly POST >> withData (ifLoggedIn uploadFile loginUserForm)
+  [ dir "_activity" showActivity
+  , dir "_go"       goToPage
+  , dir "_search"   searchResults
+  , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm loginUserForm
+  , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
   , dir "_random"   $ methodOnly GET  >> randomPage
-  , dir "_index"    $ withData indexPage
+  , dir "_index"    indexPage
   , guardCommand "showraw" >> msum
-      [ withData showRawPage
-      , guardPath isSourceCode >> withData showFileAsText ]
+      [ showRawPage
+      , guardPath isSourceCode >> showFileAsText ]
   , guardCommand "history" >> msum
-      [ withData showPageHistory
-      , guardPath isSourceCode >> withData showFileHistory ]
+      [ showPageHistory
+      , guardPath isSourceCode >> showFileHistory ]
   , guardCommand "edit" >>
-      withData (unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage)
+      (unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage)
   , guardCommand "diff" >> msum
-      [ withData showPageDiff
-      , guardPath isSourceCode >> withData showFileDiff ]
-  , guardCommand "export"  >> withData exportPage
-  , guardCommand "cancel"  >> withData showPage
-  , guardCommand "discuss" >> withData discussPage
+      [ showPageDiff
+      , guardPath isSourceCode >> showFileDiff ]
+  , guardCommand "export"  >> exportPage
+  , guardCommand "cancel"  >> showPage
+  , guardCommand "discuss" >> discussPage
   , guardCommand "update"  >> methodOnly POST >>
-      withData (unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage)
+      unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage
   , guardCommand "delete"  >> msum
       [ methodOnly GET  >>
-          withData (unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage)
+          unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage
       , methodOnly POST >>
-          withData (unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage) ]
-  , guardIndex >> withData indexPage
-  , guardPath isPreview >> withData preview
-  , withData showPage
-  , guardPath isSourceCode >> withData showHighlightedSource
+          unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
+  , guardIndex >> indexPage
+  , guardPath isPreview >> preview
+  , showPage
+  , guardPath isSourceCode >> showHighlightedSource
   , handleAny
-  , withData createPage
+  , createPage
   ]
 
 unpackReaderT:: (Monad m)

@@ -109,9 +109,8 @@ import Network.URI (isAllowedInURI, escapeURIString)
 
 runPageTransformer :: ToMessage a
                    => ContentTransformer a
-                   -> Params
                    -> GititServerPart a 
-runPageTransformer xform params = do
+runPageTransformer xform = withData $ \params -> do
   page <- getPage
   pt <- getDefaultPageType
   lhs <- getDefaultLHS
@@ -125,9 +124,8 @@ runPageTransformer xform params = do
 
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
-                   -> Params
                    -> GititServerPart a
-runFileTransformer xform params = do
+runFileTransformer xform = withData $ \params -> do
   file <- getPage
   evalStateT xform  Context{ ctxPage = file
                            , ctxFile = file
@@ -141,34 +139,34 @@ runFileTransformer xform params = do
 -- Gitit responders
 --
 
-showRawPage :: Params -> Handler
+showRawPage :: Handler
 showRawPage = runPageTransformer rawTextResponse
 
-showFileAsText :: Params -> Handler
+showFileAsText :: Handler
 showFileAsText = runFileTransformer rawTextResponse
 
-showPage :: Params -> Handler
+showPage :: Handler
 showPage = runPageTransformer htmlViaPandoc
 
-exportPage :: Params -> Handler 
+exportPage :: Handler 
 exportPage = runPageTransformer exportViaPandoc
 
-showHighlightedSource :: Params -> Handler
+showHighlightedSource :: Handler
 showHighlightedSource = runFileTransformer highlightRawSource
 
-showFile :: Params -> Handler
+showFile :: Handler
 showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
-preview :: Params -> Handler
+preview :: Handler
 preview = runPageTransformer $
           getParams >>=
           textToWikiPandoc . pRaw >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
 
-applyPreCommitPlugins :: Params -> String -> GititServerPart String
-applyPreCommitPlugins params rawtext =
-  runPageTransformer (applyPreCommitTransforms rawtext) params
+applyPreCommitPlugins :: String -> GititServerPart String
+applyPreCommitPlugins rawtext =
+  runPageTransformer (applyPreCommitTransforms rawtext)
 
 --
 -- Top level, composed transformers

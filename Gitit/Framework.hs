@@ -99,25 +99,25 @@ pBasicHeader = do
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
-unlessNoEdit :: (Params -> Handler)
-             -> (Params -> Handler)
-             -> (Params -> Handler)
-unlessNoEdit responder fallback =
-  \params -> do cfg <- getConfig
-                page <- getPage
-                if page `elem` noEdit cfg
-                   then fallback params{pMessages = ("Page is locked." : pMessages params)}
-                   else responder params
+unlessNoEdit :: Handler
+             -> Handler
+             -> Handler
+unlessNoEdit responder fallback = withData $ \(params :: Params) -> do
+  cfg <- getConfig
+  page <- getPage
+  if page `elem` noEdit cfg
+     then withInput "messages" ("Page is locked." : pMessages params) fallback
+     else responder
 
-unlessNoDelete :: (Params -> Handler)
-               -> (Params -> Handler)
-               -> (Params -> Handler)
-unlessNoDelete responder fallback =
-  \params ->  do cfg <- getConfig
-                 page <- getPage
-                 if page `elem` noDelete cfg
-                    then fallback params{pMessages = ("Page cannot be deleted." : pMessages params)}
-                    else responder params
+unlessNoDelete :: Handler
+               -> Handler
+               -> Handler
+unlessNoDelete responder fallback = withData $ \(params :: Params) -> do
+  cfg <- getConfig
+  page <- getPage
+  if page `elem` noDelete cfg
+     then withInput "messages" ("Page cannot be deleted." : pMessages params) fallback
+     else responder
 
 getPath :: ServerMonad m => m String
 getPath = liftM (fromJust . decString True . intercalate "/" . rqPaths) askRq
@@ -197,20 +197,20 @@ getMimeTypeForExtension ext = do
                 Nothing -> "application/octet-stream"
                 Just t  -> t
 
-ifLoggedIn :: (Params -> Handler)
-           -> (Params -> Handler)
-           -> (Params -> Handler)
-ifLoggedIn responder fallback params = withData $ \(sk :: Maybe SessionKey) -> do
+ifLoggedIn :: Handler
+           -> Handler
+           -> Handler
+ifLoggedIn responder fallback = withData $ \(sk :: Maybe SessionKey) -> do
   user <- getLoggedInUser
   case user of
        Nothing  -> do
-          localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) (fallback params)
+          localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) fallback
        Just _   -> do
           -- give the user another hour...
           case sk of
                Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
                Nothing   -> return ()
-          responder params
+          responder
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages
@@ -234,11 +234,11 @@ guardIndex = do
      then return ()
      else mzero
 
-withInput :: String -> String -> Handler -> Handler
+withInput :: Show a => String -> a -> Handler -> Handler
 withInput name val handler = do
   req <- askRq
   let inps = filter (\(n,_) -> n /= name) $ rqInputs req
-  let newInp = (name, Input { inputValue = fromString val
+  let newInp = (name, Input { inputValue = fromString $ show val
                             , inputFilename = Nothing
                             , inputContentType = ContentType {
                                     ctType = "text"
