@@ -20,7 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Handlers for wiki functions.
 -}
 
-module Network.Gitit.Handlers ( handleAny
+module Network.Gitit.Handlers (
+                        handleAny
                       , debugHandler
                       , randomPage
                       , discussPage
