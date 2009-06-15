@@ -140,7 +140,7 @@ wikiHandlers =
           withData (unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage)
       , methodOnly POST >>
           withData (unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage) ]
-  , guardPath isIndex >> withData indexPage
+  , guardIndex >> withData indexPage
   , guardPath isPreview >> withData preview
   , withData showPage
   , guardPath isSourceCode >> withData showHighlightedSource
