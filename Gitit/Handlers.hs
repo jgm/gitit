@@ -317,7 +317,7 @@ showHistory file page params =  do
                                     strAttr "revision" $ revId rev] <<
         [ thespan ! [theclass "date"] << (show $ revDateTime rev)
         , stringToHtml " ("
-        , thespan ! [theclass "author"] << anchor ! [href $ "/_activity?" ++
+        , thespan ! [theclass "author"] << anchor ! [href $ base' ++ "_activity?" ++
             urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
               (authorName $ revAuthor rev)
         , stringToHtml "): "
@@ -384,7 +384,7 @@ showActivity = withData $ \(params :: Params) -> do
         [ thespan ! [theclass "date"] << (show $ revDateTime rev)
         , stringToHtml " ("
         , thespan ! [theclass "author"] <<
-            anchor ! [href $ "/_activity?" ++
+            anchor ! [href $ base' ++ "_activity?" ++
               urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
                 (authorName $ revAuthor rev)
         , stringToHtml "): "
@@ -565,7 +565,7 @@ deletePage = withData $ \(params :: Params) -> do
      then do
        fs <- getFileStore
        liftIO $ delete fs (pFileToDelete params) author descrip
-       seeOther "/" $ toResponse $ p << "File deleted"
+       seeOther base' $ toResponse $ p << "File deleted"
      else seeOther (urlForPage base' page) $ toResponse $ p << "Page not deleted"
 
 updatePage :: Handler
@@ -618,13 +618,14 @@ updatePage = withData $ \(params :: Params) -> do
 indexPage :: Handler
 indexPage = withData $ \(params :: Params) -> do
   path' <- getPath
+  base' <- getWikiBase
   let prefix' = if null path' then "" else path' ++ "/"
   fs <- getFileStore
   listing <- liftIO $ directory fs prefix'
   let isDiscussionPage (FSFile f) = isDiscussPageFile f
       isDiscussionPage (FSDirectory _) = False
   let prunedListing = filter (not . isDiscussionPage) listing
-  let htmlIndex = fileListToHtml prefix' prunedListing
+  let htmlIndex = fileListToHtml base' prefix' prunedListing
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
                   pgTabs = [],
@@ -632,22 +633,22 @@ indexPage = withData $ \(params :: Params) -> do
                   pgTitle = "Contents"}
                 prefix' params htmlIndex
 
-fileListToHtml :: String -> [Resource] -> Html
-fileListToHtml prefix files =
+fileListToHtml :: String -> String -> [Resource] -> Html
+fileListToHtml base' prefix files =
   let fileLink (FSFile f) | isPageFile f =
         li ! [theclass "page"  ] <<
-          anchor ! [href $ "/" ++ prefix ++ dropExtension f] << dropExtension f
+          anchor ! [href $ base' ++ prefix ++ dropExtension f] << dropExtension f
       fileLink (FSFile f) =
-        li ! [theclass "upload"] << anchor ! [href $ "/" ++ prefix ++ f] << f
+        li ! [theclass "upload"] << anchor ! [href $ base' ++ prefix ++ f] << f
       fileLink (FSDirectory f) =
         li ! [theclass "folder"] <<
-          anchor ! [href $ "/" ++ prefix ++ f ++ "/"] << f
+          anchor ! [href $ base' ++ prefix ++ f ++ "/"] << f
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
                   concatHtml [ anchor ! [theclass "updir",
                                          href $ if length d == 1
-                                                   then "/_index"
-                                                   else joinPath d] <<
+                                                   then base' ++ "_index"
+                                                   else base' ++ joinPath d] <<
                   last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 

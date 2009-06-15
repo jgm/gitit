@@ -115,23 +115,24 @@ resetPasswordRequest params = do
                          }
                        "_register" params{ pMessages = errors }
 
-resetLink :: User -> String
-resetLink user = exportURL $  foldl add_param
-                 (fromJust . importURL $ "/_doResetPassword")
-                 [("username", uUsername user),
-                  ("reset_code", take 20 (pHashed (uPassword user)))]
+resetLink :: String -> User -> String
+resetLink base' user =
+  exportURL $  foldl add_param
+    (fromJust . importURL $ base' ++ "_doResetPassword")
+    [("username", uUsername user), ("reset_code", take 20 (pHashed (uPassword user)))]
 
 sendReregisterEmail :: User -> GititServerPart ()
 sendReregisterEmail user = do
   cfg <- getConfig
   hostname <- liftIO getHostName
+  base' <- getWikiBase
   let messageTemplate = T.newSTMP $ resetPasswordMessage cfg
   let filledTemplate = T.render .
                        T.setAttribute "username" (uUsername user) .
                        T.setAttribute "useremail" (uEmail user) .
                        T.setAttribute "hostname" hostname .
                        T.setAttribute "port" (show $ portNumber cfg) .
-                       T.setAttribute "resetlink" (resetLink user) $
+                       T.setAttribute "resetlink" (resetLink base' user) $
                        messageTemplate
   let (mailcommand:args) = words $ substitute "%s" (uEmail user)
                                    (mailCommand cfg)
@@ -315,7 +316,8 @@ sharedValidation validationType params = do
 loginForm :: GititServerPart Html
 loginForm = do
   cfg <- getConfig
-  return $ gui "/_login" ! [identifier "loginForm"] <<
+  base' <- getWikiBase
+  return $ gui (base' ++ "_login") ! [identifier "loginForm"] <<
     fieldset <<
       [ label << "Username "
       , textfield "username" ! [size "15", intAttr "tabindex" 1]
@@ -326,12 +328,12 @@ loginForm = do
       , submit "login" "Login" ! [intAttr "tabindex" 3]
       ] +++
     p << [ stringToHtml "If you do not have an account, "
-         , anchor ! [href "/_register"] << "click here to get one."
+         , anchor ! [href $ base' ++ "_register"] << "click here to get one."
          ] +++
     if null (mailCommand cfg)
        then noHtml
        else p << [ stringToHtml "If you forgot your password, "
-                 , anchor ! [href "/_resetPassword"] <<
+                 , anchor ! [href $ base' ++ "_resetPassword"] <<
                      "click here to get a new one."
                  ]
 
@@ -359,12 +361,13 @@ loginUser params = do
   let pword = pPassword params
   let destination = pDestination params
   allowed <- authUser uname pword
+  base' <- getWikiBase
   if allowed
     then do
       key <- newSession (SessionData uname)
       addCookie sessionTime (mkCookie "sid" (show key))
       -- remove unneeded destination cookie
-      addCookie 0 (mkCookie "destination" "/")
+      addCookie 0 (mkCookie "destination" base')
       seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
     else
       loginUserForm'

@@ -67,7 +67,7 @@ formattedPage layout page params htmlContents = do
   user <- getLoggedInUser
   base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
-  let scriptLink x = script ! [src ("/_static/js/" ++ x),
+  let scriptLink x = script ! [src (base' ++ "_static/js/" ++ x),
         thetype "text/javascript"] << noHtml
   let javascriptlinks = if null (pgScripts layout)
                            then ""
@@ -78,10 +78,10 @@ formattedPage layout page params htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) (pgTabs layout)
-  let searchbox = gui "/_search" ! [identifier "searchform"] <<
+  let searchbox = gui (base' ++ "_search") ! [identifier "searchform"] <<
                          [ textfield "patterns"
                          , submit "search" "Search" ]
-  let gobox     = gui "/_go" ! [identifier "goform"] <<
+  let gobox     = gui (base' ++ "_go") ! [identifier "goform"] <<
                          [ textfield "gotopage"
                          , submit "go" "Go" ]
   let messages = pMessages params
@@ -91,6 +91,7 @@ formattedPage layout page params htmlContents = do
                           map (li <<) messages
   cfg <- getConfig
   let filledTemp = T.render .
+                   T.setAttribute "base" base' .
                    T.setAttribute "pagetitle" pageTitle .
                    T.setAttribute "javascripts" javascriptlinks .
                    T.setAttribute "pagename" page .
