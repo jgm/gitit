@@ -37,6 +37,7 @@ import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
+import Network.Gitit.Server (mimeTypes)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
@@ -48,14 +49,15 @@ appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
 initializeAppState :: MonadIO m
                    => Config
                    -> M.Map String User
+                   -> [Plugin]
                    -> m ()
-initializeAppState conf users' = do
+initializeAppState conf users' plugins' = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
-                           , plugins   = [] }
+                           , plugins   = plugins' }
 
 -- | Read a file associating mime types with extensions, and return a
 -- map from extensions to types. Each line of the file consists of a
@@ -72,6 +74,7 @@ readMimeTypesFile f = catch
                f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
              return mimeTypes
 
+{-
 -- | Ready collection of common mime types. (Copied from
 -- Happstack.Server.HTTP.FileServe.)
 mimeTypes :: M.Map String String
@@ -95,6 +98,7 @@ mimeTypes = M.fromList
         ,("rtf","application/rtf")
         ,("wav","application/x-wav")
         ,("hs","text/plain")]
+-}
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())

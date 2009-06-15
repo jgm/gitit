@@ -19,17 +19,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Main where
 
-import Network.Gitit.Plugins ( loadPlugin )
-import Network.Gitit.Types
+import Network.Gitit
 import Network.Gitit.Server
 import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
-import Network.Gitit.Framework
-import Network.Gitit.Handlers
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
 import System.FilePath ((</>))
 import Control.Concurrent
-import Network.Gitit.State
 import Network.Gitit.Config (getConfigFromOpts)
 import Data.Maybe (isNothing)
 import qualified Data.Map as M
@@ -74,83 +70,27 @@ main = do
        then "Found jsMath scripts -- using jsMath"
        else "Did not find jsMath scripts -- not using jsMath"
 
-  -- initialize state
-  initializeAppState conf{jsMath = jsMathExists, logLevel = level} users'
-
-  -- setup the page repository and static files, if they don't exist
-  createRepoIfMissing conf
-  let staticdir = staticDir conf
-  createStaticIfMissing staticdir
+  let conf' = conf{jsMath = jsMathExists, logLevel = level}  
 
   -- load plugins
   let loadPluginAndLog plg = logM "gitit" WARNING ("Loading plugin '" ++ plg ++ "'...") >> loadPlugin plg
-  plugins' <- mapM loadPluginAndLog (pluginModules conf)
-  updateAppState $ \s -> s{ plugins = plugins' }
-  unless (null $ pluginModules conf) $ logM "gitit" WARNING "Finished loading plugins."
+  plugins' <- mapM loadPluginAndLog (pluginModules conf')
+  unless (null $ pluginModules conf') $ logM "gitit" WARNING "Finished loading plugins."
 
-  let serverConf = Conf { validator = Nothing, port = portNumber conf }
-  let staticHandler = dir "_static" $
-                      withExpiresHeaders $ fileServe [] staticdir
+  -- initialize state
+  initializeAppState conf' users' plugins'
 
-  let handlers = [ debugHandler | debugMode conf] ++
-                 case authenticationMethod conf of
-                    FormAuth -> authHandler : wikiHandlers
-                    _        -> wikiHandlers
-  -- TODO - rearrange so handleAny doesn't get compressed
-  let wikiHandler = mapServerPartT (unpackReaderT conf) $
-                    if compressResponses conf
-                       then compressedResponseFilter >> msum handlers
-                       else msum handlers
+  -- setup the page repository and static files, if they don't exist
+  createRepoIfMissing conf'
+  let staticdir = staticDir conf'
+  createStaticIfMissing staticdir
 
+  let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server
-  tid <- forkIO $ simpleHTTP serverConf $ msum $
-         [staticHandler, wikiHandler]
+  tid <- forkIO $ simpleHTTP serverConf $ wikiHandler conf'
   waitForTermination
 
   -- shut down the server
   killThread tid
 
-wikiHandlers :: [Handler]
-wikiHandlers =
-  [ dir "_activity" showActivity
-  , dir "_go"       goToPage
-  , dir "_search"   searchResults
-  , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm loginUserForm
-  , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
-  , dir "_random"   $ methodOnly GET  >> randomPage
-  , dir "_index"    indexPage
-  , guardCommand "showraw" >> msum
-      [ showRawPage
-      , guardPath isSourceCode >> showFileAsText ]
-  , guardCommand "history" >> msum
-      [ showPageHistory
-      , guardPath isSourceCode >> showFileHistory ]
-  , guardCommand "edit" >>
-      (unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage)
-  , guardCommand "diff" >> msum
-      [ showPageDiff
-      , guardPath isSourceCode >> showFileDiff ]
-  , guardCommand "export"  >> exportPage
-  , guardCommand "cancel"  >> showPage
-  , guardCommand "discuss" >> discussPage
-  , guardCommand "update"  >> methodOnly POST >>
-      unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage
-  , guardCommand "delete"  >> msum
-      [ methodOnly GET  >>
-          unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage
-      , methodOnly POST >>
-          unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
-  , guardIndex >> indexPage
-  , guardPath isPreview >> preview
-  , showPage
-  , guardPath isSourceCode >> showHighlightedSource
-  , handleAny
-  , createPage
-  ]
-
-unpackReaderT:: (Monad m)
-    => c 
-    -> (ReaderT c m) (Maybe ((Either Response a), FilterFun Response))
-    -> m (Maybe ((Either Response a), FilterFun Response))
-unpackReaderT st handler = runReaderT handler st
 
