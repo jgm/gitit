@@ -89,9 +89,9 @@ respondODT page doc = do
   let openDoc = writeOpenDocument
                 (defaultRespOptions {writerHeader = defaultOpenDocumentHeader})
                 doc
+  conf <- getConfig
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-                conf <- getConfig
                 saveOpenDocumentAsODT tempfile (repositoryPath conf) openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $

@@ -33,7 +33,6 @@ import qualified Text.XHtml as X ( password )
 import System.Process (readProcessWithExitCode)
 import Control.Monad (unless, liftM)
 import Control.Monad.Trans (MonadIO(), liftIO)
-import System.IO
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
@@ -101,7 +100,7 @@ resetPasswordRequest params = do
                  , stringToHtml
                    "Please click on the enclosed link to reset your password."
                  ]
-      liftIO $ sendReregisterEmail (fromJust mbUser)
+      sendReregisterEmail (fromJust mbUser)
       formattedPage defaultPageLayout{
                       pgShowPageTools = False,
                       pgTabs = [],
@@ -122,10 +121,10 @@ resetLink user = exportURL $  foldl add_param
                  [("username", uUsername user),
                   ("reset_code", take 20 (pHashed (uPassword user)))]
 
-sendReregisterEmail :: User -> IO ()
+sendReregisterEmail :: User -> GititServerPart ()
 sendReregisterEmail user = do
   cfg <- getConfig
-  hostname <- getHostName
+  hostname <- liftIO getHostName
   let messageTemplate = T.newSTMP $ resetPasswordMessage cfg
   let filledTemplate = T.render .
                        T.setAttribute "username" (uUsername user) .
@@ -136,12 +135,12 @@ sendReregisterEmail user = do
                        messageTemplate
   let (mailcommand:args) = words $ substitute "%s" (uEmail user)
                                    (mailCommand cfg)
-  (exitCode, _pOut, pErr) <- readProcessWithExitCode mailcommand args
-                               filledTemplate
-  logM "gitit" WARNING $ "Sent reset password email to " ++ uUsername user ++
+  (exitCode, _pOut, pErr) <- liftIO $ readProcessWithExitCode mailcommand args
+                                      filledTemplate
+  liftIO $ logM "gitit" WARNING $ "Sent reset password email to " ++ uUsername user ++
                          " at " ++ uEmail user
   unless (exitCode == ExitSuccess) $
-    logM "gitit" WARNING $ mailcommand ++ " failed. " ++ pErr
+    liftIO $ logM "gitit" WARNING $ mailcommand ++ " failed. " ++ pErr
 
 resetPassword :: Params -> Handler
 resetPassword params = do
@@ -195,13 +194,13 @@ doResetPassword params = do
                          pPassword = pword,
                          pEmail = email }
 
-registerForm :: ServerPart Html
+registerForm :: GititServerPart Html
 registerForm = sharedForm Nothing
 
-resetPasswordForm :: Maybe User -> ServerPart Html
+resetPasswordForm :: Maybe User -> GititServerPart Html
 resetPasswordForm = sharedForm  -- synonym for now
 
-sharedForm :: Maybe User -> ServerPart Html
+sharedForm :: Maybe User -> GititServerPart Html
 sharedForm mbUser = do
   cfg <- getConfig
   let accessQ = case accessQuestion cfg of
@@ -248,10 +247,9 @@ sharedForm mbUser = do
             , submitField ! [intAttr "tabindex" 5]]
 
 
-sharedValidation :: (ServerMonad m, MonadIO m)
-                 => ValidationType
+sharedValidation :: ValidationType
                  -> Params
-                 -> m (Either [String] (String,String,String))
+                 -> GititServerPart (Either [String] (String,String,String))
 sharedValidation validationType params = do
   let isValidUsername u = length u >= 3 && all isAlphaNum u
   let isValidPassword pw = length pw >= 6 && not (all isAlpha pw)
@@ -314,7 +312,7 @@ sharedValidation validationType params = do
   return $ if null errors then Right (uname, email, pword) else Left errors
 
 -- user authentication
-loginForm :: ServerPart Html
+loginForm :: GititServerPart Html
 loginForm = do
   cfg <- getConfig
   return $ gui "/_login" ! [identifier "loginForm"] <<

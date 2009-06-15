@@ -66,7 +66,7 @@ lookRead = liftM read . look
 mkCookie :: String -> String -> Cookie
 mkCookie name = Happstack.Server.mkCookie name . encodeString
 
-withExpiresHeaders :: ServerPart Response -> ServerPart Response
+withExpiresHeaders :: ServerMonad m => m Response -> m Response
 withExpiresHeaders = liftM (setHeader "Cache-Control" "max-age=21600")
 
 setContentType :: String -> Response -> Response

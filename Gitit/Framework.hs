@@ -57,7 +57,7 @@ import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Happstack.Crypto.Base64 (decode)
 
-getLoggedInUser :: (MonadPlus m, ServerMonad m, MonadIO m) => m (Maybe User)
+getLoggedInUser :: GititServerPart (Maybe User)
 getLoggedInUser = withData $ \(sk :: Maybe SessionKey) -> do
   cfg <- getConfig
   req <- askRq
@@ -119,7 +119,7 @@ unlessNoDelete responder fallback =
 getPath :: ServerMonad m => m String
 getPath = liftM (fromJust . decString True . intercalate "/" . rqPaths) askRq
 
-getPage :: (ServerMonad m, MonadIO m) => m String
+getPage :: GititServerPart String
 getPage = do
   conf <- getConfig
   path' <- getPath
@@ -205,11 +205,11 @@ validate :: [(Bool, String)]   -- ^ list of conditions and error messages
 validate = foldl go []
    where go errs (condition, msg) = if condition then msg:errs else errs
 
-guardCommand :: String -> ServerPart ()
+guardCommand :: String -> GititServerPart ()
 guardCommand command = withData $ \(com :: Command) ->
   case com of
        Command (Just c) | c == command -> return ()
        _                               -> mzero
 
-guardPath :: (String -> Bool) -> ServerPart ()
+guardPath :: (String -> Bool) -> GititServerPart ()
 guardPath pred' = guardRq $ \rq -> not (null $ rqPaths rq) && pred' (last (rqPaths rq))
