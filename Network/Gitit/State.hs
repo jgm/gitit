@@ -37,68 +37,22 @@ import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
-import Network.Gitit.Server (mimeTypes)
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , users = undefined
-                                                 , mimeMap = undefined
                                                  , cache = undefined
                                                  , plugins = undefined }
 
 initializeAppState :: MonadIO m
-                   => Config
-                   -> M.Map String User
+                   => M.Map String User
                    -> [Plugin]
                    -> m ()
-initializeAppState conf users' plugins' = do
-  mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
+initializeAppState users' plugins' = do
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
-                           , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
                            , plugins   = plugins' }
-
--- | Read a file associating mime types with extensions, and return a
--- map from extensions to types. Each line of the file consists of a
--- mime type, followed by space, followed by a list of zero or more
--- extensions, separated by spaces. Example: text/plain txt text
-readMimeTypesFile :: FilePath -> IO (M.Map String String)
-readMimeTypesFile f = catch
-  (liftM (foldr go M.empty . map words . lines) $ readFile f)
-  handleMimeTypesFileNotFound
-     where go []     m = m  -- skip blank lines
-           go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
-           handleMimeTypesFileNotFound e = do
-             logM "gitit" WARNING $ "Could not read mime types file: " ++
-               f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
-             return mimeTypes
-
-{-
--- | Ready collection of common mime types. (Copied from
--- Happstack.Server.HTTP.FileServe.)
-mimeTypes :: M.Map String String
-mimeTypes = M.fromList
-        [("xml","application/xml")
-        ,("xsl","application/xml")
-        ,("js","text/javascript")
-        ,("html","text/html")
-        ,("htm","text/html")
-        ,("css","text/css")
-        ,("gif","image/gif")
-        ,("jpg","image/jpeg")
-        ,("png","image/png")
-        ,("txt","text/plain")
-        ,("doc","application/msword")
-        ,("exe","application/octet-stream")
-        ,("pdf","application/pdf")
-        ,("zip","application/zip")
-        ,("gz","application/x-gzip")
-        ,("ps","application/postscript")
-        ,("rtf","application/rtf")
-        ,("wav","application/x-wav")
-        ,("hs","text/plain")]
--}
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())

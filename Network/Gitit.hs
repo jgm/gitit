@@ -20,13 +20,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit ( initializeAppState
-                     , readMimeTypesFile
                      , Config(..)
                      , User(..)
                      , Cache(..)
                      , emptyCache
                      , loadPlugin
                      , wikiHandler
+                     , readMimeTypesFile
                      )
 where
 import Network.Gitit.Types
@@ -35,6 +35,7 @@ import Network.Gitit.State
 import Network.Gitit.Server
 import Network.Gitit.Plugins (loadPlugin)
 import Network.Gitit.Handlers
+import Network.Gitit.Config (readMimeTypesFile)
 import Control.Monad.Reader
 
 -- TODO: parameterize on getLoggedInUser

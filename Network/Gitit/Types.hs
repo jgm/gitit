@@ -81,7 +81,7 @@ data Config = Config {
   recaptchaPrivateKey  :: String,
   compressResponses    :: Bool,        -- should responses be compressed?
   maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
-  mimeTypesFile        :: FilePath,    -- file assoc mime types with file exts
+  mimeMap              :: M.Map String String, -- map assoc mime types with file exts
   jsMath               :: Bool,        -- true if jsMath files are present
   mailCommand          :: String,      -- command to send notification emails
   resetPasswordMessage :: String,      -- text of password reset email
@@ -110,7 +110,6 @@ data User = User {
 data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
-  mimeMap        :: M.Map String String,
   cache          :: Cache,
   plugins        :: [Plugin]
 }
