@@ -273,7 +273,7 @@ textResponse (Just c) = mimeResponse c "text/plain; charset=utf-8"
 mimeFileResponse :: Maybe String -> ContentTransformer Response
 mimeFileResponse Nothing = error "Unable to retrieve file contents."
 mimeFileResponse (Just c) =
-  mimeResponse c =<< getMimeTypeForExtension . takeExtension =<< getFileName
+  mimeResponse c =<< lift . getMimeTypeForExtension . takeExtension =<< getFileName
 
 mimeResponse :: Monad m => String -> String -> m Response
 mimeResponse c mimeType =

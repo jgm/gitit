@@ -47,7 +47,6 @@ import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
 import Data.Char (toLower, isAscii, isDigit, isLetter)
-import Control.Monad.Trans (MonadIO)
 import Control.Monad (mzero, liftM, MonadPlus)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
@@ -201,9 +200,9 @@ urlForPage base' page = base' ++
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
 
-getMimeTypeForExtension :: MonadIO m => String -> m String
+getMimeTypeForExtension :: String -> GititServerPart String
 getMimeTypeForExtension ext = do
-  mimes <- queryAppState mimeMap
+  mimes <- liftM mimeMap getConfig
   return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
                 Nothing -> "application/octet-stream"
                 Just t  -> t

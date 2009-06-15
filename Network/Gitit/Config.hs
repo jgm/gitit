@@ -20,9 +20,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for parsing command line options and reading the config file.
 -}
 
-module Network.Gitit.Config ( getConfigFromOpts )
+module Network.Gitit.Config ( getConfigFromOpts, readMimeTypesFile )
 where
 import Network.Gitit.Types
+import Network.Gitit.Server (mimeTypes)
+import System.Log.Logger (logM, Priority(..))
+import qualified Data.Map as M
 import Data.FileStore
 import System.Environment
 import System.Exit
@@ -151,6 +154,7 @@ extractConfig cp = do
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
       markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
                           liftIO $ readFile markupHelpPath
+      mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
 
       -- create template file if it doesn't exist
       liftIO $ do
@@ -205,7 +209,7 @@ extractConfig cp = do
         , recaptchaPrivateKey  = cfRecaptchaPrivateKey
         , compressResponses    = cfCompressResponses
         , maxCacheSize         = readNumber "max-cache-size" cfMaxCacheSize
-        , mimeTypesFile        = cfMimeTypesFile
+        , mimeMap              = mimeMap'
         , jsMath               = False
         , mailCommand          = cfMailCommand
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
@@ -253,3 +257,43 @@ getConfigFromOpts = do
   defaultConfig <- extractConfig cp'
   getArgs >>= parseArgs >>= foldM (handleFlag cp') defaultConfig
 
+-- | Read a file associating mime types with extensions, and return a
+-- map from extensions to types. Each line of the file consists of a
+-- mime type, followed by space, followed by a list of zero or more
+-- extensions, separated by spaces. Example: text/plain txt text
+readMimeTypesFile :: FilePath -> IO (M.Map String String)
+readMimeTypesFile f = catch
+  (liftM (foldr go M.empty . map words . lines) $ readFile f)
+  handleMimeTypesFileNotFound
+     where go []     m = m  -- skip blank lines
+           go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
+           handleMimeTypesFileNotFound e = do
+             logM "gitit" WARNING $ "Could not read mime types file: " ++
+               f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
+             return mimeTypes
+
+{-
+-- | Ready collection of common mime types. (Copied from
+-- Happstack.Server.HTTP.FileServe.)
+mimeTypes :: M.Map String String
+mimeTypes = M.fromList
+        [("xml","application/xml")
+        ,("xsl","application/xml")
+        ,("js","text/javascript")
+        ,("html","text/html")
+        ,("htm","text/html")
+        ,("css","text/css")
+        ,("gif","image/gif")
+        ,("jpg","image/jpeg")
+        ,("png","image/png")
+        ,("txt","text/plain")
+        ,("doc","application/msword")
+        ,("exe","application/octet-stream")
+        ,("pdf","application/pdf")
+        ,("zip","application/zip")
+        ,("gz","application/x-gzip")
+        ,("ps","application/postscript")
+        ,("rtf","application/rtf")
+        ,("wav","application/x-wav")
+        ,("hs","text/plain")]
+-}
