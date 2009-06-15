@@ -65,6 +65,7 @@ formattedPage layout page params htmlContents = do
             (EditTab,Just r)  -> return r
             _ -> return ""
   user <- getLoggedInUser
+  base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
   let scriptLink x = script ! [src ("/_static/js/" ++ x),
         thetype "text/javascript"] << noHtml
@@ -76,7 +77,7 @@ formattedPage layout page params htmlContents = do
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
-  let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli page rev) (pgTabs layout)
+  let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) (pgTabs layout)
   let searchbox = gui "/_search" ! [identifier "searchform"] <<
                          [ textfield "patterns"
                          , submit "search" "Search" ]
@@ -126,53 +127,53 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "searchbox"
                        (renderHtmlFragment (searchbox +++ gobox)) .
                    T.setAttribute "exportbox"
-                       (renderHtmlFragment $  exportBox page params) .
+                       (renderHtmlFragment $  exportBox base' page params) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    template cfg
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
-exportBox :: String -> Params -> Html
-exportBox page params | not (isSourceCode page) =
+exportBox :: String -> String -> Params -> Html
+exportBox base' page params | not (isSourceCode page) =
   let rev = pRevision params
-  in  gui (urlForPage page) ! [identifier "exportbox"] <<
+  in  gui (urlForPage base' page) ! [identifier "exportbox"] <<
         ([ textfield "revision" ! [thestyle "display: none;",
              value (fromJust rev)] | isJust rev ] ++
          [ select ! [name "format"] <<
              map ((\f -> option ! [value f] << f) . fst) exportFormats
          , submit "export" "Export" ])
-exportBox _ _ = noHtml
+exportBox _ _ _ = noHtml
 
 -- auxiliary functions:
 
-linkForTab :: (Tab -> Html -> Html) -> String -> Maybe String -> Tab -> Html
-linkForTab tabli page rev HistoryTab =
-  tabli HistoryTab << anchor ! [href $ urlForPage page ++ "?history" ++
+linkForTab :: (Tab -> Html -> Html) -> String -> String -> Maybe String -> Tab -> Html
+linkForTab tabli base' page rev HistoryTab =
+  tabli HistoryTab << anchor ! [href $ urlForPage base' page ++ "?history" ++
                                        case rev of
                                             Just r -> "&revision" ++ r
                                             Nothing -> "" ] << "history"
-linkForTab tabli _ _ DiffTab =
+linkForTab tabli _ _ _ DiffTab =
   tabli DiffTab << anchor ! [href ""] << "diff"
-linkForTab tabli page rev ViewTab =
+linkForTab tabli base' page rev ViewTab =
   let origPage s = if ":discuss" `isSuffixOf` s
                       then take (length s - 8) s
                       else s
   in if isDiscussPage page
         then tabli DiscussTab << anchor !
-              [href $ urlForPage $ origPage page] << "page"
+              [href $ urlForPage base' $ origPage page] << "page"
         else tabli ViewTab << anchor !
-              [href $ urlForPage page ++
+              [href $ urlForPage base' page ++
                       case rev of
                            Just r  -> "?revision=" ++ r
                            Nothing -> ""] << "view"
-linkForTab tabli page _ DiscussTab =
+linkForTab tabli base' page _ DiscussTab =
   tabli (if isDiscussPage page then ViewTab else DiscussTab) <<
-  anchor ! [href $ urlForPage page ++
+  anchor ! [href $ urlForPage base' page ++
             if isDiscussPage page then "" else "?discuss"] << "discuss"
-linkForTab tabli page rev EditTab =
+linkForTab tabli base' page rev EditTab =
   tabli EditTab << anchor !
-    [href $ urlForPage page ++ "?edit" ++
+    [href $ urlForPage base' page ++ "?edit" ++
             case rev of
                   Just r   -> "&revision=" ++ r ++ "&" ++
                                urlEncodeVars [("logMsg", "Revert to " ++ r)]

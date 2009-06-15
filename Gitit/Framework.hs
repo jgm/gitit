@@ -148,10 +148,18 @@ getWikiBase :: ServerMonad m => m String
 getWikiBase = do
   path' <- getPath
   uri <- liftM (fromJust . decString True . rqUri) askRq
-  let path'' = if last uri == '/' then path' ++ "/" else path'
-  if path'' `isSuffixOf` uri
-     then return $ take (length uri - length path'') uri
-     else error $ "Could not getWikiBase: (path, uri) = " ++ show (path'',uri)
+  if null path' -- we're at / or something like /_index
+     then return $ takePrefix uri 
+     else do
+       let path'' = if last uri == '/' then path' ++ "/" else path'
+       if path'' `isSuffixOf` uri
+          then return $ take (length uri - length path'') uri
+          else error $ "Could not getWikiBase: (path, uri) = " ++ show (path'',uri)
+
+takePrefix :: String -> String
+takePrefix "" = ""
+takePrefix ('/':'_':_) = "/"
+takePrefix (x:xs) = x : takePrefix xs
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
@@ -183,8 +191,9 @@ isPreview x = "/___preview" `isSuffixOf` x
 -- and mod_proxy_html doesn't rewrite links in scripts.  So this is
 -- to make it possible to use gitit with an alternative docroot.
 
-urlForPage :: String -> String
-urlForPage page = '/' : encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/:")) page
+urlForPage :: String -> String -> String
+urlForPage base' page = base' ++
+  encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/:")) page
 -- / and : are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
 pathForPage :: String -> FilePath
