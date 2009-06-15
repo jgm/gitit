@@ -29,9 +29,8 @@ import qualified Data.ByteString.UTF8 as B (fromString, toString, length)
 import System.Time (getClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import Control.Monad.Trans (MonadIO(), liftIO)
-import Control.Monad (replicateM, liftM)
 import Control.Exception (try, throwIO)
+import Control.Monad.Reader
 import Data.FileStore
 import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
@@ -42,7 +41,6 @@ import Gitit.Types
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , users = undefined
-                                                 , config = undefined
                                                  , mimeMap = undefined
                                                  , cache = undefined
                                                  , plugins = undefined }
@@ -55,7 +53,6 @@ initializeAppState conf users' = do
   mimeMapFromFile <- liftIO $ readMimeTypesFile (mimeTypesFile conf)
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
-                           , config    = conf
                            , mimeMap   = mimeMapFromFile
                            , cache     = emptyCache
                            , plugins   = [] }
@@ -108,10 +105,10 @@ queryAppState fn = liftM fn $ liftIO $! readIORef appstate
 emptyCache :: Cache
 emptyCache = Cache M.empty 0
 
-debugMessage :: MonadIO m => String -> m ()
+debugMessage :: String -> GititServerPart ()
 debugMessage msg = liftIO $ logM "gitit" DEBUG msg
 
-updateCachedPageTimestamp :: MonadIO m => Cache -> String -> m ()
+updateCachedPageTimestamp :: Cache -> String -> GititServerPart ()
 updateCachedPageTimestamp cache' page = do
   now <- liftIO getClockTime
   repo <- liftM repositoryPath getConfig
@@ -121,7 +118,7 @@ updateCachedPageTimestamp cache' page = do
                      M.alter setTimeStamp (repo, page) (cachePages cache') }
   updateAppState $ \s -> s {cache = newcache }
 
-lookupCache :: MonadIO m => String -> (Maybe RevisionId) -> m (Maybe Html)
+lookupCache :: String -> (Maybe RevisionId) -> GititServerPart (Maybe Html)
 lookupCache file (Just revid) = do
   c <- queryAppState cache
   fs <- getFileStore
@@ -141,7 +138,7 @@ lookupCache file Nothing = do
        Left NotFound   -> return Nothing
        Left e          -> liftIO $ throwIO e
 
-cacheContents :: MonadIO m => String -> RevisionId -> Html -> m ()
+cacheContents :: String -> RevisionId -> Html -> GititServerPart ()
 cacheContents file revid contents = do
   c <- queryAppState cache
   repo <- liftM repositoryPath getConfig
@@ -167,13 +164,13 @@ cacheContents file revid contents = do
                      ".  Total cache size = " ++ show (cacheSize newcachePruned)
        updateAppState $ \s -> s { cache = newcachePruned }
 
-pruneCache :: MonadIO m => Integer -> Cache -> m Cache
+pruneCache :: Integer -> Cache -> GititServerPart Cache
 pruneCache maxSize c =
   if cacheSize c < maxSize
      then return c
      else dropOldest c >>= pruneCache maxSize
 
-dropOldest :: MonadIO m => Cache -> m Cache
+dropOldest :: Cache -> GititServerPart Cache
 dropOldest c = do
   let pgs    = M.toList $ cachePages c
   let ((oldestRepo, oldestFile), oldestCp) = minimumBy
@@ -202,7 +199,7 @@ genSalt = replicateM 32 $ randomRIO ('0','z')
 hashPassword :: String -> String -> String
 hashPassword salt pass = showDigest $ sha512 $ L.fromString $ salt ++ pass
 
-authUser :: MonadIO m => String -> String -> m Bool
+authUser :: String -> String -> GititServerPart Bool
 authUser name pass = do
   users' <- queryAppState users
   case M.lookup name users' of
@@ -212,32 +209,34 @@ authUser name pass = do
          return $ hashed == hashPassword salt pass
        Nothing -> return False
 
-isUser :: MonadIO m => String -> m Bool
+isUser :: String -> GititServerPart Bool
 isUser name = liftM (M.member name) $ queryAppState users
 
-addUser :: MonadIO m => String -> User -> m ()
+addUser :: String -> User -> GititServerPart ()
 addUser uname user =
   updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
-  liftIO writeUserFile
+  getConfig >>=
+  liftIO . writeUserFile
 
-adjustUser :: MonadIO m => String -> User -> m ()
+adjustUser :: String -> User -> GititServerPart ()
 adjustUser uname user = updateAppState
   (\s -> s  { users = M.adjust (const user) uname (users s) }) >>
-  liftIO writeUserFile
+  getConfig >>=
+  liftIO . writeUserFile
 
-delUser :: MonadIO m => String -> m ()
+delUser :: String -> GititServerPart ()
 delUser uname =
   updateAppState (\s -> s { users = M.delete uname (users s) }) >>
-  liftIO writeUserFile
+  getConfig >>=
+  liftIO . writeUserFile
 
-writeUserFile :: IO ()
-writeUserFile = do
-  conf <- getConfig
+writeUserFile :: Config -> IO ()
+writeUserFile conf = do
   usrs <- queryAppState users
-  liftIO $ writeFile (userFile conf) $
-           "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
+  writeFile (userFile conf) $
+      "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
 
-getUser :: MonadIO m => String -> m (Maybe User)
+getUser :: String -> GititServerPart (Maybe User)
 getUser uname = liftM (M.lookup uname) $ queryAppState users
 
 isSession :: MonadIO m => SessionKey -> m Bool
@@ -260,14 +259,14 @@ delSession key = updateAppState $ \s ->
 getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
 
-getConfig :: MonadIO m => m Config
-getConfig = queryAppState config
+getConfig :: GititServerPart Config
+getConfig = ask
 
-getFileStore :: MonadIO m => m FileStore
+getFileStore :: GititServerPart FileStore
 getFileStore = liftM filestore getConfig
 
-getDefaultPageType :: MonadIO m => m PageType
-getDefaultPageType = liftM defaultPageType (queryAppState config)
+getDefaultPageType :: GititServerPart PageType
+getDefaultPageType = liftM defaultPageType getConfig
 
-getDefaultLHS :: MonadIO m => m Bool
-getDefaultLHS = liftM defaultLHS (queryAppState config)
+getDefaultLHS :: GititServerPart Bool
+getDefaultLHS = liftM defaultLHS getConfig

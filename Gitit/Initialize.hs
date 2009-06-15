@@ -20,7 +20,6 @@ module Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing )
 where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
-import Gitit.State
 import Gitit.Types
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
@@ -35,7 +34,7 @@ import Text.Pandoc.Shared (HTMLMathMethod(..))
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
 createRepoIfMissing conf = do
-  fs <- getFileStore
+  let fs = filestore conf
   repoExists <- try (initialize fs) >>= \res ->
     case res of
          Right _               -> return False

@@ -40,7 +40,6 @@ import Data.Maybe (isNothing, isJust, fromJust)
 import Data.List (isSuffixOf)
 import Control.Exception (throwIO, catch)
 import Control.Monad.Trans (liftIO, MonadIO)
-import Control.Monad (MonadPlus)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -54,8 +53,7 @@ defaultPageLayout = PageLayout
   }
 
 -- | Returns formatted page
-formattedPage :: (MonadIO m, FilterMonad Response m, WebMonad Response m, ServerMonad m, MonadPlus m)
-              => PageLayout -> String -> Params -> Html -> m Response
+formattedPage :: PageLayout -> String -> Params -> Html -> GititServerPart Response
 formattedPage layout page params htmlContents = do
   let rev = pRevision params
   fs <- getFileStore

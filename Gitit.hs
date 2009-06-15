@@ -97,7 +97,8 @@ main = do
                     FormAuth -> authHandler : wikiHandlers
                     _        -> wikiHandlers
   -- TODO - rearrange so handleAny doesn't get compressed
-  let wikiHandler = if compressResponses conf
+  let wikiHandler = mapServerPartT (unpackReaderT conf) $
+                    if compressResponses conf
                        then compressedResponseFilter >> msum handlers
                        else msum handlers
 
@@ -146,4 +147,10 @@ wikiHandlers =
   , handleAny
   , withData createPage
   ]
+
+unpackReaderT:: (Monad m)
+    => c 
+    -> (ReaderT c m) (Maybe ((Either Response a), FilterFun Response))
+    -> m (Maybe ((Either Response a), FilterFun Response))
+unpackReaderT st handler = runReaderT handler st
 

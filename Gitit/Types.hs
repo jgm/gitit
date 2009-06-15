@@ -110,13 +110,12 @@ data User = User {
 data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
-  config         :: Config,
   mimeMap        :: M.Map String String,
   cache          :: Cache,
   plugins        :: [Plugin]
 }
 
-type ContentTransformer = StateT Context (ServerPartT IO)
+type ContentTransformer = StateT Context GititServerPart
 
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
@@ -295,7 +294,9 @@ instance FromData Command where
                                     "showraw", "history", "export", "diff",
                                     "cancel", "update", "delete", "discuss"]
 
-type Handler = ServerPart Response
+type GititServerPart = ServerPartT (ReaderT Config IO)
+
+type Handler = GititServerPart Response
 
 data CachedPage = CachedPage {
     cpContents        :: B.ByteString

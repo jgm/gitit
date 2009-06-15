@@ -110,7 +110,7 @@ import Network.URI (isAllowedInURI, escapeURIString)
 runPageTransformer :: ToMessage a
                    => ContentTransformer a
                    -> Params
-                   -> ServerPart a 
+                   -> GititServerPart a 
 runPageTransformer xform params = do
   page <- getPage
   pt <- getDefaultPageType
@@ -126,7 +126,7 @@ runPageTransformer xform params = do
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> Params
-                   -> ServerPart a
+                   -> GititServerPart a
 runFileTransformer xform params = do
   file <- getPage
   evalStateT xform  Context{ ctxPage = file
@@ -166,7 +166,7 @@ preview = runPageTransformer $
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
 
-applyPreCommitPlugins :: Params -> String -> ServerPart String
+applyPreCommitPlugins :: Params -> String -> GititServerPart String
 applyPreCommitPlugins params rawtext =
   runPageTransformer (applyPreCommitTransforms rawtext) params
 
@@ -237,9 +237,9 @@ cacheHtml c = do
     -- TODO not ideal, since page might have been modified
     -- after being retrieved by pageAsPandoc...
     -- better to have pageAsPandoc return the revision ID too...
-    fs <- getFileStore
+    fs <- lift getFileStore
     rev <- liftIO $ FS.latest fs file
-    cacheContents file rev c
+    lift $ cacheContents file rev c
   return c
 
 --
@@ -251,7 +251,7 @@ rawContents :: ContentTransformer (Maybe String)
 rawContents = do
   params <- getParams
   file <- getFileName
-  fs <- getFileStore
+  fs <- lift getFileStore
   let rev = pRevision params
   liftIO $ catch (liftM Just $ FS.retrieve fs file rev)
                  (\e -> if e == FS.NotFound then return Nothing else throwIO e)
@@ -261,7 +261,7 @@ cachedContents :: ContentTransformer (Either (Maybe String) Html)
 cachedContents = do
   file <- getFileName
   params <- getParams
-  cp <- lookupCache file (pRevision params)
+  cp <- lift $ lookupCache file (pRevision params)
   maybe (liftM Left rawContents) (return . Right) cp
 
 --
@@ -332,13 +332,13 @@ textToPandoc s = do
   return $ readerFor pt lhs $ filter (/= '\r') s
 
 -- | Same as pandocToHtml, with support for Maybe values
-maybePandocToHtml :: (MonadPlus m, MonadIO m) => Maybe Pandoc -> m Html
+maybePandocToHtml :: Maybe Pandoc -> ContentTransformer Html
 maybePandocToHtml = maybe mzero pandocToHtml
 
 -- | Converts pandoc document to HTML.
-pandocToHtml :: MonadIO m => Pandoc -> m Html
+pandocToHtml :: Pandoc -> ContentTransformer Html
 pandocToHtml pandocContents = do
-  cfg <- getConfig
+  cfg <- lift getConfig
   return $ writeHtml defaultWriterOptions{
                         writerStandalone = False
                       , writerHTMLMathMethod = JsMath
@@ -422,7 +422,7 @@ addPageNameToPandoc (Pandoc _ blocks) = do
 
 addMathSupport :: a -> ContentTransformer a
 addMathSupport c = do
-  conf <- getConfig
+  conf <- lift getConfig
   updateLayout $ \l -> addScripts l ["jsMath/easy/load.js" | jsMath conf]
   return c
 
