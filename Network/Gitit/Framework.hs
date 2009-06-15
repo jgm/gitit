@@ -17,7 +17,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- General framework for defining wiki actions. 
 -}
 
-module Gitit.Framework ( getLoggedInUser
+module Network.Gitit.Framework ( getLoggedInUser
                        , sessionTime
                        , unlessNoEdit
                        , unlessNoDelete
@@ -43,9 +43,9 @@ module Gitit.Framework ( getLoggedInUser
                        , withInput
                        )
 where
-import Gitit.Server
-import Gitit.State
-import Gitit.Types
+import Network.Gitit.Server
+import Network.Gitit.State
+import Network.Gitit.Types
 import Data.Char (toLower, isAscii, isDigit, isLetter)
 import Control.Monad.Trans (MonadIO)
 import Control.Monad (mzero, liftM, MonadPlus)

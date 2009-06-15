@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Utility functions for Gitit.
 -}
 
-module Gitit.Util ( withTempDir
+module Network.Gitit.Util ( withTempDir
                   , orIfNull
                   )
 where

@@ -55,24 +55,24 @@ Flag plugins
 
 Library
   hs-source-dirs:    .
-  exposed-modules:   Gitit.Happstack
+  exposed-modules:   Network.Gitit
   if flag(plugins)
-    exposed-modules: Gitit.Interface
-  other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
-                     Gitit.ContentTransformer, Gitit.Layout,
-                     Gitit.Export, Gitit.Framework, Gitit.Util, Gitit.Handlers
+    exposed-modules: Network.Gitit.Interface
+  other-modules:     Network.Gitit.Types, Network.Gitit.State, Network.Gitit.Server,
+                     Network.Gitit.ContentTransformer, Network.Gitit.Layout,
+                     Network.Gitit.Export, Network.Gitit.Framework, Network.Gitit.Util, Network.Gitit.Handlers
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
 
 Executable           gitit
   hs-source-dirs:    .
-  main-is:           Gitit.hs
-  other-modules:     Gitit.Types, Gitit.State, Gitit.Server,
-                     Gitit.Util, Gitit.Export, Gitit.Layout,
-                     Gitit.ContentTransformer, Gitit.Initialize,
-                     Gitit.Config, Gitit.Framework, Gitit.Handlers,
-                     Gitit.Plugins, Paths_gitit, Gitit.Authentication
+  main-is:           gitit.hs
+  other-modules:     Network.Gitit.Types, Network.Gitit.State, Network.Gitit.Server,
+                     Network.Gitit.Util, Network.Gitit.Export, Network.Gitit.Layout,
+                     Network.Gitit.ContentTransformer, Network.Gitit.Initialize,
+                     Network.Gitit.Config, Network.Gitit.Framework, Network.Gitit.Handlers,
+                     Network.Gitit.Plugins, Paths_gitit, Network.Gitit.Authentication
   build-depends:     base >=3, parsec < 3, pretty, xhtml, containers, pandoc
                      >= 1.2, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,

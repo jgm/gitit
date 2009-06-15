@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for maintaining user list and session state.
 -}
 
-module Gitit.State where
+module Network.Gitit.State where
 
 import qualified Data.Map as M
 import System.Random (randomRIO)
@@ -36,7 +36,7 @@ import Data.List (intercalate, minimumBy)
 import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
-import Gitit.Types
+import Network.Gitit.Types
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined

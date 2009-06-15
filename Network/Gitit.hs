@@ -19,20 +19,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- | Functions for embedding a gitit wiki into a Happstack application.
 -}
 
-module Gitit.Happstack ( initializeAppState 
-                       , readMimeTypesFile
-                       , mimeTypes
-                       , Config(..)
-                       , User(..)
-                       , Cache(..)
-                       , emptyCache
-                       , queryAppState
-                       , updateAppState
-                       , loadPlugin
-                       , module Gitit.Handlers
-                       )
+module Network.Gitit ( initializeAppState 
+                     , readMimeTypesFile
+                     , mimeTypes
+                     , Config(..)
+                     , User(..)
+                     , Cache(..)
+                     , emptyCache
+                     , queryAppState
+                     , updateAppState
+                     , loadPlugin
+                     , module Network.Gitit.Handlers
+                     )
 where
-import Gitit.Types
-import Gitit.State
-import Gitit.Plugins (loadPlugin)
-import Gitit.Handlers
+import Network.Gitit.Types
+import Network.Gitit.State
+import Network.Gitit.Plugins (loadPlugin)
+import Network.Gitit.Handlers
