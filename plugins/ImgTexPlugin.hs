@@ -24,7 +24,7 @@ written by Kohei OZAKI <i@smly.org>
 
 -}
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Text.Pandoc.Shared
 import System.Process (system)
 import System.Directory

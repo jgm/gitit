@@ -13,7 +13,7 @@ module PageFormatPlugin (plugin) where
 -- the page is rendered as Markdown literate Haskell.
 -- Otherwise, the default page format is used.
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Data.Char (toLower)
 
 plugin :: Plugin

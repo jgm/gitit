@@ -4,7 +4,7 @@ module CapitalizeEmphasisPlugin (plugin) where
 -- Not a very useful feature, but useful as an example
 -- of how to write a plugin.
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Data.Char (toUpper)
 
 plugin :: Plugin

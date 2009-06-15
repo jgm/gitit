@@ -17,7 +17,7 @@
 
 module InterwikiPlugin (plugin) where
 
-import Gitit.Interface
+import Network.Gitit.Interface
 
 import qualified Data.Map as M (fromList, lookup, Map)
 import Network.URI (escapeURIString, isAllowedInURI, unEscapeString)

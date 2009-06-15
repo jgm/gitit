@@ -38,7 +38,7 @@ loadPlugin pluginName =
     runGhc (Just libdir) $ do
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
-      unless ("Gitit.Plugin." `isPrefixOf` pluginName)
+      unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
         $ do
             addTarget =<< guessTarget pluginName Nothing
             r <- load LoadAllTargets
@@ -46,13 +46,13 @@ loadPlugin pluginName =
               Failed -> error $ "Error loading plugin: " ++ pluginName
               Succeeded -> return ()
       let modName =
-            if "Gitit.Plugin" `isPrefixOf` pluginName
+            if "Network.Gitit.Plugin" `isPrefixOf` pluginName
                then pluginName
-               else if "Gitit/Plugin/" `isInfixOf` pluginName
-                       then "Gitit.Plugin." ++ takeBaseName pluginName
+               else if "Network/Gitit/Plugin/" `isInfixOf` pluginName
+                       then "Network.Gitit.Plugin." ++ takeBaseName pluginName
                        else takeBaseName pluginName
       pr <- findModule (mkModuleName "Prelude") Nothing
-      i <- findModule (mkModuleName "Gitit.Interface") Nothing
+      i <- findModule (mkModuleName "Network.Gitit.Interface") Nothing
       m <- findModule (mkModuleName modName) Nothing
       setContext [] [m, i, pr]
       value <- compileExpr (modName ++ ".plugin :: Plugin")

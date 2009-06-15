@@ -3,7 +3,7 @@ module DeprofanizerPlugin (plugin) where
 
 -- This plugin replaces profane words with "XXXXX".
 
-import Gitit.Interface
+import Network.Gitit.Interface
 import Data.Char (toLower)
 
 plugin :: Plugin

@@ -82,7 +82,7 @@ Plugins are small Haskell programs that transform a wiki page after it
 has been converted from Markdown or RST. See the example plugins in the
 `plugins` directory. To enable a plugin, include the path to the plugin
 (or its module name) in the `plugins` field of the configuration file.
-(If the plugin name starts with `Gitit.Plugin.`, gitit will assume that
+(If the plugin name starts with `Network.Gitit.Plugin.`, gitit will assume that
 the plugin is an installed module and will not look for a source file.)
 
 The gitit executable will be much larger if plugins support is compiled
