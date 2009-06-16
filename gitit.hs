@@ -50,7 +50,7 @@ main = do
     when (isNothing mbFind) $ error $
       "Required program '" ++ prog ++ "' not found in system path."
 
-  -- read user file and update state
+  -- read user file
   userFileExists <- doesFileExist $ userFile conf
   users' <- if userFileExists
                then liftM (M.fromList . read) $ readFile $ userFile conf
