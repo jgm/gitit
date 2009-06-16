@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 The following is a minimal standalone wiki program:
 
 > import Network.Gitit
-> import Happstack.Server.SimpleHTTP
 > 
 > main = do
 >   conf <- getDefaultConfig
@@ -30,6 +29,50 @@ The following is a minimal standalone wiki program:
 >   createRepoIfMissing conf
 >   initializeGititState (userFile conf) (pluginModules conf)
 >   simpleHTTP nullConf $ wikiHandler conf
+
+Here is a more complex example, which serves different wikis
+under different paths, and uses a custom authentication scheme:
+
+> import Network.Gitit
+> import Control.Monad
+> import Text.XHtml hiding (dir)
+> import qualified Data.Map as M
+> 
+> type WikiSpec = (String, FileStoreType, PageType)
+> 
+> wikis = [ ("markdownWiki", Git, Markdown)
+>         , ("latexWiki", Darcs, LaTeX) ]
+> 
+> -- dummy function
+> getLoggedInUser :: GititServerPart (Maybe User)
+> getLoggedInUser = return $ Just $ User "testuser" undefined ""
+> 
+> handlerFor :: Config -> WikiSpec -> ServerPart Response
+> handlerFor conf (path', fstype, pagetype) = dir path' $
+>   wikiHandler conf{ repositoryPath = path'
+>                   , repositoryType = fstype
+>                   , defaultPageType = pagetype}
+> 
+> indexPage :: ServerPart Response
+> indexPage = ok $ toResponse $
+>   (p << "Wiki index") +++
+>   ulist << map (\(path', _, _) -> li << hotlink path' << path') wikis
+> 
+> main = do
+>   conf <- getDefaultConfig
+>   let conf' = conf{authenticationMethod = CustomAuth getLoggedInUser}
+>   forM wikis $ \(path', fstype, pagetype) -> do
+>     let conf'' = conf'{ repositoryPath = path'
+>                       , repositoryType = fstype
+>                       , defaultPageType = pagetype
+>                       }
+>     createStaticIfMissing conf''
+>     createTemplateIfMissing conf''
+>     createRepoIfMissing conf''
+>   initializeGititState (userFile conf') (pluginModules conf')
+>   simpleHTTP nullConf $ (nullDir >> indexPage) `mplus`
+>                         msum (map (handlerFor conf') wikis)
+
 
 -}
 
