@@ -36,7 +36,6 @@ under different paths, and uses a custom authentication scheme:
 > import Network.Gitit
 > import Control.Monad
 > import Text.XHtml hiding (dir)
-> import qualified Data.Map as M
 > 
 > type WikiSpec = (String, FileStoreType, PageType)
 > 
