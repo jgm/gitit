@@ -341,7 +341,7 @@ pandocToHtml pandocContents = do
   return $ writeHtml defaultWriterOptions{
                         writerStandalone = False
                       , writerHTMLMathMethod = JsMath
-                               (Just $ base' ++ "_static/js/jsMath/easy/load.js")
+                               (Just $ base' ++ "/_static/js/jsMath/easy/load.js")
                       , writerTableOfContents = tableOfContents cfg
                       , writerLiterateHaskell = showLHSBirdTracks cfg
                       } pandocContents

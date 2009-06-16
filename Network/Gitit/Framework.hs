@@ -156,12 +156,16 @@ getWikiBase = do
      else do
        let path'' = if last uri == '/' then path' ++ "/" else path'
        if path'' `isSuffixOf` uri
-          then return $ take (length uri - length path'') uri
+          then let pref = take (length uri - length path'') uri
+               in  return $ if not (null pref) && last pref == '/'
+                               then init pref
+                               else pref
           else error $ "Could not getWikiBase: (path, uri) = " ++ show (path'',uri)
 
 takePrefix :: String -> String
 takePrefix "" = ""
-takePrefix ('/':'_':_) = "/"
+takePrefix "/" = ""
+takePrefix ('/':'_':_) = ""
 takePrefix (x:xs) = x : takePrefix xs
 
 -- | Returns path portion of URI, without initial /.
@@ -195,7 +199,7 @@ isPreview x = "/___preview" `isSuffixOf` x
 -- to make it possible to use gitit with an alternative docroot.
 
 urlForPage :: String -> String -> String
-urlForPage base' page = base' ++
+urlForPage base' page = base' ++ "/" ++
   encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/:")) page
 -- / and : are left unescaped so that browsers recognize relative URLs and talk pages correctly
 

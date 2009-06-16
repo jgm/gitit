@@ -118,7 +118,7 @@ resetPasswordRequest params = do
 resetLink :: String -> User -> String
 resetLink base' user =
   exportURL $  foldl add_param
-    (fromJust . importURL $ base' ++ "_doResetPassword")
+    (fromJust . importURL $ base' ++ "/_doResetPassword")
     [("username", uUsername user), ("reset_code", take 20 (pHashed (uPassword user)))]
 
 sendReregisterEmail :: User -> GititServerPart ()
@@ -317,7 +317,7 @@ loginForm :: GititServerPart Html
 loginForm = do
   cfg <- getConfig
   base' <- getWikiBase
-  return $ gui (base' ++ "_login") ! [identifier "loginForm"] <<
+  return $ gui (base' ++ "/_login") ! [identifier "loginForm"] <<
     fieldset <<
       [ label << "Username "
       , textfield "username" ! [size "15", intAttr "tabindex" 1]
@@ -328,12 +328,12 @@ loginForm = do
       , submit "login" "Login" ! [intAttr "tabindex" 3]
       ] +++
     p << [ stringToHtml "If you do not have an account, "
-         , anchor ! [href $ base' ++ "_register"] << "click here to get one."
+         , anchor ! [href $ base' ++ "/_register"] << "click here to get one."
          ] +++
     if null (mailCommand cfg)
        then noHtml
        else p << [ stringToHtml "If you forgot your password, "
-                 , anchor ! [href $ base' ++ "_resetPassword"] <<
+                 , anchor ! [href $ base' ++ "/_resetPassword"] <<
                      "click here to get a new one."
                  ]
 

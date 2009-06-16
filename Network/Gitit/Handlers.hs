@@ -318,7 +318,7 @@ showHistory file page params =  do
                                     strAttr "revision" $ revId rev] <<
         [ thespan ! [theclass "date"] << (show $ revDateTime rev)
         , stringToHtml " ("
-        , thespan ! [theclass "author"] << anchor ! [href $ base' ++ "_activity?" ++
+        , thespan ! [theclass "author"] << anchor ! [href $ base' ++ "/_activity?" ++
             urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
               (authorName $ revAuthor rev)
         , stringToHtml "): "
@@ -385,7 +385,7 @@ showActivity = withData $ \(params :: Params) -> do
         [ thespan ! [theclass "date"] << (show $ revDateTime rev)
         , stringToHtml " ("
         , thespan ! [theclass "author"] <<
-            anchor ! [href $ base' ++ "_activity?" ++
+            anchor ! [href $ base' ++ "/_activity?" ++
               urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
                 (authorName $ revAuthor rev)
         , stringToHtml "): "
@@ -638,18 +638,18 @@ fileListToHtml :: String -> String -> [Resource] -> Html
 fileListToHtml base' prefix files =
   let fileLink (FSFile f) | isPageFile f =
         li ! [theclass "page"  ] <<
-          anchor ! [href $ base' ++ prefix ++ dropExtension f] << dropExtension f
+          anchor ! [href $ base' ++ "/" ++ prefix ++ dropExtension f] << dropExtension f
       fileLink (FSFile f) =
-        li ! [theclass "upload"] << anchor ! [href $ base' ++ prefix ++ f] << f
+        li ! [theclass "upload"] << anchor ! [href $ base' ++ "/" ++ prefix ++ f] << f
       fileLink (FSDirectory f) =
         li ! [theclass "folder"] <<
-          anchor ! [href $ base' ++ prefix ++ f ++ "/"] << f
+          anchor ! [href $ base' ++ "/" ++ prefix ++ f ++ "/"] << f
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
                   concatHtml [ anchor ! [theclass "updir",
                                          href $ if length d == 1
-                                                   then base' ++ "_index"
-                                                   else base' ++ joinPath d] <<
+                                                   then base' ++ "/_index"
+                                                   else base' ++ "/" ++ joinPath d] <<
                   last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
