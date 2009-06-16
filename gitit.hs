@@ -35,7 +35,6 @@ import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
 import Data.Char (toLower)
-import Paths_gitit
 
 main :: IO ()
 main = do
@@ -83,17 +82,10 @@ main = do
   -- initialize state
   initializeGititState users' plugins'
 
-  -- setup the page repository and static files, if they don't exist
+  -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf'
-  let staticdir = staticDir conf'
-  createStaticIfMissing staticdir
-
-  -- create template file if it doesn't exist
-  templateExists <- doesFileExist (templateFile conf')
-  unless templateExists $ do
-    templatePath <- getDataFileName $ "data" </> "template.html"
-    copyFile templatePath (templateFile conf')
-    logM "gitit" WARNING $ "Created default " ++ templateFile conf'
+  createStaticIfMissing conf'
+  createTemplateIfMissing conf'
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server

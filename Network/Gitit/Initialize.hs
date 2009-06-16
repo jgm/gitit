@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for initializing a Gitit wiki.
 -}
 
-module Network.Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing )
+module Network.Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing, createTemplateIfMissing )
 where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
@@ -24,13 +24,22 @@ import Network.Gitit.Types
 import Network.Gitit.Framework
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
-import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents)
+import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents, doesFileExist)
 import Control.Monad (unless, forM_, liftM)
 import Prelude hiding (readFile)
 import System.IO.UTF8
-import System.IO (stderr)
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
+import System.Log.Logger (logM, Priority(..))
+
+-- | Create template file if it doesn't exist.
+createTemplateIfMissing :: Config -> IO ()
+createTemplateIfMissing conf' = do
+  templateExists <- doesFileExist (templateFile conf')
+  unless templateExists $ do
+    templatePath <- getDataFileName $ "data" </> "template.html"
+    copyFile templatePath (templateFile conf')
+    logM "gitit" WARNING $ "Created default " ++ templateFile conf'
 
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
@@ -68,11 +77,12 @@ createRepoIfMissing conf = do
     -- add front page and help page
     create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
     create fs "Help.page" (Author "Gitit" "") "Default help page" helpcontents
-    hPutStrLn stderr "Created repository"
+    logM "gitit" WARNING $ "Created repository"
 
 -- | Create static directory unless it exists.
-createStaticIfMissing :: FilePath -> IO ()
-createStaticIfMissing staticdir = do
+createStaticIfMissing :: Config -> IO ()
+createStaticIfMissing conf = do
+  let staticdir = staticDir conf
   staticExists <- doesDirectoryExist staticdir
   unless staticExists $ do
 
@@ -98,5 +108,5 @@ createStaticIfMissing staticdir = do
     jsDataDir <- getDataFileName "js"
     forM_ javascripts $ \f -> copyFile (jsDataDir </> f) (jsdir </> f)
 
-    hPutStrLn stderr $ "Created " ++ staticdir ++ " directory"
+    logM "gitit" WARNING $ "Created " ++ staticdir ++ " directory"
 
