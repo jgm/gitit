@@ -5,12 +5,12 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Wiki - $pagetitle$</title>
     $if(printable)$
-    <link href="$base$_static/css/print.css" rel="stylesheet" media="all" type= "text/css" />
+    <link href="$base$/_static/css/print.css" rel="stylesheet" media="all" type= "text/css" />
     $else$
-    <link href="$base$_static/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="$base$_static/css/print.css" rel="stylesheet" media="print" type= "text/css" />
+    <link href="$base$/_static/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/_static/css/print.css" rel="stylesheet" media="print" type= "text/css" />
     $endif$
-    <!--[if IE]><link href="$base$_static/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
+    <!--[if IE]><link href="$base$/_static/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
   </head>
   <body>
     <div id="doc3" class="yui-t1">
@@ -19,9 +19,9 @@
             <div id="userbox">
               $if(showLogin)$
                 $if(user)$
-                <a href="$base$_logout">Logout $user$</a>
+                <a href="$base$/_logout">Logout $user$</a>
                 $else$
-                <a href="$base$_login">Login</a> &bull; <a href="/_register">Get an account</a>
+                <a href="$base$/_login">Login</a> &bull; <a href="/_register">Get an account</a>
                 $endif$
               $else$
                 <span class="login">Logged in as $user$</span>
@@ -32,7 +32,7 @@
               $if(nothead)$
               <h2 class="revision">Revision $revision$</h2>
               $endif$
-              <h1 class="pageTitle"><a href="$base$$pagename$">$pagetitle$</a></h1>
+              <h1 class="pageTitle"><a href="$base$/$pagename$">$pagetitle$</a></h1>
               $messages$
               $content$
             </div>
@@ -41,19 +41,19 @@
         </div>
         <div id="sidebar" class="yui-b first">
           <div id="logo">
-            <a href="$base$" title="Go to top page"><img src="$base$_static/img/logo.png" /></a>
+            <a href="$base$/" title="Go to top page"><img src="$base$/_static/img/logo.png" /></a>
           </div>
           $if(sitenav)$
           <div class="sitenav">
             <fieldset>
               <legend>Site</legend>
               <ul>
-                <li><a href="$base$">Front page</a></li>
-                <li><a href="$base$_index">All pages</a></li>
-                <li><a href="$base$_random">Random page</a></li>
-                <li><a href="$base$_activity">Recent activity</a></li>
-                <li><a href="$base$_upload">Upload a file</a></li>
-                <li><a href="$base$Help">Help</a></li>
+                <li><a href="$base$/">Front page</a></li>
+                <li><a href="$base$/_index">All pages</a></li>
+                <li><a href="$base$/_random">Random page</a></li>
+                <li><a href="$base$/_activity">Recent activity</a></li>
+                <li><a href="$base$/_upload">Upload a file</a></li>
+                <li><a href="$base$/Help">Help</a></li>
               </ul>
               $searchbox$
             </fieldset>
@@ -64,9 +64,9 @@
             <fieldset>
               <legend>This page</legend>
               <ul>
-                <li><a href="$base$$pagename$?revision=$revision$&amp;showraw">Raw page source</a></li>
-                <li><a href="$base$$pagename$?revision=$revision$&amp;printable">Printable version</a></li>
-                <li><a href="$base$$pagename$?delete">Delete this page</a></li>
+                <li><a href="$base$/$pagename$?revision=$revision$&amp;showraw">Raw page source</a></li>
+                <li><a href="$base$/$pagename$?revision=$revision$&amp;printable">Printable version</a></li>
+                <li><a href="$base$/$pagename$?delete">Delete this page</a></li>
               </ul>
               $exportbox$
             </fieldset>
