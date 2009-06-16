@@ -36,11 +36,18 @@ The following is a minimal standalone wiki program:
 module Network.Gitit ( initializeGititState
                      , getDefaultConfig
                      , Config(..)
+                     , User(..)
+                     , Password(..)
+                     , AuthenticationMethod(..)
+                     , FileStoreType(..)
+                     , PageType(..)
                      , wikiHandler
                      , readMimeTypesFile
                      , createRepoIfMissing
                      , createTemplateIfMissing
                      , createStaticIfMissing
+                     , GititServerPart
+                     , module Network.Gitit.Server
                      )
 where
 import Network.Gitit.Types
