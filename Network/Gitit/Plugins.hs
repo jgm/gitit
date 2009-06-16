@@ -27,7 +27,6 @@ import System.FilePath
 import Control.Monad (unless)
 import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
-import Control.Monad (unless)
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
 import GHC.Paths
@@ -35,10 +34,10 @@ import DynFlags
 import Unsafe.Coerce
 
 loadPlugin :: FilePath -> IO Plugin
-loadPlugin pluginName =
+loadPlugin pluginName = do
+  logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   defaultCleanupHandler defaultDynFlags $
     runGhc (Just libdir) $ do
-      logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
