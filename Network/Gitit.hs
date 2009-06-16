@@ -17,6 +17,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 {- | Functions for embedding a gitit wiki into a Happstack application.
+
+The following is a minimal standalone wiki program:
+
+> import Network.Gitit
+> import Happstack.Server.SimpleHTTP
+> 
+> main = do
+>   conf <- getDefaultConfig
+>   createStaticIfMissing conf
+>   createTemplateIfMissing conf
+>   createRepoIfMissing conf
+>   initializeGititState (userFile conf) (pluginModules conf)
+>   simpleHTTP nullConf $ wikiHandler conf
+
 -}
 
 module Network.Gitit ( initializeGititState
