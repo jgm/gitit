@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- | Functions for embedding a gitit wiki into a Happstack application.
 -}
 
-module Network.Gitit ( initializeAppState
+module Network.Gitit ( initializeGititState
                      , getDefaultConfig
                      , Config(..)
                      , User(..)

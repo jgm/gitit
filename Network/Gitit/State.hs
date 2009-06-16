@@ -44,11 +44,11 @@ appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , cache = undefined
                                                  , plugins = undefined }
 
-initializeAppState :: MonadIO m
-                   => M.Map String User
-                   -> [Plugin]
-                   -> m ()
-initializeAppState users' plugins' = do
+initializeGititState :: MonadIO m
+                     => M.Map String User
+                     -> [Plugin]
+                     -> m ()
+initializeGititState users' plugins' = do
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , cache     = emptyCache
