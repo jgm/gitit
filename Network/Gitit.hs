@@ -38,6 +38,12 @@ import Network.Gitit.Plugins (loadPlugin)
 import Network.Gitit.Handlers
 import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
 import Control.Monad.Reader
+import System.Directory
+import System.FilePath
+import Prelude hiding (readFile)
+import System.IO.UTF8
+import Paths_gitit
+import qualified Text.StringTemplate as T
 
 wikiHandler :: Config -> ServerPart Response
 wikiHandler conf = do
@@ -47,8 +53,16 @@ wikiHandler conf = do
                  case authenticationMethod conf of
                      FormAuth -> authHandler : wikiHandlers
                      _        -> wikiHandlers
+  let fs = filestoreFromConfig conf
+  templateText <- liftIO $ do
+    templateExists <- doesFileExist $ templateFile conf
+    if templateExists
+       then readFile $ templateFile conf
+       else getDataFileName ("data" </> "template.html") >>= readFile
+  let templ = T.newSTMP templateText
+  let ws = WikiState { wikiConfig = conf, wikiFileStore = fs, wikiTemplate = templ }
   -- TODO - rearrange so handleAny doesn't get compressed
-  staticHandler `mplus` (mapServerPartT (unpackReaderT conf) $
+  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $
                         if compressResponses conf
                            then compressedResponseFilter >> msum handlers
                            else msum handlers)

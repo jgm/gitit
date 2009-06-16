@@ -41,11 +41,13 @@ module Network.Gitit.Framework ( getLoggedInUser
                                , guardPath
                                , guardIndex
                                , withInput
+                               , filestoreFromConfig
                                )
 where
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
+import Data.FileStore
 import Data.Char (toLower, isAscii, isDigit, isLetter)
 import Control.Monad (mzero, liftM, MonadPlus)
 import qualified Data.Map as M
@@ -257,3 +259,8 @@ withInput name val handler = do
                             })
   localRq (\rq -> rq{ rqInputs = newInp : inps }) handler
 
+filestoreFromConfig :: Config -> FileStore
+filestoreFromConfig conf =
+  case repositoryType conf of
+         Git   -> gitFileStore $ repositoryPath conf
+         Darcs -> darcsFileStore $ repositoryPath conf

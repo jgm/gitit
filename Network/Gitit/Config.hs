@@ -28,12 +28,10 @@ import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
-import Data.FileStore
 import System.Environment
 import System.Exit
 import System.IO (stdout, stderr)
 import System.Console.GetOpt
-import System.Directory
 import Data.ConfigFile
 import Control.Monad.Error
 import System.Log.Logger ()
@@ -46,7 +44,6 @@ import System.IO.UTF8
 import System.FilePath ((</>))
 import Control.Monad (liftM)
 import Text.Pandoc
-import qualified Text.StringTemplate as T
 
 data Opt
     = Help
@@ -160,24 +157,13 @@ extractConfig cp = do
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
 
-      -- create template file if it doesn't exist
-      liftIO $ do
-        templateExists <- doesFileExist cfTemplateFile
-        unless templateExists $ do
-          templatePath <- getDataFileName $ "data" </> "template.html"
-          copyFile templatePath cfTemplateFile
-          hPutStrLn stderr $ "Created default " ++ cfTemplateFile
-
-      compiledTemplate <- liftM T.newSTMP $ liftIO $ readFile cfTemplateFile
-
-      let (filestore', repotype') = case (map toLower cfRepositoryType) of
-                                         "git"   -> (gitFileStore cfRepositoryPath, "git")
-                                         "darcs" -> (darcsFileStore cfRepositoryPath, "darcs")
-                                         x       -> error $ "Unknown repository type: " ++ x
+      let repotype' = case map toLower cfRepositoryType of
+                        "git"   -> Git
+                        "darcs" -> Darcs
+                        x       -> error $ "Unknown repository type: " ++ x
 
       return $! Config{
-          filestore            = filestore'
-        , repositoryPath       = cfRepositoryPath
+          repositoryPath       = cfRepositoryPath
         , repositoryType       = repotype'
         , defaultPageType      = pt
         , defaultLHS           = lhs
@@ -188,7 +174,7 @@ extractConfig cp = do
                                       _      -> error
                                                  "Invalid authentication-method.\nLegal values are: form, http"
         , userFile             = cfUserFile
-        , template             = compiledTemplate
+        , templateFile         = cfTemplateFile
         , logFile              = cfLogFile
         , logLevel             = let levelString = map toUpper cfLogLevel
                                      levels = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",
@@ -254,16 +240,17 @@ lrStrip :: String -> String
 lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace
     where isWhitespace = (`elem` " \t\n")
 
-getDefaultConfig :: IO Config
-getDefaultConfig = do
+getDefaultConfigParser :: IO ConfigParser
+getDefaultConfigParser = do
   cp <- getDataFileName "data/default.conf" >>= readfile emptyCP
-  let cp' = forceEither cp
-  extractConfig cp'
+  return $ forceEither cp
+
+getDefaultConfig :: IO Config
+getDefaultConfig = getDefaultConfigParser >>= extractConfig
 
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do
-  cp <- getDataFileName "data/default.conf" >>= readfile emptyCP
-  let cp' = forceEither cp
+  cp' <- getDefaultConfigParser
   defaultConfig <- extractConfig cp'
   getArgs >>= parseArgs >>= foldM (handleFlag cp') defaultConfig
 

@@ -90,6 +90,7 @@ formattedPage layout page params htmlContents = do
                         else ulist ! [theclass "messages"] <<
                           map (li <<) messages
   cfg <- getConfig
+  templ <- getTemplate
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
                    T.setAttribute "pagetitle" pageTitle .
@@ -133,7 +134,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
-                   template cfg
+                   templ
   ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
 
 exportBox :: String -> String -> Params -> Html

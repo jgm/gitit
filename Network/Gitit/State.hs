@@ -37,6 +37,7 @@ import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
+import qualified Text.StringTemplate as T
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
@@ -218,10 +219,13 @@ getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
 
 getConfig :: GititServerPart Config
-getConfig = ask
+getConfig = liftM wikiConfig ask
 
 getFileStore :: GititServerPart FileStore
-getFileStore = liftM filestore getConfig
+getFileStore = liftM wikiFileStore ask
+
+getTemplate :: GititServerPart (T.StringTemplate String)
+getTemplate = liftM wikiTemplate ask
 
 getDefaultPageType :: GititServerPart PageType
 getDefaultPageType = liftM defaultPageType getConfig

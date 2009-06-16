@@ -21,6 +21,7 @@ where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
 import Network.Gitit.Types
+import Network.Gitit.Framework
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents)
@@ -34,7 +35,7 @@ import Text.Pandoc.Shared (HTMLMathMethod(..))
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
 createRepoIfMissing conf = do
-  let fs = filestore conf
+  let fs = filestoreFromConfig conf
   repoExists <- try (initialize fs) >>= \res ->
     case res of
          Right _               -> return False
