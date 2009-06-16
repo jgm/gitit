@@ -28,6 +28,9 @@ module Network.Gitit ( initializeGititState
                      , loadPlugin
                      , wikiHandler
                      , readMimeTypesFile
+                     , createRepoIfMissing
+                     , createTemplateIfMissing
+                     , createStaticIfMissing
                      )
 where
 import Network.Gitit.Types
@@ -36,6 +39,7 @@ import Network.Gitit.State
 import Network.Gitit.Server
 import Network.Gitit.Plugins (loadPlugin)
 import Network.Gitit.Handlers
+import Network.Gitit.Initialize
 import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
 import Control.Monad.Reader
 import System.Directory
