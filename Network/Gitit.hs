@@ -36,9 +36,6 @@ The following is a minimal standalone wiki program:
 module Network.Gitit ( initializeGititState
                      , getDefaultConfig
                      , Config(..)
-                     , User(..)
-                     , Cache(..)
-                     , emptyCache
                      , wikiHandler
                      , readMimeTypesFile
                      , createRepoIfMissing
@@ -48,7 +45,6 @@ module Network.Gitit ( initializeGititState
 where
 import Network.Gitit.Types
 import Network.Gitit.Framework
-import Network.Gitit.State
 import Network.Gitit.Server
 import Network.Gitit.Handlers
 import Network.Gitit.Initialize
