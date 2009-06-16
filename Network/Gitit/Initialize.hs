@@ -16,12 +16,18 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for initializing a Gitit wiki.
 -}
 
-module Network.Gitit.Initialize ( createStaticIfMissing, createRepoIfMissing, createTemplateIfMissing )
+module Network.Gitit.Initialize ( initializeGititState
+                                , createStaticIfMissing
+                                , createRepoIfMissing
+                                , createTemplateIfMissing )
 where
 import System.FilePath ((</>), (<.>), takeExtension)
 import Data.FileStore
+import qualified Data.Map as M
 import Network.Gitit.Types
+import Network.Gitit.State
 import Network.Gitit.Framework
+import Network.Gitit.Plugins
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents, doesFileExist)
@@ -31,6 +37,21 @@ import System.IO.UTF8
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import System.Log.Logger (logM, Priority(..))
+
+-- | Initialize Gitit State.
+initializeGititState :: FilePath
+                     -> [FilePath]
+                     -> IO ()
+initializeGititState userFile' pluginModules' = do
+  plugins' <- loadPlugins pluginModules'
+  userFileExists <- doesFileExist userFile'
+  users' <- if userFileExists
+               then liftM (M.fromList . read) $ readFile userFile'
+               else return M.empty
+  updateAppState $ \s -> s { sessions  = Sessions M.empty
+                           , users     = users'
+                           , cache     = emptyCache
+                           , plugins   = plugins' }
 
 -- | Create template file if it doesn't exist.
 createTemplateIfMissing :: Config -> IO ()

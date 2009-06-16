@@ -45,16 +45,6 @@ appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , cache = undefined
                                                  , plugins = undefined }
 
-initializeGititState :: MonadIO m
-                     => M.Map String User
-                     -> [Plugin]
-                     -> m ()
-initializeGititState users' plugins' = do
-  updateAppState $ \s -> s { sessions  = Sessions M.empty
-                           , users     = users'
-                           , cache     = emptyCache
-                           , plugins   = plugins' }
-
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
 updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
 

@@ -28,8 +28,6 @@ import System.FilePath ((</>))
 import Control.Concurrent
 import Network.Gitit.Config (getConfigFromOpts)
 import Data.Maybe (isNothing)
-import qualified Data.Map as M
-import System.IO.UTF8 (readFile)
 import Control.Monad.Reader
 import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
@@ -50,12 +48,6 @@ main = do
     when (isNothing mbFind) $ error $
       "Required program '" ++ prog ++ "' not found in system path."
 
-  -- read user file
-  userFileExists <- doesFileExist $ userFile conf
-  users' <- if userFileExists
-               then liftM (M.fromList . read) $ readFile $ userFile conf
-               else return M.empty
-
   -- set up logging
   let level = if debugMode conf then DEBUG else logLevel conf
   logFileHandler <- fileHandler (logFile conf) level
@@ -74,11 +66,8 @@ main = do
 
   let conf' = conf{jsMath = jsMathExists, logLevel = level}  
 
-  -- load plugins
-  plugins' <- loadPlugins $ pluginModules conf'
-
   -- initialize state
-  initializeGititState users' plugins'
+  initializeGititState (userFile conf') (pluginModules conf')
 
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf'
