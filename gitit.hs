@@ -75,9 +75,7 @@ main = do
   let conf' = conf{jsMath = jsMathExists, logLevel = level}  
 
   -- load plugins
-  let loadPluginAndLog plg = logM "gitit" WARNING ("Loading plugin '" ++ plg ++ "'...") >> loadPlugin plg
-  plugins' <- mapM loadPluginAndLog (pluginModules conf')
-  unless (null $ pluginModules conf') $ logM "gitit" WARNING "Finished loading plugins."
+  plugins' <- loadPlugins $ pluginModules conf'
 
   -- initialize state
   initializeGititState users' plugins'

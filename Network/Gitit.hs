@@ -26,6 +26,7 @@ module Network.Gitit ( initializeGititState
                      , Cache(..)
                      , emptyCache
                      , loadPlugin
+                     , loadPlugins
                      , wikiHandler
                      , readMimeTypesFile
                      , createRepoIfMissing
@@ -37,7 +38,7 @@ import Network.Gitit.Types
 import Network.Gitit.Framework
 import Network.Gitit.State
 import Network.Gitit.Server
-import Network.Gitit.Plugins (loadPlugin)
+import Network.Gitit.Plugins (loadPlugin, loadPlugins)
 import Network.Gitit.Handlers
 import Network.Gitit.Initialize
 import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)

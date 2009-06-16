@@ -20,10 +20,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for loading plugins.
 -}
 
-module Network.Gitit.Plugins ( loadPlugin )
+module Network.Gitit.Plugins ( loadPlugin, loadPlugins )
 where
 import Network.Gitit.Types
 import System.FilePath
+import Control.Monad (unless)
+import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
 import Control.Monad (unless)
 import Data.List (isInfixOf, isPrefixOf)
@@ -36,6 +38,7 @@ loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName =
   defaultCleanupHandler defaultDynFlags $
     runGhc (Just libdir) $ do
+      logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
       dflags <- getSessionDynFlags
       setSessionDynFlags dflags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
@@ -68,3 +71,10 @@ loadPlugin pluginName = do
   return undefined
 
 #endif
+
+loadPlugins :: [FilePath] -> IO [Plugin]
+loadPlugins pluginNames = do
+  plugins' <- mapM loadPlugin pluginNames
+  unless (null pluginNames) $ logM "gitit" WARNING "Finished loading plugins."
+  return plugins'
+
