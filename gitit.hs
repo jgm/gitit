@@ -78,7 +78,7 @@ main = do
   unless (null $ pluginModules conf') $ logM "gitit" WARNING "Finished loading plugins."
 
   -- initialize state
-  initializeAppState users' plugins'
+  initializeGititState users' plugins'
 
   -- setup the page repository and static files, if they don't exist
   createRepoIfMissing conf'
