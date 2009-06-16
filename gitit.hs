@@ -34,6 +34,8 @@ import Control.Monad.Reader
 import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
+import Data.Char (toLower)
+import Paths_gitit
 
 main :: IO ()
 main = do
@@ -42,7 +44,8 @@ main = do
   conf <- getConfigFromOpts
 
   -- check for external programs that are needed
-  let prereqs = ["grep", repositoryType conf]
+  let repoProg = map toLower $ show $ repositoryType conf
+  let prereqs = ["grep", repoProg]
   forM_ prereqs $ \prog ->
     findExecutable prog >>= \mbFind ->
     when (isNothing mbFind) $ error $
@@ -84,6 +87,13 @@ main = do
   createRepoIfMissing conf'
   let staticdir = staticDir conf'
   createStaticIfMissing staticdir
+
+  -- create template file if it doesn't exist
+  templateExists <- doesFileExist (templateFile conf')
+  unless templateExists $ do
+    templatePath <- getDataFileName $ "data" </> "template.html"
+    copyFile templatePath (templateFile conf')
+    logM "gitit" WARNING $ "Created default " ++ templateFile conf'
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server

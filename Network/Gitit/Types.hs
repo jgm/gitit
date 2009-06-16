@@ -47,17 +47,18 @@ data AuthenticationMethod = FormAuth
                           | HTTPAuth
                           | CustomAuth (GititServerPart (Maybe User)) 
 
+data FileStoreType = Git | Darcs deriving Show
+
 -- | Data structure for information read from config file.
 data Config = Config {
-  filestore            :: FileStore,   -- filestore for pages
   repositoryPath       :: FilePath,    -- path of repository containing filestore
-  repositoryType       :: String,      -- type of repository ("git" or "darcs")
+  repositoryType       :: FileStoreType, -- type of repository
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
   authenticationMethod :: AuthenticationMethod, -- use forms or HTTP digest?
   userFile             :: FilePath,    -- path of users database
-  template             :: T.StringTemplate String,  -- compiled page template
+  templateFile         :: FilePath,    -- page template
   logFile              :: FilePath,    -- path of server log file
   logLevel             :: Priority,    -- severity filter for log messages
                                        -- (DEBUG, INFO, NOTICE, WARNING, ERROR,
@@ -293,7 +294,13 @@ instance FromData Command where
                                     "showraw", "history", "export", "diff",
                                     "cancel", "update", "delete", "discuss"]
 
-type GititServerPart = ServerPartT (ReaderT Config IO)
+data WikiState = WikiState { 
+                     wikiConfig    :: Config
+                   , wikiFileStore :: FileStore
+                   , wikiTemplate  :: T.StringTemplate String
+                   }
+
+type GititServerPart = ServerPartT (ReaderT WikiState IO)
 
 type Handler = GititServerPart Response
 
