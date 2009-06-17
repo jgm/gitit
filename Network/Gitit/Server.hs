@@ -33,7 +33,6 @@ module Network.Gitit.Server
           , setContentType
           , setFilename
           , lookupIPAddr
-          , waitForTermination
           , module Happstack.Server
           , compressedResponseFilter
           )
@@ -83,32 +82,4 @@ lookupIPAddr hostname = do
   if null addrs
      then return Nothing
      else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
-
-
--- mime types
-
--- Note: waitForTermination is copied from Happstack.State.Control
--- to avoid a dependency on happstack-state.   (Shouldn't this
--- function be in happstack-server?)
-
--- | Wait for a signal.
---   On unix, a signal is sigINT or sigTERM. On windows, the signal
---   is entering 'e'.
-waitForTermination :: IO ()
-waitForTermination
-    = do
-#ifdef UNIX
-         istty <- queryTerminal stdInput
-         mv <- newEmptyMVar
-         installHandler softwareTermination (CatchOnce (putMVar mv ())) Nothing
-         case istty of
-           True  -> do installHandler keyboardSignal (CatchOnce (putMVar mv ())) Nothing
-                       return ()
-           False -> return ()
-         takeMVar mv
-#else
-         let loop 'e' = return () 
-             loop _   = getChar >>= loop
-         loop 'c'
-#endif
 

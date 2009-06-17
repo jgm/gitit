@@ -25,7 +25,6 @@ import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
 import System.FilePath ((</>))
-import Control.Concurrent
 import Network.Gitit.Config (getConfigFromOpts)
 import Data.Maybe (isNothing)
 import Control.Monad.Reader
@@ -76,10 +75,5 @@ main = do
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server
-  tid <- forkIO $ simpleHTTP serverConf $ wikiHandler conf'
-  waitForTermination
-
-  -- shut down the server
-  killThread tid
-
+  simpleHTTP serverConf $ wikiHandler conf'
 
