@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 The following is a minimal standalone wiki program:
 
 > import Network.Gitit
+> import Happstack.Server.SimpleHTTP
 > 
 > main = do
 >   conf <- getDefaultConfig
@@ -36,6 +37,7 @@ under different paths, and uses a custom authentication scheme:
 > import Network.Gitit
 > import Control.Monad
 > import Text.XHtml hiding (dir)
+> import Happstack.Server.SimpleHTTP
 > 
 > type WikiSpec = (String, FileStoreType, PageType)
 > 
@@ -89,7 +91,6 @@ module Network.Gitit ( initializeGititState
                      , createTemplateIfMissing
                      , createStaticIfMissing
                      , GititServerPart
-                     , module Network.Gitit.Server
                      )
 where
 import Network.Gitit.Types
