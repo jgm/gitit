@@ -217,16 +217,26 @@ ifLoggedIn :: Handler
            -> Handler
            -> Handler
 ifLoggedIn responder fallback = withData $ \(sk :: Maybe SessionKey) -> do
-  user <- getLoggedInUser
-  case user of
-       Nothing  -> do
-          localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) fallback
-       Just _   -> do
-          -- give the user more time...
-          case sk of
-               Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
-               Nothing   -> return ()
-          responder
+  cfg <- getConfig
+  case authenticationMethod cfg of
+       CustomAuth customGetLoggedInUser -> handleCustom customGetLoggedInUser
+       _ -> handle sk
+  where handle sk = do
+          user <- getLoggedInUser
+          case user of
+               Nothing  -> do
+                  localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) fallback
+               Just _   -> do
+                  -- give the user more time...
+                  case sk of
+                       Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
+                       Nothing   -> return ()
+                  responder
+        handleCustom cGetLoggedInUser = do
+          user <- cGetLoggedInUser
+          case user of
+               Nothing  -> fallback
+               Just _   -> responder
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages
