@@ -52,6 +52,8 @@ import Data.Maybe
 -- will often contain decimal character references.  We want to convert these
 -- to regular unicode characters.  We also need to use toString to
 -- convert from UTF-8, since Happstack doesn't do this.
+-- Note: happstack >= 0.3.2 does convert from UTF-8, but we keep these
+-- definitions because happstack doesn't decodeCharacterReferences in 'look'.
 
 look :: String -> RqData String
 look = liftM (decodeCharacterReferences . toString) . lookBS
