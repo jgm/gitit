@@ -359,6 +359,13 @@ see the [`mod_proxy_html` guide].
 
 [`mod_proxy_html` guide]: http://apache.webthing.com/mod_proxy_html/guide.html
 
+Using gitit as a library
+========================
+
+By importing the module `Network.Gitit`, you can include a gitit wiki
+(or several of them) in another happstack application. There are some
+simple examples in the haddock documentation for `Network.Gitit`.
+
 Reporting bugs
 ==============
 
