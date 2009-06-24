@@ -246,7 +246,8 @@ guardIndex :: GititServerPart ()
 guardIndex = do
   base <- getWikiBase
   uri' <- liftM rqUri askRq
-  if uri' /= base && last uri' == '/'
+  let localpath = drop (length base) uri'
+  if length localpath > 1 && last uri' == '/'
      then return ()
      else mzero
 
