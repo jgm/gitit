@@ -649,7 +649,7 @@ fileListToHtml base' prefix files =
                   concatHtml [ anchor ! [theclass "updir",
                                          href $ if length d == 1
                                                    then base' ++ "/_index"
-                                                   else base' ++ "/" ++ joinPath d] <<
+                                                   else base' ++ joinPath d] <<
                   last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
