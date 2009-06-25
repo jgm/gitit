@@ -389,6 +389,9 @@ A number of people have contributed patches:
   browsing persistent.
 - Justin Bogner improved the appearance of the preview button.
 - Kohei Ozaki contributed the ImgTexPlugin.
+- mightybyte suggested making gitit available as a library,
+  and contributed a patch to ifLoggedIn that was needed to
+  make gitit usable with a custom authentication scheme.
 
 Gitit's default visual layout is shamelessly borrowed from Wikipedia.
 The stylesheets are influenced by Wikipedia's stylesheets and by the
