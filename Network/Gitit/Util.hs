@@ -17,8 +17,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Util ( withTempDir
-                  , orIfNull
-                  )
+                          , orIfNull
+                          )
 where
 import System.Directory (getTemporaryDirectory, createDirectory, removeDirectoryRecursive)
 import Control.Exception (bracket)

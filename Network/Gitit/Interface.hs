@@ -74,8 +74,8 @@ to create 'PageTransform' plugins from a transformation of any
 of the basic types used by Pandoc (for example, @Inline@, @Block@,
 @[Inline]@, even @String@). Here is a simple (if silly) example:
 
-> -- DeprofanizerPlugin.hs
-> module DeprofanizerPlugin (plugin) where
+> -- Deprofanizer.hs
+> module Deprofanizer (plugin) where
 >
 > -- This plugin replaces profane words with "XXXXX".
 >
@@ -119,12 +119,14 @@ module Network.Gitit.Interface ( Plugin(..)
                        , inlinesToURL
                        , inlinesToString
                        , liftIO
+                       , withTempDir
                        )
 where
 import Text.Pandoc.Definition
 import Data.Data
 import Network.Gitit.Types
 import Network.Gitit.ContentTransformer
+import Network.Gitit.Util (withTempDir)
 import Control.Monad.Reader (ask)
 import Control.Monad (liftM)
 import Control.Monad.Trans (liftIO)
