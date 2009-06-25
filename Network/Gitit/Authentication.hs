@@ -207,7 +207,7 @@ sharedForm mbUser = do
   let accessQ = case accessQuestion cfg of
                       Nothing          -> noHtml
                       Just (prompt, _) -> label << prompt +++ br +++
-                                          X.password "accessCode" ! [size "15"]
+                                          X.password "accessCode" ! [size "15", intAttr "tabindex" 1]
                                           +++ br
   let captcha = if useRecaptcha cfg
                    then captchaFields (recaptchaPublicKey cfg) Nothing
@@ -219,7 +219,7 @@ sharedForm mbUser = do
                       Nothing    -> label <<
                                      "Username (at least 3 letters or digits):"
                                     +++ br +++
-                                    textfield "username" ! [size "20", intAttr "tabindex" 1] +++ br
+                                    textfield "username" ! [size "20", intAttr "tabindex" 2] +++ br
                       Just user  -> label << ("Username (cannot be changed): "
                                                ++ uUsername user) +++ br
   let submitField = case mbUser of
@@ -231,21 +231,21 @@ sharedForm mbUser = do
             , userNameField
             , label << "Email (optional, will not be displayed on the Wiki):"
             , br
-            , textfield "email" ! [size "20", intAttr "tabindex" 2, value (initField uEmail)], br
+            , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)], br
             , textfield "full_name_1" ! [size "20", theclass "req"]
             , label << ("Password (at least 6 characters," ++
                         " including at least one non-letter):")
             , br
-            , X.password "password" ! [size "20", intAttr "tabindex" 3]
+            , X.password "password" ! [size "20", intAttr "tabindex" 4]
             , stringToHtml " "
             , br
             , label << "Confirm Password:"
             , br
-            , X.password "password2" ! [size "20", intAttr "tabindex" 4]
+            , X.password "password2" ! [size "20", intAttr "tabindex" 5]
             , stringToHtml " "
             , br
             , captcha
-            , submitField ! [intAttr "tabindex" 5]]
+            , submitField ! [intAttr "tabindex" 6]]
 
 
 sharedValidation :: ValidationType
