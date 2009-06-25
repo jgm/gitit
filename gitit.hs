@@ -50,8 +50,7 @@ main = do
   -- set up logging
   let level = if debugMode conf then DEBUG else logLevel conf
   logFileHandler <- fileHandler (logFile conf) level
-  serverLogger <- getLogger "Happstack.Server"
-  -- TODO changes to "Happstack.Server.AccessLog.Combined" for 0.3
+  serverLogger <- getLogger "Happstack.Server.AccessLog.Combined"
   gititLogger <- getLogger "gitit"
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
