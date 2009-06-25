@@ -37,7 +37,6 @@ import qualified Text.StringTemplate as T
 import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Data.Maybe (isNothing, isJust, fromJust)
-import Data.List (isSuffixOf)
 import Control.Exception (throwIO, catch)
 import Control.Monad.Trans (liftIO, MonadIO)
 
@@ -159,8 +158,8 @@ linkForTab tabli base' page rev HistoryTab =
 linkForTab tabli _ _ _ DiffTab =
   tabli DiffTab << anchor ! [href ""] << "diff"
 linkForTab tabli base' page rev ViewTab =
-  let origPage s = if ":discuss" `isSuffixOf` s
-                      then take (length s - 8) s
+  let origPage s = if isDiscussPage s
+                      then drop 1 s
                       else s
   in if isDiscussPage page
         then tabli DiscussTab << anchor !

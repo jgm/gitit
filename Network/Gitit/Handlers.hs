@@ -130,7 +130,7 @@ discussPage :: Handler
 discussPage = do
   page <- getPage
   base' <- getWikiBase
-  seeOther (urlForPage base' $ if isDiscussPage page then page else page ++ ":discuss") $
+  seeOther (urlForPage base' $ if isDiscussPage page then page else ('@':page)) $
                      toResponse "Redirecting to discussion page"
 
 createPage :: Handler
