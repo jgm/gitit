@@ -1,4 +1,4 @@
-module PageFormatPlugin (plugin) where
+module PageFormat (plugin) where
 
 -- This plugin looks at the first line of the stored file.
 -- If it is '.. rst', the page is rendered as RST.

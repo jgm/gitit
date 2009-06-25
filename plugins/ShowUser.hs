@@ -1,4 +1,4 @@
-module ShowUserPlugin (plugin) where
+module ShowUser (plugin) where
 
 -- This plugin replaces $USER$ with the name of the currently logged in
 -- user, or the empty string if no one is logged in.

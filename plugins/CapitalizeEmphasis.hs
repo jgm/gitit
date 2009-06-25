@@ -1,4 +1,4 @@
-module CapitalizeEmphasisPlugin (plugin) where
+module CapitalizeEmphasis (plugin) where
 
 -- This plugin converts emphasized text to ALL CAPS.
 -- Not a very useful feature, but useful as an example
