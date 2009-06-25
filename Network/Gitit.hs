@@ -109,8 +109,13 @@ import qualified Text.StringTemplate as T
 
 wikiHandler :: Config -> ServerPart Response
 wikiHandler conf = do
-  let staticHandler = dir "_static" $
-                      withExpiresHeaders $ fileServe [] $ staticDir conf
+  let static = staticDir conf
+  let staticHandler = dir "_static" $ withExpiresHeaders $ msum
+                         [ dir "css" $ fileServeStrict [] (static </> "css")
+                         , dir "js"  $ fileServeStrict [] (static </> "js")
+                         , fileServe [] static ]  -- note: fileServe (lazy) ignores filters
+                                                  -- this is what we want; images shouldn't be
+                                                  -- compressed 
   let handlers = [ debugHandler | debugMode conf] ++
                  case authenticationMethod conf of
                      FormAuth -> authHandler : wikiHandlers
@@ -123,10 +128,10 @@ wikiHandler conf = do
        else getDataFileName ("data" </> "template.html") >>= readFile
   let templ = T.newSTMP templateText
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs, wikiTemplate = templ }
-  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $
-                        if compressResponses conf
-                           then compressedResponseFilter >> msum handlers
-                           else msum handlers)
+  if compressResponses conf
+     then compressedResponseFilter
+     else return ""
+  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $ msum handlers)
 
 wikiHandlers :: [Handler]
 wikiHandlers =
