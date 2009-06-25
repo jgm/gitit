@@ -123,7 +123,6 @@ wikiHandler conf = do
        else getDataFileName ("data" </> "template.html") >>= readFile
   let templ = T.newSTMP templateText
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs, wikiTemplate = templ }
-  -- TODO - rearrange so handleAny doesn't get compressed
   staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $
                         if compressResponses conf
                            then compressedResponseFilter >> msum handlers

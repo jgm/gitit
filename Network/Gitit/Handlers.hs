@@ -94,8 +94,9 @@ handleAny = uriRest $ \uri ->
          res <- liftIO $ try
                 (retrieve fs path' Nothing :: IO B.ByteString)
          case res of
-                Right contents -> anyRequest $ ok $ setContentType mimetype $
-                                    (toResponse noHtml) {rsBody = contents}
+                Right contents -> ignoreFilters >>  -- don't compress
+                                  (ok $ setContentType mimetype $
+                                    (toResponse noHtml) {rsBody = contents})
                                     -- ugly hack
                 Left NotFound  -> anyRequest mzero
                 Left e         -> error (show e)
