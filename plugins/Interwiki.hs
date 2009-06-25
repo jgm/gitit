@@ -15,7 +15,7 @@
 
   (Written by Gwern Branwen; put in public domain, 2009) -}
 
-module InterwikiPlugin (plugin) where
+module Interwiki (plugin) where
 
 import Network.Gitit.Interface
 

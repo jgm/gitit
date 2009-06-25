@@ -1,4 +1,3 @@
-{-# LANGUAGE Rank2Types, FlexibleContexts #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -75,4 +74,3 @@ main = do
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server
   simpleHTTP serverConf $ wikiHandler conf'
-

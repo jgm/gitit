@@ -1,4 +1,4 @@
-module DotPlugin (plugin) where
+module Dot (plugin) where
 
 -- This plugin allows you to include a graphviz dot diagram
 -- in a page like this:
@@ -31,14 +31,15 @@ transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classe
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
-  (ec, out, err) <- liftIO $ readProcessWithExitCode "dot" ["-Tpng"] contents
-  if ec == ExitSuccess
-     then do
-       liftIO $ writeFile (staticDir cfg </> "img" </> outfile) out
-       return $ Para [Image name ("/_static/img" </> outfile, "")]
-     else error $ "dot returned an error status: " ++ err
+  liftIO $ do
+    (ec, out, err) <- readProcessWithExitCode "dot" ["-Tpng"] contents
+    if ec == ExitSuccess
+       then writeFile (staticDir cfg </> "img" </> outfile) out
+       else error $ "dot returned an error status: " ++ err
+  return $ Para [Image name ("/_static/img" </> outfile, "")]
 transformBlock x = return x
 
 -- | Generate a unique filename given the file's contents.
 uniqueName :: String -> String
 uniqueName = showDigest . sha1 . fromString
+

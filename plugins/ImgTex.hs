@@ -1,4 +1,4 @@
-module ImgTexPlugin (plugin) where
+module ImgTex (plugin) where
 {-
 
 This plugin provides a clear math LaTeX output.
@@ -21,12 +21,14 @@ like this:
 
 License: GPL
 written by Kohei OZAKI <i@smly.org>
+modified by John MacFarlane to use withTempDir
 
 -}
 
 import Network.Gitit.Interface
 import Text.Pandoc.Shared
 import System.Process (system)
+import System.Exit
 import System.Directory
 import Data.Char (ord)
 import Data.ByteString.Lazy.UTF8 (fromString)
@@ -36,8 +38,6 @@ import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
 plugin = mkPageTransformM transformBlock
-
-tmpdir = "/var/tmp/"
 
 templateHeader =
     ( "\\documentclass[12pt]{article}\n"
@@ -53,35 +53,23 @@ templateFooter =
       ++ "\\end{document}\n"
     )
 
-transformBlock :: Block -> Web Block
+transformBlock :: Block -> PluginM Block
 transformBlock (CodeBlock (id, classes, namevals) contents)
     | "dvipng" `elem` classes = do
-  cfg <- getConfig
+  cfg <- askConfig
   let (name, outfile) =  case lookup "name" namevals of
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
-  liftIO $ do
-    curr <- getCurrentDirectory
-    initTempDir outfile
-    writeFile (outfile++".tex") (templateHeader ++ contents ++ templateFooter)
-    system $ "latex " ++ (outfile++".tex") ++ " > /dev/null"
+  curr <- liftIO getCurrentDirectory
+  liftIO $ withTempDir "gitit-imgtex" $ \tmpdir -> do
+    setCurrentDirectory tmpdir
+    writeFile (outfile ++ ".tex") (templateHeader ++ contents ++ templateFooter)
+    system $ "latex " ++ outfile ++ ".tex > /dev/null"
     setCurrentDirectory curr
-    system $ "dvipng -T tight -bd 1000 -freetype0 -Q 5 --gamma 1.3 "
-           ++ tmpdir ++ "gitit-tmp-" ++ outfile ++ "/" ++ outfile ++ ".dvi"
-           ++ " -o " ++ (staticDir cfg </> "img" </> outfile)
-           ++ " > /dev/null"
-    finishTempDir outfile
-  return $ Para [Image name ("/img" </> outfile, "")]
+    system $ "dvipng -T tight -bd 1000 -freetype0 -Q 5 --gamma 1.3 " ++
+              (tmpdir </> outfile <.> "dvi") ++ " -o " ++ (staticDir cfg </> "img" </> outfile)
+    return $ Para [Image name ("/_static/img" </> outfile, "")]
 transformBlock x = return x
-
-mkTempDirName :: String -> String
-mkTempDirName = \s -> tmpdir ++ "gitit-tmp-" ++ s
-
-initTempDir :: String -> IO ()
-initTempDir = (\f -> createDirectory f >> setCurrentDirectory f) . mkTempDirName
-
-finishTempDir :: String -> IO ()
-finishTempDir = removeDirectoryRecursive . mkTempDirName
 
 uniqueName :: String -> String
 uniqueName = showDigest . sha1 . fromString

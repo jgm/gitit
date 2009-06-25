@@ -1,4 +1,4 @@
-module SignaturePlugin (plugin) where
+module Signature (plugin) where
 
 -- This plugin replaces $SIG$ with the username and timestamp
 -- of the last edit, prior to saving the page in the repository.
