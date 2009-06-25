@@ -55,7 +55,7 @@ import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
 import Data.List (intercalate, isSuffixOf, (\\))
-import System.FilePath ((<.>), takeExtension, dropExtension)
+import System.FilePath ((<.>), takeExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
@@ -180,10 +180,12 @@ isPageFile :: FilePath -> Bool
 isPageFile f = takeExtension f == ".page"
 
 isDiscussPage :: String -> Bool
-isDiscussPage s = isPage s && ":discuss" `isSuffixOf` s
+isDiscussPage ('@':xs) = isPage xs
+isDiscussPage _ = False
 
 isDiscussPageFile :: FilePath -> Bool
-isDiscussPageFile f = isPageFile f && ":discuss" `isSuffixOf` (dropExtension f)
+isDiscussPageFile ('@':xs) = isPageFile xs
+isDiscussPageFile _ = False
 
 isSourceCode :: String -> Bool
 isSourceCode path' =
