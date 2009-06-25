@@ -1,7 +1,3 @@
-@import url("reset-fonts-grids.css");
-@import url("base-min.css");
-@import url("hk-pyg.css");
-
 html { background: #f9f9f9; color: black; } 
 
 fieldset { border: 1px solid #ccc; padding: 1em; }
