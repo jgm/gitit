@@ -254,10 +254,10 @@ searchResults = withData $ \(params :: Params) -> do
                           search fs defaultSearchQuery{queryPatterns = patterns}
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
-  let inPageName pageName x = x `elem` (words $ map toLower $
-                                         dropExtension pageName)
-  let matchesPatterns pageName = all (inPageName pageName) $
-                                   map (map toLower) patterns
+  let inPageName pageName' x = x `elem` (words $ map toLower $
+                                          dropExtension pageName')
+  let matchesPatterns pageName' = all (inPageName pageName') $
+                                    map (map toLower) patterns
   let pageNameMatches = filter matchesPatterns allPages
   let allMatchedFiles = nub $ filter isPageFile contentMatches ++
                               pageNameMatches

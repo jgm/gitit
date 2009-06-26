@@ -72,7 +72,7 @@ formattedPage layout page params htmlContents = do
                            then ""
                            else renderHtmlFragment $ concatHtml $
                                 map scriptLink scripts
-  let pageTitle = pgTitle layout `orIfNull` page
+  let pageTitle' = pgTitle layout `orIfNull` page
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
@@ -92,7 +92,7 @@ formattedPage layout page params htmlContents = do
   templ <- getTemplate
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
-                   T.setAttribute "pagetitle" pageTitle .
+                   T.setAttribute "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
                    T.setAttribute "pagename" page .
                    (case user of
