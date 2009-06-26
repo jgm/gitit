@@ -90,6 +90,15 @@ data Config = Config {
   markupHelp           :: String       -- markup syntax help for edit sidebar
   }
 
+data Page = Page {
+    pageName        :: String
+  , pageFormat      :: PageType
+  , pageLHS         :: Bool
+  , pageTitle       :: String
+  , pageCategories  :: [String]
+  , pageText        :: String
+} deriving (Read, Show)
+
 type SessionKey = Integer
 
 data SessionData = SessionData {
