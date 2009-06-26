@@ -573,6 +573,7 @@ deletePage = withData $ \(params :: Params) -> do
 updatePage :: Handler
 updatePage = withData $ \(params :: Params) -> do
   page <- getPage
+  cfg <- getConfig
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
                         Nothing -> fail "User must be logged in to delete page."
@@ -580,14 +581,13 @@ updatePage = withData $ \(params :: Params) -> do
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
                      Just b  -> applyPreCommitPlugins b
-  let logMsg = pLogMsg params
+  let logMsg = pLogMsg params `orIfNull` defaultSummary cfg
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
   base' <- getWikiBase
   if null logMsg
      then withInput "messages" ["Description cannot be empty."] editPage
      else do
-       cfg <- getConfig
        when (length editedText > fromIntegral (maxUploadSize cfg)) $
           error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
