@@ -66,7 +66,8 @@ Library
                      Network.Gitit.Util, Network.Gitit.Export, Network.Gitit.Layout,
                      Network.Gitit.ContentTransformer, Network.Gitit.Initialize,
                      Network.Gitit.Config, Network.Gitit.Framework, Network.Gitit.Handlers,
-                     Network.Gitit.Plugins, Paths_gitit, Network.Gitit.Authentication
+                     Network.Gitit.Plugins, Paths_gitit, Network.Gitit.Authentication,
+                     Network.Gitit.Page
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
