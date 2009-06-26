@@ -41,7 +41,7 @@ import Data.FileStore.Types
 import Network.Gitit.Server
 
 data PageType = Markdown | RST | LaTeX | HTML
-                deriving (Read, Show)
+                deriving (Read, Show, Eq)
 
 data AuthenticationMethod = FormAuth
                           | HTTPAuth
