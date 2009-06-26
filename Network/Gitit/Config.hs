@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Config ( getConfigFromOpts
+                            , parsePageType
                             , readMimeTypesFile
                             , getDefaultConfig )
 where
@@ -94,6 +95,18 @@ compileInfo =
   " -plugins"
 #endif
 
+parsePageType :: String -> (PageType, Bool)
+parsePageType s =
+  case map toLower s of
+       "markdown"     -> (Markdown,False)
+       "markdown+lhs" -> (Markdown,True)
+       "rst"          -> (RST,False)
+       "rst+lhs"      -> (RST,True)
+       "html"         -> (HTML,False)
+       "latex"        -> (LaTeX,False)
+       "latex+lhs"    -> (LaTeX,True)
+       x              -> error $ "Unknown page type: " ++ x
+
 forceEither :: Show e => Either e a -> a
 forceEither = either (\e -> error (show e)) id
 
@@ -141,16 +154,7 @@ extractConfig cp = do
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
       cfMailCommand <- get cp "DEFAULT" "mail-command"
       cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
-      let (pt, lhs) = case map toLower cfDefaultPageType of
-                           "markdown"     -> (Markdown,False)
-                           "markdown+lhs" -> (Markdown,True)
-                           "rst"          -> (RST,False)
-                           "rst+lhs"      -> (RST,True)
-                           "html"         -> (HTML,False)
-                           "latex"        -> (LaTeX,False)
-                           "latex+lhs"    -> (LaTeX,True)
-                           x              -> error $ "Unknown page type: " ++ x
-
+      let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
       markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
