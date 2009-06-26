@@ -17,7 +17,27 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 {- Functions for translating between Page structures and raw
--  text strings.
+-  text strings.  The strings may begin with a metadata block,
+-  which looks like this:
+-
+-  > !title: Custom Title 
+-  > !format: markdown+lhs
+-  > !categories: foo bar baz
+-
+-  This would tell gitit to use "Custom Title" as the displayed
+-  page title (instead of the page name), to interpret the page
+-  text as markdown with literate haskell, and to include the
+-  page in the categories foo, bar, and baz.
+- 
+-  The metadata block must end with a blank line.  It may be
+-  omitted entirely, and any particular line may be omitted.
+-  The categories in the @categories@ field should be separated
+-  by spaces.  Commas will be treated as spaces.
+-  
+-  Metadata value fields may be continued on the next line, as
+-  long as it is nonblank and starts with a space character.
+-
+-  Unrecognized metadata fields are simply ignored.
 -}
 
 module Network.Gitit.Page ( stringToPage
@@ -25,12 +45,86 @@ module Network.Gitit.Page ( stringToPage
                           )
 where
 import Network.Gitit.Types
+import Network.Gitit.Config (parsePageType)
+import Text.ParserCombinators.Parsec
+import Control.Monad (unless)
+import Data.Char (toLower)
+import Data.List (intercalate)
+
+parseMetadata :: String -> ([(String, String)], String)
+parseMetadata raw =
+  case parse pMetadataBlock "" raw of
+    Left err         -> error $ "Error parsing page: " ++ show err
+    Right (ls, rest) -> (ls, rest)
+
+pMetadataBlock :: GenParser Char st ([(String, String)], String)
+pMetadataBlock = do
+  ls <- many pMetadataLine
+  unless (null ls) $ pBlankline >> return ()
+  rest <- getInput
+  return (ls, rest)
+
+pBlankline :: GenParser Char st Char
+pBlankline = try $ many (oneOf " \t") >> newline
+
+pMetadataLine :: GenParser Char st (String, String)
+pMetadataLine = try $ do
+  char '!'
+  ident <- many1 letter
+  char ':'
+  rawval <- many $ noneOf "\n\r"
+                 <|> (try $ newline >> notFollowedBy pBlankline >>
+                            skipMany1 (oneOf " \t") >> return ' ')
+  newline
+  return (ident, trim rawval)
+
+trim :: String -> String
+trim = reverse . trimLeft . reverse . trimLeft
+  where trimLeft = dropWhile (`elem` " \t")
 
 -- | Read a string (the contents of a page file) and produce a Page
 -- object, using defaults except when overridden by metadata.
-stringToPage = undefined
+stringToPage :: Config -> String -> String -> Page
+stringToPage conf pagename raw =
+  let (ls, rest) = parseMetadata raw
+      page' = Page { pageName        = pagename 
+                   , pageFormat      = defaultPageType conf
+                   , pageLHS         = defaultLHS conf
+                   , pageTitle       = pagename
+                   , pageCategories  = []
+                   , pageText        = rest }
+  in  foldr adjustPage page' ls
+
+adjustPage :: (String, String) -> Page -> Page
+adjustPage ("title", val) page' = page' { pageTitle = val }
+adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
+    where (pt, lhs) = parsePageType val
+adjustPage ("categories", val) page' =
+   page' { pageCategories = words $ map puncToSpace val }
+     where puncToSpace x | x `elem` ".,;:" = ' '
+           puncToSpace x = x
+adjustPage (_, _) page' = page'
 
 -- | Write a string (the contents of a page file) corresponding to
 -- a Page object, using explicit metadata only when needed.
-pageToString = undefined
+pageToString :: Config -> Page -> String
+pageToString conf page' =
+  let pagename   = pageName page'
+      pagetitle  = pageTitle page'
+      pageformat = pageFormat page'
+      pagelhs    = pageLHS page'
+      pagecats   = pageCategories page'
+      metadata'  = (if pagename /= pagetitle
+                       then "!title: " ++ pagetitle ++ "\n"
+                       else "") ++
+                   (if pageformat /= defaultPageType conf ||
+                          pagelhs /= defaultLHS conf
+                       then "!format: " ++ 
+                            map toLower (show pageformat) ++
+                            if pagelhs then "+lhs\n" else "\n"
+                       else "") ++
+                   (if not (null pagecats)
+                       then "!categories: " ++ intercalate " " pagecats ++ "\n"
+                       else "")
+  in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
 
