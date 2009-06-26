@@ -72,6 +72,7 @@ data Config = Config {
   frontPage            :: String,      -- the front page of the wiki
   noEdit               :: [String],    -- pages that cannot be edited via web
   noDelete             :: [String],    -- pages that cannot be deleted via web
+  defaultSummary       :: String,      -- default summary if description left blank
   accessQuestion       :: Maybe (String, [String]),
                                        -- Nothing -> anyone can register
                                        -- Just (prompt, answers) -> a user will
