@@ -114,7 +114,7 @@ runPageTransformer xform = withData $ \params -> do
   page <- getPage
   pt <- getDefaultPageType
   lhs <- getDefaultLHS
-  evalStateT xform  Context{ ctxPage = page
+  evalStateT xform  Context{ ctxPageName = page
                            , ctxFile = pathForPage page
                            , ctxPageType = pt
                            , ctxLiterateHaskell = lhs
@@ -127,7 +127,7 @@ runFileTransformer :: ToMessage a
                    -> GititServerPart a
 runFileTransformer xform = withData $ \params -> do
   file <- getPage
-  evalStateT xform  Context{ ctxPage = file
+  evalStateT xform  Context{ ctxPageName = file
                            , ctxFile = file
                            , ctxPageType = Markdown     -- doesn't mater
                            , ctxLiterateHaskell = False -- doesn't matter
@@ -292,7 +292,7 @@ exportPandoc (Just doc) = do
 
 applyWikiTemplate :: Html -> ContentTransformer Response
 applyWikiTemplate c = do
-  Context { ctxLayout = layout, ctxPage = page, ctxParams = params } <- get
+  Context { ctxLayout = layout, ctxPageName = page, ctxParams = params } <- get
   lift $ formattedPage layout page params c
 
 -- | Returns specified content as a Response
@@ -437,7 +437,7 @@ getParams :: ContentTransformer Params
 getParams = liftM ctxParams get
 
 getPageName :: ContentTransformer String
-getPageName = liftM ctxPage get
+getPageName = liftM ctxPageName get
 
 getPageType :: ContentTransformer PageType
 getPageType = liftM ctxPageType get

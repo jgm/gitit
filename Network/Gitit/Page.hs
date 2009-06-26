@@ -92,7 +92,7 @@ stringToPage conf pagename raw =
                    , pageLHS         = defaultLHS conf
                    , pageTitle       = pagename
                    , pageCategories  = []
-                   , pageText        = rest }
+                   , pageText        = filter (/= '\r') rest }
   in  foldr adjustPage page' ls
 
 adjustPage :: (String, String) -> Page -> Page
