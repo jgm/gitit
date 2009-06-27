@@ -22,12 +22,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -
 -  > !title: Custom Title 
 -  > !format: markdown+lhs
+-  > !toc: yes
 -  > !categories: foo bar baz
 -
 -  This would tell gitit to use "Custom Title" as the displayed
 -  page title (instead of the page name), to interpret the page
--  text as markdown with literate haskell, and to include the
--  page in the categories foo, bar, and baz.
+-  text as markdown with literate haskell, to include a table of
+-  contents, and to include the page in the categories foo, bar,
+-  and baz.
 - 
 -  The metadata block must end with a blank line.  It may be
 -  omitted entirely, and any particular line may be omitted.
@@ -90,6 +92,7 @@ stringToPage conf pagename raw =
       page' = Page { pageName        = pagename 
                    , pageFormat      = defaultPageType conf
                    , pageLHS         = defaultLHS conf
+                   , pageTOC         = tableOfContents conf
                    , pageTitle       = pagename
                    , pageCategories  = []
                    , pageText        = filter (/= '\r') rest }
@@ -99,6 +102,10 @@ adjustPage :: (String, String) -> Page -> Page
 adjustPage ("title", val) page' = page' { pageTitle = val }
 adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
     where (pt, lhs) = parsePageType val
+adjustPage ("toc", val) page' = page' {
+  pageTOC = if (map toLower val) `elem` ["yes","true"]
+               then True
+               else False }
 adjustPage ("categories", val) page' =
    page' { pageCategories = words $ map puncToSpace val }
      where puncToSpace x | x `elem` ".,;:" = ' '
@@ -113,6 +120,7 @@ pageToString conf page' =
       pagetitle  = pageTitle page'
       pageformat = pageFormat page'
       pagelhs    = pageLHS page'
+      pagetoc    = pageTOC page'
       pagecats   = pageCategories page'
       metadata'  = (if pagename /= pagetitle
                        then "!title: " ++ pagetitle ++ "\n"
@@ -122,6 +130,10 @@ pageToString conf page' =
                        then "!format: " ++ 
                             map toLower (show pageformat) ++
                             if pagelhs then "+lhs\n" else "\n"
+                       else "") ++
+                   (if pagetoc /= tableOfContents conf
+                       then "!toc: " ++
+                            (if pagetoc then "yes" else "no") ++ "\n"
                        else "") ++
                    (if not (null pagecats)
                        then "!categories: " ++ intercalate " " pagecats ++ "\n"

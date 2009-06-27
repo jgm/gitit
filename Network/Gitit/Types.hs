@@ -94,6 +94,7 @@ data Page = Page {
     pageName        :: String
   , pageFormat      :: PageType
   , pageLHS         :: Bool
+  , pageTOC         :: Bool
   , pageTitle       :: String
   , pageCategories  :: [String]
   , pageText        :: String
