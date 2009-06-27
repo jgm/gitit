@@ -503,26 +503,44 @@ editPage = withData $ \(params :: Params) -> do
   let title' = fromMaybe (pageTitle pageContents) (pTitle params)
   let categories = (pCategories params) `orIfNull` (pageCategories pageContents)
   let metadata = fieldset ! [identifier "metadata"] <<
-                   [ legend << "Page metadata"
-                   , label << "Format: "
-                   , select ! [name "format", identifier "format"] <<
-                      map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
-                      [Markdown, RST, LaTeX, HTML]
-                   , primHtmlChar "nbsp"
-                   , checkbox "toc" (yesOrNo toc) ! [identifier "toc"]
-                   , label << "Show table of contents?"
-                   , primHtmlChar "nbsp"
-                   , checkbox "lhs" (yesOrNo lhs) ! [identifier "lhs"]
-                   , primHtmlChar "nbsp"
-                   , label << "Literate Haskell?"
-                   , br
-                   , label << "Page title:"
-                   , br
-                   , textfield "title" ! [value title', identifier "title"]
-                   , br
-                   , label << "Categories:"
-                   , br
-                   , textfield "categories" ! [value $ unwords categories, identifier "categories"]
+                   [ legend ! [identifier "metadataLegend"] <<
+                        [ thespan << "Metadata"
+                        , thespan ! [theclass "toggleable", thestyle "display: none",
+                                      identifier "showMetadata"] << " (click to show)"
+                        , thespan ! [theclass "toggleable", thestyle "display: none"] <<
+                                      " (click to hide)"
+                        ] 
+                   , table ! [theclass "toggleable"] <<
+                     [ tr <<
+                       [ td <<
+                         [ label << "Format: "
+                         , select ! [name "format", identifier "format"] <<
+                             map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
+                             [Markdown, RST, LaTeX, HTML]
+                         ]
+                       , td <<
+                         [ checkbox "toc" (yesOrNo toc) ! [identifier "toc"]
+                         , label << " Show table of contents?"
+                         ]
+                       , td <<
+                         [ checkbox "lhs" (yesOrNo lhs) ! [identifier "lhs"]
+                         , label << " Literate Haskell?"
+                         ]
+                       ]
+                     , tr <<
+                       [ td <<
+                         [ label << "Page title:"
+                         , br
+                         , textfield "title" ! [value title', identifier "title"]
+                         ]
+                       , td ! [intAttr "colspan" 2] <<
+                         [ label << "Categories:"
+                         , br
+                         , textfield "categories" ! [value $ unwords categories,
+                              identifier "categories", size "45"]
+                         ]
+                       ]
+                     ]
                    ]
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
