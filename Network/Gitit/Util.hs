@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Util ( withTempDir
                           , orIfNull
+                          , splitCategories
+                          , trim
                           )
 where
 import System.Directory (getTemporaryDirectory, createDirectory, removeDirectoryRecursive)
@@ -43,3 +45,14 @@ createTempDir num baseName = do
 -- | Returns a string, if it is not null, or a backup, if it is.
 orIfNull :: String -> String -> String
 orIfNull str backup = if null str then backup else str
+
+-- | Split a string containing a list of categories.
+splitCategories :: String -> [String]
+splitCategories = words . map puncToSpace . trim
+     where puncToSpace x | x `elem` ".,;:" = ' '
+           puncToSpace x = x
+
+-- | Trim leading and trailing spaces.
+trim :: String -> String
+trim = reverse . trimLeft . reverse . trimLeft
+  where trimLeft = dropWhile (`elem` " \t")

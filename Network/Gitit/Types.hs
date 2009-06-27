@@ -39,6 +39,7 @@ import Data.List (intersect)
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
+import Network.Gitit.Util (splitCategories)
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
@@ -195,6 +196,7 @@ data Params = Params { pUsername     :: String
                      , pLHS          :: Maybe Bool
                      , pTOC          :: Maybe Bool
                      , pTitle        :: Maybe String
+                     , pCategories   :: [String]
                      , pLimit        :: Int
                      , pPatterns     :: [String]
                      , pGotoPage     :: String
@@ -239,6 +241,7 @@ instance FromData Params where
          ti <- (look "title" >>= \s ->
                   return (if null s then Nothing else Just s))
                   `mplus` return Nothing
+         ca <- liftM splitCategories $ look "categories"  `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
          gt <- look "gotopage"       `mplus` return ""
@@ -278,6 +281,7 @@ instance FromData Params where
                          , pLHS          = lh
                          , pTOC          = tc
                          , pTitle        = ti
+                         , pCategories   = ca
                          , pLimit        = read lt
                          , pPatterns     = words pa
                          , pGotoPage     = gt

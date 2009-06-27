@@ -48,6 +48,7 @@ module Network.Gitit.Page ( stringToPage
 where
 import Network.Gitit.Types
 import Network.Gitit.Config (parsePageType)
+import Network.Gitit.Util (trim, splitCategories)
 import Text.ParserCombinators.Parsec
 import Control.Monad (unless)
 import Data.Char (toLower)
@@ -80,10 +81,6 @@ pMetadataLine = try $ do
   newline
   return (ident, trim rawval)
 
-trim :: String -> String
-trim = reverse . trimLeft . reverse . trimLeft
-  where trimLeft = dropWhile (`elem` " \t")
-
 -- | Read a string (the contents of a page file) and produce a Page
 -- object, using defaults except when overridden by metadata.
 stringToPage :: Config -> String -> String -> Page
@@ -107,9 +104,7 @@ adjustPage ("toc", val) page' = page' {
                then True
                else False }
 adjustPage ("categories", val) page' =
-   page' { pageCategories = words $ map puncToSpace val }
-     where puncToSpace x | x `elem` ".,;:" = ' '
-           puncToSpace x = x
+   page' { pageCategories = splitCategories val }
 adjustPage (_, _) page' = page'
 
 -- | Write a string (the contents of a page file) corresponding to
