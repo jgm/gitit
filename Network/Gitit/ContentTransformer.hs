@@ -65,7 +65,7 @@ module Network.Gitit.ContentTransformer
   -- Content or context augmentation combinators
   , applyPageTransforms
   , wikiDivify
-  , addPageNameToPandoc
+  , addPageTitleToPandoc
   , addMathSupport
   , addScripts
   -- ContentTransformer context API
@@ -89,7 +89,7 @@ import Network.Gitit.Layout
 import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Page (stringToPage)
 import qualified Data.FileStore as FS
-import Data.Maybe (mapMaybe)
+import Data.Maybe (mapMaybe, fromMaybe)
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
@@ -113,7 +113,7 @@ runPageTransformer xform = withData $ \params -> do
   page <- getPage
   evalStateT xform  Context{ ctxPageName = page
                            , ctxFile = pathForPage page
-                           , ctxLayout = defaultPageLayout
+                           , ctxLayout = defaultPageLayout{ pgTitle = page }
                            , ctxParams = params
                            , ctxCacheable = True }
 
@@ -124,7 +124,7 @@ runFileTransformer xform = withData $ \params -> do
   file <- getPage
   evalStateT xform  Context{ ctxPageName = file
                            , ctxFile = file
-                           , ctxLayout = defaultPageLayout
+                           , ctxLayout = defaultPageLayout{ pgTitle = file }
                            , ctxParams = params
                            , ctxCacheable = True }
 
@@ -307,11 +307,11 @@ paramsToPage params = do
   pagename <- getPageName
   return $ Page
           { pageName        = pagename
-          , pageFormat      = defaultPageType conf
-          , pageLHS         = defaultLHS conf
-          , pageTOC         = tableOfContents conf
-          , pageTitle       = pagename
-          , pageCategories  = []
+          , pageFormat      = fromMaybe (defaultPageType conf) (pPageType params)
+          , pageLHS         = fromMaybe (defaultLHS conf) (pLHS params)
+          , pageTOC         = fromMaybe (tableOfContents conf) (pTOC params)
+          , pageTitle       = fromMaybe pagename (pTitle params) 
+          , pageCategories  = pCategories params
           , pageText        = filter (/= '\r') $ pRaw params }
 
 -- | Same as pageToWikiPandocPage, with support for Maybe values
@@ -320,9 +320,10 @@ mbPageToWikiPandocPage Nothing  = mzero
 mbPageToWikiPandocPage (Just c) = return . Just =<< pageToWikiPandocPage c
 
 -- | Converts Page to Pandoc, applies page transforms, and adds page
--- name to Pandoc meta info
+-- title to Pandoc meta info
 pageToWikiPandocPage :: Page -> ContentTransformer Pandoc
-pageToWikiPandocPage = pageToWikiPandoc >=> addPageNameToPandoc
+pageToWikiPandocPage page' =
+  pageToWikiPandoc page' >>= addPageTitleToPandoc (pageTitle page')
 
 -- | Converts source text to Pandoc and applies page transforms
 pageToWikiPandoc :: Page -> ContentTransformer Pandoc
@@ -431,10 +432,12 @@ wikiDivify c = do
   return $ thediv ! [identifier "wikipage",
                      strAttr "onDblClick" dblClickJs] << c
 
-addPageNameToPandoc :: Pandoc -> ContentTransformer Pandoc
-addPageNameToPandoc (Pandoc _ blocks) = do
-  page <- getPageName
-  return $ Pandoc (Meta [Str page] [] []) blocks
+addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
+addPageTitleToPandoc title' (Pandoc _ blocks) = do
+  updateLayout $ \layout -> layout{ pgTitle = title' }
+  return $ if null title'
+              then Pandoc (Meta [] [] []) blocks
+              else Pandoc (Meta [Str title'] [] []) blocks
 
 addMathSupport :: a -> ContentTransformer a
 addMathSupport c = do

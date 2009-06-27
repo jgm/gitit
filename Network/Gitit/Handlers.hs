@@ -504,25 +504,25 @@ editPage = withData $ \(params :: Params) -> do
   let categories = (pCategories params) `orIfNull` (pageCategories pageContents)
   let metadata = fieldset ! [identifier "metadata"] <<
                    [ legend << "Page metadata"
-                   , checkbox "toc" (yesOrNo toc)
-                   , label << "Include table of contents?"
+                   , label << "Format: "
+                   , select ! [name "format", identifier "format"] <<
+                      map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
+                      [Markdown, RST, LaTeX, HTML]
                    , primHtmlChar "nbsp"
-                   , checkbox "lhs" (yesOrNo lhs)
+                   , checkbox "toc" (yesOrNo toc) ! [identifier "toc"]
+                   , label << "Show table of contents?"
+                   , primHtmlChar "nbsp"
+                   , checkbox "lhs" (yesOrNo lhs) ! [identifier "lhs"]
+                   , primHtmlChar "nbsp"
                    , label << "Literate Haskell?"
                    , br
                    , label << "Page title:"
                    , br
-                   , textfield "title" ! [value title']
+                   , textfield "title" ! [value title', identifier "title"]
                    , br
                    , label << "Categories:"
                    , br
-                   , textfield "categories" ! [value $ unwords categories]
-                   , br
-                   , label << "Format:"
-                   , br
-                   , select ! [name "format"] <<
-                      map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
-                      [Markdown, RST, LaTeX, HTML]
+                   , textfield "categories" ! [value $ unwords categories, identifier "categories"]
                    ]
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
