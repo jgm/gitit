@@ -520,7 +520,9 @@ editPage = withData $ \(params :: Params) -> do
                    , br
                    , label << "Format:"
                    , br
-                   , textfield "format" ! [value $ show format]
+                   , select ! [name "format"] <<
+                      map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
+                      [Markdown, RST, LaTeX, HTML]
                    ]
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
