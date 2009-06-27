@@ -20,6 +20,7 @@ module Network.Gitit.Util ( withTempDir
                           , orIfNull
                           , splitCategories
                           , trim
+                          , yesOrNo
                           )
 where
 import System.Directory (getTemporaryDirectory, createDirectory, removeDirectoryRecursive)
@@ -42,9 +43,9 @@ createTempDir num baseName = do
                then createTempDir (num + 1) baseName
                else ioError e
 
--- | Returns a string, if it is not null, or a backup, if it is.
-orIfNull :: String -> String -> String
-orIfNull str backup = if null str then backup else str
+-- | Returns a list, if it is not null, or a backup, if it is.
+orIfNull :: [a] -> [a] -> [a]
+orIfNull lst backup = if null lst then backup else lst
 
 -- | Split a string containing a list of categories.
 splitCategories :: String -> [String]
@@ -56,3 +57,8 @@ splitCategories = words . map puncToSpace . trim
 trim :: String -> String
 trim = reverse . trimLeft . reverse . trimLeft
   where trimLeft = dropWhile (`elem` " \t")
+
+-- | Show Bool as "yes" or "no".
+yesOrNo :: Bool -> String
+yesOrNo True  = "yes"
+yesOrNo False = "no"

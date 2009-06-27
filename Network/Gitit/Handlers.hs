@@ -63,7 +63,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Util (orIfNull, yesOrNo)
 import Network.Gitit.Page
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
@@ -465,6 +465,7 @@ editPage :: Handler
 editPage = withData $ \(params :: Params) -> do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
+  cfg <- getConfig
   page <- getPage
   let getRevisionAndText = catch
         (do c <- liftIO $ retrieve fs (pathForPage page) rev
@@ -478,11 +479,12 @@ editPage = withData $ \(params :: Params) -> do
                   then return (Nothing, "")
                   else throwIO e)
   (mbRev, raw) <- case pEditedText params of
-                       Nothing -> liftIO getRevisionAndText
-                       Just t  -> let r = if null (pSHA1 params)
-                                             then Nothing
-                                             else Just (pSHA1 params)
-                                  in return (r, t)
+                         Nothing -> liftIO getRevisionAndText
+                         Just t  -> let r = if null (pSHA1 params)
+                                               then Nothing
+                                               else Just (pSHA1 params)
+                                    in return (r, t)
+  let pageContents = stringToPage cfg page raw
   let messages = pMessages params
   let logMsg = pLogMsg params
   let sha1Box = case mbRev of
@@ -495,10 +497,36 @@ editPage = withData $ \(params :: Params) -> do
                           strAttr "style" "color: gray"]
                     else []
   base' <- getWikiBase
+  let toc = fromMaybe (pageTOC pageContents) (pTOC params)
+  let lhs = fromMaybe (pageLHS pageContents) (pLHS params)
+  let format = fromMaybe (pageFormat pageContents) (pPageType params)
+  let title' = fromMaybe (pageTitle pageContents) (pTitle params)
+  let categories = (pCategories params) `orIfNull` (pageCategories pageContents)
+  let metadata = fieldset ! [identifier "metadata"] <<
+                   [ legend << "Page metadata"
+                   , checkbox "toc" (yesOrNo toc)
+                   , label << "Include table of contents?"
+                   , primHtmlChar "nbsp"
+                   , checkbox "lhs" (yesOrNo lhs)
+                   , label << "Literate Haskell?"
+                   , br
+                   , label << "Page title:"
+                   , br
+                   , textfield "title" ! [value title']
+                   , br
+                   , label << "Categories:"
+                   , br
+                   , textfield "categories" ! [value $ unwords categories]
+                   , br
+                   , label << "Format:"
+                   , br
+                   , textfield "format" ! [value $ show format]
+                   ]
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
+                   , metadata
                    , textarea ! (readonly ++ [cols "80", name "editedText",
-                                  identifier "editedText"]) << raw
+                                  identifier "editedText"]) << (pageText pageContents)
                    , br
                    , label << "Description of changes:"
                    , br
@@ -620,17 +648,11 @@ updatePage = withData $ \(params :: Params) -> do
             Left (MergeInfo mergedWithRev True mergedText) -> do
                let mergeMsg =
                      "The page has been edited since you checked it out. " ++
-                     "Changes have been merged into your edits below. " ++
+                     "Changes from revision " ++ revId mergedWithRev ++
+                     " have been merged into your edits below. " ++
                      "Please resolve conflicts and Save."
-               let mergedPage = stringToPage cfg page mergedText
                withInput "messages" [mergeMsg] $
-                 withInput "sha1" (revId mergedWithRev) $
-                 withInput "format" (show $ pageFormat mergedPage) $
-                 withInput "toc" (if pageTOC mergedPage then "yes" else "no") $
-                 withInput "title" (pageTitle mergedPage) $
-                 withInput "lhs" (if pageLHS mergedPage then "yes" else "no") $
-                 withInput "categories" (unwords $ pageCategories mergedPage) $
-                 withInput "editedText" (pageText mergedPage) editPage
+                 withInput "editedText" mergedText editPage
 
 indexPage :: Handler
 indexPage = withData $ \(params :: Params) -> do
