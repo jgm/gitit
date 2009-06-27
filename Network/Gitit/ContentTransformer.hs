@@ -152,8 +152,8 @@ showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
 preview :: Handler
 preview = runPageTransformer $
-          liftM pRaw getParams >>=
-          contentsToPage >>=
+          getParams >>=
+          paramsToPage >>=
           pageToWikiPandoc >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
@@ -300,6 +300,19 @@ utf8Response = return . toResponse . encodeString
 --
 -- Content-type transformation combinators
 --
+
+paramsToPage :: Params -> ContentTransformer Page
+paramsToPage params = do
+  conf <- lift getConfig
+  pagename <- getPageName
+  return $ Page
+          { pageName        = pagename
+          , pageFormat      = defaultPageType conf
+          , pageLHS         = defaultLHS conf
+          , pageTOC         = tableOfContents conf
+          , pageTitle       = pagename
+          , pageCategories  = []
+          , pageText        = filter (/= '\r') $ pRaw params }
 
 -- | Same as pageToWikiPandocPage, with support for Maybe values
 mbPageToWikiPandocPage :: Maybe Page -> ContentTransformer (Maybe Pandoc)
