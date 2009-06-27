@@ -64,6 +64,7 @@ import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Page
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
@@ -581,6 +582,14 @@ updatePage = withData $ \(params :: Params) -> do
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
                      Just b  -> applyPreCommitPlugins b
+  let page' = Page { pageName        = page
+                   , pageFormat      = fromMaybe (defaultPageType cfg) (pPageType params)
+                   , pageLHS         = fromMaybe (defaultLHS cfg)      (pLHS params)   
+                   , pageTOC         = fromMaybe (tableOfContents cfg) (pTOC params) 
+                   , pageTitle       = fromMaybe page                  (pTitle params)
+                   , pageCategories  = []
+                   , pageText        = editedText }
+  let textWithMetadata = pageToString cfg page'
   let logMsg = pLogMsg params `orIfNull` defaultSummary cfg
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
@@ -588,16 +597,16 @@ updatePage = withData $ \(params :: Params) -> do
   if null logMsg
      then withInput "messages" ["Description cannot be empty."] editPage
      else do
-       when (length editedText > fromIntegral (maxUploadSize cfg)) $
+       when (length textWithMetadata > fromIntegral (maxUploadSize cfg)) $
           error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
        modifyRes <- if null oldSHA1
                        then liftIO $ create fs (pathForPage page)
-                                       (Author user email) logMsg editedText >>
+                                       (Author user email) logMsg textWithMetadata >>
                                      return (Right ())
                        else liftIO $ catch (modify fs (pathForPage page)
                                             oldSHA1 (Author user email) logMsg
-                                            editedText)
+                                            textWithMetadata)
                                      (\e -> if e == Unchanged
                                                then return (Right ())
                                                else throwIO e)
@@ -613,9 +622,15 @@ updatePage = withData $ \(params :: Params) -> do
                      "The page has been edited since you checked it out. " ++
                      "Changes have been merged into your edits below. " ++
                      "Please resolve conflicts and Save."
+               let mergedPage = stringToPage cfg page mergedText
                withInput "messages" [mergeMsg] $
                  withInput "sha1" (revId mergedWithRev) $
-                   withInput "editedText" mergedText editPage
+                 withInput "format" (show $ pageFormat mergedPage) $
+                 withInput "toc" (if pageTOC mergedPage then "yes" else "no") $
+                 withInput "title" (pageTitle mergedPage) $
+                 withInput "lhs" (if pageLHS mergedPage then "yes" else "no") $
+                 withInput "categories" (unwords $ pageCategories mergedPage) $
+                 withInput "editedText" (pageText mergedPage) editPage
 
 indexPage :: Handler
 indexPage = withData $ \(params :: Params) -> do
