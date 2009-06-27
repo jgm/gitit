@@ -35,7 +35,7 @@ module Network.Gitit.ContentTransformer
   , preview
   , applyPreCommitPlugins
   -- Cache-aware transformer combinators
-  , mbTextToWikiPandocPageCached
+  , mbContentsToWikiPandocPageCached
   , pandocToWikiDivCached
   , highlightSourceCached
   -- Cache support for transformers
@@ -54,10 +54,10 @@ module Network.Gitit.ContentTransformer
   , htmlResponse
   , utf8Response
   -- Content-type transformation combinators
-  , mbTextToWikiPandocPage
-  , textToWikiPandocPage
-  , textToWikiPandoc
-  , textToPandoc
+  , mbPageToWikiPandocPage
+  , pageToWikiPandocPage
+  , pageToWikiPandoc
+  , pageToPandoc
   , maybePandocToHtml
   , pandocToHtml
   , highlightSource
@@ -71,8 +71,6 @@ module Network.Gitit.ContentTransformer
   -- ContentTransformer context API
   , getPageName
   , getFileName
-  , getPageType
-  , getLiterateHaskell
   , getLayout
   , getParams
   , getCacheable
@@ -89,6 +87,7 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Layout
 import Network.Gitit.Export (exportFormats)
+import Network.Gitit.Page (stringToPage)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc
@@ -112,12 +111,8 @@ runPageTransformer :: ToMessage a
                    -> GititServerPart a 
 runPageTransformer xform = withData $ \params -> do
   page <- getPage
-  pt <- getDefaultPageType
-  lhs <- getDefaultLHS
   evalStateT xform  Context{ ctxPageName = page
                            , ctxFile = pathForPage page
-                           , ctxPageType = pt
-                           , ctxLiterateHaskell = lhs
                            , ctxLayout = defaultPageLayout
                            , ctxParams = params
                            , ctxCacheable = True }
@@ -129,8 +124,6 @@ runFileTransformer xform = withData $ \params -> do
   file <- getPage
   evalStateT xform  Context{ ctxPageName = file
                            , ctxFile = file
-                           , ctxPageType = Markdown     -- doesn't mater
-                           , ctxLiterateHaskell = False -- doesn't matter
                            , ctxLayout = defaultPageLayout
                            , ctxParams = params
                            , ctxCacheable = True }
@@ -159,8 +152,9 @@ showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
 preview :: Handler
 preview = runPageTransformer $
-          getParams >>=
-          textToWikiPandoc . pRaw >>=
+          liftM pRaw getParams >>=
+          contentsToPage >>=
+          pageToWikiPandoc >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
 
@@ -176,11 +170,11 @@ rawTextResponse :: ContentTransformer Response
 rawTextResponse = rawContents >>= textResponse
 
 exportViaPandoc :: ContentTransformer Response
-exportViaPandoc = rawContents >>= mbTextToWikiPandocPage >>= exportPandoc
+exportViaPandoc = rawContents >>= mbContentsToPage >>= mbPageToWikiPandocPage >>= exportPandoc
 
 htmlViaPandoc :: ContentTransformer Response
 htmlViaPandoc = cachedContents >>=
-                mbTextToWikiPandocPageCached >>=
+                mbContentsToWikiPandocPageCached >>=
                 pandocToWikiDivCached >>=
                 addMathSupport >>=
                 applyWikiTemplate
@@ -194,9 +188,9 @@ highlightRawSource = do
 -- Cache-aware transformer combinators
 --
 
-mbTextToWikiPandocPageCached :: Either (Maybe String) Html
-                             -> ContentTransformer (Either (Maybe Pandoc) Html)
-mbTextToWikiPandocPageCached = skipIfCached mbTextToWikiPandocPage
+mbContentsToWikiPandocPageCached :: Either (Maybe String) Html
+                                 -> ContentTransformer (Either (Maybe Pandoc) Html)
+mbContentsToWikiPandocPageCached = skipIfCached (mbContentsToPage >=> mbPageToWikiPandocPage)
 
 pandocToWikiDivCached :: Either (Maybe Pandoc) Html -> ContentTransformer Html
 pandocToWikiDivCached = useCache pandocToWikiDiv
@@ -307,27 +301,36 @@ utf8Response = return . toResponse . encodeString
 -- Content-type transformation combinators
 --
 
--- | Same as textToWikiPandocPage, with support for Maybe values
-mbTextToWikiPandocPage :: Maybe String -> ContentTransformer (Maybe Pandoc)
-mbTextToWikiPandocPage Nothing  = mzero
-mbTextToWikiPandocPage (Just c) = return . Just =<< textToWikiPandocPage c
+-- | Same as pageToWikiPandocPage, with support for Maybe values
+mbPageToWikiPandocPage :: Maybe Page -> ContentTransformer (Maybe Pandoc)
+mbPageToWikiPandocPage Nothing  = mzero
+mbPageToWikiPandocPage (Just c) = return . Just =<< pageToWikiPandocPage c
 
--- | Converts source text to Pandoc, applies page transforms, and adds page
+-- | Converts Page to Pandoc, applies page transforms, and adds page
 -- name to Pandoc meta info
-textToWikiPandocPage :: String -> ContentTransformer Pandoc
-textToWikiPandocPage = textToWikiPandoc >=> addPageNameToPandoc
+pageToWikiPandocPage :: Page -> ContentTransformer Pandoc
+pageToWikiPandocPage = pageToWikiPandoc >=> addPageNameToPandoc
 
 -- | Converts source text to Pandoc and applies page transforms
-textToWikiPandoc :: String -> ContentTransformer Pandoc
-textToWikiPandoc = applyPreParseTransforms >=>
-                     textToPandoc >=> applyPageTransforms
+pageToWikiPandoc :: Page -> ContentTransformer Pandoc
+pageToWikiPandoc = applyPreParseTransforms >=>
+                     pageToPandoc >=> applyPageTransforms
 
 -- | Converts source text to Pandoc using default page type
-textToPandoc :: String -> ContentTransformer Pandoc
-textToPandoc s = do
-  pt <- getPageType -- should get the current page type instead
-  lhs <- getLiterateHaskell
-  return $ readerFor pt lhs $ filter (/= '\r') s
+pageToPandoc :: Page -> ContentTransformer Pandoc
+pageToPandoc page' = do
+  return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
+
+mbContentsToPage :: Maybe String -> ContentTransformer (Maybe Page)
+mbContentsToPage Nothing = mzero
+mbContentsToPage (Just s) = return . Just =<< contentsToPage s
+
+-- | Converts contents of page file to Page object
+contentsToPage :: String -> ContentTransformer Page
+contentsToPage s = do
+  cfg <- lift getConfig
+  pn <- getPageName
+  return $ stringToPage cfg pn s
 
 -- | Same as pandocToHtml, with support for Maybe values
 maybePandocToHtml :: Maybe Pandoc -> ContentTransformer Html
@@ -393,8 +396,9 @@ applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = liftM (wikiLinksTransform : ) getPageTransforms >>=
                         foldM applyTransform c
 
-applyPreParseTransforms :: String -> ContentTransformer String
-applyPreParseTransforms c = getPreParseTransforms >>= foldM applyTransform c
+applyPreParseTransforms :: Page -> ContentTransformer Page
+applyPreParseTransforms page' = getPreParseTransforms >>= foldM applyTransform (pageText page') >>=
+                                (\t -> return page'{ pageText = t })
 
 applyPreCommitTransforms :: String -> ContentTransformer String
 applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
@@ -438,12 +442,6 @@ getParams = liftM ctxParams get
 
 getPageName :: ContentTransformer String
 getPageName = liftM ctxPageName get
-
-getPageType :: ContentTransformer PageType
-getPageType = liftM ctxPageType get
-
-getLiterateHaskell :: ContentTransformer Bool
-getLiterateHaskell = liftM ctxLiterateHaskell get
 
 getFileName :: ContentTransformer FilePath
 getFileName = liftM ctxFile get
