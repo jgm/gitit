@@ -11,5 +11,10 @@ function updatePreviewPane() {
 };
 $(document).ready(function(){
     $("#previewButton").show();
+    $("#showMetadata").show();
+    $("table.toggleable").hide();
+    $("#metadataLegend").click(function () {
+      $(".toggleable").toggle();
+      });
   });
 
