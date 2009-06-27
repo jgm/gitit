@@ -238,9 +238,7 @@ instance FromData Params where
          pt <- (liftM Just $ lookRead "format") `mplus` return Nothing
          lh <- (liftM (Just . (=="yes")) $ look "lhs")   `mplus` return Nothing
          tc <- (liftM (Just . (=="yes")) $ look "toc")   `mplus` return Nothing
-         ti <- (look "title" >>= \s ->
-                  return (if null s then Nothing else Just s))
-                  `mplus` return Nothing
+         ti <- (liftM Just $ look "title") `mplus` return Nothing
          ca <- liftM splitCategories $ look "categories"  `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""

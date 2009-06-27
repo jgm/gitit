@@ -29,7 +29,6 @@ import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import Codec.Binary.UTF8.String (encodeString)
@@ -72,7 +71,7 @@ formattedPage layout page params htmlContents = do
                            then ""
                            else renderHtmlFragment $ concatHtml $
                                 map scriptLink scripts
-  let pageTitle' = pgTitle layout `orIfNull` page
+  let pageTitle' = pgTitle layout
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
