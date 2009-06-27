@@ -138,8 +138,6 @@ runPluginM plugin conf user = runStateT (runReaderT plugin (conf, user))
 
 data Context = Context { ctxPageName        :: String
                        , ctxFile            :: String
-                       , ctxPageType        :: PageType
-                       , ctxLiterateHaskell :: Bool
                        , ctxLayout          :: PageLayout
                        , ctxParams          :: Params
                        , ctxCacheable       :: Bool
