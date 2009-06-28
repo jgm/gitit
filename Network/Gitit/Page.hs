@@ -102,7 +102,7 @@ adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
 adjustPage ("toc", val) page' = page' {
   pageTOC = (map toLower val) `elem` ["yes","true"] }
 adjustPage ("categories", val) page' =
-   page' { pageCategories = splitCategories val }
+   page' { pageCategories = splitCategories val ++ pageCategories page' }
 adjustPage (_, _) page' = page'
 
 -- | Write a string (the contents of a page file) corresponding to
