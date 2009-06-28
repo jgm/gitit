@@ -63,7 +63,7 @@ parseMetadata raw =
 pMetadataBlock :: GenParser Char st ([(String, String)], String)
 pMetadataBlock = do
   ls <- many pMetadataLine
-  unless (null ls) $ pBlankline >> return ()
+  unless (null ls) $ many1 pBlankline >> return ()
   rest <- getInput
   return (ls, rest)
 
