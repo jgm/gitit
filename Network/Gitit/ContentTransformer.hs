@@ -89,7 +89,7 @@ import Network.Gitit.Layout
 import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Page (stringToPage)
 import qualified Data.FileStore as FS
-import Data.Maybe (mapMaybe, fromMaybe)
+import Data.Maybe (mapMaybe)
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
@@ -304,15 +304,8 @@ utf8Response = return . toResponse . encodeString
 paramsToPage :: Params -> ContentTransformer Page
 paramsToPage params = do
   conf <- lift getConfig
-  pagename <- getPageName
-  return $ Page
-          { pageName        = pagename
-          , pageFormat      = fromMaybe (defaultPageType conf) (pPageType params)
-          , pageLHS         = fromMaybe (defaultLHS conf) (pLHS params)
-          , pageTOC         = fromMaybe (tableOfContents conf) (pTOC params)
-          , pageTitle       = fromMaybe pagename (pTitle params) 
-          , pageCategories  = pCategories params
-          , pageText        = filter (/= '\r') $ pRaw params }
+  pn <- getPageName
+  return $ stringToPage conf pn $ filter (/= '\r') $ pRaw params
 
 -- | Same as pageToWikiPandocPage, with support for Maybe values
 mbPageToWikiPandocPage :: Maybe Page -> ContentTransformer (Maybe Pandoc)
