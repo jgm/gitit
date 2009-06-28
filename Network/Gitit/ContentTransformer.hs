@@ -111,22 +111,28 @@ runPageTransformer :: ToMessage a
                    -> GititServerPart a 
 runPageTransformer xform = withData $ \params -> do
   page <- getPage
+  cfg <- getConfig
   evalStateT xform  Context{ ctxPageName = page
                            , ctxFile = pathForPage page
                            , ctxLayout = defaultPageLayout{ pgTitle = page }
                            , ctxParams = params
-                           , ctxCacheable = True }
+                           , ctxCacheable = True
+                           , ctxTOC = tableOfContents cfg
+                           , ctxBirdTracks = showLHSBirdTracks cfg }
 
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> GititServerPart a
 runFileTransformer xform = withData $ \params -> do
   file <- getPage
+  cfg <- getConfig
   evalStateT xform  Context{ ctxPageName = file
                            , ctxFile = file
                            , ctxLayout = defaultPageLayout{ pgTitle = file }
                            , ctxParams = params
-                           , ctxCacheable = True }
+                           , ctxCacheable = True
+                           , ctxTOC = tableOfContents cfg
+                           , ctxBirdTracks = showLHSBirdTracks cfg }
 
 --
 -- Gitit responders
@@ -152,8 +158,8 @@ showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
 preview :: Handler
 preview = runPageTransformer $
-          getParams >>=
-          paramsToPage >>=
+          liftM (filter (/= '\r') . pRaw) getParams >>=
+          contentsToPage >>=
           pageToWikiPandoc >>=
           pandocToHtml >>=
           utf8Response . renderHtmlFragment
@@ -301,12 +307,6 @@ utf8Response = return . toResponse . encodeString
 -- Content-type transformation combinators
 --
 
-paramsToPage :: Params -> ContentTransformer Page
-paramsToPage params = do
-  conf <- lift getConfig
-  pn <- getPageName
-  return $ stringToPage conf pn $ filter (/= '\r') $ pRaw params
-
 -- | Same as pageToWikiPandocPage, with support for Maybe values
 mbPageToWikiPandocPage :: Maybe Page -> ContentTransformer (Maybe Pandoc)
 mbPageToWikiPandocPage Nothing  = mzero
@@ -326,6 +326,7 @@ pageToWikiPandoc = applyPreParseTransforms >=>
 -- | Converts source text to Pandoc using default page type
 pageToPandoc :: Page -> ContentTransformer Pandoc
 pageToPandoc page' = do
+  modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
 mbContentsToPage :: Maybe String -> ContentTransformer (Maybe Page)
@@ -346,14 +347,15 @@ maybePandocToHtml = maybe mzero pandocToHtml
 -- | Converts pandoc document to HTML.
 pandocToHtml :: Pandoc -> ContentTransformer Html
 pandocToHtml pandocContents = do
-  cfg <- lift getConfig
   base' <- lift getWikiBase
+  toc <- liftM ctxTOC get
+  bird <- liftM ctxBirdTracks get
   return $ writeHtml defaultWriterOptions{
                         writerStandalone = False
                       , writerHTMLMathMethod = JsMath
                                (Just $ base' ++ "/_static/js/jsMath/easy/load.js")
-                      , writerTableOfContents = tableOfContents cfg
-                      , writerLiterateHaskell = showLHSBirdTracks cfg
+                      , writerTableOfContents = toc
+                      , writerLiterateHaskell = bird
                       } pandocContents
 
 highlightSource :: Maybe String -> ContentTransformer Html

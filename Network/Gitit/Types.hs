@@ -142,6 +142,8 @@ data Context = Context { ctxPageName        :: String
                        , ctxLayout          :: PageLayout
                        , ctxParams          :: Params
                        , ctxCacheable       :: Bool
+                       , ctxTOC             :: Bool
+                       , ctxBirdTracks      :: Bool
                        }
 
 class (Monad m) => HasContext m where
