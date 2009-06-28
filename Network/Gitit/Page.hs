@@ -100,9 +100,7 @@ adjustPage ("title", val) page' = page' { pageTitle = val }
 adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
     where (pt, lhs) = parsePageType val
 adjustPage ("toc", val) page' = page' {
-  pageTOC = if (map toLower val) `elem` ["yes","true"]
-               then True
-               else False }
+  pageTOC = (map toLower val) `elem` ["yes","true"] }
 adjustPage ("categories", val) page' =
    page' { pageCategories = splitCategories val }
 adjustPage (_, _) page' = page'
