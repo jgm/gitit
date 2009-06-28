@@ -63,8 +63,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (orIfNull, yesOrNo)
-import Network.Gitit.Page
+import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
@@ -465,7 +464,6 @@ editPage :: Handler
 editPage = withData $ \(params :: Params) -> do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
-  cfg <- getConfig
   page <- getPage
   let getRevisionAndText = catch
         (do c <- liftIO $ retrieve fs (pathForPage page) rev
@@ -484,7 +482,6 @@ editPage = withData $ \(params :: Params) -> do
                                                then Nothing
                                                else Just (pSHA1 params)
                                     in return (r, t)
-  let pageContents = stringToPage cfg page raw
   let messages = pMessages params
   let logMsg = pLogMsg params
   let sha1Box = case mbRev of
@@ -497,56 +494,10 @@ editPage = withData $ \(params :: Params) -> do
                           strAttr "style" "color: gray"]
                     else []
   base' <- getWikiBase
-  let toc = fromMaybe (pageTOC pageContents) (pTOC params)
-  let lhs = fromMaybe (pageLHS pageContents) (pLHS params)
-  let format = fromMaybe (pageFormat pageContents) (pPageType params)
-  let title' = fromMaybe (pageTitle pageContents) (pTitle params)
-  let categories = (pCategories params) `orIfNull` (pageCategories pageContents)
-  let metadata = fieldset ! [identifier "metadata"] <<
-                   [ legend ! [identifier "metadataLegend"] <<
-                        [ thespan << "Metadata"
-                        , thespan ! [theclass "toggleable", thestyle "display: none",
-                                      identifier "showMetadata"] << " (click to show)"
-                        , thespan ! [theclass "toggleable", thestyle "display: none"] <<
-                                      " (click to hide)"
-                        ] 
-                   , table ! [theclass "toggleable"] <<
-                     [ tr <<
-                       [ td <<
-                         [ label << "Format: "
-                         , select ! [name "format", identifier "format"] <<
-                             map (\f -> option ! ([value $ show f] ++ [selected | f == format]) << show f)
-                             [Markdown, RST, LaTeX, HTML]
-                         ]
-                       , td <<
-                         [ checkbox "toc" (yesOrNo toc) ! [identifier "toc"]
-                         , label << " Show table of contents?"
-                         ]
-                       , td <<
-                         [ checkbox "lhs" (yesOrNo lhs) ! [identifier "lhs"]
-                         , label << " Literate Haskell?"
-                         ]
-                       ]
-                     , tr <<
-                       [ td <<
-                         [ label << "Page title:"
-                         , br
-                         , textfield "title" ! [value title', identifier "title"]
-                         ]
-                       , td ! [intAttr "colspan" 2] <<
-                         [ label << "Categories:"
-                         , br
-                         , textfield "categories" ! [value $ unwords categories,
-                              identifier "categories", size "45"]
-                         ]
-                       ]
-                     ]
-                   ]
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
-                   , metadata
                    , textarea ! (readonly ++ [cols "80", name "editedText",
-                                  identifier "editedText"]) << (pageText pageContents)
+                                  identifier "editedText"]) << raw
                    , br
                    , label << "Description of changes:"
                    , br
@@ -630,14 +581,6 @@ updatePage = withData $ \(params :: Params) -> do
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
                      Just b  -> applyPreCommitPlugins b
-  let page' = Page { pageName        = page
-                   , pageFormat      = fromMaybe (defaultPageType cfg) (pPageType params)
-                   , pageLHS         = fromMaybe (defaultLHS cfg)      (pLHS params)   
-                   , pageTOC         = fromMaybe (tableOfContents cfg) (pTOC params) 
-                   , pageTitle       = fromMaybe page                  (pTitle params)
-                   , pageCategories  = pCategories params
-                   , pageText        = editedText }
-  let textWithMetadata = pageToString cfg page'
   let logMsg = pLogMsg params `orIfNull` defaultSummary cfg
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
@@ -645,16 +588,16 @@ updatePage = withData $ \(params :: Params) -> do
   if null logMsg
      then withInput "messages" ["Description cannot be empty."] editPage
      else do
-       when (length textWithMetadata > fromIntegral (maxUploadSize cfg)) $
+       when (length editedText > fromIntegral (maxUploadSize cfg)) $
           error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
        modifyRes <- if null oldSHA1
                        then liftIO $ create fs (pathForPage page)
-                                       (Author user email) logMsg textWithMetadata >>
+                                       (Author user email) logMsg editedText >>
                                      return (Right ())
                        else liftIO $ catch (modify fs (pathForPage page)
                                             oldSHA1 (Author user email) logMsg
-                                            textWithMetadata)
+                                            editedText)
                                      (\e -> if e == Unchanged
                                                then return (Right ())
                                                else throwIO e)

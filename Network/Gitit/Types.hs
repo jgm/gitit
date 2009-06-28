@@ -39,7 +39,6 @@ import Data.List (intersect)
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
-import Network.Gitit.Util (splitCategories)
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
@@ -192,11 +191,6 @@ data Params = Params { pUsername     :: String
                      , pForUser      :: Maybe String
                      , pSince        :: Maybe DateTime
                      , pRaw          :: String
-                     , pPageType     :: Maybe PageType
-                     , pLHS          :: Maybe Bool
-                     , pTOC          :: Maybe Bool
-                     , pTitle        :: Maybe String
-                     , pCategories   :: [String]
                      , pLimit        :: Int
                      , pPatterns     :: [String]
                      , pGotoPage     :: String
@@ -235,11 +229,6 @@ instance FromData Params where
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- lookCookieValue "destination" `mplus` return "/"
          ra <- look "raw"            `mplus` return ""
-         pt <- (liftM Just $ lookRead "format") `mplus` return Nothing
-         lh <- (liftM (Just . (=="yes")) $ look "lhs")   `mplus` return Nothing
-         tc <- (liftM (Just . (=="yes")) $ look "toc")   `mplus` return Nothing
-         ti <- (liftM Just $ look "title") `mplus` return Nothing
-         ca <- liftM splitCategories $ look "categories"  `mplus` return ""
          lt <- look "limit"          `mplus` return "100"
          pa <- look "patterns"       `mplus` return ""
          gt <- look "gotopage"       `mplus` return ""
@@ -275,11 +264,6 @@ instance FromData Params where
                          , pDestination  = ds
                          , pUri          = ""       -- gets set by handle...
                          , pRaw          = ra
-                         , pPageType     = pt
-                         , pLHS          = lh
-                         , pTOC          = tc
-                         , pTitle        = ti
-                         , pCategories   = ca
                          , pLimit        = read lt
                          , pPatterns     = words pa
                          , pGotoPage     = gt

@@ -131,5 +131,3 @@ pre.matches { margin: 0; padding: 0; }
 h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
 #footer { padding: 1em; color: #888; text-align: center; font-size: 93%; }
 .markupHelp pre { font-size: 70%; font-family: Monaco, Lucida Sans Mono, monospace; }
-#metadata table, #metadata tr, #metadata td { border: none; }
-#metadata { padding-top: 0; padding-bottom: 0; }
