@@ -118,7 +118,8 @@ runPageTransformer xform = withData $ \params -> do
                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
-                           , ctxBirdTracks = showLHSBirdTracks cfg }
+                           , ctxBirdTracks = showLHSBirdTracks cfg
+                           , ctxCategories = [] }
 
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
@@ -132,7 +133,8 @@ runFileTransformer xform = withData $ \params -> do
                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
-                           , ctxBirdTracks = showLHSBirdTracks cfg }
+                           , ctxBirdTracks = showLHSBirdTracks cfg
+                           , ctxCategories = [] }
 
 --
 -- Gitit responders
@@ -326,7 +328,8 @@ pageToWikiPandoc = applyPreParseTransforms >=>
 -- | Converts source text to Pandoc using default page type
 pageToPandoc :: Page -> ContentTransformer Pandoc
 pageToPandoc page' = do
-  modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page' }
+  modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
+                             , ctxCategories = pageCategories page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
 mbContentsToPage :: Maybe String -> ContentTransformer (Maybe Page)
@@ -419,13 +422,17 @@ applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
   params <- getParams
+  categories <- liftM ctxCategories get
+  base' <- lift getWikiBase
+  let categoryLink ctg = li (anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg)
+  let htmlCategories = ulist ! [theclass "categories"] << map categoryLink categories
   let dblClickJs = "window.location = window.location + '?edit" ++
                    case pRevision params of
                         Nothing   -> "';"
                         Just r    -> ("&" ++ urlEncodeVars [("revision", r),
                               ("logMsg", "Revert to " ++ r)] ++ "';")
   return $ thediv ! [identifier "wikipage",
-                     strAttr "onDblClick" dblClickJs] << c
+                     strAttr "onDblClick" dblClickJs] << [c, htmlCategories]
 
 addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
 addPageTitleToPandoc title' (Pandoc _ blocks) = do

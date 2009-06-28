@@ -16,18 +16,28 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Utility functions for Gitit.
 -}
 
-module Network.Gitit.Util ( withTempDir
+module Network.Gitit.Util ( inDir
+                          , withTempDir
                           , orIfNull
                           , splitCategories
                           , trim
                           , yesOrNo
                           )
 where
-import System.Directory (getTemporaryDirectory, createDirectory, removeDirectoryRecursive)
+import System.Directory
 import Control.Exception (bracket)
 import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
+
+-- | Perform a function a directory and return to working directory.
+inDir :: FilePath -> IO a -> IO a
+inDir d action = do
+  w <- getCurrentDirectory
+  setCurrentDirectory d
+  result <- action
+  setCurrentDirectory w
+  return result 
 
 -- | Perform a function in a temporary directory and clean up.
 withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
