@@ -124,6 +124,9 @@ If all goes well, gitit will do the following:
 Check that it worked: open a web browser and go to
 <http://localhost:5001>.
 
+Using gitit
+===========
+
 Wiki links and formatting
 -------------------------
 
@@ -137,6 +140,47 @@ effect.
 If you want to link to a directory listing for a subdirectory, use a
 trailing slash:  `[foo/bar/]()` creates a link to the directory for
 `foo/bar`.
+
+Page metadata
+-------------
+
+Pages may optionally begin with a metadata block.  Here is an example:
+
+    !format: latex+lhs
+    !categories: haskell math
+    !toc: no
+    !title: Haskell and
+      Category Theory
+
+    \section{Why Category Theory?}
+    ...
+
+The metadata block consists of a list of key-value pairs, each on a separate
+line. If needed, the value can be continued on one or more additional
+line, which must begin with a space. (This is illustrated by the "title"
+example above.)  The metadata block must be separated from the main text
+of the article by a blank line.
+
+Currently the following keys are supported:
+
+format
+:   Overrides the default page type as specified in the configuration file.
+    Possible values are `markdown`, `rst`, `latex`, `html`, `markdown+lhs`,
+    `rst+lhs`, `latex+lhs`.  (Capitalization is ignored, so you can also
+    use `LaTeX`, `HTML`, etc.)  The `+lhs` variants indicate that the page
+    is to be interpreted as literate Haskell.  If this field is missing,
+    the default page type will be used.
+
+categories
+:   A space or comma separated list of categories to which the page belongs.
+
+toc
+:   Overrides default setting for table-of-contents in the configuration file.
+    Values can be `yes`, `no`, `true`, or `false` (capitalization is ignored).
+
+title
+:   By default the displayed page title is the page name.  This metadata element
+    overrides that default.
 
 Configuring gitit
 =================
@@ -218,7 +262,8 @@ quadratic formula). Note that if you copied the `jsMath` directory into
 change to be noticed. Gitit checks for the existence of the jsMath files
 when it starts, and will not include links to them unless they exist.
 
-To write math on a wiki page, just enclose it in dollar signs, as in LaTeX:
+To write math on a markdown-formatted wiki page, just enclose it
+in dollar signs, as in LaTeX:
 
     Here is a formula:  $\frac{1}{\sqrt{c^2}}$
 
