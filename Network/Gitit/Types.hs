@@ -144,6 +144,7 @@ data Context = Context { ctxPageName        :: String
                        , ctxCacheable       :: Bool
                        , ctxTOC             :: Bool
                        , ctxBirdTracks      :: Bool
+                       , ctxCategories      :: [String]
                        }
 
 class (Monad m) => HasContext m where

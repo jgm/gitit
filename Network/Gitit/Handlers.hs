@@ -32,6 +32,8 @@ module Network.Gitit.Handlers (
                       , uploadForm
                       , uploadFile
                       , indexPage
+                      , categoryPage
+                      , categoryListPage
                       , preview
                       , showRawPage
                       , showFileAsText
@@ -63,7 +65,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Util (orIfNull, inDir, splitCategories)
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
@@ -71,16 +73,18 @@ import Control.Exception (throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Time
 import System.FilePath
+import System.Process (readProcess)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
-import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits)
+import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
 import Data.Maybe (fromMaybe, mapMaybe, isJust)
 import Data.Ord (comparing)
 import Data.Char (toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars)
+import Codec.Binary.UTF8.String (encodeString)
 import Data.DateTime (getCurrentTime, addMinutes)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
@@ -137,10 +141,13 @@ createPage :: Handler
 createPage = withData $ \(params :: Params) -> do
   page <- getPage
   base' <- getWikiBase
-  formattedPage (defaultPageLayout { pgTabs = [] }) page params $
-     p << [ stringToHtml ("There is no page '" ++ page ++
-               "'.  You may create the page by "),
-             anchor ! [href $ urlForPage base' page ++ "?edit"] << "clicking here." ]
+  case page of
+       ('_':_) -> mzero   -- don't allow creation of _index, etc.
+       _       -> formattedPage (defaultPageLayout { pgTabs = [] }) page params $
+                    p << [ stringToHtml ("There is no page '" ++ page ++
+                              "'.  You may create the page by "),
+                            anchor ! [href $ urlForPage base' page ++ "?edit"] <<
+                              "clicking here." ]
 
 uploadForm :: Handler
 uploadForm = withData $ \(params :: Params) -> do
@@ -653,6 +660,57 @@ fileListToHtml base' prefix files =
                                                    else base' ++ joinPath d] <<
                   last d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
+
+-- NOTE:  The current implementation of categoryPage does not go via the
+-- filestore abstraction.  That is bad, but can only be fixed if we add
+-- more sophisticated searching options to filestore.
+categoryPage :: String -> Handler
+categoryPage category = withData $ \(params :: Params) -> do
+  let limit = pLimit params
+  cfg <- getConfig
+  let repoPath = repositoryPath cfg
+  let categoryDescription = "Category: " ++ category
+  fs <- getFileStore
+  files <- liftM (map encodeString) $ liftIO $ index fs
+  let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
+  matchLines <- liftM (take limit . filter isPageFile . lines) $
+                liftIO $ inDir repoPath $
+                readProcess "grep" (["--max-count", "6", "-E", "-l", "-R",
+                   "^!categories:.*[,; ]" ++ category ++ "([,; ].*)?$"] ++ pages)  ""
+  let matches = map dropExtension matchLines
+  base' <- getWikiBase
+  let toMatchListItem file = li <<
+        [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
+  let htmlMatches = ulist << map toMatchListItem matches
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgScripts = ["search.js"],
+                  pgTitle = categoryDescription }
+                categoryDescription params htmlMatches
+
+categoryListPage :: Handler
+categoryListPage = withData $ \(params :: Params) -> do
+  cfg <- getConfig
+  let repoPath = repositoryPath cfg
+  fs <- getFileStore
+  files <- liftM (map encodeString) $ liftIO $ index fs
+  let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
+  matchLines <- liftM lines $
+                liftIO $ inDir repoPath $
+                readProcess "grep" (["--max-count", "6", "-E", "-R", "-h",
+                   "^!categories:"] ++ pages) ""
+  let categories = nub $ sort $ concat $ map (splitCategories . drop 13) matchLines
+  base' <- getWikiBase
+  let toCatLink ctg = li <<
+        [ anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg ]
+  let htmlMatches = ulist << map toCatLink categories
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgScripts = ["search.js"],
+                  pgTitle = "Categories" }
+                "Categories" params htmlMatches
 
 authHandler :: Handler
 authHandler = msum $

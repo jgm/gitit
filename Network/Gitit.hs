@@ -142,6 +142,8 @@ wikiHandlers =
   , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
+  , dir "_category" $ path categoryPage
+  , dir "_categories" categoryListPage
   , guardCommand "showraw" >> msum
       [ showRawPage
       , guardPath isSourceCode >> showFileAsText ]
