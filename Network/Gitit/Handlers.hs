@@ -65,20 +65,21 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (orIfNull, inDir, splitCategories)
+import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
+import Network.Gitit.Page (extractCategories)
 import Control.Exception (throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Time
 import System.FilePath
-import System.Process (readProcess)
+import System.IO.UTF8 (readFile)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
 import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
-import Data.Maybe (fromMaybe, mapMaybe, isJust)
+import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
 import Data.Char (toLower)
 import Control.Monad.Reader
@@ -666,18 +667,18 @@ fileListToHtml base' prefix files =
 -- more sophisticated searching options to filestore.
 categoryPage :: String -> Handler
 categoryPage category = withData $ \(params :: Params) -> do
-  let limit = pLimit params
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ category
   fs <- getFileStore
   files <- liftM (map encodeString) $ liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
-  matchLines <- liftM (take limit . filter isPageFile . lines) $
-                liftIO $ inDir repoPath $
-                readProcess "grep" (["--max-count", "6", "-E", "-l", "-R",
-                   "^!categories:.*[,; ]" ++ category ++ "([,; ].*)?$"] ++ pages)  ""
-  let matches = map dropExtension matchLines
+  matches <- liftM catMaybes $
+             forM pages $ \f ->
+               liftIO (readFile $ repoPath </> f) >>= \s ->
+               return $ if category `elem` (extractCategories s)
+                           then Just $ dropExtension f
+                           else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
         [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
@@ -696,11 +697,10 @@ categoryListPage = withData $ \(params :: Params) -> do
   fs <- getFileStore
   files <- liftM (map encodeString) $ liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
-  matchLines <- liftM lines $
-                liftIO $ inDir repoPath $
-                readProcess "grep" (["--max-count", "6", "-E", "-R", "-h",
-                   "^!categories:"] ++ pages) ""
-  let categories = nub $ sort $ concat $ map (splitCategories . drop 13) matchLines
+  categories <- liftIO $
+                liftM (nub . sort . concat) $
+                forM pages $
+                liftM extractCategories . readFile . (repoPath </>)
   base' <- getWikiBase
   let toCatLink ctg = li <<
         [ anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg ]
