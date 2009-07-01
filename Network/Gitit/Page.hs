@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Page ( stringToPage
                           , pageToString
+                          , extractCategories
                           )
 where
 import Network.Gitit.Types
@@ -54,6 +55,7 @@ import Network.Gitit.Util (trim, splitCategories)
 import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
 import Data.List (intercalate)
+import Data.Maybe (fromMaybe)
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -137,3 +139,8 @@ pageToString conf page' =
                        else "")
   in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
 
+extractCategories :: String -> [String]
+extractCategories s | take 3 s == "---" = 
+  let (md,_) = parseMetadata s
+  in  splitCategories $ fromMaybe "" $ lookup "categories" md
+extractCategories _ = []
