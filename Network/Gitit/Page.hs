@@ -18,12 +18,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 {- Functions for translating between Page structures and raw
 -  text strings.  The strings may begin with a metadata block,
--  which looks like this:
+-  which looks like this (it is valid YAML):
 -
--  > !title: Custom Title 
--  > !format: markdown+lhs
--  > !toc: yes
--  > !categories: foo bar baz
+-  > ---
+-  > title: Custom Title 
+-  > format: markdown+lhs
+-  > toc: yes
+-  > categories: foo bar baz
+-  > ...
 -
 -  This would tell gitit to use "Custom Title" as the displayed
 -  page title (instead of the page name), to interpret the page
@@ -50,20 +52,23 @@ import Network.Gitit.Types
 import Network.Gitit.Config (parsePageType)
 import Network.Gitit.Util (trim, splitCategories)
 import Text.ParserCombinators.Parsec
-import Control.Monad (unless)
 import Data.Char (toLower)
 import Data.List (intercalate)
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
   case parse pMetadataBlock "" raw of
-    Left err         -> error $ "Error parsing page: " ++ show err
+    Left _           -> ([], raw)
     Right (ls, rest) -> (ls, rest)
 
 pMetadataBlock :: GenParser Char st ([(String, String)], String)
-pMetadataBlock = do
+pMetadataBlock = try $ do
+  string "---"
+  pBlankline
   ls <- many pMetadataLine
-  unless (null ls) $ many1 pBlankline >> return ()
+  string "..."
+  pBlankline
+  many1 pBlankline
   rest <- getInput
   return (ls, rest)
 
@@ -72,7 +77,6 @@ pBlankline = try $ many (oneOf " \t") >> newline
 
 pMetadataLine :: GenParser Char st (String, String)
 pMetadataLine = try $ do
-  char '!'
   ident <- many1 letter
   char ':'
   rawval <- many $ noneOf "\n\r"
