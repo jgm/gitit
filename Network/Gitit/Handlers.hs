@@ -671,7 +671,7 @@ categoryPage category = withData $ \(params :: Params) -> do
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ category
   fs <- getFileStore
-  files <- liftM (map encodeString) $ liftIO $ index fs
+  files <- liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   matches <- liftM catMaybes $
              forM pages $ \f ->
@@ -681,7 +681,7 @@ categoryPage category = withData $ \(params :: Params) -> do
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
-        [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
+        [ anchor ! [href $ urlForPage base' $ dropExtension file] << encodeString (dropExtension file) ]
   let htmlMatches = ulist << map toMatchListItem matches
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
@@ -695,12 +695,12 @@ categoryListPage = withData $ \(params :: Params) -> do
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   fs <- getFileStore
-  files <- liftM (map encodeString) $ liftIO $ index fs
+  files <- liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   categories <- liftIO $
                 liftM (nub . sort . concat) $
                 forM pages $
-                liftM extractCategories . readFile . (repoPath </>)
+                liftM extractCategories . (readFile . (repoPath </>))
   base' <- getWikiBase
   let toCatLink ctg = li <<
         [ anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg ]
