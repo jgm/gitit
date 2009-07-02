@@ -40,6 +40,7 @@ module Network.Gitit.Framework ( getLoggedInUser
                                , guardCommand
                                , guardPath
                                , guardIndex
+                               , guardBareBase
                                , withInput
                                , filestoreFromConfig
                                )
@@ -260,6 +261,16 @@ guardIndex = do
   uri' <- liftM rqUri askRq
   let localpath = drop (length base) uri'
   if length localpath > 1 && last uri' == '/'
+     then return ()
+     else mzero
+
+-- Guard against a path like /wiki when the wiki is being
+-- served at /wiki.
+guardBareBase :: GititServerPart ()
+guardBareBase = do
+  base' <- getWikiBase
+  uri' <- liftM rqUri askRq
+  if not (null base') && base' == uri'
      then return ()
      else mzero
 

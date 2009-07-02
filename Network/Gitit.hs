@@ -135,7 +135,10 @@ wikiHandler conf = do
 
 wikiHandlers :: [Handler]
 wikiHandlers =
-  [ dir "_activity" showActivity
+  [ -- redirect /wiki -> /wiki/ when gitit is being served at /wiki
+    -- so that relative wikilinks on the page will work properly:
+    guardBareBase >> getWikiBase >>= \b -> seeOther (b ++ "/") (toResponse ())
+  , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
   , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm loginUserForm
