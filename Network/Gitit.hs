@@ -106,6 +106,7 @@ import Prelude hiding (readFile)
 import System.IO.UTF8
 import Paths_gitit
 import qualified Text.StringTemplate as T
+import Codec.Binary.UTF8.String (decodeString)
 
 wikiHandler :: Config -> ServerPart Response
 wikiHandler conf = do
@@ -145,7 +146,7 @@ wikiHandlers =
   , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
-  , dir "_category" $ path categoryPage
+  , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
   , guardCommand "showraw" >> msum
       [ showRawPage
