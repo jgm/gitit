@@ -137,7 +137,7 @@ wikiHandlers :: [Handler]
 wikiHandlers =
   [ -- redirect /wiki -> /wiki/ when gitit is being served at /wiki
     -- so that relative wikilinks on the page will work properly:
-    guardBareBase >> getWikiBase >>= \b -> seeOther (b ++ "/") (toResponse ())
+    guardBareBase >> getWikiBase >>= \b -> movedPermanently (b ++ "/") (toResponse ())
   , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
