@@ -80,6 +80,7 @@ pBlankline = try $ many (oneOf " \t") >> newline
 pMetadataLine :: GenParser Char st (String, String)
 pMetadataLine = try $ do
   ident <- many1 letter
+  skipMany (oneOf " \t")
   char ':'
   rawval <- many $ noneOf "\n\r"
                  <|> (try $ newline >> notFollowedBy pBlankline >>
