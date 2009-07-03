@@ -85,7 +85,6 @@ import Data.Char (toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP (urlEncodeVars)
-import Codec.Binary.UTF8.String (encodeString)
 import Data.DateTime (getCurrentTime, addMinutes)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
@@ -681,7 +680,7 @@ categoryPage category = withData $ \(params :: Params) -> do
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
-        [ anchor ! [href $ urlForPage base' $ dropExtension file] << encodeString (dropExtension file) ]
+        [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
   let htmlMatches = ulist << map toMatchListItem matches
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
