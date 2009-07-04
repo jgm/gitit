@@ -1,3 +1,113 @@
+Version 0.6.1 released ? ??? 2009
+
+When upgrading, be sure to delete template.html and the static directory so
+that these will be replaced by the newest versions.  Or, if you have customized
+these, merge the changes into your customized versions.  If your wiki contains
+discuss pages of the form `foo:discuss.page`, rename them to `@foo.page`.
+Summary of main changes:
+
+* Added support for plugins -- dynamically loaded Haskell programs that
+  transform pages. See the haddock documentation for Gitit.Interface for
+  plugin documentation. The plugins directory contains several sample
+  plugins.
+
+* Gitit's configuration file is now a text file with key-value pairs,
+  rather than a Haskell file.  The default configuration file
+  (which can be printed using `gitit --print-default-config`
+  contains comments that document all of the options.
+
+* Pages may now be written in (limited dialects of) LaTeX or HTML,
+  as well as markdown and reStructuredText.  The default format
+  is determined by a configuration option, but can be overridden
+  on a per-page basis using metadata (see below).  The default
+  Front Page and Help page are created in the default format specified
+  by the configuration file. In addition, syntax help is now displayed
+  to the left of the editing box when a page is being edited.
+
+* Pages may be written in literate Haskell, using either bird
+  style with markdown or reStructuredText, or LaTeX style with
+  LaTeX.  Literate Haskell can be made the default or specified on
+  a per-page basis.
+
+* Gitit now exports a library, Network.Gitit, that makes it easy for
+  any happstack application to embed a gitit wiki.
+
+* HTPP authentication is now supported as an alternative to gitit's
+  form-based authentication.
+
+* Gitit's form-based authentication now includes a "password reset"
+  email.  Slightly modified from a patch from Henry Laxen.
+
+* The naming scheme for discussion pages has changed: the discussion
+  page for foo is now @foo, not foo:discuss. Reason: Windows, and
+  thus darcs, does not like colons in filenames.
+
+* Improved logging, with configurable verbosity.
+
+* Improved caching, with better memory efficiency.  Cached
+  pages stored as bytestrings.  Configurable maximum cache
+  size; old pages are expired as needed to stay under this
+  limit.
+
+* Major code reorganization and cleanup.  Gitit has been moved under
+  the Network namespace. The old WebT handlers are replaced by new ones
+  in ServerPartT. 'handle' has been removed; instead, we use happstack's
+  routing combinators. Configuration and filestores are now passed
+  around in a reader monad, in WikiState. (This also allows different
+  wikis to have different configurations.) Most handlers have been
+  simplified so that they no longer require Page and Params arguments.
+  A new function, 'withInput', is used to avoid the need to pass Params
+  between handlers.
+
+* Added Network.Gitit.ContentTransformer module (thanks to Anton van
+  Straaten). The ContentTransformer module replaces Gitit.Convert. It
+  defines a number of single-purpose combinators that can be combined to
+  yield various kinds of content conversions. These are used to define
+  showPage, preview, showHighlightedSource, and other handlers that used
+  to be defined in Gitit.hs.
+
+* Updated for happstack-0.3.
+
+* Redirects set properly after account creation.  If users go from
+  the Login form to the Register form, they are no longer redirected
+  back to the Login form after creating an account.
+
+* indexPage now uses filestore's new 'directory' function. It shows one
+  directory at a time. Subdirectories link to further index pages. This
+  improves on the old javascript folding interface, which did not preserve
+  state.  (Thanks to Thomas Hartman for suggestions.)
+
+* URLs of the form /a/b/ are now equivalent to /_index/a/b.
+
+* All static content has been moved to the path /_static, so
+  it doesn't interfere with user-created `css`, `js`, `img`
+  directories.
+
+* Improvements and bug fixes to deleting. Deleting a non-page now works.
+  You get a nice informative message if you try to delete a nonexistent
+  page or file.
+
+* The "Permanent link" link has been removed. It relied on the sha1
+  parameter always being set, but we've changed that for performance
+  reasons.
+
+* Gitit can now be proxied to a subdirectory path. Thanks to Henry Laxen
+  for the idea and patches. See README for instructions.
+
+* Performance improvements (mostly due to Gwern Branwen):  Pages can be
+  compressed (configurable); unneeded filestore calls removed; cache-control:
+  max-age used.
+
+* Moved sidebar to end of HTML to make things easier for screen readers.
+
+* Yahoo YUI CSS framework is now used for better consistency across browsers.
+
+* Fixed handling of 'forUser' parameter in 'recent activity'.
+
+* Made default maxUploadSize 10 Mb.
+
+* Page names may now contain periods.
+
 Version 0.5.3 released 1 Feb 2009
 
 * Fixed bug which caused jsMath not to load.
@@ -9,13 +119,20 @@ Version 0.5.2 released 1 Feb 2009
 Version 0.5.1 released 1 Feb 2009
 
 * Major code reorganization, making gitit more modular.
+
 * Gitit can now optionally be built using Happstack instead of HAppS
   (just use -fhappstack when cabal installing).
+
 * Fixed bug with directories that had the same names as pages.
+
 * Added code from HAppS-Extra to fix cookie parsing problems.
+
 * New command-line options for --port, --debug.
+
 * New debug feature prints the date, the raw request, and
   the processed request data to standard output on each request.
+
 * Files with ".page" extension can no longer be uploaded.
+
 * Apostrophes and quotation marks now allowed in page names.
 
