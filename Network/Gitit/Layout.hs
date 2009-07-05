@@ -31,7 +31,6 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
-import Codec.Binary.UTF8.String (encodeString)
 import qualified Text.StringTemplate as T
 import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
@@ -133,7 +132,7 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  ok $ setContentType "text/html" $ toResponse $ encodeString filledTemp
+  ok $ setContentType "text/html" $ toResponse filledTemp
 
 exportBox :: String -> String -> Params -> Html
 exportBox base' page params | not (isSourceCode page) =

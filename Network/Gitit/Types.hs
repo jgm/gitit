@@ -39,6 +39,7 @@ import Data.List (intersect)
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
+import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
@@ -221,43 +222,44 @@ data Params = Params { pUsername     :: String
 
 instance FromData Params where
      fromData = do
-         un <- look "username"       `mplus` return ""
-         pw <- look "password"       `mplus` return ""
-         p2 <- look "password2"      `mplus` return ""
-         rv <- (look "revision" >>= \s ->
+         let look' = liftM decodeCharacterReferences . look
+         un <- look' "username"       `mplus` return ""
+         pw <- look' "password"       `mplus` return ""
+         p2 <- look' "password2"      `mplus` return ""
+         rv <- (look' "revision" >>= \s ->
                  return (if null s then Nothing else Just s))
                  `mplus` return Nothing
-         fu <- (liftM Just $ look "forUser") `mplus` return Nothing
-         si <- (liftM (parseDateTime "%Y-%m-%d") $ look "since")
+         fu <- (liftM Just $ look' "forUser") `mplus` return Nothing
+         si <- (liftM (parseDateTime "%Y-%m-%d") $ look' "since")
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- lookCookieValue "destination" `mplus` return "/"
-         ra <- look "raw"            `mplus` return ""
-         lt <- look "limit"          `mplus` return "100"
-         pa <- look "patterns"       `mplus` return ""
-         gt <- look "gotopage"       `mplus` return ""
-         ft <- look "filetodelete"   `mplus` return ""
+         ra <- look' "raw"            `mplus` return ""
+         lt <- look' "limit"          `mplus` return "100"
+         pa <- look' "patterns"       `mplus` return ""
+         gt <- look' "gotopage"       `mplus` return ""
+         ft <- look' "filetodelete"   `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
-         fm <- (liftM Just $ look "from") `mplus` return Nothing
-         to <- (liftM Just $ look "to")   `mplus` return Nothing
-         et <- (liftM (Just . filter (/='\r')) $ look "editedText")
+         fm <- (liftM Just $ look' "from") `mplus` return Nothing
+         to <- (liftM Just $ look' "to")   `mplus` return Nothing
+         et <- (liftM (Just . filter (/='\r')) $ look' "editedText")
                  `mplus` return Nothing
-         fo <- look "format"         `mplus` return ""
-         sh <- look "sha1"           `mplus` return ""
-         lm <- look "logMsg"         `mplus` return ""
-         em <- look "email"          `mplus` return ""
-         na <- look "full_name_1"    `mplus` return ""
-         wn <- look "wikiname"       `mplus` return ""
-         pr <- (look "printable" >> return True) `mplus` return False
-         ow <- (liftM (=="yes") $ look "overwrite") `mplus` return False
+         fo <- look' "format"         `mplus` return ""
+         sh <- look' "sha1"           `mplus` return ""
+         lm <- look' "logMsg"         `mplus` return ""
+         em <- look' "email"          `mplus` return ""
+         na <- look' "full_name_1"    `mplus` return ""
+         wn <- look' "wikiname"       `mplus` return ""
+         pr <- (look' "printable" >> return True) `mplus` return False
+         ow <- (liftM (=="yes") $ look' "overwrite") `mplus` return False
          fn <- (liftM (fromMaybe "" . inputFilename) $ lookInput "file")
                  `mplus` return ""
          fc <- (liftM inputValue $ lookInput "file") `mplus` return L.empty
-         ac <- look "accessCode"     `mplus` return ""
-         cn <- (look "confirm" >> return True) `mplus` return False
+         ac <- look' "accessCode"     `mplus` return ""
+         cn <- (look' "confirm" >> return True) `mplus` return False
          sk <- (liftM Just $ readCookieValue "sid") `mplus` return Nothing
-         rc <- look "recaptcha_challenge_field" `mplus` return ""
-         rr <- look "recaptcha_response_field" `mplus` return ""
-         rk <- look "reset_code" `mplus` return ""
+         rc <- look' "recaptcha_challenge_field" `mplus` return ""
+         rr <- look' "recaptcha_response_field" `mplus` return ""
+         rk <- look' "reset_code" `mplus` return ""
          return   Params { pUsername     = un
                          , pPassword     = pw
                          , pPassword2    = p2
