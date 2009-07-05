@@ -51,8 +51,6 @@ module Network.Gitit.ContentTransformer
   , mimeResponse
   , exportPandoc
   , applyWikiTemplate
-  , htmlResponse
-  , utf8Response
   -- Content-type transformation combinators
   , mbPageToWikiPandocPage
   , pageToWikiPandocPage
@@ -164,7 +162,7 @@ preview = runPageTransformer $
           contentsToPage >>=
           pageToWikiPandoc >>=
           pandocToHtml >>=
-          utf8Response . renderHtmlFragment
+          return . toResponse . renderHtmlFragment
 
 applyPreCommitPlugins :: String -> GititServerPart String
 applyPreCommitPlugins rawtext =
@@ -279,7 +277,7 @@ mimeFileResponse (Just c) =
 
 mimeResponse :: Monad m => String -> String -> m Response
 mimeResponse c mimeType =
-  return . setContentType mimeType . toResponse . encodeString $ c
+  return . setContentType mimeType . toResponse $ c
 
 -- | Exports Pandoc as Response using format specified in Params
 exportPandoc :: Maybe Pandoc -> ContentTransformer Response
@@ -296,14 +294,6 @@ applyWikiTemplate :: Html -> ContentTransformer Response
 applyWikiTemplate c = do
   Context { ctxLayout = layout, ctxPageName = page, ctxParams = params } <- get
   lift $ formattedPage layout page params c
-
--- | Returns specified content as a Response
-htmlResponse :: (Monad m, ToMessage a) => a -> m Response
-htmlResponse = return . toResponse
-
--- | Encode string as UTF8 and return as Response
-utf8Response :: String -> ContentTransformer Response
-utf8Response = return . toResponse . encodeString
 
 --
 -- Content-type transformation combinators

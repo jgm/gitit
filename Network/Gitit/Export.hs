@@ -31,7 +31,6 @@ import Control.Monad.Trans (liftIO)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString.Lazy as B
 import System.FilePath ((<.>), (</>))
-import Codec.Binary.UTF8.String (encodeString)
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True
@@ -45,7 +44,7 @@ respond :: String
         -> Handler
 respond mimetype ext fn page = ok . setContentType mimetype .
   (if null ext then id else setFilename (page ++ "." ++ ext)) .
-  toResponse . encodeString . fn
+  toResponse . fn
 
 respondLaTeX :: String -> Pandoc -> Handler
 respondLaTeX = respond "application/x-latex" "tex" $
