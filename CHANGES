@@ -66,7 +66,8 @@ Summary of main changes:
   showPage, preview, showHighlightedSource, and other handlers that used
   to be defined in Gitit.hs.
 
-* Updated for happstack-0.3.
+* Updated for happstack-server-0.3.3.  Since this version of happstack
+  supports UTF-8, gitit's old manual decoding and encoding were removed.
 
 * Redirects set properly after account creation.  If users go from
   the Login form to the Register form, they are no longer redirected
