@@ -174,7 +174,7 @@ wikiHandlers =
   , showPage
   , guardPath isSourceCode >> showHighlightedSource
   , handleAny
-  , createPage
+  , guardPath isPage >> createPage
   ]
 
 unpackReaderT:: (Monad m)
