@@ -88,6 +88,8 @@ Summary of main changes:
   You get a nice informative message if you try to delete a nonexistent
   page or file.
 
+* Page names containing "..", "?", or "*" are disallowed.
+
 * The "Permanent link" link has been removed. It relied on the sha1
   parameter always being set, but we've changed that for performance
   reasons.
