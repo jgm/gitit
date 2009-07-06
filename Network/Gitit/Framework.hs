@@ -55,7 +55,7 @@ import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
-import Data.List (intercalate, isSuffixOf, (\\))
+import Data.List (intercalate, isSuffixOf, isInfixOf, (\\))
 import System.FilePath ((<.>), takeExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
@@ -175,7 +175,9 @@ uriPath :: String -> String
 uriPath = unwords . words . drop 1 . takeWhile (/='?')
 
 isPage :: String -> Bool
-isPage _ = True
+isPage s = all (`notElem` "*?") s && not (".." `isInfixOf` s)
+-- for now, we disallow * and ? in page names, because git filestore
+-- does not deal with them properly, and darcs filestore disallows them.
 
 isPageFile :: FilePath -> Bool
 isPageFile f = takeExtension f == ".page"
