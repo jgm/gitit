@@ -131,7 +131,9 @@ getPage = do
   path' <- getPath
   if null path'
      then return (frontPage conf)
-     else return path'
+     else if isPage path'
+             then return path'
+             else mzero  -- fail if not valid page name
 
 getReferer :: ServerMonad m => m String
 getReferer = do
