@@ -39,11 +39,12 @@ import Text.Pandoc.Shared (HTMLMathMethod(..))
 import System.Log.Logger (logM, Priority(..))
 
 -- | Initialize Gitit State.
-initializeGititState :: FilePath
-                     -> [FilePath]
-                     -> IO ()
-initializeGititState userFile' pluginModules' = do
+initializeGititState :: Config -> IO ()
+initializeGititState conf = do
+  let userFile' = userFile conf
+      pluginModules' = pluginModules conf
   plugins' <- loadPlugins pluginModules'
+
   userFileExists <- doesFileExist userFile'
   users' <- if userFileExists
                then liftM (M.fromList . read) $ readFile userFile'

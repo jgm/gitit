@@ -64,7 +64,7 @@ main = do
   let conf' = conf{jsMath = jsMathExists, logLevel = level}  
 
   -- initialize state
-  initializeGititState (userFile conf') (pluginModules conf')
+  initializeGititState conf'
 
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf'
