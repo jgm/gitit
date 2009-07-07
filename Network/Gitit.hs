@@ -29,7 +29,7 @@ The following is a minimal standalone wiki program:
 >   createTemplateIfMissing conf
 >   createRepoIfMissing conf
 >   initializeGititState (userFile conf) (pluginModules conf)
->   simpleHTTP nullConf $ wikiHandler conf
+>   simpleHTTP nullConf{port = 5001} $ wikiHandler conf
 
 Here is a more complex example, which serves different wikis
 under different paths, and uses a custom authentication scheme:
@@ -71,8 +71,8 @@ under different paths, and uses a custom authentication scheme:
 >     createTemplateIfMissing conf''
 >     createRepoIfMissing conf''
 >   initializeGititState (userFile conf') (pluginModules conf')
->   simpleHTTP nullConf $ (nullDir >> indexPage) `mplus`
->                         msum (map (handlerFor conf') wikis)
+>   simpleHTTP nullConf{port = 5001} $
+>     (nullDir >> indexPage) `mplus` msum (map (handlerFor conf') wikis)
 
 
 -}
