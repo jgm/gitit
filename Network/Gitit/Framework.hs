@@ -207,8 +207,8 @@ isPreview x = "/___preview" `isSuffixOf` x
 
 urlForPage :: String -> String -> String
 urlForPage base' page = base' ++ "/" ++
-  encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/:")) page
--- / and : are left unescaped so that browsers recognize relative URLs and talk pages correctly
+  encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/@")) page
+-- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
