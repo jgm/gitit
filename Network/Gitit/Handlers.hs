@@ -563,19 +563,20 @@ confirmDelete = withData $ \(params :: Params) -> do
 deletePage :: Handler
 deletePage = withData $ \(params :: Params) -> do
   page <- getPage
+  let file = pFileToDelete params
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete page."
+                        Nothing -> fail "User must be logged in to delete."
                         Just u  -> return (uUsername u, uEmail u)
   let author = Author user email
   let descrip = "Deleted using web interface."
   base' <- getWikiBase
-  if pConfirm params
+  if pConfirm params && (file == page || file == page <.> "page") 
      then do
        fs <- getFileStore
-       liftIO $ delete fs (pFileToDelete params) author descrip
-       seeOther base' $ toResponse $ p << "File deleted"
-     else seeOther (urlForPage base' page) $ toResponse $ p << "Page not deleted"
+       liftIO $ delete fs file author descrip
+       seeOther (base' ++ "/") $ toResponse $ p << "File deleted"
+     else seeOther (urlForPage base' page) $ toResponse $ p << "Not deleted"
 
 updatePage :: Handler
 updatePage = withData $ \(params :: Params) -> do
