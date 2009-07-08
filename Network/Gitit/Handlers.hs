@@ -143,7 +143,7 @@ createPage = withData $ \(params :: Params) -> do
   base' <- getWikiBase
   case page of
        ('_':_) -> mzero   -- don't allow creation of _index, etc.
-       _       -> formattedPage (defaultPageLayout { pgTabs = [] }) page params $
+       _       -> formattedPage (defaultPageLayout { pgTabs = [], pgTitle = "Create " ++ page ++ "?" }) page params $
                     p << [ stringToHtml ("There is no page '" ++ page ++
                               "'.  You may create the page by "),
                             anchor ! [href $ urlForPage base' page ++ "?edit"] <<
@@ -554,7 +554,7 @@ confirmDelete = withData $ \(params :: Params) -> do
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  formattedPage defaultPageLayout page params $
+  formattedPage defaultPageLayout{ pgTitle = "Delete " ++ page ++ "?" } page params $
     if null fileToDelete
        then ulist ! [theclass "messages"] << li <<
             "There is no file or page by that name."
