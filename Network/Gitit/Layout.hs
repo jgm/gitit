@@ -34,6 +34,7 @@ import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
 import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing, isJust, fromJust)
 import Control.Exception (throwIO, catch)
 import Control.Monad.Trans (liftIO, MonadIO)
@@ -88,42 +89,34 @@ formattedPage layout page params htmlContents = do
                           map (li <<) messages
   cfg <- getConfig
   templ <- getTemplate
+  let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
+  let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
-                   T.setAttribute "pagetitle" pageTitle' .
+                   setStrAttr "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
-                   T.setAttribute "pagename" page .
+                   setStrAttr "pagename" page .
                    (case user of
-                         Just u     -> T.setAttribute "user" (uUsername u)
+                         Just u     -> setStrAttr "user" (uUsername u)
                          Nothing    -> id) .
                    (case authenticationMethod cfg of
                          FormAuth        -> T.setAttribute "showLogin" "true"
                          HTTPAuth        -> id
                          CustomAuth _    -> id) .
-                   (if isPage page
-                       then T.setAttribute "ispage" "true"
-                       else id) .
-                   (if pgShowPageTools layout
-                       then T.setAttribute "pagetools" "true"
-                       else id) .
-                   (if pgShowSiteNav layout
-                       then T.setAttribute "sitenav" "true"
-                       else id) .
+                   setBoolAttr "ispage" (isPage page) .
+                   setBoolAttr "pagetools" (pgShowPageTools layout) .
+                   setBoolAttr "sitenav" (pgShowSiteNav layout) .
                    (if pgShowMarkupHelp layout
                        then T.setAttribute "markuphelp" (markupHelp cfg)
                        else id) .
-                   (if pPrintable params
-                       then T.setAttribute "printable" "true"
-                       else id) .
-                   (if isJust rev
-                       then T.setAttribute "nothead" "true"
-                       else id) .
+                   setBoolAttr "printable" (pPrintable params) .
+                   setBoolAttr "nothead" (isJust rev) .
                    (if isJust rev
                        then T.setAttribute "revision" (fromJust rev)
                        else id) .
                    (if null sha1
                        then id
-                       else T.setAttribute "sha1" sha1) .
+                       else setStrAttr "sha1" sha1) .
                    T.setAttribute "searchbox"
                        (renderHtmlFragment (searchbox +++ gobox)) .
                    T.setAttribute "exportbox"
