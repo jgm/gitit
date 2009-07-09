@@ -24,7 +24,6 @@ module Network.Gitit.Layout ( defaultPageLayout
                     , formattedPage
                     )
 where
-import Data.FileStore
 import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.State
@@ -36,8 +35,6 @@ import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing, isJust, fromJust)
-import Control.Exception (throwIO, catch)
-import Control.Monad.Trans (liftIO, MonadIO)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -54,14 +51,6 @@ defaultPageLayout = PageLayout
 formattedPage :: PageLayout -> String -> Params -> Html -> GititServerPart Response
 formattedPage layout page params htmlContents = do
   let rev = pRevision params
-  fs <- getFileStore
-  sha1 <- case (pgSelectedTab layout, rev) of
-            (EditTab,Nothing) -> liftIO $ catch (latest fs $ pathForPage page)
-                                                (\e -> if e == NotFound
-                                                       then return ""
-                                                       else throwIO e)
-            (EditTab,Just r)  -> return r
-            _ -> return ""
   user <- getLoggedInUser
   base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
@@ -114,9 +103,6 @@ formattedPage layout page params htmlContents = do
                    (if isJust rev
                        then T.setAttribute "revision" (fromJust rev)
                        else id) .
-                   (if null sha1
-                       then id
-                       else setStrAttr "sha1" sha1) .
                    T.setAttribute "searchbox"
                        (renderHtmlFragment (searchbox +++ gobox)) .
                    T.setAttribute "exportbox"
