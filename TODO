@@ -9,6 +9,8 @@ _ config should include functions for loginUserForm and
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
 
+_ stabilize API
+
 _ document HTTP auth setup in README
 _ add "logout" link for HTTP auth?  This could have the server
   return an HTTP 401 (unauthorized), which should force the browser
@@ -34,3 +36,11 @@ _ improve support for categories:
   https://secure.wikimedia.org/wikipedia/en/wiki/Wikipedia:Categorization
   Categories can form a tree structure.
   Articles can be in multiple categories.
+
+_ test on windows.  consider windows binary package?
+
+_ web page with simple instructions on installing gitit with
+  cabal install and Haskell platform.
+
+_ release!
+
