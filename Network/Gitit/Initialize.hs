@@ -65,7 +65,7 @@ createTemplateIfMissing conf' = do
       getDirectoryContents templatePath
     forM_ templs $ \t -> do
       copyFile (templatePath </> t) (templatesDir conf' </> t)
-      logM "gitit" WARNING $ "Created default " ++ (templatesDir conf' </> t)
+      logM "gitit" WARNING $ "Created " ++ (templatesDir conf' </> t)
 
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
@@ -73,7 +73,9 @@ createRepoIfMissing conf = do
   let fs = filestoreFromConfig conf
   repoExists <- try (initialize fs) >>= \res ->
     case res of
-         Right _               -> return False
+         Right _               -> do
+           logM "gitit" WARNING $ "Created repository in " ++ (repositoryPath conf)
+           return False
          Left RepositoryExists -> return True
          Left e                -> throwIO e >> return False
   let pt = defaultPageType conf
@@ -102,8 +104,9 @@ createRepoIfMissing conf = do
     let helpcontents = helpcontentsInitial ++ "\n\n" ++ helpcontentsMarkup
     -- add front page and help page
     create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
+    logM "gitit" WARNING $ "Added " ++ (frontPage conf <.> "page") ++ " to repository"
     create fs "Help.page" (Author "Gitit" "") "Default help page" helpcontents
-    logM "gitit" WARNING $ "Created repository"
+    logM "gitit" WARNING $ "Added " ++ "Help.page" ++ " to repository"
 
 -- | Create static directory unless it exists.
 createStaticIfMissing :: Config -> IO ()
@@ -116,23 +119,29 @@ createStaticIfMissing conf = do
     createDirectoryIfMissing True cssdir
     cssDataDir <- getDataFileName "css"
     cssFiles <- liftM (filter (\f -> takeExtension f == ".css")) $ getDirectoryContents cssDataDir
-    forM_ cssFiles $ \f -> copyFile (cssDataDir </> f) (cssdir </> f)
+    forM_ cssFiles $ \f -> do
+      copyFile (cssDataDir </> f) (cssdir </> f)
+      logM "gitit" WARNING $ "Created " ++ (cssdir </> f)
 
     let icondir = staticdir </> "img" </> "icons" 
     createDirectoryIfMissing True icondir
     iconDataDir <- getDataFileName ("img" </> "icons")
     iconFiles <- liftM (filter (\f -> takeExtension f == ".png")) $ getDirectoryContents iconDataDir
-    forM_ iconFiles $ \f -> copyFile (iconDataDir </> f) (icondir </> f)
+    forM_ iconFiles $ \f -> do
+      copyFile (iconDataDir </> f) (icondir </> f)
+      logM "gitit" WARNING $ "Created " ++ (icondir </> f)
 
     logopath <- getDataFileName $ "img" </> "gitit-dog.png"
     copyFile logopath $ staticdir </> "img" </> "logo.png"
+    logM "gitit" WARNING $ "Created " ++ (staticdir </> "img" </> "logo.png")
 
     let jsdir = staticdir </> "js"
     createDirectoryIfMissing True jsdir
     let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
                        "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     jsDataDir <- getDataFileName "js"
-    forM_ javascripts $ \f -> copyFile (jsDataDir </> f) (jsdir </> f)
+    forM_ javascripts $ \f -> do
+      copyFile (jsDataDir </> f) (jsdir </> f)
+      logM "gitit" WARNING $ "Created " ++ (jsdir </> f)
 
-    logM "gitit" WARNING $ "Created " ++ staticdir ++ " directory"
 
