@@ -1,44 +1,31 @@
+_ improve use of string templates:  different components of pages should
+  have their own templates.
+  see http://www.happstutorial.com/tutorial/stringtemplate-basics
+  use /templates directory instead of template.html
+
+_ config should include functions for loginUserForm and
+  a function to render the page.  templates stuff optional.
+
+_ consider making the library independent of datafiles, moving
+  all of that to a separate gitit executable package?
+
 _ document HTTP auth setup in README
 _ add "logout" link for HTTP auth?  This could have the server
   return an HTTP 401 (unauthorized), which should force the browser
   to ask for credentials...
-_ show mrkup default format when editing
-  + links to instructions (Issue #51)
-_ document plugins in README (see old pandoc plugins docs)
 
 _ cleanup code for 80 cols; hlint
 
-_ clean up architecture to take advantage of the new happstack
-  architecture.
-  get rid of Params; instead, use getter functions
-  can also get rid of page parameter
-  make everything a ServerPart monad
-  take better advantage of happstack routing?
-
-_ or, rewrite to use hack?  (if we can get a happstack backend)
-
-----------
-
 _ paging for long histories, activity lists
-
-_ literate haskell support
-  (By this is meant that the 'literate' part of the file should
-  be interpreted and displayed as Markdown/ReST, and the code
-  would be handled as it is now, inside delimited code blocks like
-  ~~~~{.haskell}
-  need some way of indicating that a file is lhs... perhaps a leading
-  <!-- lhs -->?
 
 _ rss feed for individual page changes & Recent Activity?  
   see the rss library (Text.RSS) on HackageDB.  see gwern's partial patch.
 
-_ add signature? (-- ~~~~)  (pre-update plugin)
-
-_ improve use of string templates:  different components of pages should
-  have their own templates.
-  see http://www.happstutorial.com/tutorial/stringtemplate-basics
-
-- add support for categories:
+_ improve support for categories:
+  _ categories in a tree structure
+  _ editable category pages
+  _ improve look of category box at bottom of page?
+  see greenrd's email, also:
   an example of a category:
   http://haskell.org/haskellwiki/Category:XMonad
   Note the subcategories as well. For general technical information 
