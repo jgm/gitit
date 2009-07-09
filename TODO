@@ -3,6 +3,15 @@ _ improve use of string templates:  different components of pages should
   see http://www.happstutorial.com/tutorial/stringtemplate-basics
   use /templates directory instead of template.html
 
+  _ NOTE: the current setup actually does recompile the templates
+    on every page load, unlike the old.  Revert to old method??
+    i.e. put the actual compiled template in individual wiki configs.
+  _ add _updateTemplate handler (only in gitit.hs?) to recompile template
+  _ see templates/ for factored out templates.
+  _ see Network/Gitit.hs.  Need to change config to point to a
+    template dir rather than a template file.  Change initialize
+    to initialize this.  Change README.
+
 _ config should include functions for loginUserForm and
   a function to render the page.  templates stuff optional.
 
