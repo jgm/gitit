@@ -131,7 +131,7 @@ extractConfig cp = do
       cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
       cfAuthenticationMethod <- get cp "DEFAULT" "authentication-method"
       cfUserFile <- get cp "DEFAULT" "user-file"
-      cfTemplateFile <- get cp "DEFAULT" "template-file"
+      cfTemplatesDir <- get cp "DEFAULT" "templates-dir"
       cfLogFile <- get cp "DEFAULT" "log-file"
       cfLogLevel <- get cp "DEFAULT" "log-level"
       cfStaticDir <- get cp "DEFAULT" "static-dir"
@@ -179,7 +179,7 @@ extractConfig cp = do
                                       _      -> error
                                                  "Invalid authentication-method.\nLegal values are: form, http"
         , userFile             = cfUserFile
-        , templateFile         = cfTemplateFile
+        , templatesDir         = cfTemplatesDir
         , logFile              = cfLogFile
         , logLevel             = let levelString = map toUpper cfLogLevel
                                      levels = ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR",

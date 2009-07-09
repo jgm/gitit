@@ -59,7 +59,7 @@ data Config = Config {
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
   authenticationMethod :: AuthenticationMethod, -- use forms or HTTP digest?
   userFile             :: FilePath,    -- path of users database
-  templateFile         :: FilePath,    -- page template
+  templatesDir         :: FilePath,    -- directory containing page templates
   logFile              :: FilePath,    -- path of server log file
   logLevel             :: Priority,    -- severity filter for log messages
                                        -- (DEBUG, INFO, NOTICE, WARNING, ERROR,

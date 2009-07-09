@@ -54,14 +54,18 @@ initializeGititState conf = do
                            , cache     = emptyCache
                            , plugins   = plugins' }
 
--- | Create template file if it doesn't exist.
+-- | Create templates dir if it doesn't exist.
 createTemplateIfMissing :: Config -> IO ()
 createTemplateIfMissing conf' = do
-  templateExists <- doesFileExist (templateFile conf')
+  templateExists <- doesDirectoryExist (templatesDir conf')
   unless templateExists $ do
-    templatePath <- getDataFileName $ "data" </> "template.html"
-    copyFile templatePath (templateFile conf')
-    logM "gitit" WARNING $ "Created default " ++ templateFile conf'
+    createDirectoryIfMissing True (templatesDir conf')
+    templatePath <- getDataFileName $ "data" </> "templates"
+    templs <- liftM (filter (`notElem` [".",".."])) $
+      getDirectoryContents templatePath
+    forM_ templs $ \t -> do
+      copyFile (templatePath </> t) (templatesDir conf' </> t)
+      logM "gitit" WARNING $ "Created default " ++ (templatesDir conf' </> t)
 
 -- | Create page repository unless it exists.
 createRepoIfMissing :: Config -> IO ()
