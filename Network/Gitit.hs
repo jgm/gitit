@@ -103,8 +103,8 @@ import Control.Monad.Reader
 import System.Directory
 import System.FilePath
 import Prelude hiding (readFile)
-import System.IO.UTF8
 import Paths_gitit
+import Data.Maybe (fromJust)
 import qualified Text.StringTemplate as T
 import Codec.Binary.UTF8.String (decodeString)
 
@@ -122,12 +122,12 @@ wikiHandler conf = do
                      FormAuth -> authHandler : wikiHandlers
                      _        -> wikiHandlers
   let fs = filestoreFromConfig conf
-  templateText <- liftIO $ do
-    templateExists <- doesFileExist $ templateFile conf
+  templs <- liftIO $ do
+    templateExists <- doesDirectoryExist $ templatesDir conf
     if templateExists
-       then readFile $ templateFile conf
-       else getDataFileName ("data" </> "template.html") >>= readFile
-  let templ = T.newSTMP templateText
+       then T.directoryGroup $ templatesDir conf
+       else getDataFileName ("data" </> "templates") >>= T.directoryGroup
+  let templ = fromJust $ T.getStringTemplate "page" templs
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs, wikiTemplate = templ }
   if compressResponses conf
      then compressedResponseFilter

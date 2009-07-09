@@ -106,9 +106,9 @@ supports this. So you should make sure that you are using a UTF-8 locale
 when running gitit. (To check this, type `locale`.)
 
 Switch to the directory where you want to run gitit. This should be a
-directory where you have write access, since two directories, `static`
-and `wikidata`, and two files, `gitit-users` and `template.html`, will
-be created here. To start gitit, just type:
+directory where you have write access, since three directories, `static`,
+`templates`, and `wikidata`, and two files, `gitit-users` and `gitit.log`,
+will be created here. To start gitit, just type:
 
     gitit
 
@@ -117,7 +117,7 @@ If all goes well, gitit will do the following:
  1.  Create a git repository, `wikidata`, and add a default front page.
  2.  Create a `static` directory containing the scripts, images,
      and stylesheets used by gitit.
- 3.  Create a `template.html` file containing an HStringTemplate template
+ 3.  Create a `templates` directory containing HStringTemplate templates
      for wiki pages.
  4.  Start a web server on port 5001.
 
@@ -231,9 +231,9 @@ Changing the theme
 ------------------
 
 To change the look of the wiki, you can modify `screen.css` in
-`static/css`.  But a better approach is to add a line to `template.html`
-that imports your own custom stylesheet.  This line should go
-after the line that links to `/css/screen.css`:
+`static/css`.  But a better approach is to add a line to
+`templates/page.st` that imports your own custom stylesheet. This line
+should go after the line that links to `/css/screen.css`:
 
     <link href="/css/my-screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
 
@@ -247,9 +247,10 @@ To change the look of printed pages, modify `print.css`.
 The logo picture can be changed by copying a new PNG file to
 `static/img/logo.png`.
 
-For more radical changes, you can modify `template.html`.
-Note that interpolated variables are surrounded by `$`s, so literal
-`$` must be backslash-escaped.
+For more radical changes, you can modify any of the templates in
+`templates`. The `page.st` template is the master template; it includes
+the others.  Interpolated variables are surrounded by `$`s, so
+`literal $` must be backslash-escaped.
 
 Adding support for math
 -----------------------
