@@ -143,26 +143,20 @@ sendReregisterEmail user = do
   unless (exitCode == ExitSuccess) $
     liftIO $ logM "gitit" WARNING $ mailcommand ++ " failed. " ++ pErr
 
-resetPassword :: Params -> Handler
-resetPassword params = do
+validateReset :: Params -> (User -> Handler) -> Handler
+validateReset params postValidate = do
   users' <- queryAppState users
   let uname = pUsername params
   let user = M.lookup uname users'
   let knownUser = isJust user
   let resetCodeMatches = take 20 (pHashed (uPassword (fromJust user))) ==
                            pResetCode params
-  let errors = if knownUser && resetCodeMatches then [] else
+  let errors = if knownUser && resetCodeMatches then "" else
                   if knownUser
                      then "Your reset code is invalid, sorry"
                      else "User " ++ uname ++ " is not known here"
   if null errors
-     then resetPasswordForm user >>=
-          formattedPage defaultPageLayout{
-                          pgShowPageTools = False,
-                          pgTabs = [],
-                          pgTitle = "Reset your registration info"
-                          }
-                        "_doResetPassword" params
+     then postValidate (fromJust user)
      else registerForm >>=
           formattedPage defaultPageLayout{
                           pgShowPageTools = False,
@@ -171,27 +165,34 @@ resetPassword params = do
                           }
                         "_register" params{ pMessages = [errors] }
 
+resetPassword :: Params -> Handler
+resetPassword params = validateReset params $ \user ->
+  resetPasswordForm (Just user) >>=
+  formattedPage defaultPageLayout{
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgTitle = "Reset your registration info"
+                  }
+                "_doResetPassword" params
+
 doResetPassword :: Params -> Handler
-doResetPassword params = do
-  let uname = pUsername params
-  users' <- queryAppState users
-  let mbUser = M.lookup uname users'
+doResetPassword params = validateReset params $ \user -> do
   result' <- sharedValidation ResetPassword params
   case result' of
     Left errors ->
-      resetPasswordForm mbUser >>=
+      resetPasswordForm (Just user) >>=
           formattedPage defaultPageLayout{
                           pgShowPageTools = False,
                           pgTabs = [],
                           pgTitle = "Reset your registration info"
                           }
                         "_register" params{ pMessages = errors }
-    Right (uname', email, pword) -> do
-       user <- liftIO $ mkUser uname' email pword
-       adjustUser uname' user
+    Right (uname, email, pword) -> do
+       user' <- liftIO $ mkUser uname email pword
+       adjustUser uname user'
        liftIO $ logM "gitit" WARNING $
-            "Successfully reset password and email for " ++ uUsername user
-       loginUser params{ pUsername = uname',
+            "Successfully reset password and email for " ++ uUsername user'
+       loginUser params{ pUsername = uname,
                          pPassword = pword,
                          pEmail = email }
 
