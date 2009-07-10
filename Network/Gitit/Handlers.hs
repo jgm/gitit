@@ -611,16 +611,13 @@ updatePage = withData $ \(params :: Params) -> do
                                                else throwIO e)
        case modifyRes of
             Right () -> seeOther (urlForPage base' page) $ toResponse $ p << "Page updated"
-            Left (MergeInfo mergedWithRev False mergedText) ->
-               withMessages (("Merged with revision " ++ revId mergedWithRev) : pMessages params) $
-                 withInput "editedText" mergedText $
-                   withInput "sha1" (revId mergedWithRev) updatePage
-            Left (MergeInfo mergedWithRev True mergedText) -> do
-               let mergeMsg =
-                     "The page has been edited since you checked it out. " ++
-                     "Changes from revision " ++ revId mergedWithRev ++
-                     " have been merged into your edits below. " ++
-                     "Please resolve conflicts and Save."
+            Left (MergeInfo mergedWithRev conflicts mergedText) -> do
+               let mergeMsg = "The page has been edited since you checked it out. " ++
+                      "Changes from revision " ++ revId mergedWithRev ++
+                      " have been merged into your edits below. " ++
+                      if conflicts
+                         then "Please resolve conflicts and Save."
+                         else "Please review and Save."
                withMessages [mergeMsg] $
                  withInput "editedText" mergedText $
                    withInput "sha1" (revId mergedWithRev) editPage
