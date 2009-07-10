@@ -12,16 +12,13 @@ _ improve use of string templates:  different components of pages should
     template dir rather than a template file.  Change initialize
     to initialize this.  Change README.
 
-_ fix informational message on automatic merge.  (do we really
-  need to use a redirect?  can we change the POST to a GET?)
-
 _ config should include functions for loginUserForm and
   a function to render the page.  templates stuff optional.
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
 
-_ fix 'revert':  when you're viewing a diff, 'revert' should
+x fix 'revert':  when you're viewing a diff, 'revert' should
   revert to the older of the two revisions being compared,
   not the newer (as now).
 

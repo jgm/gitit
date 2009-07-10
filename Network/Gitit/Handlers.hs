@@ -424,8 +424,24 @@ showDiff :: String -> String -> Params -> Handler
 showDiff file page params = do
   let from = pFrom params
   let to = pTo params
+  -- 'to' or 'from' must be given
+  when (from == Nothing && to == Nothing) mzero
   fs <- getFileStore
-  result' <- liftIO $ try $ getDiff fs file from to
+  -- if 'to' is not specified, defaults to current revision
+  -- if 'from' is not specified, defaults to revision immediately before 'to'
+  from' <- case (from, to) of
+              (Just _, _)        -> return from
+              (Nothing, Nothing) -> return from
+              (Nothing, Just t)  -> do 
+                pageHist <- liftIO $ history fs [file]
+                                     (TimeRange Nothing Nothing)
+                let (_, upto) = break (\r -> idsMatch fs (revId r) t)
+                                  pageHist
+                return $ if length upto >= 2
+                            -- immediately preceding revision
+                            then Just $ revId $ upto !! 1
+                            else Nothing
+  result' <- liftIO $ try $ getDiff fs file from' to
   case result' of
        Left NotFound  -> mzero
        Left e         -> liftIO $ throwIO e
@@ -434,37 +450,19 @@ showDiff file page params = do
                                                    pgTabs defaultPageLayout,
                                           pgSelectedTab = DiffTab
                                           }
-                                       page params{ pRevision = to } htmlDiff
+                                       page params{ pRevision = from' }
+                                       htmlDiff
 
 getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
         -> IO Html
 getDiff fs file from to = do
-  from' <- case from of
-              Just x  -> return $ Just x
-              Nothing -> do
-                pageHist <- liftIO $ history fs [file]
-                                     (TimeRange Nothing Nothing)
-                if length pageHist < 2
-                   then return Nothing
-                   else case to of
-                            Nothing -> return Nothing
-                            Just t  -> let (_, upto) = break
-                                             (\r -> idsMatch fs (revId r) t)
-                                             pageHist
-                                       in  return $
-                                           if length upto >= 2
-                                              -- immediately preceding revision
-                                              then Just $ revId $ upto !! 1
-                                              else Nothing
-  rawDiff <- diff fs file from' to
+  rawDiff <- diff fs file from to
   let diffLineToHtml (B, xs) = thespan << unlines xs
       diffLineToHtml (F, xs) = thespan ! [theclass "deleted"] << unlines xs
       diffLineToHtml (S, xs) = thespan ! [theclass "added"]   << unlines xs
   return $ h2 ! [theclass "revision"] <<
-             ("Changes from " ++
-               case from' of
-                    Just r  -> r
-                    Nothing -> "beginning") +++
+             ("Changes from " ++ fromMaybe "beginning" from ++
+              " to " ++ fromMaybe "current" to) +++
            pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
 editPage :: Handler

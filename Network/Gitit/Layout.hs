@@ -127,11 +127,8 @@ exportBox _ _ _ = noHtml
 -- auxiliary functions:
 
 linkForTab :: (Tab -> Html -> Html) -> String -> String -> Maybe String -> Tab -> Html
-linkForTab tabli base' page rev HistoryTab =
-  tabli HistoryTab << anchor ! [href $ urlForPage base' page ++ "?history" ++
-                                       case rev of
-                                            Just r -> "&revision" ++ r
-                                            Nothing -> "" ] << "history"
+linkForTab tabli base' page _ HistoryTab =
+  tabli HistoryTab << anchor ! [href $ urlForPage base' page ++ "?history"] << "history"
 linkForTab tabli _ _ _ DiffTab =
   tabli DiffTab << anchor ! [href ""] << "diff"
 linkForTab tabli base' page rev ViewTab =
