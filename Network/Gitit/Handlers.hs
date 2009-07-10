@@ -224,7 +224,7 @@ uploadFile = withData $ \(params :: Params) -> do
                        pgTabs = [],
                        pgTitle = "Upload successful"}
                      page params contents
-     else withInput "messages" errors uploadForm
+     else withMessages errors uploadForm
 
 goToPage :: Handler
 goToPage = withData $ \(params :: Params) -> do
@@ -594,7 +594,7 @@ updatePage = withData $ \(params :: Params) -> do
   fs <- getFileStore
   base' <- getWikiBase
   if null logMsg
-     then withInput "messages" ["Description cannot be empty."] editPage
+     then withMessages ["Description cannot be empty."] editPage
      else do
        when (length editedText > fromIntegral (maxUploadSize cfg)) $
           error "Page exceeds maximum size."
@@ -610,10 +610,9 @@ updatePage = withData $ \(params :: Params) -> do
                                                then return (Right ())
                                                else throwIO e)
        case modifyRes of
-            Right () -> seeOther (urlForPage base' page) $ toResponse $
-               p << "Page updated"
+            Right () -> seeOther (urlForPage base' page) $ toResponse $ p << "Page updated"
             Left (MergeInfo mergedWithRev False mergedText) ->
-               withInput "messages" (("Merged with revision " ++ revId mergedWithRev) : pMessages params) $
+               withMessages (("Merged with revision " ++ revId mergedWithRev) : pMessages params) $
                  withInput "editedText" mergedText $
                    withInput "sha1" (revId mergedWithRev) updatePage
             Left (MergeInfo mergedWithRev True mergedText) -> do
@@ -622,8 +621,9 @@ updatePage = withData $ \(params :: Params) -> do
                      "Changes from revision " ++ revId mergedWithRev ++
                      " have been merged into your edits below. " ++
                      "Please resolve conflicts and Save."
-               withInput "messages" [mergeMsg] $
-                 withInput "editedText" mergedText editPage
+               withMessages [mergeMsg] $
+                 withInput "editedText" mergedText $
+                   withInput "sha1" (revId mergedWithRev) editPage
 
 indexPage :: Handler
 indexPage = withData $ \(params :: Params) -> do

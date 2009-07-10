@@ -41,6 +41,7 @@ module Network.Gitit.Framework ( getLoggedInUser
                                , guardPath
                                , guardIndex
                                , guardBareBase
+                               , withMessages
                                , withInput
                                , filestoreFromConfig
                                )
@@ -109,7 +110,7 @@ unlessNoEdit responder fallback = withData $ \(params :: Params) -> do
   cfg <- getConfig
   page <- getPage
   if page `elem` noEdit cfg
-     then withInput "messages" ("Page is locked." : pMessages params) fallback
+     then withMessages ("Page is locked." : pMessages params) fallback
      else responder
 
 unlessNoDelete :: Handler
@@ -119,7 +120,7 @@ unlessNoDelete responder fallback = withData $ \(params :: Params) -> do
   cfg <- getConfig
   page <- getPage
   if page `elem` noDelete cfg
-     then withInput "messages" ("Page cannot be deleted." : pMessages params) fallback
+     then withMessages ("Page cannot be deleted." : pMessages params) fallback
      else responder
 
 getPath :: ServerMonad m => m String
@@ -278,11 +279,14 @@ guardBareBase = do
      then return ()
      else mzero
 
-withInput :: Show a => String -> a -> Handler -> Handler
+withMessages :: [String] -> Handler -> Handler
+withMessages msgs = withInput "messages" (show msgs)
+
+withInput :: String -> String -> Handler -> Handler
 withInput name val handler = do
   req <- askRq
   let inps = filter (\(n,_) -> n /= name) $ rqInputs req
-  let newInp = (name, Input { inputValue = fromString $ show val
+  let newInp = (name, Input { inputValue = fromString val
                             , inputFilename = Nothing
                             , inputContentType = ContentType {
                                     ctType = "text"
