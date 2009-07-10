@@ -433,7 +433,8 @@ A number of people have contributed patches:
   the apache proxy instructions.
 - Anton van Straaten made the process of page generation
   more modular by adding Gitit.ContentTransformer.
-- Robin Green helped improve the plugin API and interface.
+- Robin Green helped improve the plugin API and interface, and
+  fixed a security problem with the reset password code.
 - Thomas Hartman helped improve the index page, making directory
   browsing persistent.
 - Justin Bogner improved the appearance of the preview button.
