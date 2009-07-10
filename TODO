@@ -12,6 +12,9 @@ _ improve use of string templates:  different components of pages should
     template dir rather than a template file.  Change initialize
     to initialize this.  Change README.
 
+_ fix informational message on automatic merge.  (do we really
+  need to use a redirect?  can we change the POST to a GET?)
+
 _ config should include functions for loginUserForm and
   a function to render the page.  templates stuff optional.
 
