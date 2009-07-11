@@ -279,10 +279,10 @@ guardBareBase = do
      then return ()
      else mzero
 
-withMessages :: [String] -> Handler -> Handler
+withMessages :: ServerMonad m => [String] -> m a -> m a
 withMessages msgs = withInput "messages" (show msgs)
 
-withInput :: String -> String -> Handler -> Handler
+withInput :: ServerMonad m => String -> String -> m a -> m a
 withInput name val handler = do
   req <- askRq
   let inps = filter (\(n,_) -> n /= name) $ rqInputs req
