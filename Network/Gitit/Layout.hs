@@ -83,10 +83,6 @@ defaultRenderPage templ layout htmlContents = do
   let gobox     = gui (base' ++ "/_go") ! [identifier "goform"] <<
                          [ textfield "gotopage"
                          , submit "go" "Go" ]
-  let htmlMessages = case pgMessages layout of
-                          []      -> noHtml
-                          xs      -> ulist ! [theclass "messages"] <<
-                                       map (li <<) xs
   cfg <- getConfig
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
@@ -118,7 +114,7 @@ defaultRenderPage templ layout htmlContents = do
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
-                   T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
+                   T.setAttribute "messages" (pgMessages layout) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse filledTemp
