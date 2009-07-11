@@ -37,13 +37,13 @@ import Data.Ord (comparing)
 import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
-import qualified Text.StringTemplate as T
 
 appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , users = undefined
                                                  , cache = undefined
-                                                 , template = undefined
+                                                 , templatesPath = undefined
+                                                 , renderPage = undefined
                                                  , plugins = undefined }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
@@ -208,9 +208,6 @@ delSession key = updateAppState $ \s ->
 
 getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
-
-getTemplate :: GititServerPart (T.StringTemplate String)
-getTemplate = queryAppState (compiledTemplate . template)
 
 getConfig :: GititServerPart Config
 getConfig = liftM wikiConfig ask

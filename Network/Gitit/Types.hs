@@ -27,9 +27,9 @@ import System.Time (ClockTime)
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
 import Control.Monad (liftM)
-import qualified Text.StringTemplate as T
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
+import Text.XHtml (Html)
 import qualified Data.ByteString.Lazy.UTF8 as L (ByteString)
 import qualified Data.ByteString.Lazy as L (empty)
 import qualified Data.ByteString.UTF8 as B (ByteString)
@@ -40,7 +40,6 @@ import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
-import qualified Text.StringTemplate as T
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
@@ -121,15 +120,12 @@ data User = User {
   uEmail    :: String
 } deriving (Show,Read)
 
-data Template = Template {
-        compiledTemplate   :: T.StringTemplate String
-      , templatesDirectory :: FilePath }
-
 data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
   cache          :: Cache,
-  template       :: Template,
+  templatesPath  :: FilePath,
+  renderPage     :: PageLayout -> Html -> Handler,
   plugins        :: [Plugin]
 }
 
