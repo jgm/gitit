@@ -58,6 +58,7 @@ formattedPage layout htmlContents = do
   renderer <- queryAppState renderPage
   renderer layout htmlContents
 
+-- | Given a compiled string template, returns a page renderer.
 defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
 -- NOTE: the following are used from params:  pRevision, pPrintable, pMessages

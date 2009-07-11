@@ -62,12 +62,14 @@ initializeGititState conf = do
                            , renderPage    = defaultRenderPage templ
                            , plugins       = plugins' }
 
+-- | Recompile the page template.
 recompilePageTemplate :: IO ()
 recompilePageTemplate = do
   tempsDir <- queryAppState templatesPath
   ct <- compilePageTemplate tempsDir
   updateAppState $ \st -> st{renderPage = defaultRenderPage ct}
 
+-- | Compile a master page template named @page.st@ in the directory specified.
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
 compilePageTemplate tempsDir = do
   templateExists <- doesDirectoryExist tempsDir
@@ -76,8 +78,9 @@ compilePageTemplate tempsDir = do
                else getDataFileName ("data" </> "templates") >>= T.directoryGroup
   case T.getStringTemplate "page" templs of
         Just t    -> return t
-        Nothing   -> error "Could not get string template"-- | Create templates dir if it doesn't exist.
-
+        Nothing   -> error "Could not get string template"
+ 
+-- | Create templates dir if it doesn't exist.
 createTemplateIfMissing :: Config -> IO ()
 createTemplateIfMissing conf' = do
   templateExists <- doesDirectoryExist (templatesDir conf')
