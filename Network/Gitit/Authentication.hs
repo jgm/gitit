@@ -53,11 +53,11 @@ registerUser params = do
   case result' of
     Left errors -> registerForm >>=
           formattedPage defaultPageLayout{
+                          pgMessages = errors,
                           pgShowPageTools = False,
                           pgTabs = [],
                           pgTitle = "Register for an account"
                           }
-                        "_register" (params { pMessages = errors })
     Right (uname, email, pword) -> do
        user <- liftIO $ mkUser uname email pword
        addUser uname user
@@ -66,7 +66,7 @@ registerUser params = do
                          pEmail = email }
 
 resetPasswordRequestForm :: Params -> Handler
-resetPasswordRequestForm params = do
+resetPasswordRequestForm _ = do
   let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
               [ label << "Username: "
               , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
@@ -79,7 +79,7 @@ resetPasswordRequestForm params = do
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgTitle = "Reset your password" }
-                "_resetPassword" params contents
+                contents
 
 resetPasswordRequest :: Params -> Handler
 resetPasswordRequest params = do
@@ -106,14 +106,14 @@ resetPasswordRequest params = do
                       pgTabs = [],
                       pgTitle = "Resetting your password"
                       }
-                    "_resetPassword"  params response
+                    response
     else registerForm >>=
          formattedPage defaultPageLayout{
+                         pgMessages = errors, 
                          pgShowPageTools = False,
                          pgTabs = [],
                          pgTitle = "Register for an account"
                          }
-                       "_register" params{ pMessages = errors }
 
 resetLink :: String -> User -> String
 resetLink base' user =
@@ -151,19 +151,19 @@ validateReset params postValidate = do
   let knownUser = isJust user
   let resetCodeMatches = take 20 (pHashed (uPassword (fromJust user))) ==
                            pResetCode params
-  let errors = if knownUser && resetCodeMatches then "" else
-                  if knownUser
-                     then "Your reset code is invalid, sorry"
-                     else "User " ++ uname ++ " is not known here"
+  let errors = case (knownUser, resetCodeMatches) of
+                     (True, True)   -> []
+                     (True, False)  -> ["Your reset code is invalid"]
+                     (False, _)     -> ["User " ++ uname ++ " is not known"] 
   if null errors
      then postValidate (fromJust user)
      else registerForm >>=
           formattedPage defaultPageLayout{
+                          pgMessages = errors,
                           pgShowPageTools = False,
                           pgTabs = [],
                           pgTitle = "Register for an account"
                           }
-                        "_register" params{ pMessages = [errors] }
 
 resetPassword :: Params -> Handler
 resetPassword params = validateReset params $ \user ->
@@ -173,7 +173,6 @@ resetPassword params = validateReset params $ \user ->
                   pgTabs = [],
                   pgTitle = "Reset your registration info"
                   }
-                "_doResetPassword" params
 
 doResetPassword :: Params -> Handler
 doResetPassword params = validateReset params $ \user -> do
@@ -182,11 +181,11 @@ doResetPassword params = validateReset params $ \user -> do
     Left errors ->
       resetPasswordForm (Just user) >>=
           formattedPage defaultPageLayout{
+                          pgMessages = errors,
                           pgShowPageTools = False,
                           pgTabs = [],
                           pgTitle = "Reset your registration info"
                           }
-                        "_register" params{ pMessages = errors }
     Right (uname, email, pword) -> do
        user' <- liftIO $ mkUser uname email pword
        adjustUser uname user'
@@ -349,13 +348,12 @@ loginUserForm = withData $ \params -> do
        CustomAuth _ -> error "You must be logged in through custom authentication."
 
 loginUserForm' :: Params -> Handler
-loginUserForm' params =
+loginUserForm' _ =
   loginForm >>= formattedPage defaultPageLayout{
                                 pgShowPageTools = False,
                                 pgTabs = [],
                                 pgTitle = "Login"
                                 }
-                              "" params
 
 loginUser :: Params -> Handler
 loginUser params = do
@@ -401,5 +399,4 @@ registerUserForm params = do
                     pgTabs = [],
                     pgTitle = "Register for an account"
                     }
-                  "_register" params
 

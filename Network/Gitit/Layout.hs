@@ -52,13 +52,14 @@ defaultPageLayout = PageLayout
   }
 
 -- | Returns formatted page
-formattedPage :: PageLayout -> String -> Params -> Html -> GititServerPart Response
-formattedPage layout page params htmlContents = do
+formattedPage :: PageLayout -> Html -> GititServerPart Response
+formattedPage layout htmlContents = do
 
 -- NOTE: the following are used from params:  pRevision, pPrintable, pMessages
 -- make these part of PageLayout? and why not page too?
 
-  let rev = pRevision params
+  let rev  = pgRevision layout
+  let page = pgPageName layout
   user <- getLoggedInUser
   base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
@@ -79,11 +80,10 @@ formattedPage layout page params htmlContents = do
   let gobox     = gui (base' ++ "/_go") ! [identifier "goform"] <<
                          [ textfield "gotopage"
                          , submit "go" "Go" ]
-  let messages = pMessages params
-  let htmlMessages = if null messages
-                        then noHtml
-                        else ulist ! [theclass "messages"] <<
-                          map (li <<) messages
+  let htmlMessages = case pgMessages layout of
+                          []      -> noHtml
+                          xs      -> ulist ! [theclass "messages"] <<
+                                       map (li <<) xs
   cfg <- getConfig
   templ <- getTemplate
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
@@ -106,7 +106,7 @@ formattedPage layout page params htmlContents = do
                    (if pgShowMarkupHelp layout
                        then T.setAttribute "markuphelp" (markupHelp cfg)
                        else id) .
-                   setBoolAttr "printable" (pPrintable params) .
+                   setBoolAttr "printable" (pgPrintable layout) .
                    setBoolAttr "nothead" (isJust rev) .
                    (if isJust rev
                        then T.setAttribute "revision" (fromJust rev)
@@ -114,22 +114,21 @@ formattedPage layout page params htmlContents = do
                    T.setAttribute "searchbox"
                        (renderHtmlFragment (searchbox +++ gobox)) .
                    T.setAttribute "exportbox"
-                       (renderHtmlFragment $  exportBox base' page params) .
+                       (renderHtmlFragment $  exportBox base' page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (renderHtmlFragment htmlMessages) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse filledTemp
 
-exportBox :: String -> String -> Params -> Html
-exportBox base' page params | not (isSourceCode page) =
-  let rev = pRevision params
-  in  gui (urlForPage base' page) ! [identifier "exportbox"] <<
-        ([ textfield "revision" ! [thestyle "display: none;",
-             value (fromJust rev)] | isJust rev ] ++
-         [ select ! [name "format"] <<
-             map ((\f -> option ! [value f] << f) . fst) exportFormats
-         , submit "export" "Export" ])
+exportBox :: String -> String -> Maybe String -> Html
+exportBox base' page rev | not (isSourceCode page) =
+  gui (urlForPage base' page) ! [identifier "exportbox"] <<
+    ([ textfield "revision" ! [thestyle "display: none;",
+         value (fromJust rev)] | isJust rev ] ++
+     [ select ! [name "format"] <<
+         map ((\f -> option ! [value f] << f) . fst) exportFormats
+     , submit "export" "Export" ])
 exportBox _ _ _ = noHtml
 
 -- auxiliary functions:
