@@ -144,8 +144,7 @@ type PluginM = ReaderT (Config, Maybe User) (StateT Context IO)
 runPluginM :: PluginM a -> Config -> Maybe User -> Context -> IO (a, Context)
 runPluginM plugin conf user = runStateT (runReaderT plugin (conf, user))
 
-data Context = Context { ctxPageName        :: String
-                       , ctxFile            :: String
+data Context = Context { ctxFile            :: String
                        , ctxLayout          :: PageLayout
                        , ctxParams          :: Params
                        , ctxCacheable       :: Bool

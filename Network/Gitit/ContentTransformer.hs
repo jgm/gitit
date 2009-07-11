@@ -67,8 +67,8 @@ module Network.Gitit.ContentTransformer
   , addMathSupport
   , addScripts
   -- ContentTransformer context API
-  , getPageName
   , getFileName
+  , getPageName
   , getLayout
   , getParams
   , getCacheable
@@ -110,9 +110,13 @@ runPageTransformer :: ToMessage a
 runPageTransformer xform = withData $ \params -> do
   page <- getPage
   cfg <- getConfig
-  evalStateT xform  Context{ ctxPageName = page
-                           , ctxFile = pathForPage page
-                           , ctxLayout = defaultPageLayout{ pgTitle = page }
+  evalStateT xform  Context{ ctxFile = pathForPage page
+                           , ctxLayout = defaultPageLayout{
+                                             pgPageName = page
+                                           , pgTitle = page
+                                           , pgPrintable = pPrintable params
+                                           , pgMessages = pMessages params
+                                           , pgRevision = pRevision params }
                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
@@ -125,10 +129,14 @@ runFileTransformer :: ToMessage a
 runFileTransformer xform = withData $ \params -> do
   file <- getPage
   cfg <- getConfig
-  evalStateT xform  Context{ ctxPageName = file
-                           , ctxFile = file
-                           , ctxLayout = defaultPageLayout{ pgTitle = file }
-                           , ctxParams = params
+  evalStateT xform  Context{ ctxFile = file
+                           , ctxLayout = defaultPageLayout{
+                                             pgPageName = file
+                                           , pgTitle = file
+                                           , pgPrintable = pPrintable params
+                                           , pgMessages = pMessages params
+                                           , pgRevision = pRevision params }
+                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
                            , ctxBirdTracks = showLHSBirdTracks cfg
@@ -292,8 +300,8 @@ exportPandoc (Just doc) = do
 
 applyWikiTemplate :: Html -> ContentTransformer Response
 applyWikiTemplate c = do
-  Context { ctxLayout = layout, ctxPageName = page, ctxParams = params } <- get
-  lift $ formattedPage layout page params c
+  Context { ctxLayout = layout } <- get
+  lift $ formattedPage layout c
 
 --
 -- Content-type transformation combinators
@@ -448,11 +456,11 @@ addScripts layout scriptPaths =
 getParams :: ContentTransformer Params
 getParams = liftM ctxParams get
 
-getPageName :: ContentTransformer String
-getPageName = liftM ctxPageName get
-
 getFileName :: ContentTransformer FilePath
 getFileName = liftM ctxFile get
+
+getPageName :: ContentTransformer String
+getPageName = liftM (pgPageName . ctxLayout) get
 
 getLayout :: ContentTransformer PageLayout
 getLayout = liftM ctxLayout get

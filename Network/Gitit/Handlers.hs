@@ -140,12 +140,16 @@ discussPage = do
                      toResponse "Redirecting to discussion page"
 
 createPage :: Handler
-createPage = withData $ \(params :: Params) -> do
+createPage = do
   page <- getPage
   base' <- getWikiBase
   case page of
        ('_':_) -> mzero   -- don't allow creation of _index, etc.
-       _       -> formattedPage (defaultPageLayout { pgTabs = [], pgTitle = "Create " ++ page ++ "?" }) page params $
+       _       -> formattedPage defaultPageLayout{
+                                      pgPageName = page
+                                    , pgTabs = []
+                                    , pgTitle = "Create " ++ page ++ "?"
+                                    } $
                     p << [ stringToHtml ("There is no page '" ++ page ++
                               "'.  You may create the page by "),
                             anchor ! [href $ urlForPage base' page ++ "?edit"] <<
@@ -175,15 +179,14 @@ uploadForm = withData $ \(params :: Params) -> do
               , submit "upload" "Upload" ]
        ]
   formattedPage defaultPageLayout{
+                   pgMessages = pMessages params,
                    pgScripts = ["uploadForm.js"],
                    pgShowPageTools = False,
                    pgTabs = [],
-                   pgTitle = "Upload a file"}
-                "" params upForm
+                   pgTitle = "Upload a file"} upForm
 
 uploadFile :: Handler
 uploadFile = withData $ \(params :: Params) -> do
-  let page = "_upload"
   let origPath = pFilename params
   let fileContents = pFileContents params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
@@ -222,10 +225,11 @@ uploadFile = withData $ \(params :: Params) -> do
                   else p << "To link to this resource from a page, use:" +++
                        pre << ("[link label](/" ++ wikiname ++ ")") ]
        formattedPage defaultPageLayout{
+                       pgMessages = pMessages params,
                        pgShowPageTools = False,
                        pgTabs = [],
                        pgTitle = "Upload successful"}
-                     page params contents
+                     contents
      else withMessages errors uploadForm
 
 goToPage :: Handler
@@ -253,7 +257,6 @@ goToPage = withData $ \(params :: Params) -> do
 
 searchResults :: Handler
 searchResults = withData $ \(params :: Params) -> do
-  let page = "_search"
   let patterns = pPatterns params
   let limit = pLimit params
   fs <- getFileStore
@@ -298,11 +301,12 @@ searchResults = withData $ \(params :: Params) -> do
                     olist << map toMatchListItem
                              (reverse $ sortBy (comparing relevance) matches)
   formattedPage defaultPageLayout{
+                  pgMessages = pMessages params,
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = "Search results"}
-                page params htmlMatches
+                htmlMatches
 
 showPageHistory :: Handler
 showPageHistory = withData $ \(params :: Params) -> do
@@ -358,16 +362,16 @@ showHistory file page params =  do
                      then [ViewTab,HistoryTab]
                      else pgTabs defaultPageLayout
        formattedPage defaultPageLayout{
+                        pgPageName = page,
+                        pgMessages = pMessages params,
                         pgScripts = ["dragdiff.js"],
                         pgTabs = tabs,
                         pgSelectedTab = HistoryTab,
                         pgTitle = ("Changes to " ++ page)
-                        }
-                     page params contents
+                        } contents
 
 showActivity :: Handler
 showActivity = withData $ \(params :: Params) -> do
-  let page = "_activity"
   currTime <- liftIO getCurrentTime
   let oneMonthAgo = addMinutes (-1 * 60 * 24 * 30) currTime
   let since = case pSince params of
@@ -406,11 +410,11 @@ showActivity = withData $ \(params :: Params) -> do
         ]
   let contents = ulist ! [theclass "history"] << map revToListItem hist'
   formattedPage defaultPageLayout{
+                  pgMessages = pMessages params,
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgTitle = "Recent changes"
-                  }
-                page params (heading +++ contents)
+                  } (heading +++ contents)
 
 showPageDiff :: Handler
 showPageDiff = withData $ \(params :: Params) -> do
@@ -448,11 +452,13 @@ showDiff file page params = do
        Left NotFound  -> mzero
        Left e         -> liftIO $ throwIO e
        Right htmlDiff -> formattedPage defaultPageLayout{
+                                          pgPageName = page,
+                                          pgRevision = from',
+                                          pgMessages = pMessages params,
                                           pgTabs = DiffTab :
                                                    pgTabs defaultPageLayout,
                                           pgSelectedTab = DiffTab
                                           }
-                                       page params{ pRevision = from' }
                                        htmlDiff
 
 getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
@@ -521,17 +527,19 @@ editPage = withData $ \(params :: Params) -> do
                    , thediv ! [ identifier "previewpane" ] << noHtml
                    ]
   formattedPage defaultPageLayout{
+                  pgPageName = page,
+                  pgMessages = messages,
+                  pgRevision = rev,
                   pgShowPageTools = False,
                   pgShowSiteNav = False,
                   pgShowMarkupHelp = True,
                   pgSelectedTab = EditTab,
                   pgScripts = ["preview.js"],
                   pgTitle = ("Editing " ++ page)
-                  }
-                page params{pMessages = messages} editForm
+                  } editForm
 
 confirmDelete :: Handler
-confirmDelete = withData $ \(params :: Params) -> do
+confirmDelete = do
   page <- getPage
   fs <- getFileStore
   -- determine whether there is a corresponding page, and if not whether there
@@ -554,7 +562,7 @@ confirmDelete = withData $ \(params :: Params) -> do
         , stringToHtml " "
         , submit "cancel" "No, keep it!"
         , br ]
-  formattedPage defaultPageLayout{ pgTitle = "Delete " ++ page ++ "?" } page params $
+  formattedPage defaultPageLayout{ pgTitle = "Delete " ++ page ++ "?" } $
     if null fileToDelete
        then ulist ! [theclass "messages"] << li <<
             "There is no file or page by that name."
@@ -623,7 +631,7 @@ updatePage = withData $ \(params :: Params) -> do
                    withInput "sha1" (revId mergedWithRev) editPage
 
 indexPage :: Handler
-indexPage = withData $ \(params :: Params) -> do
+indexPage = do
   path' <- getPath
   base' <- getWikiBase
   let prefix' = if null path' then "" else path' ++ "/"
@@ -634,11 +642,11 @@ indexPage = withData $ \(params :: Params) -> do
   let prunedListing = filter (not . isDiscussionPage) listing
   let htmlIndex = fileListToHtml base' prefix' prunedListing
   formattedPage defaultPageLayout{
+                  pgPageName = prefix',
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgScripts = [],
-                  pgTitle = "Contents"}
-                prefix' params htmlIndex
+                  pgTitle = "Contents"} htmlIndex
 
 fileListToHtml :: String -> String -> [Resource] -> Html
 fileListToHtml base' prefix files =
@@ -663,7 +671,7 @@ fileListToHtml base' prefix files =
 -- filestore abstraction.  That is bad, but can only be fixed if we add
 -- more sophisticated searching options to filestore.
 categoryPage :: String -> Handler
-categoryPage category = withData $ \(params :: Params) -> do
+categoryPage category = do
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ category
@@ -681,14 +689,15 @@ categoryPage category = withData $ \(params :: Params) -> do
         [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
   let htmlMatches = ulist << map toMatchListItem matches
   formattedPage defaultPageLayout{
+                  pgPageName = categoryDescription,
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = categoryDescription }
-                categoryDescription params htmlMatches
+                htmlMatches
 
 categoryListPage :: Handler
-categoryListPage = withData $ \(params :: Params) -> do
+categoryListPage = do
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   fs <- getFileStore
@@ -703,20 +712,20 @@ categoryListPage = withData $ \(params :: Params) -> do
         [ anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg ]
   let htmlMatches = ulist << map toCatLink categories
   formattedPage defaultPageLayout{
+                  pgPageName = "Categories",
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgScripts = ["search.js"],
-                  pgTitle = "Categories" }
-                "Categories" params htmlMatches
+                  pgTitle = "Categories" } htmlMatches
 
 reloadTemplates :: Handler
-reloadTemplates = withData $ \(params :: Params) -> do  -- TODO remove params later
+reloadTemplates = do
   liftIO $ recompilePageTemplate
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
                   pgTabs = [],
-                  pgTitle = "Tada!" }
-                "" params (p << "Page templates have been recompiled.")
+                  pgTitle = "Tada!" } $
+                p << "Page templates have been recompiled."
 
 authHandler :: Handler
 authHandler = msum $
