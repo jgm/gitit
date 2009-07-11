@@ -124,6 +124,7 @@ data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
   cache          :: Cache,
+  template       :: T.StringTemplate String,
   plugins        :: [Plugin]
 }
 
@@ -311,7 +312,6 @@ instance FromData Command where
 data WikiState = WikiState { 
                      wikiConfig    :: Config
                    , wikiFileStore :: FileStore
-                   , wikiTemplate  :: T.StringTemplate String
                    }
 
 type GititServerPart = ServerPartT (ReaderT WikiState IO)
