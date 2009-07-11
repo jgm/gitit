@@ -423,7 +423,9 @@ wikiDivify c = do
   categories <- liftM ctxCategories get
   base' <- lift getWikiBase
   let categoryLink ctg = li (anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg)
-  let htmlCategories = thediv ! [identifier "categoryList"] << ulist << map categoryLink categories
+  let htmlCategories = if null categories
+                          then noHtml
+                          else thediv ! [identifier "categoryList"] << ulist << map categoryLink categories
   let dblClickJs = "window.location = window.location + '?edit" ++
                    case pRevision params of
                         Nothing   -> "';"
