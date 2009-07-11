@@ -136,6 +136,7 @@ wikiHandlers =
   , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
+  , dir "_reloadTemplates" reloadTemplates
   , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
   , guardCommand "showraw" >> msum

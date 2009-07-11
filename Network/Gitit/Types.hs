@@ -40,6 +40,7 @@ import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
+import qualified Text.StringTemplate as T
 
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
@@ -120,11 +121,15 @@ data User = User {
   uEmail    :: String
 } deriving (Show,Read)
 
+data Template = Template {
+        compiledTemplate   :: T.StringTemplate String
+      , templatesDirectory :: FilePath }
+
 data AppState = AppState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
   cache          :: Cache,
-  template       :: T.StringTemplate String,
+  template       :: Template,
   plugins        :: [Plugin]
 }
 

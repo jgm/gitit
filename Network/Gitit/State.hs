@@ -210,7 +210,7 @@ getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
 
 getTemplate :: GititServerPart (T.StringTemplate String)
-getTemplate = queryAppState template
+getTemplate = queryAppState (compiledTemplate . template)
 
 getConfig :: GititServerPart Config
 getConfig = liftM wikiConfig ask
