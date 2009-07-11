@@ -9,7 +9,8 @@ _ config should include functions for loginUserForm and
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
 
-_ stabilize API
+_ consider replacing Params with a bunch of newtypes, one for
+  each sort of param.  This would make the code more modular.
 
 _ split config into a gitit-wide config, which is part of GititState,
   and a wiki-specific config
@@ -18,10 +19,6 @@ _ document HTTP auth setup in README
 _ add "logout" link for HTTP auth?  This could have the server
   return an HTTP 401 (unauthorized), which should force the browser
   to ask for credentials...
-
-_ cleanup code for 80 cols; hlint
-
-_ paging for long histories, activity lists
 
 _ rss feed for individual page changes & Recent Activity?  
   see the rss library (Text.RSS) on HackageDB.  see gwern's partial patch.
@@ -40,7 +37,11 @@ _ improve support for categories:
   Categories can form a tree structure.
   Articles can be in multiple categories.
 
-_ test on windows.  consider windows binary package?
+_ paging for long histories, activity lists
+
+_ stabilize API
+
+_ cleanup code for 80 cols; hlint
 
 _ web page with simple instructions on installing gitit with
   cabal install and Haskell platform.
