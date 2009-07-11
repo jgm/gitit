@@ -38,7 +38,11 @@ import Data.Maybe (isNothing, isJust, fromJust)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
-  { pgTitle          = ""
+  { pgPageName       = ""
+  , pgRevision       = Nothing
+  , pgPrintable      = False
+  , pgMessages       = []
+  , pgTitle          = ""
   , pgScripts        = []
   , pgShowPageTools  = True
   , pgShowSiteNav    = True
@@ -50,6 +54,10 @@ defaultPageLayout = PageLayout
 -- | Returns formatted page
 formattedPage :: PageLayout -> String -> Params -> Html -> GititServerPart Response
 formattedPage layout page params htmlContents = do
+
+-- NOTE: the following are used from params:  pRevision, pPrintable, pMessages
+-- make these part of PageLayout? and why not page too?
+
   let rev = pRevision params
   user <- getLoggedInUser
   base' <- getWikiBase
