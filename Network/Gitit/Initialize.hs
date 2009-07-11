@@ -29,6 +29,7 @@ import Network.Gitit.Types
 import Network.Gitit.State
 import Network.Gitit.Framework
 import Network.Gitit.Plugins
+import Network.Gitit.Layout (defaultRenderPage)
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents, doesFileExist)
@@ -54,19 +55,18 @@ initializeGititState conf = do
 
   templ <- compilePageTemplate (templatesDir conf)
 
-  updateAppState $ \s -> s { sessions  = Sessions M.empty
-                           , users     = users'
-                           , cache     = emptyCache
-                           , template  = Template{ 
-                                            compiledTemplate = templ,
-                                            templatesDirectory = templatesDir conf }
-                           , plugins   = plugins' }
+  updateAppState $ \s -> s { sessions      = Sessions M.empty
+                           , users         = users'
+                           , cache         = emptyCache
+                           , templatesPath = templatesDir conf
+                           , renderPage    = defaultRenderPage templ
+                           , plugins       = plugins' }
 
 recompilePageTemplate :: IO ()
 recompilePageTemplate = do
-  t <- queryAppState template
-  ct <- compilePageTemplate (templatesDirectory t)
-  updateAppState $ \st -> st{template = t{compiledTemplate = ct}}
+  tempsDir <- queryAppState templatesPath
+  ct <- compilePageTemplate tempsDir
+  updateAppState $ \st -> st{renderPage = defaultRenderPage ct}
 
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
 compilePageTemplate tempsDir = do

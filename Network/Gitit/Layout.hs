@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Layout ( defaultPageLayout
+                            , defaultRenderPage
                             , formattedPage
                             )
 where
@@ -52,9 +53,13 @@ defaultPageLayout = PageLayout
   }
 
 -- | Returns formatted page
-formattedPage :: PageLayout -> Html -> GititServerPart Response
+formattedPage :: PageLayout -> Html -> Handler
 formattedPage layout htmlContents = do
+  renderer <- queryAppState renderPage
+  renderer layout htmlContents
 
+defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
+defaultRenderPage templ layout htmlContents = do
 -- NOTE: the following are used from params:  pRevision, pPrintable, pMessages
 -- make these part of PageLayout? and why not page too?
 
@@ -85,7 +90,6 @@ formattedPage layout htmlContents = do
                           xs      -> ulist ! [theclass "messages"] <<
                                        map (li <<) xs
   cfg <- getConfig
-  templ <- getTemplate
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
   let filledTemp = T.render .
