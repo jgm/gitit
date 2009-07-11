@@ -168,7 +168,11 @@ instance HasContext PluginM where
 
 -- | Abstract representation of page layout (tabs, scripts, etc.)
 data PageLayout = PageLayout
-  { pgTitle          :: String
+  { pgPageName       :: String
+  , pgRevision       :: Maybe String
+  , pgPrintable      :: Bool
+  , pgMessages       :: [String] 
+  , pgTitle          :: String
   , pgScripts        :: [String]
   , pgShowPageTools  :: Bool
   , pgShowSiteNav    :: Bool
