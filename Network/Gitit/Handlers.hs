@@ -56,7 +56,6 @@ module Network.Gitit.Handlers (
                       , resetPasswordRequest
                       , resetPassword
                       , doResetPassword
-                      , reloadTemplates
                       , authHandler
                       )
 where
@@ -66,7 +65,6 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Initialize (recompilePageTemplate)
 import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
@@ -719,15 +717,6 @@ categoryListPage = do
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = "Categories" } htmlMatches
-
-reloadTemplates :: Handler
-reloadTemplates = do
-  liftIO $ recompilePageTemplate
-  formattedPage defaultPageLayout{
-                  pgShowPageTools = False,
-                  pgTabs = [],
-                  pgTitle = "Tada!" } $
-                p << "Page templates have been recompiled."
 
 authHandler :: Handler
 authHandler = msum $

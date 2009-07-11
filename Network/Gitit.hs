@@ -90,6 +90,7 @@ module Network.Gitit ( initializeGititState
                      , createRepoIfMissing
                      , createTemplateIfMissing
                      , createStaticIfMissing
+                     , reloadTemplates
                      , GititServerPart
                      )
 where
@@ -136,7 +137,6 @@ wikiHandlers =
   , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
-  , dir "_reloadTemplates" reloadTemplates
   , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
   , guardCommand "showraw" >> msum
@@ -167,6 +167,11 @@ wikiHandlers =
   , handleAny
   , createPage
   ]
+
+reloadTemplates :: ServerPart Response
+reloadTemplates = do
+  liftIO $ recompilePageTemplate
+  ok $ toResponse "Page templates have been recompiled."
 
 unpackReaderT:: (Monad m)
     => c 
