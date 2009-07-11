@@ -243,7 +243,7 @@ instance FromData Params where
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- lookCookieValue "destination" `mplus` return "/"
          ra <- look' "raw"            `mplus` return ""
-         lt <- look' "limit"          `mplus` return "100"
+         lt <- lookRead "limit"       `mplus` return 100
          pa <- look' "patterns"       `mplus` return ""
          gt <- look' "gotopage"       `mplus` return ""
          ft <- look' "filetodelete"   `mplus` return ""
@@ -278,7 +278,7 @@ instance FromData Params where
                          , pDestination  = ds
                          , pUri          = ""       -- gets set by handle...
                          , pRaw          = ra
-                         , pLimit        = read lt
+                         , pLimit        = lt
                          , pPatterns     = words pa
                          , pGotoPage     = gt
                          , pFileToDelete = ft
