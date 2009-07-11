@@ -61,9 +61,6 @@ formattedPage layout htmlContents = do
 -- | Given a compiled string template, returns a page renderer.
 defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
--- NOTE: the following are used from params:  pRevision, pPrintable, pMessages
--- make these part of PageLayout? and why not page too?
-
   let rev  = pgRevision layout
   let page = pgPageName layout
   user <- getLoggedInUser
