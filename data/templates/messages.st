@@ -1,3 +1,3 @@
 <ul class="messages">
-  $messages:message()$
+  $messages:listitem()$
 </ul>
