@@ -17,6 +17,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Initialize ( initializeGititState
+                                , recompilePageTemplate
                                 , createStaticIfMissing
                                 , createRepoIfMissing
                                 , createTemplateIfMissing )
@@ -51,21 +52,32 @@ initializeGititState conf = do
                then liftM (M.fromList . read) $ readFile userFile'
                else return M.empty
 
-  templateExists <- doesDirectoryExist $ templatesDir conf
-  templs <- if templateExists
-               then T.directoryGroup $ templatesDir conf
-               else getDataFileName ("data" </> "templates") >>= T.directoryGroup
-  let templ = case T.getStringTemplate "page" templs of
-                    Just t    -> t
-                    Nothing   -> error "Could not get string template"
+  templ <- compilePageTemplate (templatesDir conf)
 
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , cache     = emptyCache
-                           , template  = templ
+                           , template  = Template{ 
+                                            compiledTemplate = templ,
+                                            templatesDirectory = templatesDir conf }
                            , plugins   = plugins' }
 
--- | Create templates dir if it doesn't exist.
+recompilePageTemplate :: IO ()
+recompilePageTemplate = do
+  t <- queryAppState template
+  ct <- compilePageTemplate (templatesDirectory t)
+  updateAppState $ \st -> st{template = t{compiledTemplate = ct}}
+
+compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
+compilePageTemplate tempsDir = do
+  templateExists <- doesDirectoryExist tempsDir
+  templs <- if templateExists
+               then T.directoryGroup tempsDir
+               else getDataFileName ("data" </> "templates") >>= T.directoryGroup
+  case T.getStringTemplate "page" templs of
+        Just t    -> return t
+        Nothing   -> error "Could not get string template"-- | Create templates dir if it doesn't exist.
+
 createTemplateIfMissing :: Config -> IO ()
 createTemplateIfMissing conf' = do
   templateExists <- doesDirectoryExist (templatesDir conf')
