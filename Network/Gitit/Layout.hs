@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Layout ( defaultPageLayout
-                    , formattedPage
-                    )
+                            , formattedPage
+                            )
 where
 import Network.Gitit.Server
 import Network.Gitit.Framework
