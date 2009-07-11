@@ -49,6 +49,7 @@ tr {page-break-inside: avoid;}
 #content { border: none; }
 #sidebar, #userbox, #footer {display:none;}
 #toc { display: none; }
+#categoryList { display: none; }
 h1 a:link, h2 a:link, h3 a:link, h4 a:link, h5 a:link, h6 a:link { text-decoration: none; }
 h1.pageTitle { font-size: 220%; }
 td.lineNumbers { display: none; }
