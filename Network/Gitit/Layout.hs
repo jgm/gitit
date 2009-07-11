@@ -77,12 +77,6 @@ defaultRenderPage templ layout htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) (pgTabs layout)
-  let searchbox = gui (base' ++ "/_search") ! [identifier "searchform"] <<
-                         [ textfield "patterns"
-                         , submit "search" "Search" ]
-  let gobox     = gui (base' ++ "/_go") ! [identifier "goform"] <<
-                         [ textfield "gotopage"
-                         , submit "go" "Go" ]
   cfg <- getConfig
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
@@ -109,8 +103,6 @@ defaultRenderPage templ layout htmlContents = do
                    (if isJust rev
                        then T.setAttribute "revision" (fromJust rev)
                        else id) .
-                   T.setAttribute "searchbox"
-                       (renderHtmlFragment (searchbox +++ gobox)) .
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .

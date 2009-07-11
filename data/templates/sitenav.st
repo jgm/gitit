@@ -10,6 +10,13 @@
       <li><a href="$base$/_upload">Upload a file</a></li>
       <li><a href="$base$/Help">Help</a></li>
     </ul>
-    $searchbox$
+    <form action="$base$/_search" method="post" id="searchform">
+     <input type="text" name="patterns" id="patterns"/>
+     <input type="submit" name="search" id="search" value="Search"/>
+    </form>
+    <form action="$base$/_go" method="post" id="goform">
+      <input type="text" name="gotopage" id="gotopage"/>
+      <input type="submit" name="go" id="go" value="Go"/>
+    </form>
   </fieldset>
 </div>
