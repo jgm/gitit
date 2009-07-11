@@ -100,12 +100,8 @@ import Network.Gitit.Handlers
 import Network.Gitit.Initialize
 import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
 import Control.Monad.Reader
-import System.Directory
 import System.FilePath
 import Prelude hiding (readFile)
-import Paths_gitit
-import Data.Maybe (fromJust)
-import qualified Text.StringTemplate as T
 import Codec.Binary.UTF8.String (decodeString)
 
 wikiHandler :: Config -> ServerPart Response
@@ -122,13 +118,7 @@ wikiHandler conf = do
                      FormAuth -> authHandler : wikiHandlers
                      _        -> wikiHandlers
   let fs = filestoreFromConfig conf
-  templs <- liftIO $ do
-    templateExists <- doesDirectoryExist $ templatesDir conf
-    if templateExists
-       then T.directoryGroup $ templatesDir conf
-       else getDataFileName ("data" </> "templates") >>= T.directoryGroup
-  let templ = fromJust $ T.getStringTemplate "page" templs
-  let ws = WikiState { wikiConfig = conf, wikiFileStore = fs, wikiTemplate = templ }
+  let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
   if compressResponses conf
      then compressedResponseFilter
      else return ""

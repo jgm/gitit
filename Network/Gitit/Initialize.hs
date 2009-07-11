@@ -37,6 +37,7 @@ import System.IO.UTF8
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import System.Log.Logger (logM, Priority(..))
+import qualified Text.StringTemplate as T
 
 -- | Initialize Gitit State.
 initializeGititState :: Config -> IO ()
@@ -49,9 +50,19 @@ initializeGititState conf = do
   users' <- if userFileExists
                then liftM (M.fromList . read) $ readFile userFile'
                else return M.empty
+
+  templateExists <- doesDirectoryExist $ templatesDir conf
+  templs <- if templateExists
+               then T.directoryGroup $ templatesDir conf
+               else getDataFileName ("data" </> "templates") >>= T.directoryGroup
+  let templ = case T.getStringTemplate "page" templs of
+                    Just t    -> t
+                    Nothing   -> error "Could not get string template"
+
   updateAppState $ \s -> s { sessions  = Sessions M.empty
                            , users     = users'
                            , cache     = emptyCache
+                           , template  = templ
                            , plugins   = plugins' }
 
 -- | Create templates dir if it doesn't exist.

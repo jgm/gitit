@@ -43,6 +43,7 @@ appstate :: IORef AppState
 appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
                                                  , users = undefined
                                                  , cache = undefined
+                                                 , template = undefined
                                                  , plugins = undefined }
 
 updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
@@ -208,14 +209,14 @@ delSession key = updateAppState $ \s ->
 getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
 getSession key = queryAppState $ M.lookup key . unsession . sessions
 
+getTemplate :: GititServerPart (T.StringTemplate String)
+getTemplate = queryAppState template
+
 getConfig :: GititServerPart Config
 getConfig = liftM wikiConfig ask
 
 getFileStore :: GititServerPart FileStore
 getFileStore = liftM wikiFileStore ask
-
-getTemplate :: GititServerPart (T.StringTemplate String)
-getTemplate = liftM wikiTemplate ask
 
 getDefaultPageType :: GititServerPart PageType
 getDefaultPageType = liftM defaultPageType getConfig
