@@ -258,12 +258,14 @@ goToPage = withData $ \(params :: Params) -> do
 searchResults :: Handler
 searchResults = withData $ \(params :: Params) -> do
   let patterns = pPatterns params
-  let limit = pLimit params
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
-                   else liftM (take limit) $ liftIO $
-                          search fs defaultSearchQuery{queryPatterns = patterns}
+                   else liftIO $ search fs SearchQuery{
+                                            queryPatterns = patterns
+                                          , queryWholeWords = True
+                                          , queryMatchAll = True
+                                          , queryIgnoreCase = True }
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
   let inPageName pageName' x = x `elem` (words $ map toLower $
