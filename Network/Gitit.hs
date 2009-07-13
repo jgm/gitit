@@ -68,8 +68,8 @@ under different paths, and uses a custom authentication scheme:
 >                       , defaultPageType = pagetype
 >                       }
 >     createStaticIfMissing conf''
->     createTemplateIfMissing conf''
 >     createRepoIfMissing conf''
+>   createTemplateIfMissing conf'
 >   initializeGititState conf'
 >   simpleHTTP nullConf{port = 5001} $
 >     (nullDir >> indexPage) `mplus` msum (map (handlerFor conf') wikis)
