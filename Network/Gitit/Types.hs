@@ -120,7 +120,7 @@ data User = User {
   uEmail    :: String
 } deriving (Show,Read)
 
-data AppState = AppState {
+data GititState = GititState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
   cache          :: Cache,

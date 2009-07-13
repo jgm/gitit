@@ -55,7 +55,7 @@ defaultPageLayout = PageLayout
 -- | Returns formatted page
 formattedPage :: PageLayout -> Html -> Handler
 formattedPage layout htmlContents = do
-  renderer <- queryAppState renderPage
+  renderer <- queryGititState renderPage
   renderer layout htmlContents
 
 -- | Given a compiled string template, returns a page renderer.

@@ -376,19 +376,19 @@ pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 --
 
 getPageTransforms :: ContentTransformer [Pandoc -> PluginM Pandoc]
-getPageTransforms = liftM (mapMaybe pageTransform) $ queryAppState plugins
+getPageTransforms = liftM (mapMaybe pageTransform) $ queryGititState plugins
   where pageTransform (PageTransform x) = Just x
         pageTransform _                 = Nothing
 
 getPreParseTransforms :: ContentTransformer [String -> PluginM String]
 getPreParseTransforms = liftM (mapMaybe preParseTransform) $
-                          queryAppState plugins
+                          queryGititState plugins
   where preParseTransform (PreParseTransform x) = Just x
         preParseTransform _                     = Nothing
 
 getPreCommitTransforms :: ContentTransformer [String -> PluginM String]
 getPreCommitTransforms = liftM (mapMaybe preCommitTransform) $
-                          queryAppState plugins
+                          queryGititState plugins
   where preCommitTransform (PreCommitTransform x) = Just x
         preCommitTransform _                      = Nothing
 

@@ -35,7 +35,6 @@ import Control.Monad (unless, liftM)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
-import qualified Data.Map as M
 import Data.Char (isAlphaNum, isAlpha)
 import Text.Pandoc.Shared (substitute)
 import Data.Maybe (isJust, fromJust)
@@ -145,9 +144,8 @@ sendReregisterEmail user = do
 
 validateReset :: Params -> (User -> Handler) -> Handler
 validateReset params postValidate = do
-  users' <- queryAppState users
   let uname = pUsername params
-  let user = M.lookup uname users'
+  user <- getUser uname
   let knownUser = isJust user
   let resetCodeMatches = take 20 (pHashed (uPassword (fromJust user))) ==
                            pResetCode params

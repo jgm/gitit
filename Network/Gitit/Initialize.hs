@@ -55,19 +55,19 @@ initializeGititState conf = do
 
   templ <- compilePageTemplate (templatesDir conf)
 
-  updateAppState $ \s -> s { sessions      = Sessions M.empty
-                           , users         = users'
-                           , cache         = emptyCache
-                           , templatesPath = templatesDir conf
-                           , renderPage    = defaultRenderPage templ
-                           , plugins       = plugins' }
+  updateGititState $ \s -> s { sessions      = Sessions M.empty
+                             , users         = users'
+                             , cache         = emptyCache
+                             , templatesPath = templatesDir conf
+                             , renderPage    = defaultRenderPage templ
+                             , plugins       = plugins' }
 
 -- | Recompile the page template.
 recompilePageTemplate :: IO ()
 recompilePageTemplate = do
-  tempsDir <- queryAppState templatesPath
+  tempsDir <- queryGititState templatesPath
   ct <- compilePageTemplate tempsDir
-  updateAppState $ \st -> st{renderPage = defaultRenderPage ct}
+  updateGititState $ \st -> st{renderPage = defaultRenderPage ct}
 
 -- | Compile a master page template named @page.st@ in the directory specified.
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
