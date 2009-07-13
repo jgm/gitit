@@ -421,6 +421,9 @@ Reporting bugs
 Bugs may be reported (and feature requests filed) at
 <http://code.google.com/p/gitit/issues/list>.
 
+There is a mailing list for users and developers at
+<http://groups.google.com/group/gitit-discuss>.
+
 Acknowledgements
 ================
 
