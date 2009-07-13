@@ -38,19 +38,19 @@ import Text.XHtml (Html, renderHtmlFragment, primHtml)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
 
-appstate :: IORef AppState
-appstate = unsafePerformIO $  newIORef  AppState { sessions = undefined
-                                                 , users = undefined
-                                                 , cache = undefined
-                                                 , templatesPath = undefined
-                                                 , renderPage = undefined
-                                                 , plugins = undefined }
+gititstate :: IORef GititState
+gititstate = unsafePerformIO $  newIORef  GititState { sessions = undefined
+                                                     , users = undefined
+                                                     , cache = undefined
+                                                     , templatesPath = undefined
+                                                     , renderPage = undefined
+                                                     , plugins = undefined }
 
-updateAppState :: MonadIO m => (AppState -> AppState) -> m ()
-updateAppState fn = liftIO $! atomicModifyIORef appstate $ \st -> (fn st, ())
+updateGititState :: MonadIO m => (GititState -> GititState) -> m ()
+updateGititState fn = liftIO $! atomicModifyIORef gititstate $ \st -> (fn st, ())
 
-queryAppState :: MonadIO m => (AppState -> a) -> m a
-queryAppState fn = liftM fn $ liftIO $! readIORef appstate
+queryGititState :: MonadIO m => (GititState -> a) -> m a
+queryGititState fn = liftM fn $ liftIO $! readIORef gititstate
 
 emptyCache :: Cache
 emptyCache = Cache M.empty 0
@@ -66,11 +66,11 @@ updateCachedPageTimestamp cache' page = do
       setTimeStamp (Just cp) = Just cp{ cpLastAccessTime = now }
   let newcache = cache'{ cachePages = 
                      M.alter setTimeStamp (repo, page) (cachePages cache') }
-  updateAppState $ \s -> s {cache = newcache }
+  updateGititState $ \s -> s {cache = newcache }
 
 lookupCache :: String -> (Maybe RevisionId) -> GititServerPart (Maybe Html)
 lookupCache file (Just revid) = do
-  c <- queryAppState cache
+  c <- queryGititState cache
   fs <- getFileStore
   repo <- liftM repositoryPath getConfig
   case M.lookup (repo, file) (cachePages c) of
@@ -90,7 +90,7 @@ lookupCache file Nothing = do
 
 cacheContents :: String -> RevisionId -> Html -> GititServerPart ()
 cacheContents file revid contents = do
-  c <- queryAppState cache
+  c <- queryGititState cache
   repo <- liftM repositoryPath getConfig
   let oldsize = case M.lookup (repo, file) (cachePages c) of
                      Just cp  -> fromIntegral $ B.length $ cpContents cp
@@ -112,7 +112,7 @@ cacheContents file revid contents = do
        newcachePruned <- pruneCache maxCacheSize' newcache
        debugMessage $ "Updating cache with " ++ file ++ " in " ++ repo ++
                      ".  Total cache size = " ++ show (cacheSize newcachePruned)
-       updateAppState $ \s -> s { cache = newcachePruned }
+       updateGititState $ \s -> s { cache = newcachePruned }
 
 pruneCache :: Integer -> Cache -> GititServerPart Cache
 pruneCache maxSize c =
@@ -151,7 +151,7 @@ hashPassword salt pass = showDigest $ sha512 $ L.fromString $ salt ++ pass
 
 authUser :: String -> String -> GititServerPart Bool
 authUser name pass = do
-  users' <- queryAppState users
+  users' <- queryGititState users
   case M.lookup name users' of
        Just u  -> do
          let salt = pSalt $ uPassword u
@@ -160,40 +160,40 @@ authUser name pass = do
        Nothing -> return False
 
 isUser :: String -> GititServerPart Bool
-isUser name = liftM (M.member name) $ queryAppState users
+isUser name = liftM (M.member name) $ queryGititState users
 
 addUser :: String -> User -> GititServerPart ()
 addUser uname user =
-  updateAppState (\s -> s { users = M.insert uname user (users s) }) >>
+  updateGititState (\s -> s { users = M.insert uname user (users s) }) >>
   getConfig >>=
   liftIO . writeUserFile
 
 adjustUser :: String -> User -> GititServerPart ()
-adjustUser uname user = updateAppState
+adjustUser uname user = updateGititState
   (\s -> s  { users = M.adjust (const user) uname (users s) }) >>
   getConfig >>=
   liftIO . writeUserFile
 
 delUser :: String -> GititServerPart ()
 delUser uname =
-  updateAppState (\s -> s { users = M.delete uname (users s) }) >>
+  updateGititState (\s -> s { users = M.delete uname (users s) }) >>
   getConfig >>=
   liftIO . writeUserFile
 
 writeUserFile :: Config -> IO ()
 writeUserFile conf = do
-  usrs <- queryAppState users
+  usrs <- queryGititState users
   writeFile (userFile conf) $
       "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
 
 getUser :: String -> GititServerPart (Maybe User)
-getUser uname = liftM (M.lookup uname) $ queryAppState users
+getUser uname = liftM (M.lookup uname) $ queryGititState users
 
 isSession :: MonadIO m => SessionKey -> m Bool
-isSession key = liftM (M.member key . unsession) $ queryAppState sessions
+isSession key = liftM (M.member key . unsession) $ queryGititState sessions
 
 setSession :: MonadIO m => SessionKey -> SessionData -> m ()
-setSession key u = updateAppState $ \s ->
+setSession key u = updateGititState $ \s ->
   s { sessions = Sessions . M.insert key u . unsession $ sessions s }
 
 newSession :: MonadIO m => SessionData -> m SessionKey
@@ -203,11 +203,11 @@ newSession u = do
   return key
 
 delSession :: MonadIO m => SessionKey -> m ()
-delSession key = updateAppState $ \s ->
+delSession key = updateGititState $ \s ->
   s { sessions = Sessions . M.delete key . unsession $ sessions s }
 
 getSession :: MonadIO m => SessionKey -> m (Maybe SessionData)
-getSession key = queryAppState $ M.lookup key . unsession . sessions
+getSession key = queryGititState $ M.lookup key . unsession . sessions
 
 getConfig :: GititServerPart Config
 getConfig = liftM wikiConfig ask
