@@ -1,9 +1,10 @@
-_ split config into a gitit-wide config, which is part of GititState,
-  and a wiki-specific config
-
-_ config should include functions for loginUserForm
-
-x a function to render the page.  templates stuff optional.
+_ instead of CustomAuth, etc., have the Config include
+  slots for handlers:  getLoggedInUser and loginUserForm.
+  these can then get set appropriately depending on whether
+  http-auth or form-auth is specified in the config file.
+  and they can be overridden when using gitit as a library
+  to use a custom auth system.  This should allow the
+  functions getLoggedInUser and ifLoggedIn to be simplified.
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
