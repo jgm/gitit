@@ -111,9 +111,8 @@ wikiHandler conf = do
   let staticHandler = dir "_static" $ withExpiresHeaders $ msum
                          [ dir "css" $ fileServeStrict [] (static </> "css")
                          , dir "js"  $ fileServeStrict [] (static </> "js")
-                         , fileServe [] static ]  -- note: fileServe (lazy) ignores filters
-                                                  -- this is what we want; images shouldn't be
-                                                  -- compressed 
+                         , ignoreFilters >>  -- don't compress images, pdfs, etc.
+                             fileServeStrict [] static ]
   let handlers = [ debugHandler | debugMode conf] ++
                  case authenticationMethod conf of
                      FormAuth -> authHandler : wikiHandlers
