@@ -88,10 +88,6 @@ defaultRenderPage templ layout htmlContents = do
                    (case user of
                          Just u     -> setStrAttr "user" (uUsername u)
                          Nothing    -> id) .
-                   (case authenticationMethod cfg of
-                         FormAuth        -> T.setAttribute "showLogin" "true"
-                         HTTPAuth        -> id
-                         CustomAuth _    -> id) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .

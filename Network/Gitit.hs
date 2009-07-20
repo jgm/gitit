@@ -45,9 +45,13 @@ under different paths, and uses a custom authentication scheme:
 >         , ("latexWiki", Darcs, LaTeX) ]
 > 
 > -- dummy function
-> getLoggedInUser :: GititServerPart (Maybe User)
-> getLoggedInUser = return $ Just $ User "testuser" undefined ""
-> 
+> getLoggedInUser' :: GititServerPart (Maybe User)
+> getLoggedInUser' = return $ Just $ User "testuser" undefined ""
+>
+> -- dummy function
+> loginUser' :: GititServerPart Response
+> loginUser' = ok $ toResponse "done"
+>
 > handlerFor :: Config -> WikiSpec -> ServerPart Response
 > handlerFor conf (path', fstype, pagetype) = dir path' $
 >   wikiHandler conf{ repositoryPath = path'
@@ -61,7 +65,7 @@ under different paths, and uses a custom authentication scheme:
 > 
 > main = do
 >   conf <- getDefaultConfig
->   let conf' = conf{authenticationMethod = CustomAuth getLoggedInUser}
+>   let conf' = conf{getUserHandler = getLoggedInUser', loginUserHandler = loginUser'}
 >   forM wikis $ \(path', fstype, pagetype) -> do
 >     let conf'' = conf'{ repositoryPath = path'
 >                       , repositoryType = fstype
@@ -82,7 +86,6 @@ module Network.Gitit ( initializeGititState
                      , Config(..)
                      , User(..)
                      , Password(..)
-                     , AuthenticationMethod(..)
                      , FileStoreType(..)
                      , PageType(..)
                      , wikiHandler
@@ -92,6 +95,10 @@ module Network.Gitit ( initializeGititState
                      , createStaticIfMissing
                      , reloadTemplates
                      , GititServerPart
+                     , getUserFromSession
+                     , getUserFromHTTPAuth
+                     , loginUserForm
+                     , loginUserHTTP 
                      )
 where
 import Network.Gitit.Types
@@ -100,6 +107,7 @@ import Network.Gitit.Server
 import Network.Gitit.Handlers
 import Network.Gitit.Initialize
 import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
+import Network.Gitit.Authentication
 import Control.Monad.Reader
 import System.FilePath
 import Prelude hiding (readFile)
@@ -113,10 +121,7 @@ wikiHandler conf = do
                          , dir "js"  $ fileServeStrict [] (static </> "js")
                          , ignoreFilters >>  -- don't compress images, pdfs, etc.
                              fileServeStrict [] static ]
-  let handlers = [ debugHandler | debugMode conf] ++
-                 case authenticationMethod conf of
-                     FormAuth -> authHandler : wikiHandlers
-                     _        -> wikiHandlers
+  let handlers = [ debugHandler | debugMode conf] ++ (authHandler : wikiHandlers)
   let fs = filestoreFromConfig conf
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
   if compressResponses conf
@@ -132,8 +137,8 @@ wikiHandlers =
   , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
-  , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm loginUserForm
-  , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile loginUserForm
+  , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm 
+  , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_category" $ path $ categoryPage . decodeString
@@ -145,7 +150,7 @@ wikiHandlers =
       [ showPageHistory
       , guardPath isSourceCode >> showFileHistory ]
   , guardCommand "edit" >>
-      (unlessNoEdit (ifLoggedIn editPage loginUserForm) showPage)
+      (unlessNoEdit (ifLoggedIn editPage) showPage)
   , guardCommand "diff" >> msum
       [ showPageDiff
       , guardPath isSourceCode >> showFileDiff ]
@@ -153,12 +158,12 @@ wikiHandlers =
   , guardCommand "cancel"  >> showPage
   , guardCommand "discuss" >> discussPage
   , guardCommand "update"  >> methodOnly POST >>
-      unlessNoEdit (ifLoggedIn updatePage loginUserForm) showPage
+      unlessNoEdit (ifLoggedIn updatePage) showPage
   , guardCommand "delete"  >> msum
       [ methodOnly GET  >>
-          unlessNoDelete (ifLoggedIn confirmDelete loginUserForm) showPage
+          unlessNoDelete (ifLoggedIn confirmDelete) showPage
       , methodOnly POST >>
-          unlessNoDelete (ifLoggedIn deletePage loginUserForm) showPage ]
+          unlessNoDelete (ifLoggedIn deletePage) showPage ]
   , guardIndex >> indexPage
   , guardPath isPreview >> preview
   , showPage

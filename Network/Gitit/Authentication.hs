@@ -335,15 +335,14 @@ loginForm = do
                      "click here to get a new one."
                  ]
 
+loginUserHTTP :: Handler
+loginUserHTTP = unauthorized $ toResponse "You must be logged in via HTTP authentication."
+
 loginUserForm :: Handler
 loginUserForm = withData $ \params -> do
-  cfg <- getConfig
   referer <- getReferer
-  case authenticationMethod cfg of
-       FormAuth     -> addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer) >>
-                       loginUserForm' params
-       HTTPAuth     -> error "You must be logged in through HTTP authentication."
-       CustomAuth _ -> error "You must be logged in through custom authentication."
+  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer)
+  loginUserForm' params
 
 loginUserForm' :: Params -> Handler
 loginUserForm' _ =

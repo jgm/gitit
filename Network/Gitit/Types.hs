@@ -44,10 +44,6 @@ import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
 
-data AuthenticationMethod = FormAuth
-                          | HTTPAuth
-                          | CustomAuth (GititServerPart (Maybe User)) 
-
 data FileStoreType = Git | Darcs deriving Show
 
 -- | Data structure for information read from config file.
@@ -57,7 +53,8 @@ data Config = Config {
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
-  authenticationMethod :: AuthenticationMethod, -- use forms or HTTP digest?
+  getUserHandler       :: GititServerPart (Maybe User),  -- function to get logged in user
+  loginUserHandler     :: GititServerPart Response, -- handler for login user page
   userFile             :: FilePath,    -- path of users database
   templatesDir         :: FilePath,    -- directory containing page templates
   logFile              :: FilePath,    -- path of server log file
