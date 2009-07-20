@@ -17,7 +17,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- General framework for defining wiki actions. 
 -}
 
-module Network.Gitit.Framework ( getLoggedInUser
+module Network.Gitit.Framework ( getUserFromSession
+                               , getUserFromHTTPAuth
+                               , getLoggedInUser
                                , sessionTime
                                , unlessNoEdit
                                , unlessNoDelete
@@ -63,26 +65,29 @@ import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Happstack.Crypto.Base64 (decode)
 
+getUserFromSession :: GititServerPart (Maybe User)
+getUserFromSession = withData $ \(sk :: Maybe SessionKey) -> do
+  mbSd <- maybe (return Nothing) getSession sk
+  case mbSd of
+       Nothing    -> return Nothing
+       Just sd    -> getUser $! sessionUser sd
+
+getUserFromHTTPAuth :: GititServerPart (Maybe User)
+getUserFromHTTPAuth = do
+  req <- askRq
+  case (getHeader "authorization" req) of
+       Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
+                          Left _  -> return Nothing
+                          Right u -> return $ Just $
+                                       User{ uUsername = u,
+                                             uPassword = undefined,
+                                             uEmail    = "" }
+       Nothing         -> return Nothing
+
 getLoggedInUser :: GititServerPart (Maybe User)
-getLoggedInUser = withData $ \(sk :: Maybe SessionKey) -> do
-  cfg <- getConfig
-  case authenticationMethod cfg of
-       HTTPAuth -> do
-         req <- askRq
-         case (getHeader "authorization" req) of
-              Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
-                                 Left _  -> return Nothing
-                                 Right u -> return $ Just $
-                                              User{ uUsername = u,
-                                                    uPassword = undefined,
-                                                    uEmail    = "" }
-              Nothing         -> return Nothing
-       FormAuth -> do
-         mbSd <- maybe (return Nothing) getSession sk
-         case mbSd of
-              Nothing    -> return Nothing
-              Just sd    -> getUser $! sessionUser sd
-       CustomAuth customGetLoggedInUser -> customGetLoggedInUser
+getLoggedInUser = do
+  handler <- liftM getUserHandler getConfig
+  handler
 
 pAuthorizationHeader :: GenParser Char st String
 pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
@@ -223,28 +228,19 @@ getMimeTypeForExtension ext = do
 
 ifLoggedIn :: Handler
            -> Handler
-           -> Handler
-ifLoggedIn responder fallback = withData $ \(sk :: Maybe SessionKey) -> do
+ifLoggedIn responder = withData $ \(sk :: Maybe SessionKey) -> do
+  user <- getLoggedInUser
   cfg <- getConfig
-  case authenticationMethod cfg of
-       CustomAuth customGetLoggedInUser -> handleCustom customGetLoggedInUser
-       _ -> handle sk
-  where handle sk = do
-          user <- getLoggedInUser
-          case user of
-               Nothing  -> do
-                  localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) fallback
-               Just _   -> do
-                  -- give the user more time...
-                  case sk of
-                       Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
-                       Nothing   -> return ()
-                  responder
-        handleCustom cGetLoggedInUser = do
-          user <- cGetLoggedInUser
-          case user of
-               Nothing  -> fallback
-               Just _   -> responder
+  let loginHandler = loginUserHandler cfg
+  case user of
+       Nothing  -> do
+          localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) loginHandler
+       Just _   -> do
+          -- give the user more time...
+          case sk of
+               Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
+               Nothing   -> return ()
+          responder
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages

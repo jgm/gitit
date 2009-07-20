@@ -27,6 +27,8 @@ module Network.Gitit.Config ( getConfigFromOpts
 where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
+import Network.Gitit.Framework
+import Network.Gitit.Authentication
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import System.Environment
@@ -161,6 +163,7 @@ extractConfig cp = do
                             liftIO $ readFile markupHelpPath
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
+      let authMethod = map toLower cfAuthenticationMethod
 
       let repotype' = case map toLower cfRepositoryType of
                         "git"   -> Git
@@ -173,11 +176,12 @@ extractConfig cp = do
         , defaultPageType      = pt
         , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
-        , authenticationMethod = case (map toLower cfAuthenticationMethod) of
-                                      "form" -> FormAuth
-                                      "http" -> HTTPAuth
-                                      _      -> error
-                                                 "Invalid authentication-method.\nLegal values are: form, http"
+        , getUserHandler       = if authMethod == "form"
+                                    then getUserFromSession
+                                    else getUserFromHTTPAuth
+        , loginUserHandler     = if authMethod == "form"
+                                    then loginUserForm
+                                    else loginUserHTTP
         , userFile             = cfUserFile
         , templatesDir         = cfTemplatesDir
         , logFile              = cfLogFile
