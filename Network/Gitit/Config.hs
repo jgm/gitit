@@ -145,6 +145,11 @@ extractConfig cp = do
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
       cfMailCommand <- get cp "DEFAULT" "mail-command"
       cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
+      cfUseFeed <- get cp "DEFAULT" "use-feed"
+      cfBaseUrl <- get cp "DEFAULT" "base-url"
+      cfWikiTitle <- get cp "DEFAULT" "wiki-title"
+      cfFeedDays <- get cp "DEFAULT" "feed-days"
+      cfFeedRefreshTime <- get cp "DEFAULT" "feed-refresh-time"
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
@@ -205,7 +210,12 @@ extractConfig cp = do
         , jsMath               = False
         , mailCommand          = cfMailCommand
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
-        , markupHelp           = markupHelpText }
+        , markupHelp           = markupHelpText
+        , useFeed              = cfUseFeed
+        , baseUrl              = cfBaseUrl
+        , wikiTitle            = cfWikiTitle
+        , feedDays             = readNumber "feed-days" cfFeedDays
+        , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)

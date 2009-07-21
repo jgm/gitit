@@ -84,7 +84,12 @@ data Config = Config {
   jsMath               :: Bool,        -- true if jsMath files are present
   mailCommand          :: String,      -- command to send notification emails
   resetPasswordMessage :: String,      -- text of password reset email
-  markupHelp           :: String       -- markup syntax help for edit sidebar
+  markupHelp           :: String,      -- markup syntax help for edit sidebar
+  useFeed              :: Bool,        -- provide an atom feed?
+  baseUrl              :: String,      -- base URL of wiki, for use in feed
+  wikiTitle            :: String,      -- title of wiki, used in feed
+  feedDays             :: Integer,     -- number of days history to be included in feed
+  feedRefreshTime      :: Integer      -- number of minutes to cache feeds before refreshing
   }
 
 data Page = Page {
@@ -169,6 +174,7 @@ data PageLayout = PageLayout
   , pgMarkupHelp     :: Maybe String
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
+  , pgLinkToFeed     :: Bool
   }
 
 data Tab = ViewTab

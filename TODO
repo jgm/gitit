@@ -1,9 +1,9 @@
+_ atom feed (see feed branch)
+
 _ use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
   don't have to manually merge changes to templates they haven't
   modified. But this would need good documentation.
-
-_ atom feed (see feed branch)
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?

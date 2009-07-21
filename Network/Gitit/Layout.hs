@@ -50,6 +50,7 @@ defaultPageLayout = PageLayout
   , pgMarkupHelp     = Nothing
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
+  , pgLinkToFeed     = False
   }
 
 -- | Returns formatted page
@@ -77,6 +78,7 @@ defaultRenderPage templ layout htmlContents = do
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
+                   T.setAttribute "feed" (pgLinkToFeed layout) .
                    setStrAttr "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
