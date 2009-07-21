@@ -1,3 +1,5 @@
+_ fix caching issues? see thread in gitit-discuss on alternatives.
+
 _ need also a logout function in config, since custom authentication
   will need a logout as well...  (should we also eliminate "Get account"
   from the default userbox?)
