@@ -238,8 +238,9 @@ cacheHtml :: Html -> ContentTransformer Html
 cacheHtml c = do
   params <- getParams
   file <- getFileName
+  maxsize <- liftM maxCacheSize $ lift getConfig
   cacheable <- getCacheable
-  when (isNothing (pRevision params) && cacheable) $ do
+  when (isNothing (pRevision params) && cacheable && maxsize > 0) $ do
     -- TODO not ideal, since page might have been modified
     -- after being retrieved by pageAsPandoc...
     -- better to have pageAsPandoc return the revision ID too...
@@ -267,8 +268,11 @@ cachedContents :: ContentTransformer (Either (Maybe String) Html)
 cachedContents = do
   file <- getFileName
   params <- getParams
-  cp <- lift $ lookupCache file (pRevision params)
-  maybe (liftM Left rawContents) (return . Right) cp
+  maxsize <- liftM maxCacheSize $ lift getConfig
+  if maxsize > 0
+     then do cp <- lift $ lookupCache file (pRevision params)
+             maybe (liftM Left rawContents) (return . Right) cp
+     else liftM Left rawContents
 
 --
 -- Response-generating combinators

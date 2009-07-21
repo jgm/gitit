@@ -81,6 +81,7 @@ data Config = Config {
   recaptchaPrivateKey  :: String,
   compressResponses    :: Bool,        -- should responses be compressed?
   maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
+                                       -- 0 = don't cache anything
   mimeMap              :: M.Map String String, -- map assoc mime types with file exts
   jsMath               :: Bool,        -- true if jsMath files are present
   mailCommand          :: String,      -- command to send notification emails
