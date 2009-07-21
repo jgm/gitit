@@ -60,6 +60,7 @@ module Network.Gitit.Handlers (
                       , httpAuthHandlers
                       , currentUser
                       , expireCache
+                      , feedHandler
                       )
 where
 import Data.FileStore
@@ -68,9 +69,10 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
+import Network.Gitit.Feed (filestoreToXmlFeed)
 import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
-import Network.Gitit.Cache (expireCachedFile)
+import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (extractCategories)
@@ -89,6 +91,7 @@ import Data.Ord (comparing)
 import Data.Char (toLower)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as S
 import Network.HTTP (urlEncodeVars)
 import Data.DateTime (getCurrentTime, addMinutes)
 import Data.FileStore
@@ -757,3 +760,24 @@ expireCache = do
   -- try it as a page first, then as an uploaded file
   expireCachedFile (pathForPage page) `mplus` expireCachedFile page
   ok $ toResponse ()
+
+feedHandler :: Handler
+feedHandler = do
+  cfg <- getConfig
+  when (not $ useFeed cfg) mzero
+  path' <- getPath     -- e.g. "foo/bar" if they hit /_rss/foo/bar
+  let file = (path' `orIfNull` "[main]") <.> "feed"
+  let mbPath = if null path' then Nothing else Just path'
+  fs <- getFileStore
+  -- first, check for a cached version that is recent enough
+  now <- liftIO $ getClockTime
+  let isRecentEnough t = diffClockTimes now t > noTimeDiff{tdMin = fromIntegral $ feedRefreshTime cfg}
+  mbCached <- lookupCache file
+  case mbCached of
+       Just (modtime, contents) | isRecentEnough modtime -> do
+            let emptyResponse = setContentType "application/atom+xml; charset=utf-8" . toResponse $ ()
+            ok $ emptyResponse{rsBody = B.fromChunks [contents]}
+       _ -> do
+            resp <- liftM toResponse $ liftIO (filestoreToXmlFeed cfg fs mbPath)
+            cacheContents file $ S.concat $ B.toChunks $ rsBody resp
+            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp

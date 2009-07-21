@@ -26,7 +26,8 @@ where
 
 import qualified Data.ByteString as B (ByteString, readFile, writeFile)
 import System.FilePath
-import System.Directory (doesFileExist, removeFile, createDirectoryIfMissing)
+import System.Directory (doesFileExist, removeFile, createDirectoryIfMissing, getModificationTime)
+import System.Time (ClockTime)
 import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
@@ -44,7 +45,7 @@ expireCachedFile file = do
        then liftIO (removeFile target)
        else mzero
 
-lookupCache :: String -> GititServerPart (Maybe B.ByteString)
+lookupCache :: String -> GititServerPart (Maybe (ClockTime, B.ByteString))
 lookupCache file = do
   cfg <- getConfig
   let target = cacheDir cfg </> file
@@ -52,7 +53,10 @@ lookupCache file = do
      then do
        exists <- liftIO $ doesFileExist target
        if exists
-          then liftM Just $ liftIO $ B.readFile target
+          then liftIO $ do
+            modtime <- getModificationTime target
+            contents <- B.readFile target
+            return $ Just (modtime, contents)
           else return Nothing
      else return Nothing
 

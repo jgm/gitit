@@ -110,7 +110,8 @@ runPageTransformer xform = withData $ \params -> do
                                            , pgTitle = page
                                            , pgPrintable = pPrintable params
                                            , pgMessages = pMessages params
-                                           , pgRevision = pRevision params }
+                                           , pgRevision = pRevision params
+                                           , pgLinkToFeed = useFeed cfg }
                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
@@ -129,7 +130,8 @@ runFileTransformer xform = withData $ \params -> do
                                            , pgTitle = file
                                            , pgPrintable = pPrintable params
                                            , pgMessages = pMessages params
-                                           , pgRevision = pRevision params }
+                                           , pgRevision = pRevision params
+                                           , pgLinkToFeed = useFeed cfg }
                             , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
@@ -222,7 +224,7 @@ cachedHtml = do
   if not (pPrintable params) && isNothing (pRevision params)
      then do mbCached <- lift $ lookupCache file
              let emptyResponse = setContentType "text/html; charset=utf-8" . toResponse $ ()
-             maybe mzero (\contents -> lift . ok $ emptyResponse{rsBody = L.fromChunks [contents]}) mbCached
+             maybe mzero (\(_modtime, contents) -> lift . ok $ emptyResponse{rsBody = L.fromChunks [contents]}) mbCached
      else mzero
 
 --

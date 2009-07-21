@@ -142,6 +142,7 @@ wikiHandlers =
   , dir "_upload"   $ methodOnly POST >> requireUser uploadFile
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
+  , dir "_feed"     feedHandler
   , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
   , dir "_expire" $ expireCache
