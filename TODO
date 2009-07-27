@@ -1,8 +1,6 @@
-_ fix caching issues? see thread in gitit-discuss on alternatives.
+_ atom feed
 
-_ need also a logout function in config, since custom authentication
-  will need a logout as well...  (should we also eliminate "Get account"
-  from the default userbox?)
+_ fix caching issues? see thread in gitit-discuss on alternatives.
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
