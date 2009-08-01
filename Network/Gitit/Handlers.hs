@@ -58,6 +58,7 @@ module Network.Gitit.Handlers (
                       , doResetPassword
                       , formAuthHandlers
                       , httpAuthHandlers
+                      , currentUser
                       )
 where
 import Data.FileStore
@@ -73,6 +74,7 @@ import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
 import Network.Gitit.Page (extractCategories)
 import Control.Exception (throwIO, catch, try)
 import Prelude hiding (writeFile, readFile, catch)
+import Data.ByteString.UTF8 (toString)
 import System.Time
 import System.FilePath
 import System.IO.UTF8 (readFile)
@@ -736,4 +738,9 @@ httpAuthHandlers :: [Handler]
 httpAuthHandlers =
   [ dir "_logout" $ logoutUserHTTP
   , dir "_login"  $ withData loginUserHTTP ]
+
+currentUser :: Handler
+currentUser = do
+  req <- askRq
+  ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
 
