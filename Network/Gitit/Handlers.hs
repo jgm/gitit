@@ -734,5 +734,6 @@ formAuthHandlers =
 
 httpAuthHandlers :: [Handler]
 httpAuthHandlers =
-  [ dir "_logout" $ unauthorized $ toResponse () ]
+  [ dir "_logout" $ logoutUserHTTP
+  , dir "_login"  $ withData loginUserHTTP ]
 
