@@ -50,8 +50,7 @@ module Network.Gitit.Page ( stringToPage
                           )
 where
 import Network.Gitit.Types
-import Network.Gitit.Config (parsePageType)
-import Network.Gitit.Util (trim, splitCategories)
+import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
 import Data.List (intercalate)

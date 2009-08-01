@@ -56,7 +56,8 @@ module Network.Gitit.Handlers (
                       , resetPasswordRequest
                       , resetPassword
                       , doResetPassword
-                      , authHandler
+                      , formAuthHandlers
+                      , httpAuthHandlers
                       )
 where
 import Data.FileStore
@@ -718,9 +719,9 @@ categoryListPage = do
                   pgScripts = ["search.js"],
                   pgTitle = "Categories" } htmlMatches
 
-authHandler :: Handler
-authHandler = msum $
-  [ dir "_register"  $ methodSP GET  $ withData registerUserForm
+formAuthHandlers :: [Handler]
+formAuthHandlers =
+  [ dir "_register"  $ methodSP GET  registerUserForm
   , dir "_register"  $ methodSP POST $ withData registerUser
   , dir "_login"     $ methodSP GET  loginUserForm
   , dir "_login"     $ methodSP POST $ withData loginUser
@@ -730,4 +731,8 @@ authHandler = msum $
   , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
   , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
   ]
+
+httpAuthHandlers :: [Handler]
+httpAuthHandlers =
+  [ dir "_logout" $ unauthorized $ toResponse () ]
 

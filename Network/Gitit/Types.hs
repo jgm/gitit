@@ -53,8 +53,8 @@ data Config = Config {
   defaultPageType      :: PageType,    -- default page markup type for this wiki
   defaultLHS           :: Bool,        -- treat as literate haskell by default?
   showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
-  getUserHandler       :: GititServerPart (Maybe User),  -- function to get logged in user
-  loginUserHandler     :: GititServerPart Response, -- handler for login user page
+  withUser             :: Handler -> Handler, -- combinator to set REMOTE_USER request header
+  authHandler          :: Handler,     -- handler for login, logout, register, etc.
   userFile             :: FilePath,    -- path of users database
   templatesDir         :: FilePath,    -- directory containing page templates
   logFile              :: FilePath,    -- path of server log file
@@ -194,7 +194,6 @@ data Params = Params { pUsername     :: String
                      , pPassword2    :: String
                      , pRevision     :: Maybe String
                      , pDestination  :: String
-                     , pUri          :: String
                      , pForUser      :: Maybe String
                      , pSince        :: Maybe DateTime
                      , pRaw          :: String
@@ -235,7 +234,7 @@ instance FromData Params where
          fu <- (liftM Just $ look' "forUser") `mplus` return Nothing
          si <- (liftM (parseDateTime "%Y-%m-%d") $ look' "since")
                  `mplus` return Nothing  -- YYYY-mm-dd format
-         ds <- lookCookieValue "destination" `mplus` return "/"
+         ds <- look' "destination" `mplus` return ""
          ra <- look' "raw"            `mplus` return ""
          lt <- lookRead "limit"       `mplus` return 100
          pa <- look' "patterns"       `mplus` return ""
@@ -270,7 +269,6 @@ instance FromData Params where
                          , pForUser      = fu
                          , pSince        = si
                          , pDestination  = ds
-                         , pUri          = ""       -- gets set by handle...
                          , pRaw          = ra
                          , pLimit        = lt
                          , pPatterns     = words pa

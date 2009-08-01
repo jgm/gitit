@@ -17,8 +17,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- General framework for defining wiki actions. 
 -}
 
-module Network.Gitit.Framework ( getUserFromSession
-                               , getUserFromHTTPAuth
+module Network.Gitit.Framework ( withUserFromSession
+                               , withUserFromHTTPAuth
+                               , requireUserThat
+                               , requireUser
                                , getLoggedInUser
                                , sessionTime
                                , unlessNoEdit
@@ -37,7 +39,6 @@ module Network.Gitit.Framework ( getUserFromSession
                                , urlForPage
                                , pathForPage
                                , getMimeTypeForExtension
-                               , ifLoggedIn
                                , validate
                                , guardCommand
                                , guardPath
@@ -52,7 +53,7 @@ import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
 import Data.FileStore
-import Data.Char (toLower, isAscii, isDigit, isLetter)
+import Data.Char (toLower, isAscii)
 import Control.Monad (mzero, liftM, MonadPlus)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
@@ -64,30 +65,53 @@ import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Happstack.Crypto.Base64 (decode)
+import Network.HTTP (urlEncodeVars)
 
-getUserFromSession :: GititServerPart (Maybe User)
-getUserFromSession = withData $ \(sk :: Maybe SessionKey) -> do
+requireUser :: Handler -> Handler 
+requireUser = requireUserThat (const True)
+
+requireUserThat :: (User -> Bool) -> Handler -> Handler
+requireUserThat predicate handler = do
+  mbUser <- getLoggedInUser
+  rq <- askRq
+  let url = rqURL rq
+  case mbUser of
+       Nothing   -> tempRedirect ("/_login?" ++ urlEncodeVars [("destination",url)]) $ toResponse ()
+       Just u    -> if predicate u
+                       then handler
+                       else error "Not authorized."
+
+withUserFromSession :: Handler -> Handler
+withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
   mbSd <- maybe (return Nothing) getSession sk
-  case mbSd of
-       Nothing    -> return Nothing
-       Just sd    -> getUser $! sessionUser sd
+  mbUser <- case mbSd of
+            Nothing    -> return Nothing
+            Just sd    -> do
+              addCookie sessionTime (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
+              getUser $! sessionUser sd
+  let user = maybe "" uUsername mbUser
+  localRq (setHeader "REMOTE_USER" user) handler
 
-getUserFromHTTPAuth :: GititServerPart (Maybe User)
-getUserFromHTTPAuth = do
+withUserFromHTTPAuth :: Handler -> Handler
+withUserFromHTTPAuth handler = do
   req <- askRq
-  case (getHeader "authorization" req) of
-       Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
-                          Left _  -> return Nothing
-                          Right u -> return $ Just $
-                                       User{ uUsername = u,
-                                             uPassword = undefined,
-                                             uEmail    = "" }
-       Nothing         -> return Nothing
+  let user = case (getHeader "authorization" req) of
+              Nothing         -> ""
+              Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
+                                  Left _  -> ""
+                                  Right u -> u
+  localRq (setHeader "REMOTE_USER" user) handler
 
 getLoggedInUser :: GititServerPart (Maybe User)
 getLoggedInUser = do
-  handler <- liftM getUserHandler getConfig
-  handler
+  req <- askRq
+  case maybe "" toString (getHeader "REMOTE_USER" req) of
+        "" -> return Nothing
+        u  -> do
+          mbUser <- getUser u
+          case mbUser of
+               Just user -> return $ Just user
+               Nothing   -> return $ Just User{uUsername = u, uEmail = "", uPassword = undefined}
 
 pAuthorizationHeader :: GenParser Char st String
 pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
@@ -213,7 +237,7 @@ isPreview x = "/___preview" `isSuffixOf` x
 
 urlForPage :: String -> String -> String
 urlForPage base' page = base' ++ "/" ++
-  encString True (\c -> isAscii c && (isLetter c || isDigit c || c `elem` "/@")) page
+  encString True (\c -> isAscii c && (c `notElem` "?&")) page
 -- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
 pathForPage :: String -> FilePath
@@ -225,22 +249,6 @@ getMimeTypeForExtension ext = do
   return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
                 Nothing -> "application/octet-stream"
                 Just t  -> t
-
-ifLoggedIn :: Handler
-           -> Handler
-ifLoggedIn responder = withData $ \(sk :: Maybe SessionKey) -> do
-  user <- getLoggedInUser
-  cfg <- getConfig
-  let loginHandler = loginUserHandler cfg
-  case user of
-       Nothing  -> do
-          localRq (\rq -> setHeader "referer" (rqUri rq ++ rqQuery rq) rq) loginHandler
-       Just _   -> do
-          -- give the user more time...
-          case sk of
-               Just key  -> addCookie sessionTime (mkCookie "sid" (show key))
-               Nothing   -> return ()
-          responder
 
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages

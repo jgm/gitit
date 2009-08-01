@@ -22,6 +22,7 @@ module Network.Gitit.Util ( inDir
                           , splitCategories
                           , trim
                           , yesOrNo
+                          , parsePageType
                           )
 where
 import System.Directory
@@ -29,6 +30,8 @@ import Control.Exception (bracket)
 import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
+import Data.Char (toLower)
+import Network.Gitit.Types
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a
@@ -72,3 +75,16 @@ trim = reverse . trimLeft . reverse . trimLeft
 yesOrNo :: Bool -> String
 yesOrNo True  = "yes"
 yesOrNo False = "no"
+
+parsePageType :: String -> (PageType, Bool)
+parsePageType s =
+  case map toLower s of
+       "markdown"     -> (Markdown,False)
+       "markdown+lhs" -> (Markdown,True)
+       "rst"          -> (RST,False)
+       "rst+lhs"      -> (RST,True)
+       "html"         -> (HTML,False)
+       "latex"        -> (LaTeX,False)
+       "latex+lhs"    -> (LaTeX,True)
+       x              -> error $ "Unknown page type: " ++ x
+
