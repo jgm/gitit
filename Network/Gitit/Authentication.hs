@@ -27,6 +27,7 @@ import Network.Gitit.Types
 import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.Server
+import Network.Gitit.Util
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
@@ -393,4 +394,13 @@ registerUserForm = registerForm >>=
                     pgTabs = [],
                     pgTitle = "Register for an account"
                     }
+
+loginUserHTTP :: Params -> Handler
+loginUserHTTP params = do
+  base' <- getWikiBase
+  let destination = pDestination params `orIfNull` (base' ++ "/")
+  seeOther (encUrl destination) $ toResponse ()
+
+logoutUserHTTP :: Handler
+logoutUserHTTP = unauthorized $ toResponse ()  -- will this work?
 
