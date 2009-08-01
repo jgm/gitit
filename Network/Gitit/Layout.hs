@@ -68,10 +68,7 @@ defaultRenderPage templ layout htmlContents = do
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
   let scriptLink x = script ! [src (base' ++ "/_static/js/" ++ x),
         thetype "text/javascript"] << noHtml
-  let javascriptlinks = if null (pgScripts layout)
-                           then ""
-                           else renderHtmlFragment $ concatHtml $
-                                map scriptLink scripts
+  let javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
   let pageTitle' = pgTitle layout
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
