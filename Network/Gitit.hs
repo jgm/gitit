@@ -38,26 +38,29 @@ under different paths, and uses a custom authentication scheme:
 > import Control.Monad
 > import Text.XHtml hiding (dir)
 > import Happstack.Server.SimpleHTTP
+> import My.Auth.System (myGetUser, myLoginUser, myLogoutUser)
 > 
 > type WikiSpec = (String, FileStoreType, PageType)
 > 
 > wikis = [ ("markdownWiki", Git, Markdown)
 >         , ("latexWiki", Darcs, LaTeX) ]
 > 
-> -- dummy function
-> getLoggedInUser' :: GititServerPart (Maybe User)
-> getLoggedInUser' = return $ Just $ User "testuser" undefined ""
+> -- custom authentication
+> withUser :: Handler -> Handler
+> withUser handler = do
+>   user <- myGetUser
+>   localRq (setHeader "REMOTE_USER" user) handler
 >
-> -- dummy function
-> loginUser' :: GititServerPart Response
-> loginUser' = ok $ toResponse "done"
+> myAuthHandler = msum
+>   [ dir "_login" myLoginUser
+>   , dir "_logout" myLogoutUser ]
 >
 > handlerFor :: Config -> WikiSpec -> ServerPart Response
 > handlerFor conf (path', fstype, pagetype) = dir path' $
 >   wikiHandler conf{ repositoryPath = path'
 >                   , repositoryType = fstype
 >                   , defaultPageType = pagetype}
-> 
+>
 > indexPage :: ServerPart Response
 > indexPage = ok $ toResponse $
 >   (p << "Wiki index") +++
@@ -65,7 +68,7 @@ under different paths, and uses a custom authentication scheme:
 > 
 > main = do
 >   conf <- getDefaultConfig
->   let conf' = conf{getUserHandler = getLoggedInUser', loginUserHandler = loginUser'}
+>   let conf' = conf{authHandler = myAuthHandler}
 >   forM wikis $ \(path', fstype, pagetype) -> do
 >     let conf'' = conf'{ repositoryPath = path'
 >                       , repositoryType = fstype
@@ -95,10 +98,7 @@ module Network.Gitit ( initializeGititState
                      , createStaticIfMissing
                      , reloadTemplates
                      , GititServerPart
-                     , getUserFromSession
-                     , getUserFromHTTPAuth
                      , loginUserForm
-                     , loginUserHTTP 
                      )
 where
 import Network.Gitit.Types
@@ -121,13 +121,13 @@ wikiHandler conf = do
                          , dir "js"  $ fileServeStrict [] (static </> "js")
                          , ignoreFilters >>  -- don't compress images, pdfs, etc.
                              fileServeStrict [] static ]
-  let handlers = [ debugHandler | debugMode conf] ++ (authHandler : wikiHandlers)
+  let handlers = [ debugHandler | debugMode conf] ++ (authHandler conf : wikiHandlers)
   let fs = filestoreFromConfig conf
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
   if compressResponses conf
      then compressedResponseFilter
      else return ""
-  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $ msum handlers)
+  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $ withUser conf $ msum handlers)
 
 wikiHandlers :: [Handler]
 wikiHandlers =
@@ -137,8 +137,8 @@ wikiHandlers =
   , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
-  , dir "_upload"   $ methodOnly GET  >> ifLoggedIn uploadForm 
-  , dir "_upload"   $ methodOnly POST >> ifLoggedIn uploadFile
+  , dir "_upload"   $ methodOnly GET  >> requireUser uploadForm 
+  , dir "_upload"   $ methodOnly POST >> requireUser uploadFile
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_category" $ path $ categoryPage . decodeString
@@ -150,7 +150,7 @@ wikiHandlers =
       [ showPageHistory
       , guardPath isSourceCode >> showFileHistory ]
   , guardCommand "edit" >>
-      (unlessNoEdit (ifLoggedIn editPage) showPage)
+      (requireUser $ unlessNoEdit editPage showPage)
   , guardCommand "diff" >> msum
       [ showPageDiff
       , guardPath isSourceCode >> showFileDiff ]
@@ -158,12 +158,12 @@ wikiHandlers =
   , guardCommand "cancel"  >> showPage
   , guardCommand "discuss" >> discussPage
   , guardCommand "update"  >> methodOnly POST >>
-      unlessNoEdit (ifLoggedIn updatePage) showPage
+      requireUser (unlessNoEdit updatePage showPage)
   , guardCommand "delete"  >> msum
       [ methodOnly GET  >>
-          unlessNoDelete (ifLoggedIn confirmDelete) showPage
+          requireUser (unlessNoDelete confirmDelete showPage)
       , methodOnly POST >>
-          unlessNoDelete (ifLoggedIn deletePage) showPage ]
+          requireUser (unlessNoDelete deletePage showPage) ]
   , guardIndex >> indexPage
   , guardPath isPreview >> preview
   , showPage

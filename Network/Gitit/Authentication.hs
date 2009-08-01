@@ -35,12 +35,14 @@ import Control.Monad (unless, liftM)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
-import Data.Char (isAlphaNum, isAlpha)
+import Data.Char (isAlphaNum, isAlpha, isAscii)
 import Text.Pandoc.Shared (substitute)
 import Data.Maybe (isJust, fromJust)
-import Network.URL
+import Network.URL (encString, exportURL, add_param, importURL)
 import Network.BSD (getHostName)
 import qualified Text.StringTemplate as T
+import Network.HTTP (urlEncodeVars)
+import Codec.Binary.UTF8.String (encodeString) 
 
 data ValidationType = Register
                     | ResetPassword
@@ -200,8 +202,11 @@ resetPasswordForm :: Maybe User -> GititServerPart Html
 resetPasswordForm = sharedForm  -- synonym for now
 
 sharedForm :: Maybe User -> GititServerPart Html
-sharedForm mbUser = do
+sharedForm mbUser = withData $ \params -> do
   cfg <- getConfig
+  dest <- case pDestination params of
+                ""  -> getReferer
+                x   -> return x
   let accessQ = case accessQuestion cfg of
                       Nothing          -> noHtml
                       Just (prompt, _) -> label << prompt +++ br +++
@@ -243,6 +248,7 @@ sharedForm mbUser = do
             , stringToHtml " "
             , br
             , captcha
+            , textfield "destination" ! [thestyle "display: none;", value dest]
             , submitField ! [intAttr "tabindex" 6]]
 
 
@@ -311,8 +317,8 @@ sharedValidation validationType params = do
   return $ if null errors then Right (uname, email, pword) else Left errors
 
 -- user authentication
-loginForm :: GititServerPart Html
-loginForm = do
+loginForm :: String -> GititServerPart Html
+loginForm dest = do
   cfg <- getConfig
   base' <- getWikiBase
   return $ gui (base' ++ "/_login") ! [identifier "loginForm"] <<
@@ -323,10 +329,12 @@ loginForm = do
       , label << "Password "
       , X.password "password" ! [size "15", intAttr "tabindex" 2]
       , stringToHtml " "
+      , textfield "destination" ! [thestyle "display: none;", value dest]
       , submit "login" "Login" ! [intAttr "tabindex" 3]
       ] +++
     p << [ stringToHtml "If you do not have an account, "
-         , anchor ! [href $ base' ++ "/_register"] << "click here to get one."
+         , anchor ! [href $ base' ++ "/_register?" ++
+           urlEncodeVars [("destination", encodeString dest)]] << "click here to get one."
          ] +++
     if null (mailCommand cfg)
        then noHtml
@@ -335,22 +343,17 @@ loginForm = do
                      "click here to get a new one."
                  ]
 
-loginUserHTTP :: Handler
-loginUserHTTP = unauthorized $ toResponse "You must be logged in via HTTP authentication."
-
 loginUserForm :: Handler
 loginUserForm = withData $ \params -> do
-  referer <- getReferer
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" referer)
-  loginUserForm' params
-
-loginUserForm' :: Params -> Handler
-loginUserForm' _ =
-  loginForm >>= formattedPage defaultPageLayout{
-                                pgShowPageTools = False,
-                                pgTabs = [],
-                                pgTitle = "Login"
-                                }
+  dest <- case pDestination params of
+                ""  -> getReferer
+                x   -> return x
+  loginForm dest >>=
+    formattedPage defaultPageLayout{ pgShowPageTools = False,
+                                     pgTabs = [],
+                                     pgTitle = "Login",
+                                     pgMessages = pMessages params
+                                   }
 
 loginUser :: Params -> Handler
 loginUser params = do
@@ -358,39 +361,33 @@ loginUser params = do
   let pword = pPassword params
   let destination = pDestination params
   allowed <- authUser uname pword
-  base' <- getWikiBase
   if allowed
     then do
       key <- newSession (SessionData uname)
       addCookie sessionTime (mkCookie "sid" (show key))
-      -- remove unneeded destination cookie
-      addCookie 0 (mkCookie "destination" base')
-      seeOther destination $ toResponse $ p << ("Welcome, " ++ uname)
+      seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      loginUserForm'
-         params{ pMessages = "Authentication failed." : pMessages params }
+      loginUserForm
+
+encUrl :: String -> String
+encUrl = encString True isAscii
 
 logoutUser :: Params -> Handler
 logoutUser params = do
   let key = pSessionKey params
-  referer <- getReferer
-  let destination = substitute " " "%20" referer
+  dest <- case pDestination params of
+                ""  -> getReferer
+                x   -> return x
   case key of
        Just k  -> do
          delSession k
          -- make cookie expire immediately, effectively deleting it
          addCookie 0 (mkCookie "sid" "-1")
        Nothing -> return ()
-  seeOther destination $ toResponse "You have been logged out."
+  seeOther (encUrl dest) $ toResponse "You have been logged out."
 
-registerUserForm :: Params -> Handler
-registerUserForm params = do
-  referer <- getReferer
-  let destination = case pDestination params of
-                          ""  -> referer
-                          x   -> x   -- came from login page, preserve prev dest
-  addCookie (60 * 10) (mkCookie "destination" $ substitute " " "%20" destination)
-  registerForm >>=
+registerUserForm :: Handler
+registerUserForm = registerForm >>=
     formattedPage defaultPageLayout{
                     pgShowPageTools = False,
                     pgTabs = [],

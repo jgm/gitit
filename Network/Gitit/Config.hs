@@ -21,14 +21,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Config ( getConfigFromOpts
-                            , parsePageType
                             , readMimeTypesFile
                             , getDefaultConfig )
 where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
-import Network.Gitit.Authentication
+import Network.Gitit.Handlers (formAuthHandlers, httpAuthHandlers)
+import Network.Gitit.Util (parsePageType)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import System.Environment
@@ -97,18 +97,6 @@ compileInfo =
   " -plugins"
 #endif
 
-parsePageType :: String -> (PageType, Bool)
-parsePageType s =
-  case map toLower s of
-       "markdown"     -> (Markdown,False)
-       "markdown+lhs" -> (Markdown,True)
-       "rst"          -> (RST,False)
-       "rst+lhs"      -> (RST,True)
-       "html"         -> (HTML,False)
-       "latex"        -> (LaTeX,False)
-       "latex+lhs"    -> (LaTeX,True)
-       x              -> error $ "Unknown page type: " ++ x
-
 forceEither :: Show e => Either e a -> a
 forceEither = either (\e -> error (show e)) id
 
@@ -176,12 +164,14 @@ extractConfig cp = do
         , defaultPageType      = pt
         , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
-        , getUserHandler       = if authMethod == "form"
-                                    then getUserFromSession
-                                    else getUserFromHTTPAuth
-        , loginUserHandler     = if authMethod == "form"
-                                    then loginUserForm
-                                    else loginUserHTTP
+        , withUser             = case authMethod of
+                                      "form"     -> withUserFromSession
+                                      "http"     -> withUserFromHTTPAuth
+                                      _          -> id
+        , authHandler          = case authMethod of
+                                      "form"     -> msum formAuthHandlers
+                                      "http"     -> msum httpAuthHandlers
+                                      _          -> mzero
         , userFile             = cfUserFile
         , templatesDir         = cfTemplatesDir
         , logFile              = cfLogFile

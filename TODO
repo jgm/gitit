@@ -1,3 +1,7 @@
+_ redirects in login with unicode urls are broken
+
+...
+
 _ atom feed
 
 _ fix caching issues? see thread in gitit-discuss on alternatives.
