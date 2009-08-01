@@ -1,6 +1,4 @@
-_ redirects in login with unicode urls are broken
-
-...
+_ make userbox ajax, so we can cache whole pages
 
 _ atom feed
 
