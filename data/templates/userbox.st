@@ -1,7 +1,4 @@
 <div id="userbox">
-  $if(user)$
-  <a href="$base$/_logout">Logout $user$</a>
-  $else$
-  <a href="$base$/_login">Login / create an account</a>
-  $endif$
+  <a id="loginlink" href="$base$/_login">Login / Get an account</a>
+  <a id="logoutlink" href="$base$/_logout">Logout <span id="username"></span></a>
 </div>
