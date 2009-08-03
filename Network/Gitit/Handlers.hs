@@ -739,6 +739,7 @@ httpAuthHandlers =
   [ dir "_logout" $ logoutUserHTTP
   , dir "_login"  $ withData loginUserHTTP ]
 
+-- | Returns username of logged in user or null string if nobody logged in.
 currentUser :: Handler
 currentUser = do
   req <- askRq
