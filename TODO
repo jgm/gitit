@@ -1,6 +1,6 @@
 _ make userbox ajax, so we can cache whole pages
 
-_ atom feed
+_ atom feed (see feed branch)
 
 _ fix caching issues? see thread in gitit-discuss on alternatives.
 
@@ -14,9 +14,6 @@ _ document HTTP auth setup in README
 _ add "logout" link for HTTP auth?  This could have the server
   return an HTTP 401 (unauthorized), which should force the browser
   to ask for credentials...
-
-_ rss feed for individual page changes & Recent Activity?  
-  see the rss library (Text.RSS) on HackageDB.  see gwern's partial patch.
 
 _ improve support for categories:
   _ categories in a tree structure
