@@ -1,8 +1,7 @@
-_ make userbox ajax, so we can cache whole pages
-
 _ atom feed (see feed branch)
 
 _ fix caching issues? see thread in gitit-discuss on alternatives.
+x make userbox ajax, so we can cache whole pages
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
