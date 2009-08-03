@@ -63,7 +63,6 @@ defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
   let rev  = pgRevision layout
   let page = pgPageName layout
-  user <- getLoggedInUser
   base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
   let scriptLink x = script ! [src (base' ++ "/_static/js/" ++ x),
@@ -82,9 +81,6 @@ defaultRenderPage templ layout htmlContents = do
                    setStrAttr "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
-                   (case user of
-                         Just u     -> setStrAttr "user" (uUsername u)
-                         Nothing    -> id) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
