@@ -32,7 +32,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      img/icons/page.png, img/icons/pdf.png, img/icons/tick.png,
                      img/icons/xls.png,
                      js/dragdiff.js, js/jquery.min.js, js/uploadForm.js,
-                     js/jquery-ui.packed.js,
+                     js/jquery-ui.packed.js, js/jquery.hotkeys-0.7.9.min.js,
                      js/preview.js, js/search.js,
                      data/post-update, data/FrontPage.page, data/Help.page,
                      data/markup.Markdown, data/markup.RST,
@@ -43,6 +43,7 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      data/templates/logo.st, data/templates/markuphelp.st,
                      data/templates/pagetools.st, data/templates/sitenav.st,
                      data/templates/messages.st, data/templates/listitem.st,
+                     data/templates/expire.st, data/templates/getuser.st,
                      data/markupHelp/Markdown, data/markupHelp/Markdown+LHS,
                      data/markupHelp/RST, data/markupHelp/RST+LHS,
                      data/markupHelp/LaTeX, data/markupHelp/LaTeX+LHS,
@@ -71,7 +72,7 @@ Library
                      Network.Gitit.ContentTransformer, Network.Gitit.Initialize,
                      Network.Gitit.Config, Network.Gitit.Framework, Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Paths_gitit, Network.Gitit.Authentication,
-                     Network.Gitit.Page
+                     Network.Gitit.Page, Network.Gitit.Cache
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all

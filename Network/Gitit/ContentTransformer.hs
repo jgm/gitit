@@ -34,17 +34,11 @@ module Network.Gitit.ContentTransformer
   , showFile
   , preview
   , applyPreCommitPlugins
-  -- Cache-aware transformer combinators
-  , mbContentsToWikiPandocPageCached
-  , pandocToWikiDivCached
-  , highlightSourceCached
   -- Cache support for transformers
-  , skipIfCached
-  , useCache
   , cacheHtml
+  , cachedHtml
   -- Content retrieval combinators
   , rawContents
-  , cachedContents
   -- Response-generating combinators
   , textResponse
   , mimeFileResponse
@@ -52,14 +46,11 @@ module Network.Gitit.ContentTransformer
   , exportPandoc
   , applyWikiTemplate
   -- Content-type transformation combinators
-  , mbPageToWikiPandocPage
   , pageToWikiPandocPage
   , pageToWikiPandoc
   , pageToPandoc
-  , maybePandocToHtml
   , pandocToHtml
   , highlightSource
-  , pandocToWikiDiv
   -- Content or context augmentation combinators
   , applyPageTransforms
   , wikiDivify
@@ -86,6 +77,7 @@ import Network.Gitit.Types
 import Network.Gitit.Layout
 import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Page (stringToPage)
+import Network.Gitit.Cache (lookupCache, cacheContents)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc
@@ -99,6 +91,8 @@ import Control.Monad.State
 import Control.Exception (throwIO, catch)
 import Network.HTTP (urlEncodeVars)
 import Network.URI (isAllowedInURI, escapeURIString)
+import qualified Data.ByteString as S (concat) 
+import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 
 --
 -- ContentTransformer runners
@@ -184,70 +178,52 @@ rawTextResponse :: ContentTransformer Response
 rawTextResponse = rawContents >>= textResponse
 
 exportViaPandoc :: ContentTransformer Response
-exportViaPandoc = rawContents >>= mbContentsToPage >>= mbPageToWikiPandocPage >>= exportPandoc
+exportViaPandoc = rawContents >>= maybe mzero return >>= contentsToPage >>= pageToWikiPandocPage >>= exportPandoc
 
 htmlViaPandoc :: ContentTransformer Response
-htmlViaPandoc = cachedContents >>=
-                mbContentsToWikiPandocPageCached >>=
-                pandocToWikiDivCached >>=
-                addMathSupport >>=
-                applyWikiTemplate
+htmlViaPandoc = cachedHtml `mplus`
+                  (rawContents >>=
+                   maybe mzero return >>=
+                   contentsToPage >>=
+                   pageToWikiPandoc >>=
+                   addMathSupport >>=
+                   pandocToHtml >>=
+                   wikiDivify >>=
+                   applyWikiTemplate >>=
+                   cacheHtml)
 
 highlightRawSource :: ContentTransformer Response
-highlightRawSource = do
-    updateLayout $ \l -> l { pgTabs = [ViewTab,HistoryTab] }
-    cachedContents >>= highlightSourceCached >>= applyWikiTemplate
-
---
--- Cache-aware transformer combinators
---
-
-mbContentsToWikiPandocPageCached :: Either (Maybe String) Html
-                                 -> ContentTransformer (Either (Maybe Pandoc) Html)
-mbContentsToWikiPandocPageCached = skipIfCached (mbContentsToPage >=> mbPageToWikiPandocPage)
-
-pandocToWikiDivCached :: Either (Maybe Pandoc) Html -> ContentTransformer Html
-pandocToWikiDivCached = useCache pandocToWikiDiv
-
-highlightSourceCached :: Either (Maybe String) Html -> ContentTransformer Html
-highlightSourceCached = useCache highlightSource
+highlightRawSource =
+  cachedHtml `mplus`
+    (updateLayout (\l -> l { pgTabs = [ViewTab,HistoryTab] }) >> 
+     rawContents >>=
+     highlightSource >>=
+     applyWikiTemplate >>=
+     cacheHtml)
 
 --
 -- Cache support for transformers
 --
 
--- | Returns a cache-aware version of the provided transformer.  The returned
--- transformer, when applied to cached content represented as (Right c),
--- returns the cache unchanged.  The provided transformer is only evaluated
--- when uncached content is provided, represented as (Left x).
-skipIfCached :: (Monad m) => (a -> m b) -> Either a c -> m (Either b c)
-skipIfCached f (Left x)  = liftM Left (f x)
-skipIfCached _ (Right c) = return (Right c)
-
--- | Returns a cache-enabled version of the provided transformer.  The returned
--- transformer either returns the contents of the cache, if any, or applies the
--- provided transformer to the uncached content, and caches and returns the
--- result.
-useCache :: (a -> ContentTransformer Html)
-         -> Either a Html
-         -> ContentTransformer Html
-useCache f (Left c)  = f c >>= cacheHtml
-useCache _ (Right c) = return c
-
-cacheHtml :: Html -> ContentTransformer Html
-cacheHtml c = do
+cacheHtml :: Response -> ContentTransformer Response 
+cacheHtml resp = do
   params <- getParams
   file <- getFileName
-  maxsize <- liftM maxCacheSize $ lift getConfig
   cacheable <- getCacheable
-  when (isNothing (pRevision params) && cacheable && maxsize > 0) $ do
-    -- TODO not ideal, since page might have been modified
-    -- after being retrieved by pageAsPandoc...
-    -- better to have pageAsPandoc return the revision ID too...
-    fs <- lift getFileStore
-    rev <- liftIO $ FS.latest fs file
-    lift $ cacheContents file rev c
-  return c
+  when (isNothing (pRevision params) && cacheable) $
+    lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp 
+  return resp 
+
+-- | Returns cached page if available, otherwise mzero.
+cachedHtml :: ContentTransformer Response
+cachedHtml = do
+  file <- getFileName
+  params <- getParams
+  if isNothing (pRevision params)
+     then do mbCached <- lift $ lookupCache file
+             let emptyResponse = setContentType "text/html; charset=utf-8" . toResponse $ ()
+             maybe mzero (\contents -> lift . ok $ emptyResponse{rsBody = L.fromChunks [contents]}) mbCached
+     else mzero
 
 --
 -- Content retrieval combinators
@@ -262,17 +238,6 @@ rawContents = do
   let rev = pRevision params
   liftIO $ catch (liftM Just $ FS.retrieve fs file rev)
                  (\e -> if e == FS.NotFound then return Nothing else throwIO e)
-
--- | Returns cached page if available, otherwise raw file contents
-cachedContents :: ContentTransformer (Either (Maybe String) Html)
-cachedContents = do
-  file <- getFileName
-  params <- getParams
-  maxsize <- liftM maxCacheSize $ lift getConfig
-  if maxsize > 0
-     then do cp <- lift $ lookupCache file (pRevision params)
-             maybe (liftM Left rawContents) (return . Right) cp
-     else liftM Left rawContents
 
 --
 -- Response-generating combinators
@@ -292,9 +257,8 @@ mimeResponse c mimeType =
   return . setContentType mimeType . toResponse $ c
 
 -- | Exports Pandoc as Response using format specified in Params
-exportPandoc :: Maybe Pandoc -> ContentTransformer Response
-exportPandoc Nothing = error "Unable to retrieve page contents."
-exportPandoc (Just doc) = do
+exportPandoc :: Pandoc -> ContentTransformer Response
+exportPandoc doc = do
   params <- getParams
   page <- getPageName
   let format = pFormat params
@@ -310,11 +274,6 @@ applyWikiTemplate c = do
 --
 -- Content-type transformation combinators
 --
-
--- | Same as pageToWikiPandocPage, with support for Maybe values
-mbPageToWikiPandocPage :: Maybe Page -> ContentTransformer (Maybe Pandoc)
-mbPageToWikiPandocPage Nothing  = mzero
-mbPageToWikiPandocPage (Just c) = return . Just =<< pageToWikiPandocPage c
 
 -- | Converts Page to Pandoc, applies page transforms, and adds page
 -- title to Pandoc meta info
@@ -334,20 +293,12 @@ pageToPandoc page' = do
                              , ctxCategories = pageCategories page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
-mbContentsToPage :: Maybe String -> ContentTransformer (Maybe Page)
-mbContentsToPage Nothing = mzero
-mbContentsToPage (Just s) = return . Just =<< contentsToPage s
-
 -- | Converts contents of page file to Page object
 contentsToPage :: String -> ContentTransformer Page
 contentsToPage s = do
   cfg <- lift getConfig
   pn <- getPageName
   return $ stringToPage cfg pn s
-
--- | Same as pandocToHtml, with support for Maybe values
-maybePandocToHtml :: Maybe Pandoc -> ContentTransformer Html
-maybePandocToHtml = maybe mzero pandocToHtml
 
 -- | Converts pandoc document to HTML.
 pandocToHtml :: Pandoc -> ContentTransformer Html
@@ -371,9 +322,6 @@ highlightSource (Just source) = do
   case highlightAs lang' (filter (/='\r') source) of
        Left _       -> mzero
        Right res    -> return $ formatAsXHtml [OptNumberLines] lang' $! res
-
-pandocToWikiDiv :: Maybe Pandoc -> ContentTransformer Html
-pandocToWikiDiv = maybePandocToHtml >=> wikiDivify
 
 --
 -- Plugin combinators

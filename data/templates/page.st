@@ -39,15 +39,7 @@
         </div>
     </div>
     $javascripts$
-    <script type="text/javascript">
-      \$.get("$base$/_user", {}, function(username, status) {
-            \$("#username").text(username);
-            if (username == "") {  // nobody logged in
-               \$("#logoutlink").hide();
-            } else {
-               \$("#loginlink").hide();
-            };
-          });
-    </script>
+    $expire()$
+    $getuser()$
   </body>
 </html>
