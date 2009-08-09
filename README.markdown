@@ -185,6 +185,25 @@ title
 :   By default the displayed page title is the page name.  This metadata element
     overrides that default.
 
+Caching
+-------
+
+By default, gitit caches rendered pages and highlighted source
+code files in the `cache` directory. (This can be changed by modifying
+the `use-cache` and `cache-dir` options in the configuration file; see
+below for information about configuring gitit.)
+
+Cached pages are updated when pages are modified using the web
+interface.  They are not updated when pages are modified directly
+through git or darcs.  However, the cache can be refreshed manually
+by pressing Ctrl-R when viewing a page, or by sending a POST
+request to `/_expire` with `pageName` set to the name of the page.
+
+Users who frequently update pages using git or darcs may wish
+to set `use-cache` to `no`, or alternatively to add a hook to
+the repository that makes the appropriate POST request to expire
+pages when they are updated.
+
 Configuring gitit
 =================
 

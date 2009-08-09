@@ -59,6 +59,7 @@ module Network.Gitit.Handlers (
                       , formAuthHandlers
                       , httpAuthHandlers
                       , currentUser
+                      , expireCache
                       )
 where
 import Data.FileStore
@@ -69,6 +70,7 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
+import Network.Gitit.Cache (expireCachedFile)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (extractCategories)
@@ -217,6 +219,7 @@ uploadFile = withData $ \(params :: Params) -> do
                  ]
   if null errors
      then do
+       expireCachedFile wikiname `mplus` return ()
        liftIO $ save fs wikiname (Author user email) logMsg fileContents
        let contents = thediv <<
              [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
@@ -510,6 +513,7 @@ editPage = withData $ \(params :: Params) -> do
                           strAttr "style" "color: gray"]
                     else []
   base' <- getWikiBase
+  cfg <- getConfig
   let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
                    [ sha1Box
                    , textarea ! (readonly ++ [cols "80", name "editedText",
@@ -535,7 +539,7 @@ editPage = withData $ \(params :: Params) -> do
                   pgRevision = rev,
                   pgShowPageTools = False,
                   pgShowSiteNav = False,
-                  pgShowMarkupHelp = True,
+                  pgMarkupHelp = Just $ markupHelp cfg,
                   pgSelectedTab = EditTab,
                   pgScripts = ["preview.js"],
                   pgTitle = ("Editing " ++ page)
@@ -614,7 +618,9 @@ updatePage = withData $ \(params :: Params) -> do
                        then liftIO $ create fs (pathForPage page)
                                        (Author user email) logMsg editedText >>
                                      return (Right ())
-                       else liftIO $ catch (modify fs (pathForPage page)
+                       else do
+                         expireCachedFile (pathForPage page) `mplus` return ()
+                         liftIO $ catch (modify fs (pathForPage page)
                                             oldSHA1 (Author user email) logMsg
                                             editedText)
                                      (\e -> if e == Unchanged
@@ -745,3 +751,8 @@ currentUser = do
   req <- askRq
   ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
 
+expireCache :: PageName -> Handler
+expireCache (PageName pn) = do
+  -- try it as a page first, then as an uploaded file
+  expireCachedFile (pathForPage pn) `mplus` expireCachedFile pn
+  ok $ toResponse ()

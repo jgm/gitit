@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Types where
 
-import System.Time (ClockTime)
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
 import Control.Monad (liftM)
@@ -32,7 +31,6 @@ import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
 import qualified Data.ByteString.Lazy.UTF8 as L (ByteString)
 import qualified Data.ByteString.Lazy as L (empty)
-import qualified Data.ByteString.UTF8 as B (ByteString)
 import qualified Data.Map as M
 import Data.DateTime
 import Data.List (intersect)
@@ -80,8 +78,8 @@ data Config = Config {
   recaptchaPublicKey   :: String,
   recaptchaPrivateKey  :: String,
   compressResponses    :: Bool,        -- should responses be compressed?
-  maxCacheSize         :: Integer,     -- max size (bytes) of memory page cache
-                                       -- 0 = don't cache anything
+  useCache             :: Bool,        -- should responses be cached?
+  cacheDir             :: FilePath,    -- directory to hold cached pages
   mimeMap              :: M.Map String String, -- map assoc mime types with file exts
   jsMath               :: Bool,        -- true if jsMath files are present
   mailCommand          :: String,      -- command to send notification emails
@@ -121,7 +119,6 @@ data User = User {
 data GititState = GititState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
-  cache          :: Cache,
   templatesPath  :: FilePath,
   renderPage     :: PageLayout -> Html -> Handler,
   plugins        :: [Plugin]
@@ -169,7 +166,7 @@ data PageLayout = PageLayout
   , pgScripts        :: [String]
   , pgShowPageTools  :: Bool
   , pgShowSiteNav    :: Bool
-  , pgShowMarkupHelp :: Bool
+  , pgMarkupHelp     :: Maybe String
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   }
@@ -188,6 +185,11 @@ data Recaptcha = Recaptcha {
 
 instance FromData SessionKey where
      fromData = readCookieValue "sid"
+
+newtype PageName = PageName String
+
+instance FromData PageName where
+     fromData = liftM PageName $ look "pageName"
 
 data Params = Params { pUsername     :: String
                      , pPassword     :: String
@@ -305,7 +307,7 @@ instance FromData Command where
        return $ case map fst pairs `intersect` commandList of
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
-               where commandList = ["page", "request", "params", "edit",
+               where commandList = ["page", "request", "params", "edit", "expire",
                                     "showraw", "history", "export", "diff",
                                     "cancel", "update", "delete", "discuss"]
 
@@ -317,15 +319,3 @@ data WikiState = WikiState {
 type GititServerPart = ServerPartT (ReaderT WikiState IO)
 
 type Handler = GititServerPart Response
-
-data CachedPage = CachedPage {
-    cpContents        :: B.ByteString
-  , cpRevisionId      :: RevisionId
-  , cpLastAccessTime  :: ClockTime
-  } deriving Show
-
-data Cache = Cache {
-    cachePages :: M.Map (String, String) CachedPage
-  , cacheSize  :: Integer
-}
-

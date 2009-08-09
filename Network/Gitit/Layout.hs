@@ -36,6 +36,7 @@ import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing, isJust, fromJust)
+import Text.Pandoc.Shared (substitute)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -47,7 +48,7 @@ defaultPageLayout = PageLayout
   , pgScripts        = []
   , pgShowPageTools  = True
   , pgShowSiteNav    = True
-  , pgShowMarkupHelp = False
+  , pgMarkupHelp     = Nothing
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   }
@@ -73,7 +74,6 @@ defaultRenderPage templ layout htmlContents = do
                      then li ! [theclass "selected"]
                      else li
   let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) (pgTabs layout)
-  cfg <- getConfig
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
   let filledTemp = T.render .
@@ -81,17 +81,14 @@ defaultRenderPage templ layout htmlContents = do
                    setStrAttr "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
+                   setStrAttr "jspagename" (substitute "\"" "\\\"" page) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
-                   (if pgShowMarkupHelp layout
-                       then T.setAttribute "markuphelp" (markupHelp cfg)
-                       else id) .
+                   maybe id (T.setAttribute "markuphelp") (pgMarkupHelp layout) .
                    setBoolAttr "printable" (pgPrintable layout) .
                    setBoolAttr "nothead" (isJust rev) .
-                   (if isJust rev
-                       then T.setAttribute "revision" (fromJust rev)
-                       else id) .
+                   maybe id (T.setAttribute "revision") rev .
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .

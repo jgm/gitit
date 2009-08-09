@@ -25,23 +25,17 @@ import qualified Data.Map as M
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
-import qualified Data.ByteString.UTF8 as B (fromString, toString, length)
-import System.Time (getClockTime)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
-import Control.Exception (try, throwIO)
 import Control.Monad.Reader
 import Data.FileStore
-import Data.List (intercalate, minimumBy)
-import Data.Ord (comparing)
-import Text.XHtml (Html, renderHtmlFragment, primHtml)
+import Data.List (intercalate)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
 
 gititstate :: IORef GititState
 gititstate = unsafePerformIO $  newIORef  GititState { sessions = undefined
                                                      , users = undefined
-                                                     , cache = undefined
                                                      , templatesPath = undefined
                                                      , renderPage = undefined
                                                      , plugins = undefined }
@@ -52,85 +46,8 @@ updateGititState fn = liftIO $! atomicModifyIORef gititstate $ \st -> (fn st, ()
 queryGititState :: MonadIO m => (GititState -> a) -> m a
 queryGititState fn = liftM fn $ liftIO $! readIORef gititstate
 
-emptyCache :: Cache
-emptyCache = Cache M.empty 0
-
 debugMessage :: String -> GititServerPart ()
 debugMessage msg = liftIO $ logM "gitit" DEBUG msg
-
-updateCachedPageTimestamp :: Cache -> String -> GititServerPart ()
-updateCachedPageTimestamp cache' page = do
-  now <- liftIO getClockTime
-  repo <- liftM repositoryPath getConfig
-  let setTimeStamp Nothing   = Nothing
-      setTimeStamp (Just cp) = Just cp{ cpLastAccessTime = now }
-  let newcache = cache'{ cachePages = 
-                     M.alter setTimeStamp (repo, page) (cachePages cache') }
-  updateGititState $ \s -> s {cache = newcache }
-
-lookupCache :: String -> (Maybe RevisionId) -> GititServerPart (Maybe Html)
-lookupCache file (Just revid) = do
-  c <- queryGititState cache
-  fs <- getFileStore
-  repo <- liftM repositoryPath getConfig
-  case M.lookup (repo, file) (cachePages c) of
-       Just cp | idsMatch fs (cpRevisionId cp) revid -> do
-                   debugMessage $ "Retrieving " ++ file ++
-                      " from cache for " ++ repo
-                   updateCachedPageTimestamp c file
-                   return $ Just $ primHtml $ B.toString $ cpContents cp
-       _        -> return Nothing
-lookupCache file Nothing = do
-  fs <- getFileStore
-  latestRes <- liftIO $ try (latest fs file)
-  case latestRes of
-       Right latestid  -> lookupCache file (Just latestid)
-       Left NotFound   -> return Nothing
-       Left e          -> liftIO $ throwIO e
-
-cacheContents :: String -> RevisionId -> Html -> GititServerPart ()
-cacheContents file revid contents = do
-  c <- queryGititState cache
-  repo <- liftM repositoryPath getConfig
-  let oldsize = case M.lookup (repo, file) (cachePages c) of
-                     Just cp  -> fromIntegral $ B.length $ cpContents cp
-                     Nothing  -> 0
-  let contentsBS = B.fromString $! renderHtmlFragment contents
-  let newsize = fromIntegral (B.length contentsBS)
-  maxCacheSize' <- liftM maxCacheSize getConfig
-  if newsize > maxCacheSize'
-     then debugMessage $ "Not caching page " ++ file ++ " in " ++ repo ++
-                        " because it is bigger than the maximum cache size."
-     else do
-       now <- liftIO getClockTime
-       let newpage = CachedPage { cpContents       = contentsBS
-                                , cpRevisionId     = revid
-                                , cpLastAccessTime = now }
-       let newcache = c{ cachePages = M.insert (repo, file) newpage
-                                        (cachePages c),
-                         cacheSize  = cacheSize c + newsize - oldsize }
-       newcachePruned <- pruneCache maxCacheSize' newcache
-       debugMessage $ "Updating cache with " ++ file ++ " in " ++ repo ++
-                     ".  Total cache size = " ++ show (cacheSize newcachePruned)
-       updateGititState $ \s -> s { cache = newcachePruned }
-
-pruneCache :: Integer -> Cache -> GititServerPart Cache
-pruneCache maxSize c =
-  if cacheSize c < maxSize
-     then return c
-     else dropOldest c >>= pruneCache maxSize
-
-dropOldest :: Cache -> GititServerPart Cache
-dropOldest c = do
-  let pgs    = M.toList $ cachePages c
-  let ((oldestRepo, oldestFile), oldestCp) = minimumBy
-        (comparing (cpLastAccessTime . snd)) pgs
-  let oldestSize = fromIntegral $ B.length $ cpContents oldestCp
-  debugMessage $ "Removing " ++ oldestFile ++ " in " ++ oldestRepo ++
-                 " (" ++ show oldestSize ++
-                 " bytes) from cache to keep size under limit."
-  return $ c{ cachePages = M.delete (oldestRepo, oldestFile) (cachePages c),
-              cacheSize = cacheSize c - oldestSize }
 
 mkUser :: String   -- username
        -> String   -- email

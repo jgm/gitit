@@ -57,7 +57,6 @@ initializeGititState conf = do
 
   updateGititState $ \s -> s { sessions      = Sessions M.empty
                              , users         = users'
-                             , cache         = emptyCache
                              , templatesPath = templatesDir conf
                              , renderPage    = defaultRenderPage templ
                              , plugins       = plugins' }
@@ -163,9 +162,8 @@ createStaticIfMissing conf = do
 
     let jsdir = staticdir </> "js"
     createDirectoryIfMissing True jsdir
-    let javascripts = ["jquery.min.js", "jquery-ui.packed.js",
-                       "dragdiff.js", "preview.js", "search.js", "uploadForm.js"]
     jsDataDir <- getDataFileName "js"
+    javascripts <- liftM (filter (`notElem` [".", ".."])) $ getDirectoryContents jsDataDir
     forM_ javascripts $ \f -> do
       copyFile (jsDataDir </> f) (jsdir </> f)
       logM "gitit" WARNING $ "Created " ++ (jsdir </> f)

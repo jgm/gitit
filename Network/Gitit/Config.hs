@@ -140,7 +140,8 @@ extractConfig cp = do
       cfRecaptchaPublicKey <- get cp "DEFAULT" "recaptcha-public-key"
       cfRecaptchaPrivateKey <- get cp "DEFAULT" "recaptcha-private-key"
       cfCompressResponses <- get cp "DEFAULT" "compress-responses"
-      cfMaxCacheSize <- get cp "DEFAULT" "max-cache-size"
+      cfUseCache <- get cp "DEFAULT" "use-cache"
+      cfCacheDir <- get cp "DEFAULT" "cache-dir"
       cfMimeTypesFile <- get cp "DEFAULT" "mime-types-file"
       cfMailCommand <- get cp "DEFAULT" "mail-command"
       cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
@@ -198,7 +199,8 @@ extractConfig cp = do
         , recaptchaPublicKey   = cfRecaptchaPublicKey
         , recaptchaPrivateKey  = cfRecaptchaPrivateKey
         , compressResponses    = cfCompressResponses
-        , maxCacheSize         = readNumber "max-cache-size" cfMaxCacheSize
+        , useCache             = cfUseCache
+        , cacheDir             = cfCacheDir
         , mimeMap              = mimeMap'
         , jsMath               = False
         , mailCommand          = cfMailCommand
