@@ -2,7 +2,7 @@
 <script type="text/javascript">
 /* <![CDATA[ */
      \$(document).bind("keydown", "ctrl+r", function() {
-         \$.post("$base$/_expire", { pageName : "$jspagename$" });
+         \$.post("$base$/_expire$pageUrl$");
          return true;
          });
 /* ]]> */

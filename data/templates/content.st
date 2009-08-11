@@ -1,8 +1,8 @@
 <div id="content">
-  $if(nothead)$
+  $if(revision)$
     <h2 class="revision">Revision $revision$</h2>
   $endif$
-  <h1 class="pageTitle"><a href="$base$/$pagename$">$pagetitle$</a></h1>
+  <h1 class="pageTitle"><a href="$base$$pageUrl$">$pagetitle$</a></h1>
   $if(messages)$
     $messages()$
   $endif$

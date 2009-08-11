@@ -751,8 +751,9 @@ currentUser = do
   req <- askRq
   ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
 
-expireCache :: PageName -> Handler
-expireCache (PageName pn) = do
+expireCache :: Handler
+expireCache = do
+  page <- getPage
   -- try it as a page first, then as an uploaded file
-  expireCachedFile (pathForPage pn) `mplus` expireCachedFile pn
+  expireCachedFile (pathForPage page) `mplus` expireCachedFile page
   ok $ toResponse ()
