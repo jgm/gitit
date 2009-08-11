@@ -3,11 +3,11 @@
   \$.get("$base$/_user", {}, function(username, status) {
      \$("#username").text(username);
      if (username == "") {  // nobody logged in
-        \$("#logoutlink").hide();
-        \$("#loginlink").show();
+        \$("#logoutlink").css("visibility","hidden");
+        \$("#loginlink").css("visibility","visible");
      } else {
-        \$("#logoutlink").show();
-        \$("#loginlink").hide();
+        \$("#logoutlink").css("visibility","visible");
+        \$("#loginlink").css("visibility","hidden");
      };
    });
 /* ]]> */
