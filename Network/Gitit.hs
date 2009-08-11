@@ -144,7 +144,7 @@ wikiHandlers =
   , dir "_index"    indexPage
   , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
-  , dir "_expire" $ methodOnly POST >> expireCache
+  , dir "_expire" $ expireCache
   , guardCommand "showraw" >> msum
       [ showRawPage
       , guardPath isSourceCode >> showFileAsText ]
