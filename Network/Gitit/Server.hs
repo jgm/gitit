@@ -46,7 +46,7 @@ setContentType :: String -> Response -> Response
 setContentType = setHeader "Content-Type"
 
 setFilename :: String -> Response -> Response
-setFilename = setHeader "Content-Disposition" . \fname -> "attachment: filename=\"" ++ fname ++ "\""
+setFilename = setHeader "Content-Disposition" . \fname -> "attachment; filename=\"" ++ fname ++ "\""
 
 -- IP lookup
 
