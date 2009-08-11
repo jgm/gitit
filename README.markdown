@@ -196,12 +196,13 @@ below for information about configuring gitit.)
 Cached pages are updated when pages are modified using the web
 interface.  They are not updated when pages are modified directly
 through git or darcs.  However, the cache can be refreshed manually
-by pressing Ctrl-R when viewing a page, or by sending a POST
-request to `/_expire` with `pageName` set to the name of the page.
+by pressing Ctrl-R when viewing a page, or by sending an HTTP
+GET or POST request to `/_expire/path/to/page`, where `path/to/page` is
+the name of the page to be expired.
 
 Users who frequently update pages using git or darcs may wish
 to set `use-cache` to `no`, or alternatively to add a hook to
-the repository that makes the appropriate POST request to expire
+the repository that makes the appropriate HTTP request to expire
 pages when they are updated.
 
 Configuring gitit
