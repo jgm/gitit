@@ -1,9 +1,3 @@
-_ the ajax userbox takes a long time to load.  this is also somewhat
-  inefficient -- the user is right there in the REMOTE_USER header
-  and doesn't require any additional processing to get.  So maybe
-  we should go back to caching partial pages and adding the user
-  + sidebar at the end?  We could keep everything else the same.
-
 _ use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
   don't have to manually merge changes to templates they haven't
