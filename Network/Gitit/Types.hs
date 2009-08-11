@@ -186,11 +186,6 @@ data Recaptcha = Recaptcha {
 instance FromData SessionKey where
      fromData = readCookieValue "sid"
 
-newtype PageName = PageName String
-
-instance FromData PageName where
-     fromData = liftM PageName $ look "pageName"
-
 data Params = Params { pUsername     :: String
                      , pPassword     :: String
                      , pPassword2    :: String

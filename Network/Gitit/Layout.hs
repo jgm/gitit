@@ -36,7 +36,6 @@ import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing, isJust, fromJust)
-import Text.Pandoc.Shared (substitute)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -81,13 +80,12 @@ defaultRenderPage templ layout htmlContents = do
                    setStrAttr "pagetitle" pageTitle' .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
-                   setStrAttr "jspagename" (substitute "\"" "\\\"" page) .
+                   setStrAttr "pageUrl" (urlForPage "" page) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
                    maybe id (T.setAttribute "markuphelp") (pgMarkupHelp layout) .
                    setBoolAttr "printable" (pgPrintable layout) .
-                   setBoolAttr "nothead" (isJust rev) .
                    maybe id (T.setAttribute "revision") rev .
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' page rev) .
