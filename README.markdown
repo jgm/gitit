@@ -203,7 +203,21 @@ the name of the page to be expired.
 Users who frequently update pages using git or darcs may wish
 to set `use-cache` to `no`, or alternatively to add a hook to
 the repository that makes the appropriate HTTP request to expire
-pages when they are updated.
+pages when they are updated.  To facilitate such hooks, the gitit
+cabal package includes an executable `expireGititCache`.  Assuming
+you are running gitit at port 5001 on localhost, and the
+environment variable `CHANGED_FILES` contains a list of the files
+that have changed, you can expire their cached versions using
+
+    expireGititCache http://localhost:5001 $CHANGED_FILES
+
+Or you can specify the files directly:
+
+    expireGititCache http://localhost:5001 "Front Page.page" foo/bar/baz.c
+
+This program will return a success status (0) if the page has been
+successfully expired (or if it was never cached in the first place),
+and a failure status (> 0) otherwise.
 
 Configuring gitit
 =================
