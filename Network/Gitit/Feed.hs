@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for creating atom feeds for gitit wikis and pages.
 -}
 
-module Network.Gitit.Feed (filestoreToXmlFeed) where
+module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
 import Text.Atom.Feed
 import Text.Atom.Feed.Export
@@ -29,25 +29,30 @@ import Data.FileStore.Types
 import Data.Maybe
 import Data.DateTime
 import System.FilePath
-import Network.Gitit.Types
 import Control.Monad
 import Data.List (intercalate, sortBy)
 import Data.Ord (comparing)
 
-filestoreToXmlFeed :: Config -> FileStore -> (Maybe FilePath) -> IO String
+data FeedConfig = FeedConfig {
+    fcTitle    :: String
+  , fcBaseUrl  :: String
+  , fcFeedDays :: Integer
+  } deriving (Show, Read)
+
+filestoreToXmlFeed :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO String
 filestoreToXmlFeed cfg f mbPath = filestoreToFeed cfg f mbPath >>= return . ppTopElement . xmlFeed
 
-filestoreToFeed :: Config -> FileStore -> (Maybe FilePath) -> IO Feed
+filestoreToFeed :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO Feed
 filestoreToFeed cfg a mbPath = do
   let path' = maybe "" id mbPath
-  when (null $ baseUrl cfg) $ error "base-url in the config file is null."
+  when (null $ fcBaseUrl cfg) $ error "base-url in the config file is null."
   rs <- changeLog cfg a mbPath
   let rsShifted = if null rs
                      then []
                      else head rs : init rs   -- so we can get revids for diffs
   now <- liftM formatFeedTime getCurrentTime
-  return $ Feed { feedId = baseUrl cfg ++ "/" ++ path'
-                , feedTitle = TextString $ wikiTitle cfg
+  return $ Feed { feedId = fcBaseUrl cfg ++ "/" ++ path'
+                , feedTitle = TextString $ fcTitle cfg
                 , feedUpdated = now
                 , feedAuthors = []
                 , feedCategories = []
@@ -65,15 +70,15 @@ filestoreToFeed cfg a mbPath = do
                 , feedEntries = reverse $ zipWith (revToEntry cfg path') rs rsShifted }
 
 -- | Get the last N days history.
-changeLog :: Config -> FileStore -> (Maybe FilePath) -> IO [Revision]
+changeLog :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO [Revision]
 changeLog cfg a mbPath = do
   let files = maybe [] (\f -> [f, f <.> "page"]) mbPath
   now <- getCurrentTime
-  let startTime = addMinutes (-60 * 24 * feedDays cfg) now
+  let startTime = addMinutes (-60 * 24 * fcFeedDays cfg) now
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now}
   return $ sortBy (comparing revDateTime) rs
  
-revToEntry :: Config -> String -> Revision -> Revision -> Entry
+revToEntry :: FeedConfig -> String -> Revision -> Revision -> Entry
 revToEntry cfg path' Revision{
                      revId = rid,
                      revDateTime = rdt,
@@ -106,7 +111,7 @@ revToEntry cfg path' Revision{
            -- Enclosure seems to be for conveying media, see
            -- https://secure.wikimedia.org/wikipedia/en/wiki/RSS_enclosure
         }
-    where diffLink = Link{ linkHref = baseUrl cfg ++ "/" ++ firstpath ++ "?diff&to=" ++ rid ++ "&from=" ++
+    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/" ++ firstpath ++ "?diff&to=" ++ rid ++ "&from=" ++
                                                 revId prevRevision
                          , linkRel = Nothing
                          , linkType = Nothing
@@ -121,7 +126,7 @@ revToEntry cfg path' Revision{
                                    Added f    -> dePage f
                                    Deleted f  -> dePage f 
                          else path'
-          baseEntry = nullEntry (baseUrl cfg ++ "/" ++ path' ++ "?revision=" ++ rid)
+          baseEntry = nullEntry (fcBaseUrl cfg ++ "/" ++ path' ++ "?revision=" ++ rid)
                         (TextString (intercalate ", " $ map showRev rv)) (formatFeedTime rdt)
           showRev (Modified f) = dePage f
           showRev (Added f)    = "added " ++ dePage f
