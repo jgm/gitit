@@ -69,7 +69,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Feed (filestoreToXmlFeed)
+import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Authentication
 import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
@@ -763,17 +763,21 @@ expireCache = do
 
 feedHandler :: Handler
 feedHandler = do
+  cfg <- getConfig
+  when (not $ useFeed cfg) mzero
   base' <- getWikiBase >>= \b ->   -- drop '_feed/' from base
     return . reverse . dropWhile (/='/') . drop 1 . reverse $ b
-  cfg <- getConfig >>= \c ->
-    if null (baseUrl c)  -- if baseUrl blank, try to get it from Host header
-       then do
-         mbHost <- getHost
-         case mbHost of
-              Nothing    -> error "Could not determine base URL"
-              Just hn    -> return c{baseUrl = "http://" ++ hn ++ base'}
-       else return c{baseUrl = baseUrl c ++ base'}
-  when (not $ useFeed cfg) mzero
+  feedBase <- if null (baseUrl cfg)  -- if baseUrl blank, try to get it from Host header
+                 then do
+                   mbHost <- getHost
+                   case mbHost of
+                        Nothing    -> error "Could not determine base URL"
+                        Just hn    -> return ("http://" ++ hn ++ base')
+                 else return (baseUrl cfg ++ base')
+  let fc = FeedConfig{
+              fcTitle = wikiTitle cfg
+            , fcBaseUrl = feedBase
+            , fcFeedDays = feedDays cfg }
   path' <- getPath     -- e.g. "foo/bar" if they hit /_feed/foo/bar
   let file = (path' `orIfNull` "[main]") <.> "feed"
   let mbPath = if null path' then Nothing else Just path'
@@ -787,6 +791,6 @@ feedHandler = do
             let emptyResponse = setContentType "application/atom+xml; charset=utf-8" . toResponse $ ()
             ok $ emptyResponse{rsBody = B.fromChunks [contents]}
        _ -> do
-            resp <- liftM toResponse $ liftIO (filestoreToXmlFeed cfg fs mbPath)
+            resp <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
             cacheContents file $ S.concat $ B.toChunks $ rsBody resp
             ok . setContentType "application/atom+xml; charset=UTF-8" $ resp
