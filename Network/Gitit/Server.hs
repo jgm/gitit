@@ -30,6 +30,7 @@ module Network.Gitit.Server
           , setContentType
           , setFilename
           , lookupIPAddr
+          , getHost
           , compressedResponseFilter
           )
 where
@@ -38,6 +39,7 @@ import Happstack.Server.Parts (compressedResponseFilter)
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import Control.Monad.Reader
 import Data.Maybe
+import Data.ByteString.UTF8 as U
 
 withExpiresHeaders :: ServerMonad m => m Response -> m Response
 withExpiresHeaders = liftM (setHeader "Cache-Control" "max-age=21600")
@@ -57,3 +59,5 @@ lookupIPAddr hostname = do
      then return Nothing
      else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
 
+getHost :: ServerMonad m => m (Maybe String)
+getHost = liftM (maybe Nothing (Just . U.toString)) $ getHeaderM "Host"

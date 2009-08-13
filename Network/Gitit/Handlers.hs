@@ -763,7 +763,16 @@ expireCache = do
 
 feedHandler :: Handler
 feedHandler = do
-  cfg <- getConfig
+  base' <- getWikiBase >>= \b ->   -- drop '_feed/' from base
+    return . reverse . dropWhile (/='/') . drop 1 . reverse $ b
+  cfg <- getConfig >>= \c ->
+    if null (baseUrl c)  -- if baseUrl blank, try to get it from Host header
+       then do
+         mbHost <- getHost
+         case mbHost of
+              Nothing    -> error "Could not determine base URL"
+              Just hn    -> return c{baseUrl = "http://" ++ hn ++ base'}
+       else return c{baseUrl = baseUrl c ++ base'}
   when (not $ useFeed cfg) mzero
   path' <- getPath     -- e.g. "foo/bar" if they hit /_feed/foo/bar
   let file = (path' `orIfNull` "[main]") <.> "feed"
