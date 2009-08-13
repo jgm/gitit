@@ -765,7 +765,7 @@ feedHandler :: Handler
 feedHandler = do
   cfg <- getConfig
   when (not $ useFeed cfg) mzero
-  path' <- getPath     -- e.g. "foo/bar" if they hit /_rss/foo/bar
+  path' <- getPath     -- e.g. "foo/bar" if they hit /_feed/foo/bar
   let file = (path' `orIfNull` "[main]") <.> "feed"
   let mbPath = if null path' then Nothing else Just path'
   fs <- getFileStore
