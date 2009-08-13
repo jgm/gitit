@@ -158,7 +158,7 @@ extractConfig cp = do
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
       let authMethod = map toLower cfAuthenticationMethod
-
+      let stripTrailingSlash = reverse . dropWhile (=='/') . reverse
       let repotype' = case map toLower cfRepositoryType of
                         "git"   -> Git
                         "darcs" -> Darcs
@@ -212,7 +212,7 @@ extractConfig cp = do
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
         , markupHelp           = markupHelpText
         , useFeed              = cfUseFeed
-        , baseUrl              = cfBaseUrl
+        , baseUrl              = stripTrailingSlash cfBaseUrl
         , wikiTitle            = cfWikiTitle
         , feedDays             = readNumber "feed-days" cfFeedDays
         , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime }
