@@ -102,6 +102,5 @@ Executable           expireGititCache
   build-depends:     base >=3 && < 5, HTTP, url, filepath
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
-  ghc-options:       -Wall -threaded
-  ghc-prof-options:  -auto-all -caf-all
+  ghc-options:       -Wall
 
