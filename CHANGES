@@ -1,11 +1,20 @@
 Version 0.6.1 released ? ??? 2009
 
-When upgrading, be sure to delete template.html and the static directory so
-that these will be replaced by the newest versions.  Or, if you have customized
-these, merge the changes into your customized versions.  If your wiki contains
-discuss pages of the form `foo:discuss.page`, rename them to `@foo.page`.
+merge in LOG ****
+
+When upgrading, be sure to delete template.html and the static directory
+so that these will be replaced by the newest versions. Or, if you have
+customized these, merge the changes into your customized versions. If
+your wiki contains discuss pages of the form `foo:discuss.page`, rename
+them to `@foo.page`.
 
 Summary of main changes:
+
+* Fixed security issue with change password. Gitit did not verify that
+  a change password request is genuine when it receives the final
+  POST. It has been changed to re-verify the reset code, otherwise
+  an attacker could simply steal anyone's account by spoofing a POST
+  request.  (Thanks to Robin Green.)
 
 * Added support for plugins -- dynamically loaded Haskell programs that
   transform pages. See the haddock documentation for Gitit.Interface for
@@ -33,6 +42,30 @@ Summary of main changes:
 * Gitit now exports a library, Network.Gitit, that makes it easy for
   any happstack application to embed a gitit wiki.
 
+* Added optional atom feeds, for whole site (at /_feed)
+  and for individual pages (at /_feed/path/to/page).
+  Feeds are cached with a configurable expiration time.
+
+* Completely new caching system.  Caching is turned off by default and
+  can be enabled by a configuration option.  Complete pages are cached
+  on disk and expired when pages are revised through the web interface.
+  When pages are modified directly through a VCS, the cache must be
+  refreshed manually, either by pressing Ctrl-R while viewing a page,
+  or by sending an HTTP request to /_expire/path/to/page, or by using
+  the included program expireGititPath. The new system is much faster
+  than the old in-memory cache, because it avoids the considerable
+  overhead of filestore calls to get the current revision id.
+
+* To make whole-page caching possible, the user login/out box has been
+  made into an ajax request to /_user.  jQuery is now loaded on every
+  page.
+
+* template.html has now been replaced by a directory, templates/, with
+  separate templates for each component of a page.
+
+* Added /_reloadTemplates action that recompiles the templates. (By
+  default the templates are compiled only on startup.)
+
 * HTPP authentication is now supported as an alternative to gitit's
   form-based authentication.
 
@@ -44,16 +77,6 @@ Summary of main changes:
   thus darcs, does not like colons in filenames.
 
 * Improved logging, with configurable verbosity.
-
-* Completely new caching system.  Caching is turned off by default and
-  can be enabled by a configuration option.  Complete pages are cached
-  on disk and expired when pages are revised through the web interface.
-  When pages are modified directly through a VCS, the cache must be
-  refreshed manually, either by pressing Ctrl-R while viewing a page,
-  or by sending an HTTP request to /_expire/path/to/page, or by using
-  the included program expireGititPath. The new system is much faster
-  than the old in-memory cache, because it avoids the considerable
-  overhead of filestore calls to get the current revision id.
 
 * Major code reorganization and cleanup.  Gitit has been moved under
   the Network namespace. The old WebT handlers are replaced by new ones
@@ -72,8 +95,26 @@ Summary of main changes:
   showPage, preview, showHighlightedSource, and other handlers that used
   to be defined in Gitit.hs.
 
+* Verify in delete POST requests that filetodelete parameter matches
+  page.
+
+* Fixed revert when called from diff pages. Revert now reverts to the
+  older of the two revisions being compared.
+
+* Revamped auto-merging: user must now verify an edited page after
+  a merge, even if there were no conflicts.
+
+* Fixed Content-Disposition header on export so that filenames have
+  proper extensions.
+
 * Updated for happstack-server-0.3.3.  Since this version of happstack
   supports UTF-8, gitit's old manual decoding and encoding were removed.
+
+* Use fileServeStrict instead of fileServe.  Resolves Issue #57.
+
+* 'limit' is no longer used in search.  The way it worked before was
+  confusing, since it limited total matches (usually to just a few files)
+  rather than limiting the number of matches in each file.
 
 * Redirects set properly after account creation.  If users go from
   the Login form to the Register form, they are no longer redirected
