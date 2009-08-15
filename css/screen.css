@@ -130,7 +130,7 @@ pre.matches { margin: 0; padding: 0; }
 .deleted { text-decoration: line-through; color: gray; }
 h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; margin: 0 0 0.5em 0; padding: 0; }
 #footer { padding: 1em; color: #888; text-align: center; font-size: 93%; }
-.markupHelp pre { font-size: 70%; font-family: Monaco, Lucida Sans Mono, monospace; }
+div.markupHelp pre { font-size: 77%; overflow: auto; }
 div#categoryList { padding: 0em; margin: 1em 0 0 0; border: 1px dashed #ccc; }
 div#categoryList ul > li { display: inline; padding-right: 1em; }
 .login { display: none; }
