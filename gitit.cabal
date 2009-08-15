@@ -2,17 +2,35 @@ name:                gitit
 version:             0.6.1
 Cabal-version:       >= 1.2
 build-type:          Simple
-synopsis:            Wiki using Happstack, git or darcs, and pandoc.
-description:         Gitit is a wiki program. Pages and uploaded files
-                     are stored in a git or darcs repository and may be modified
-                     either by using the VCS's command-line tools or through
-                     the wiki's web interface. Pandoc's extended version
-                     of markdown is used as a markup language. Pages
-                     can be exported in a number of different formats,
-                     including LaTeX, RTF, OpenOffice ODT, and MediaWiki
-                     markup. Gitit can be configured to display TeX math
-                     (using jsMath) and highlighted source code (using
-                     highlighting-kate).
+synopsis:            Wiki using happstack, git or darcs, and pandoc.
+description:         Gitit is a wiki backed by a git or darcs filestore.
+                     Pages and uploaded files can be modified either
+                     directly via the VCS's command-line tools or through
+                     the wiki's web interface. Pandoc is used for markup
+                     processing, so pages may be written in
+                     (extended) markdown, reStructuredText, LaTeX, HTML,
+                     or literate Haskell, and exported in ten different
+                     formats, including LaTeX, ConTeXt, DocBook, RTF,
+                     OpenOffice ODT, and MediaWiki markup.
+                     .
+                     Other features include
+                     .
+                     * plugins: dynamically loaded page
+                       transformations written in Haskell
+                     .
+                     * categories
+                     .
+                     * TeX math (using jsMath)
+                     .
+                     * syntax highlighting of source code
+                       files and code snippets (using highlighting-kate)
+                     .
+                     * caching
+                     .
+                     * atom feeds (site-wide and per-page)
+                     .
+                     * a library, "Network.Gitit", that makes it simple
+                       to include a gitit wiki in any happstack application
 
 category:            Network
 license:             GPL
