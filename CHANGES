@@ -1,20 +1,23 @@
 Version 0.6.1 released ? ??? 2009
 
-merge in LOG ****
+Instructions for upgrading from 0.5.3:
 
-When upgrading, be sure to delete template.html and the static directory
-so that these will be replaced by the newest versions. Or, if you have
-customized these, merge the changes into your customized versions. If
-your wiki contains discuss pages of the form `foo:discuss.page`, rename
-them to `@foo.page`.
+- If you were using a Haskell configuration file, you will
+  need to create a new configuration file. 'gitit --print-default-config'
+  will print a self-documenting default configuration file in the new
+  format, which you can modify.
+
+- If your wiki contains discuss pages of the form 'foo:discuss.page',
+  rename them to '@foo.page'.
+
+- Delete template.html and the static directory so that these will
+  be replaced by the newest versions when you run gitit. If you have
+  customized these, you should back them up first, then merge your
+  changes into the new versions after they are created. (Note that
+  template.html will be replaced by a templates/ directory containing
+  multiple template files.)
 
 Summary of main changes:
-
-* Fixed security issue with change password. Gitit did not verify that
-  a change password request is genuine when it receives the final
-  POST. It has been changed to re-verify the reset code, otherwise
-  an attacker could simply steal anyone's account by spoofing a POST
-  request.  (Thanks to Robin Green.)
 
 * Added support for plugins -- dynamically loaded Haskell programs that
   transform pages. See the haddock documentation for Gitit.Interface for
@@ -72,6 +75,11 @@ Summary of main changes:
   the logged in user and sets REMOTE_USER accordingly) and a custom
   authHandler (including handlers for /_login, /_logout, and whatever
   else is needed).
+
+* Security fix: Gitit did not verify that a change password request
+  is genuine when it receives the final POST. It has been changed to
+  re-verify the reset code, otherwise an attacker could simply steal
+  anyone's account by spoofing a POST request. (Thanks to Robin Green.)
 
 * template.html has now been replaced by a directory, templates/, with
   separate templates for each component of a page.
