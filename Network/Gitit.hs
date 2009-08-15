@@ -84,21 +84,25 @@ under different paths, and uses a custom authentication scheme:
 
 -}
 
-module Network.Gitit ( initializeGititState
+module Network.Gitit (
+                     -- * Initialization
+                       initializeGititState
+                     , createRepoIfMissing
+                     , createTemplateIfMissing
+                     , createStaticIfMissing
+                     -- * Configuration
                      , getDefaultConfig
-                     , Handler
                      , Config(..)
                      , User(..)
                      , Password(..)
                      , FileStoreType(..)
                      , PageType(..)
-                     , wikiHandler
                      , readMimeTypesFile
-                     , createRepoIfMissing
-                     , createTemplateIfMissing
-                     , createStaticIfMissing
-                     , reloadTemplates
+                     -- * Wiki handlers
                      , GititServerPart
+                     , Handler
+                     , wikiHandler
+                     , reloadTemplates
                      , loginUserForm
                      )
 where
