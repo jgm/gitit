@@ -227,6 +227,17 @@ you need to add the following field to the configuration file:
 This program may be called "darcsit" instead of "gitit" when a darcs
 backend is used.
 
+Note:  we recommend that you use gitit/darcsit with darcs version
+2.3.0 or greater.  If you must use an older version of darcs, then
+you need to compile the filestore library without the (default)
+maxcount flag, before (re)installing gitit:
+
+    cabal install --reinstall filestore -f-maxcount
+    cabal install --reinstall gitit
+
+Otherwise you will get an error when you attempt to access your
+repository.
+
 Changing the theme
 ------------------
 
