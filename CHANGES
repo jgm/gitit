@@ -60,14 +60,24 @@ Summary of main changes:
   made into an ajax request to /_user.  jQuery is now loaded on every
   page.
 
+* The authentication system has been revised and made much more
+  flexible. In the configuration file, you can specify either
+  'form', 'http', or 'generic' as authentication-method. Form
+  authentication is the old form-based gitit authentication system. HTTP
+  authentication presupposes that the wiki pages are locked down under
+  HTTP authentication; the gitit user will be set to the username used
+  for HTTP authentication. Generic authentication takes the username
+  from the REMOTE_USER request header. When gitit is being used as a
+  library, one can specify a custom withUser filter (which determines
+  the logged in user and sets REMOTE_USER accordingly) and a custom
+  authHandler (including handlers for /_login, /_logout, and whatever
+  else is needed).
+
 * template.html has now been replaced by a directory, templates/, with
   separate templates for each component of a page.
 
 * Added /_reloadTemplates action that recompiles the templates. (By
   default the templates are compiled only on startup.)
-
-* HTPP authentication is now supported as an alternative to gitit's
-  form-based authentication.
 
 * Gitit's form-based authentication now includes a "password reset"
   email.  Slightly modified from a patch from Henry Laxen.
@@ -87,6 +97,10 @@ Summary of main changes:
   simplified so that they no longer require Page and Params arguments.
   A new function, 'withInput', is used to avoid the need to pass Params
   between handlers.
+
+* Gitit State now includes a renderPage function. This is more flexible
+  than storing a page template, since the user may want to use a custom
+  page rendering function, even one not based on string templates.
 
 * Added Network.Gitit.ContentTransformer module (thanks to Anton van
   Straaten). The ContentTransformer module replaces Gitit.Convert. It
@@ -136,6 +150,7 @@ Summary of main changes:
   page or file.
 
 * Page names containing "..", "?", or "*" are disallowed.
+  Page names may now contain periods.
 
 * The "Permanent link" link has been removed. It relied on the sha1
   parameter always being set, but we've changed that for performance
@@ -150,13 +165,15 @@ Summary of main changes:
 
 * Moved sidebar to end of HTML to make things easier for screen readers.
 
+* Moved search box and go box to templates.
+
 * Yahoo YUI CSS framework is now used for better consistency across browsers.
 
 * Fixed handling of 'forUser' parameter in 'recent activity'.
 
 * Made default maxUploadSize 10 Mb.
 
-* Page names may now contain periods.
+* Renamed AppState -> GititState.
 
 Version 0.5.3 released 1 Feb 2009
 
