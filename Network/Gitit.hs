@@ -86,6 +86,7 @@ under different paths, and uses a custom authentication scheme:
 
 module Network.Gitit ( initializeGititState
                      , getDefaultConfig
+                     , Handler
                      , Config(..)
                      , User(..)
                      , Password(..)
