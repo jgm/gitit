@@ -46,50 +46,84 @@ data FileStoreType = Git | Darcs deriving Show
 
 -- | Data structure for information read from config file.
 data Config = Config {
-  repositoryPath       :: FilePath,    -- path of repository containing filestore
-  repositoryType       :: FileStoreType, -- type of repository
-  defaultPageType      :: PageType,    -- default page markup type for this wiki
-  defaultLHS           :: Bool,        -- treat as literate haskell by default?
-  showLHSBirdTracks    :: Bool,        -- show Haskell code with bird tracks
-  withUser             :: Handler -> Handler, -- combinator to set REMOTE_USER request header
-  authHandler          :: Handler,     -- handler for login, logout, register, etc.
-  userFile             :: FilePath,    -- path of users database
-  templatesDir         :: FilePath,    -- directory containing page templates
-  logFile              :: FilePath,    -- path of server log file
-  logLevel             :: Priority,    -- severity filter for log messages
-                                       -- (DEBUG, INFO, NOTICE, WARNING, ERROR,
-                                       -- CRITICAL, ALERT, EMERGENCY)
-  staticDir            :: FilePath,    -- path of static directory
-  pluginModules        :: [String],    -- names of plugin modules to load
-  tableOfContents      :: Bool,        -- show table of contents on each page?
-  maxUploadSize        :: Integer,     -- max size of pages and file uploads
-  portNumber           :: Int,         -- port number to serve content on
-  debugMode            :: Bool,        -- print debug info to the console?
-  frontPage            :: String,      -- the front page of the wiki
-  noEdit               :: [String],    -- pages that cannot be edited via web
-  noDelete             :: [String],    -- pages that cannot be deleted via web
-  defaultSummary       :: String,      -- default summary if description left blank
+  -- | Path of repository containing filestore
+  repositoryPath       :: FilePath,
+  -- | Type of repository
+  repositoryType       :: FileStoreType,
+  -- | Default page markup type for this wiki
+  defaultPageType      :: PageType,
+  -- | Treat as literate haskell by default?
+  defaultLHS           :: Bool,
+  -- | Show Haskell code with bird tracks
+  showLHSBirdTracks    :: Bool,
+  -- | Combinator to set @REMOTE_USER@ request header
+  withUser             :: Handler -> Handler,
+  -- | Handler for login, logout, register, etc.
+  authHandler          :: Handler,
+  -- | Path of users database
+  userFile             :: FilePath,
+  -- | Directory containing page templates
+  templatesDir         :: FilePath,
+  -- | Path of server log file
+  logFile              :: FilePath,
+  -- | Severity filter for log messages (DEBUG, INFO,
+  -- NOTICE, WARNING, ERROR, CRITICAL, ALERT, EMERGENCY)
+  logLevel             :: Priority,
+  -- | Path of static directory
+  staticDir            :: FilePath,
+  -- | Names of plugin modules to load
+  pluginModules        :: [String],
+  -- | Show table of contents on each page?
+  tableOfContents      :: Bool,
+  -- | Max size of pages and file uploads
+  maxUploadSize        :: Integer,
+  -- | Port number to serve content on
+  portNumber           :: Int,
+  -- | Print debug info to the console?
+  debugMode            :: Bool,
+  -- | The front page of the wiki
+  frontPage            :: String,
+  -- | Pages that cannot be edited via web
+  noEdit               :: [String],
+  -- | Pages that cannot be deleted via web
+  noDelete             :: [String],
+  -- | Default summary if description left blank
+  defaultSummary       :: String,
+  -- | @Nothing@ = anyone can register.
+  -- @Just (prompt, answers)@ = a user will
+  -- be given the prompt and must give
+  -- one of the answers to register.
   accessQuestion       :: Maybe (String, [String]),
-                                       -- Nothing -> anyone can register
-                                       -- Just (prompt, answers) -> a user will
-                                       -- be given the prompt and must give
-                                       -- one of the answers to register.
-  useRecaptcha         :: Bool,        -- use ReCAPTCHA for user registration.
+  -- | Use ReCAPTCHA for user registration.
+  useRecaptcha         :: Bool,
   recaptchaPublicKey   :: String,
   recaptchaPrivateKey  :: String,
-  compressResponses    :: Bool,        -- should responses be compressed?
-  useCache             :: Bool,        -- should responses be cached?
-  cacheDir             :: FilePath,    -- directory to hold cached pages
-  mimeMap              :: M.Map String String, -- map assoc mime types with file exts
-  jsMath               :: Bool,        -- true if jsMath files are present
-  mailCommand          :: String,      -- command to send notification emails
-  resetPasswordMessage :: String,      -- text of password reset email
-  markupHelp           :: String,      -- markup syntax help for edit sidebar
-  useFeed              :: Bool,        -- provide an atom feed?
-  baseUrl              :: String,      -- base URL of wiki, for use in feed
-  wikiTitle            :: String,      -- title of wiki, used in feed
-  feedDays             :: Integer,     -- number of days history to be included in feed
-  feedRefreshTime      :: Integer      -- number of minutes to cache feeds before refreshing
+  -- | Should responses be compressed?
+  compressResponses    :: Bool,
+  -- | Should responses be cached?
+  useCache             :: Bool,
+  -- | Directory to hold cached pages
+  cacheDir             :: FilePath,
+  -- | Map associating mime types with file extensions
+  mimeMap              :: M.Map String String,
+  -- | Are jsMath files present?
+  jsMath               :: Bool,
+  -- | Command to send notification emails
+  mailCommand          :: String,
+  -- | Text of password reset email
+  resetPasswordMessage :: String,
+  -- | Markup syntax help for edit sidebar
+  markupHelp           :: String,
+  -- | Provide an atom feed?
+  useFeed              :: Bool,
+  -- | Base URL of wiki, for use in feed
+  baseUrl              :: String,
+  -- | Title of wiki, used in feed
+  wikiTitle            :: String,
+  -- | Number of days history to be included in feed
+  feedDays             :: Integer,
+  -- | Number of minutes to cache feeds before refreshing
+  feedRefreshTime      :: Integer
   }
 
 data Page = Page {
