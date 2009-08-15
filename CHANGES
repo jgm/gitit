@@ -4,6 +4,7 @@ When upgrading, be sure to delete template.html and the static directory so
 that these will be replaced by the newest versions.  Or, if you have customized
 these, merge the changes into your customized versions.  If your wiki contains
 discuss pages of the form `foo:discuss.page`, rename them to `@foo.page`.
+
 Summary of main changes:
 
 * Added support for plugins -- dynamically loaded Haskell programs that
@@ -44,10 +45,15 @@ Summary of main changes:
 
 * Improved logging, with configurable verbosity.
 
-* Improved caching, with better memory efficiency.  Cached
-  pages stored as bytestrings.  Configurable maximum cache
-  size; old pages are expired as needed to stay under this
-  limit.
+* Completely new caching system.  Caching is turned off by default and
+  can be enabled by a configuration option.  Complete pages are cached
+  on disk and expired when pages are revised through the web interface.
+  When pages are modified directly through a VCS, the cache must be
+  refreshed manually, either by pressing Ctrl-R while viewing a page,
+  or by sending an HTTP request to /_expire/path/to/page, or by using
+  the included program expireGititPath. The new system is much faster
+  than the old in-memory cache, because it avoids the considerable
+  overhead of filestore calls to get the current revision id.
 
 * Major code reorganization and cleanup.  Gitit has been moved under
   the Network namespace. The old WebT handlers are replaced by new ones
