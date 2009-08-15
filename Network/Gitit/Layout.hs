@@ -62,6 +62,7 @@ formattedPage layout htmlContents = do
 -- | Given a compiled string template, returns a page renderer.
 defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
+  cfg <- getConfig
   let rev  = pgRevision layout
   let page = pgPageName layout
   base' <- getWikiBase
@@ -93,6 +94,7 @@ defaultRenderPage templ layout htmlContents = do
                        (renderHtmlFragment $  exportBox base' page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (pgMessages layout) .
+                   T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
   ok $ setContentType "text/html" $ toResponse filledTemp
