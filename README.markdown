@@ -12,12 +12,12 @@ formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
 Gitit can be configured to display TeX math (using [jsMath][]) and
 highlighted source code (using [highlighting-kate][]).
 
-[git]: http://git.or.cz  
+[git]: http://git.or.cz
 [darcs]: http://darcs.net
 [pandoc]: http://johnmacfarlane.net/pandoc
 [Happstack]: http://happstack.com
 [jsMath]: http://www.math.union.edu/~dpvc/jsMath/
-[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/  
+[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
 
 Getting started
 ===============
@@ -185,40 +185,6 @@ title
 :   By default the displayed page title is the page name.  This metadata element
     overrides that default.
 
-Caching
--------
-
-By default, gitit caches rendered pages and highlighted source
-code files in the `cache` directory. (This can be changed by modifying
-the `use-cache` and `cache-dir` options in the configuration file; see
-below for information about configuring gitit.)
-
-Cached pages are updated when pages are modified using the web
-interface.  They are not updated when pages are modified directly
-through git or darcs.  However, the cache can be refreshed manually
-by pressing Ctrl-R when viewing a page, or by sending an HTTP
-GET or POST request to `/_expire/path/to/page`, where `path/to/page` is
-the name of the page to be expired.
-
-Users who frequently update pages using git or darcs may wish
-to set `use-cache` to `no`, or alternatively to add a hook to
-the repository that makes the appropriate HTTP request to expire
-pages when they are updated.  To facilitate such hooks, the gitit
-cabal package includes an executable `expireGititCache`.  Assuming
-you are running gitit at port 5001 on localhost, and the
-environment variable `CHANGED_FILES` contains a list of the files
-that have changed, you can expire their cached versions using
-
-    expireGititCache http://localhost:5001 $CHANGED_FILES
-
-Or you can specify the files directly:
-
-    expireGititCache http://localhost:5001 "Front Page.page" foo/bar/baz.c
-
-This program will return a success status (0) if the page has been
-successfully expired (or if it was never cached in the first place),
-and a failure status (> 0) otherwise.
-
 Configuring gitit
 =================
 
@@ -347,6 +313,44 @@ with the wiki using git command line tools:
 If you now look at the Front Page on the wiki, you should see your changes
 reflected there.  Note that the pages all have the extension `.page`.
 
+Caching
+=======
+
+By default, gitit does not cache content.  If your wiki receives a lot of
+traffic or contains pages that are slow to render, you may want to activate
+caching.  To do this, set the configuration option `use-cache` to `yes`.
+By default, rendered pages and highlighted source files will be cached
+in the `cache` directory. (Another directory can be specified by setting
+the `cache-dir` configuration option.)
+
+Cached pages are updated when pages are modified using the web
+interface. They are not updated when pages are modified directly through
+git or darcs. However, the cache can be refreshed manually by pressing
+Ctrl-R when viewing a page, or by sending an HTTP GET or POST request to
+`/_expire/path/to/page`, where `path/to/page` is the name of the page to
+be expired.
+
+Users who frequently update pages using git or darcs may wish to add a
+hook to the repository that makes the appropriate HTTP request to expire
+pages when they are updated. To facilitate such hooks, the gitit cabal
+package includes an executable `expireGititCache`. Assuming you are
+running gitit at port 5001 on localhost, and the environment variable
+`CHANGED_FILES` contains a list of the files that have changed, you can
+expire their cached versions using
+
+    expireGititCache http://localhost:5001 $CHANGED_FILES
+
+Or you can specify the files directly:
+
+    expireGititCache http://localhost:5001 "Front Page.page" foo/bar/baz.c
+
+This program will return a success status (0) if the page has been
+successfully expired (or if it was never cached in the first place),
+and a failure status (> 0) otherwise.
+
+The cache is persistent through restarts of gitit.  To expire all cached
+pages, simply remove the `cache` directory.
+
 Using gitit with apache
 =======================
 
@@ -464,7 +468,7 @@ Acknowledgements
 A number of people have contributed patches:
 
 - Gwern Branwen helped to optimize gitit and wrote the
-  InterwikiPlugin.
+  InterwikiPlugin. He also helped with the Feed module.
 - Simon Michael contributed the patch adding RST support.
 - Henry Laxen added support for password resets and helped with
   the apache proxy instructions.

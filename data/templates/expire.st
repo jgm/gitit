@@ -1,3 +1,4 @@
+$if(usecache)$
 <script type="text/javascript" src="$base$/_static/js/jquery.hotkeys-0.7.9.min.js"></script>
 <script type="text/javascript">
 /* <![CDATA[ */
@@ -7,3 +8,4 @@
          });
 /* ]]> */
 </script>
+$endif$
