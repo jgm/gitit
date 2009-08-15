@@ -25,6 +25,7 @@ import qualified Data.Map as M
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
+import qualified System.IO.Cautious as C (writeFile)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
 import Control.Monad.Reader
@@ -100,7 +101,7 @@ delUser uname =
 writeUserFile :: Config -> IO ()
 writeUserFile conf = do
   usrs <- queryGititState users
-  writeFile (userFile conf) $
+  C.writeFile (userFile conf) $
       "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
 
 getUser :: String -> GititServerPart (Maybe User)
