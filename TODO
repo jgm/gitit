@@ -1,5 +1,3 @@
-_ atom feed (see feed branch)
-
 _ use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
   don't have to manually merge changes to templates they haven't
