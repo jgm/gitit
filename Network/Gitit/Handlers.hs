@@ -48,14 +48,6 @@ module Network.Gitit.Handlers (
                       , deletePage
                       , confirmDelete
                       , showHighlightedSource
-                      , loginUserForm
-                      , loginUser
-                      , registerUserForm
-                      , registerUser
-                      , resetPasswordRequestForm
-                      , resetPasswordRequest
-                      , resetPassword
-                      , doResetPassword
                       , formAuthHandlers
                       , httpAuthHandlers
                       , currentUser
