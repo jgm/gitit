@@ -101,6 +101,7 @@ module Network.Gitit (
                      -- * Wiki handlers
                      , GititServerPart
                      , Handler
+                     , runHandler
                      , wiki
                      , reloadTemplates
                      , loginUserForm
