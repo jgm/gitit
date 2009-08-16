@@ -77,8 +77,10 @@ data-files:          css/screen.css, css/print.css, css/ie.css, css/hk-pyg.css,
                      CHANGES, README.markdown, YUI-LICENSE, BLUETRIP-LICENSE, TANGOICONS
 
 Flag plugins
-  description:       Compile in support for plugins.
-  default:           False
+  description:       Compile in support for plugins.  This will increase the size of
+                     the executable and the memory it uses, so those who will not need
+                     plugins should disable this flag.
+  default:           True
 
 Library
   hs-source-dirs:    .

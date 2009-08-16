@@ -75,25 +75,6 @@ is compiled with highlighting support, then install gitit as above:
     cabal install pandoc -fhighlighting --reinstall
     cabal install gitit
 
-Optional plugins support
-------------------------
-
-Plugins are small Haskell programs that transform a wiki page after it
-has been converted from Markdown or RST. See the example plugins in the
-`plugins` directory. To enable a plugin, include the path to the plugin
-(or its module name) in the `plugins` field of the configuration file.
-(If the plugin name starts with `Network.Gitit.Plugin.`, gitit will assume that
-the plugin is an installed module and will not look for a source file.)
-
-The gitit executable will be much larger if plugins support is compiled
-in. Plugin support is disabled by default. To enable support for
-plugins, pass the `plugins` flag to Cabal:
-
-    cabal install gitit -fplugins
-
-Note also that if you compile gitit for executable profiling, attempts
-to load plugins will result in "internal error: PAP object entered!"
-
 Running gitit
 -------------
 
@@ -184,6 +165,25 @@ toc
 title
 :   By default the displayed page title is the page name.  This metadata element
     overrides that default.
+
+Highlighted source code
+-----------------------
+
+If gitit was compiled against a version of pandoc that has highlighting
+support (see above), you can get highlighted source code by using
+[delimited code blocks][]:
+
+    ~~~ {.haskell .numberLines}
+    qsort []     = []
+    qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++
+                   qsort (filter (>= x) xs) 
+    ~~~
+
+To see what languages are available:
+
+    pandoc -v
+
+[delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
 
 Configuring gitit
 =================
@@ -288,24 +288,25 @@ You can write display math by enclosing it in double dollar signs:
 
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 
-Highlighted source code
------------------------
+Plugins
+=======
 
-If gitit was compiled against a version of pandoc that has highlighting
-support (see above), you can get highlighted source code by using
-[delimited code blocks][]:
+Plugins are small Haskell programs that transform a wiki page after it
+has been converted from Markdown or RST. See the example plugins in the
+`plugins` directory. To enable a plugin, include the path to the plugin
+(or its module name) in the `plugins` field of the configuration file.
+(If the plugin name starts with `Network.Gitit.Plugin.`, gitit will assume that
+the plugin is an installed module and will not look for a source file.)
 
-    ~~~ {.haskell .numberLines}
-    qsort []     = []
-    qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++
-                   qsort (filter (>= x) xs) 
-    ~~~
+Plugin support is enabled by default. However, plugin support makes
+the gitit executable considerably larger and more memory-hungry.
+If you don't need plugins, you may want to compile gitit without plugin
+support.  To do this, unset the `plugins` Cabal flag:
 
-To see what languages are available:
+    cabal install --reinstall gitit -f-plugins
 
-    pandoc -v
-
-[delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
+Note also that if you compile gitit for executable profiling, attempts
+to load plugins will result in "internal error: PAP object entered!"
 
 Accessing the wiki via git or darcs
 ===================================
