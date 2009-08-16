@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.ContentTransformer
   (
-  -- ContentTransformer runners
+  -- * ContentTransformer runners
     runPageTransformer
   , runFileTransformer
-  -- Gitit responders
+  -- * Gitit responders
   , showRawPage
   , showFileAsText
   , showPage
@@ -34,36 +34,36 @@ module Network.Gitit.ContentTransformer
   , showFile
   , preview
   , applyPreCommitPlugins
-  -- Cache support for transformers
+  -- * Cache support for transformers
   , cacheHtml
   , cachedHtml
-  -- Content retrieval combinators
+  -- * Content retrieval combinators
   , rawContents
-  -- Response-generating combinators
+  -- * Response-generating combinators
   , textResponse
   , mimeFileResponse
   , mimeResponse
   , exportPandoc
   , applyWikiTemplate
-  -- Content-type transformation combinators
+  -- * Content-type transformation combinators
   , pageToWikiPandocPage
   , pageToWikiPandoc
   , pageToPandoc
   , pandocToHtml
   , highlightSource
-  -- Content or context augmentation combinators
+  -- * Content or context augmentation combinators
   , applyPageTransforms
   , wikiDivify
   , addPageTitleToPandoc
   , addMathSupport
   , addScripts
-  -- ContentTransformer context API
+  -- * ContentTransformer context API
   , getFileName
   , getPageName
   , getLayout
   , getParams
   , getCacheable
-  -- Pandoc and wiki content conversion support
+  -- * Pandoc and wiki content conversion support
   , inlinesToURL
   , inlinesToString
   )
@@ -98,13 +98,14 @@ import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 -- ContentTransformer runners
 --
 
-runPageTransformer :: ToMessage a
-                   => ContentTransformer a
-                   -> GititServerPart a 
-runPageTransformer xform = withData $ \params -> do
+runTransformer :: ToMessage a
+               => (String -> String)
+               -> ContentTransformer a
+               -> GititServerPart a 
+runTransformer pathFor xform = withData $ \params -> do
   page <- getPage
   cfg <- getConfig
-  evalStateT xform  Context{ ctxFile = pathForPage page
+  evalStateT xform  Context{ ctxFile = pathFor page
                            , ctxLayout = defaultPageLayout{
                                              pgPageName = page
                                            , pgTitle = page
@@ -117,24 +118,18 @@ runPageTransformer xform = withData $ \params -> do
                            , ctxBirdTracks = showLHSBirdTracks cfg
                            , ctxCategories = [] }
 
+-- | Converts a @ContentTransformer@ into a @GititServerPart@;
+-- specialized to wiki pages.
+runPageTransformer :: ToMessage a
+                   => ContentTransformer a
+                   -> GititServerPart a 
+runPageTransformer = runTransformer pathForPage
+
+-- | Converts a @ContentTransformer@ into a @GititServerPart@.
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> GititServerPart a
-runFileTransformer xform = withData $ \params -> do
-  file <- getPage
-  cfg <- getConfig
-  evalStateT xform  Context{ ctxFile = file
-                           , ctxLayout = defaultPageLayout{
-                                             pgPageName = file
-                                           , pgTitle = file
-                                           , pgPrintable = pPrintable params
-                                           , pgMessages = pMessages params
-                                           , pgRevision = pRevision params
-                                           , pgLinkToFeed = useFeed cfg }
-                           , ctxCacheable = True
-                           , ctxTOC = tableOfContents cfg
-                           , ctxBirdTracks = showLHSBirdTracks cfg
-                           , ctxCategories = [] }
+runFileTransformer = runTransformer id
 
 --
 -- Gitit responders
