@@ -74,7 +74,9 @@ defaultRenderPage templ layout htmlContents = do
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
-  let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) (pgTabs layout)
+  let tabs' = [x | x <- pgTabs layout,
+                not (x == EditTab && page `elem` noEdit cfg)]
+  let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) tabs'
   let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
   let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
   let filledTemp = T.render .
