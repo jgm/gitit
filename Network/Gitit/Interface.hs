@@ -107,8 +107,10 @@ module Network.Gitit.Interface ( Plugin(..)
                        , mkPageTransformM
                        , module Text.Pandoc.Definition
                        , Config(..)
+                       , Request(..)
                        , askConfig
                        , askUser
+                       , askRequest
                        , User(..)
                        , doNotCache
                        , getContext
@@ -127,15 +129,19 @@ import Data.Data
 import Network.Gitit.Types
 import Network.Gitit.ContentTransformer
 import Network.Gitit.Util (withTempDir)
+import Network.Gitit.Server (Request(..))
 import Control.Monad.Reader (ask)
-import Control.Monad (liftM)
 import Control.Monad.Trans (liftIO)
+import Control.Monad (liftM)
 
 askConfig :: PluginM Config
-askConfig = liftM fst ask
+askConfig = liftM pluginConfig ask
 
 askUser :: PluginM (Maybe User)
-askUser = liftM snd ask
+askUser = liftM pluginUser ask
+
+askRequest :: PluginM Request
+askRequest = liftM pluginRequest ask
 
 doNotCache :: PluginM ()
 doNotCache = modifyContext (\ctx -> ctx{ ctxCacheable = False })

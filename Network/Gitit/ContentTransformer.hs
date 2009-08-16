@@ -349,8 +349,11 @@ applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
   user <- lift getLoggedInUser
-  (result', context') <- liftIO $
-                        runPluginM (transform inp) conf user context
+  req <- lift askRq
+  let pluginData = PluginData{ pluginConfig = conf
+                             , pluginUser = user
+                             , pluginRequest = req }
+  (result', context') <- liftIO $ runPluginM (transform inp) pluginData context
   put context'
   return result'
 
