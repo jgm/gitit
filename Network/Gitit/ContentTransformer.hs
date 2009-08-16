@@ -112,7 +112,6 @@ runPageTransformer xform = withData $ \params -> do
                                            , pgMessages = pMessages params
                                            , pgRevision = pRevision params
                                            , pgLinkToFeed = useFeed cfg }
-                           , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
                            , ctxBirdTracks = showLHSBirdTracks cfg
@@ -132,7 +131,6 @@ runFileTransformer xform = withData $ \params -> do
                                            , pgMessages = pMessages params
                                            , pgRevision = pRevision params
                                            , pgLinkToFeed = useFeed cfg }
-                            , ctxParams = params
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
                            , ctxBirdTracks = showLHSBirdTracks cfg
@@ -410,7 +408,7 @@ addScripts layout scriptPaths =
 --
 
 getParams :: ContentTransformer Params
-getParams = liftM ctxParams get
+getParams = lift (withData return)
 
 getFileName :: ContentTransformer FilePath
 getFileName = liftM ctxFile get
