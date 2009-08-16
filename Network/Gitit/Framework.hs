@@ -284,7 +284,7 @@ guardBareBase = do
      else mzero
 
 withMessages :: ServerMonad m => [String] -> m a -> m a
-withMessages msgs = withInput "messages" (show msgs)
+withMessages = withInput "messages" . show
 
 withInput :: ServerMonad m => String -> String -> m a -> m a
 withInput name val handler = do

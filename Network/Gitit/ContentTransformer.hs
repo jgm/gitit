@@ -167,8 +167,7 @@ preview = runPageTransformer $
           return . toResponse . renderHtmlFragment
 
 applyPreCommitPlugins :: String -> GititServerPart String
-applyPreCommitPlugins rawtext =
-  runPageTransformer (applyPreCommitTransforms rawtext)
+applyPreCommitPlugins = runPageTransformer . applyPreCommitTransforms
 
 --
 -- Top level, composed transformers
