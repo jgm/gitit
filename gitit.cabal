@@ -16,7 +16,8 @@ description:         Gitit is a wiki backed by a git or darcs filestore.
                      Other features include
                      .
                      * plugins: dynamically loaded page
-                       transformations written in Haskell
+                       transformations written in Haskell (see
+                       "Network.Gitit.Interface")
                      .
                      * categories
                      .
