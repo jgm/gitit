@@ -133,7 +133,7 @@ wiki conf = do
   if compressResponses conf
      then compressedResponseFilter
      else return ""
-  staticHandler `mplus` (runHandler ws $ withUser conf $ msum handlers)
+  staticHandler `mplus` runHandler ws (withUser conf $ msum handlers)
 
 wikiHandlers :: [Handler]
 wikiHandlers =
@@ -151,7 +151,7 @@ wikiHandlers =
   , dir "_feed"     feedHandler
   , dir "_category" $ path $ categoryPage . decodeString
   , dir "_categories" categoryListPage
-  , dir "_expire" $ expireCache
+  , dir "_expire"     expireCache
   , guardCommand "showraw" >> msum
       [ showRawPage
       , guardPath isSourceCode >> showFileAsText ]
@@ -159,7 +159,7 @@ wikiHandlers =
       [ showPageHistory
       , guardPath isSourceCode >> showFileHistory ]
   , guardCommand "edit" >>
-      (requireUser $ unlessNoEdit editPage showPage)
+      requireUser (unlessNoEdit editPage showPage)
   , guardCommand "diff" >> msum
       [ showPageDiff
       , guardPath isSourceCode >> showFileDiff ]
@@ -184,12 +184,12 @@ wikiHandlers =
 -- | Recompiles the gitit templates.
 reloadTemplates :: ServerPart Response
 reloadTemplates = do
-  liftIO $ recompilePageTemplate
+  liftIO recompilePageTemplate
   ok $ toResponse "Page templates have been recompiled."
 
 -- | Converts a gitit Handler into a standard happstack ServerPart.
 runHandler :: WikiState -> Handler -> ServerPart Response
-runHandler ws = mapServerPartT (unpackReaderT ws)
+runHandler = mapServerPartT . unpackReaderT
 
 unpackReaderT:: (Monad m)
     => c 
