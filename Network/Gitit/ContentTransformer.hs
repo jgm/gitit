@@ -125,7 +125,8 @@ runPageTransformer :: ToMessage a
                    -> GititServerPart a 
 runPageTransformer = runTransformer pathForPage
 
--- | Converts a @ContentTransformer@ into a @GititServerPart@.
+-- | Converts a @ContentTransformer@ into a @GititServerPart@;
+-- specialized to non-pages.
 runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> GititServerPart a
@@ -135,24 +136,32 @@ runFileTransformer = runTransformer id
 -- Gitit responders
 --
 
+-- | Responds with raw page source.
 showRawPage :: Handler
 showRawPage = runPageTransformer rawTextResponse
 
+-- | Responds with raw source (for non-pages such as source
+-- code files).
 showFileAsText :: Handler
 showFileAsText = runFileTransformer rawTextResponse
 
+-- | Responds with rendered wiki page.
 showPage :: Handler
 showPage = runPageTransformer htmlViaPandoc
 
+-- | Responds with page exported into selected format.
 exportPage :: Handler 
 exportPage = runPageTransformer exportViaPandoc
 
+-- | Responds with highlighted source code.
 showHighlightedSource :: Handler
 showHighlightedSource = runFileTransformer highlightRawSource
 
+-- | Responds with non-highlighted source code.
 showFile :: Handler
 showFile = runFileTransformer (rawContents >>= mimeFileResponse)
 
+-- | Responds with rendered page derived from form data.
 preview :: Handler
 preview = runPageTransformer $
           liftM (filter (/= '\r') . pRaw) getParams >>=
@@ -161,6 +170,8 @@ preview = runPageTransformer $
           pandocToHtml >>=
           return . toResponse . renderHtmlFragment
 
+-- | Applies pre-commit plugins to raw page source, possibly
+-- modifying it.
 applyPreCommitPlugins :: String -> GititServerPart String
 applyPreCommitPlugins = runPageTransformer . applyPreCommitTransforms
 
