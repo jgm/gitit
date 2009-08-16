@@ -187,6 +187,6 @@ reloadTemplates = do
 
 unpackReaderT:: (Monad m)
     => c 
-    -> (ReaderT c m) (Maybe ((Either Response a), FilterFun Response))
-    -> m (Maybe ((Either Response a), FilterFun Response))
+    -> (ReaderT c m) (Maybe ((Either b a), FilterFun b))
+    -> m (Maybe ((Either b a), FilterFun b))
 unpackReaderT st handler = runReaderT handler st
