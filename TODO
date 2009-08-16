@@ -3,8 +3,8 @@ x         x         Network.Gitit
 x         x         Network.Gitit.Interface
 x         x         Network.Gitit.Config
 x         x         Network.Gitit.Initialize
-_         _         Network.Gitit.ContentTransformer
-_         _         Network.Gitit.Framework
+_         x         Network.Gitit.ContentTransformer
+_         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
 
