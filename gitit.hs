@@ -74,6 +74,6 @@ main = do
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server
   simpleHTTP serverConf $ msum [
-      wikiHandler conf'
+      wiki conf'
     , dir "_reloadTemplates" reloadTemplates
     ]
