@@ -85,35 +85,34 @@ under different paths, and uses a custom authentication scheme:
 -}
 
 module Network.Gitit (
-                     -- * Initialization
-                       initializeGititState
-                     , createRepoIfMissing
-                     , createTemplateIfMissing
-                     , createStaticIfMissing
-                     -- * Configuration
-                     , getDefaultConfig
-                     , Config(..)
-                     , User(..)
-                     , Password(..)
-                     , FileStoreType(..)
-                     , PageType(..)
-                     , readMimeTypesFile
                      -- * Wiki handlers
-                     , GititServerPart
-                     , Handler
-                     , runHandler
-                     , wiki
+                       wiki
                      , reloadTemplates
+                     , runHandler
+                     -- * Initialization
+                     , module Network.Gitit.Initialize
+                     -- * Configuration
+                     , module Network.Gitit.Config
                      , loginUserForm
+                     -- * Types
+                     , module Network.Gitit.Types
+                     -- * Tools for building handlers
+                     , module Network.Gitit.Framework
+                     , module Network.Gitit.ContentTransformer
+                     , getFileStore
+                     , getUser
+                     , getConfig
                      )
 where
 import Network.Gitit.Types
-import Network.Gitit.Framework
 import Network.Gitit.Server
+import Network.Gitit.Framework
 import Network.Gitit.Handlers
 import Network.Gitit.Initialize
-import Network.Gitit.Config (readMimeTypesFile, getDefaultConfig)
-import Network.Gitit.Authentication
+import Network.Gitit.Config
+import Network.Gitit.State (getFileStore, getUser, getConfig)
+import Network.Gitit.ContentTransformer
+import Network.Gitit.Authentication (loginUserForm)
 import Control.Monad.Reader
 import System.FilePath
 import Prelude hiding (readFile)
