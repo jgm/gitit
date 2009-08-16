@@ -48,8 +48,6 @@ module Network.Gitit.Handlers (
                       , deletePage
                       , confirmDelete
                       , showHighlightedSource
-                      , formAuthHandlers
-                      , httpAuthHandlers
                       , currentUser
                       , expireCache
                       , feedHandler
@@ -63,7 +61,6 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
-import Network.Gitit.Authentication
 import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
@@ -721,24 +718,6 @@ categoryListPage = do
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = "Categories" } htmlMatches
-
-formAuthHandlers :: [Handler]
-formAuthHandlers =
-  [ dir "_register"  $ methodSP GET  registerUserForm
-  , dir "_register"  $ methodSP POST $ withData registerUser
-  , dir "_login"     $ methodSP GET  loginUserForm
-  , dir "_login"     $ methodSP POST $ withData loginUser
-  , dir "_logout"    $ methodSP GET  $ withData logoutUser
-  , dir "_resetPassword"   $ methodSP GET  $ withData resetPasswordRequestForm
-  , dir "_resetPassword"   $ methodSP POST $ withData resetPasswordRequest
-  , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
-  , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
-  ]
-
-httpAuthHandlers :: [Handler]
-httpAuthHandlers =
-  [ dir "_logout" $ logoutUserHTTP
-  , dir "_login"  $ withData loginUserHTTP ]
 
 -- | Returns username of logged in user or null string if nobody logged in.
 currentUser :: Handler

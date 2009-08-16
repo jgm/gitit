@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Handlers for registering and authenticating users.
 -}
 
-module Network.Gitit.Authentication where
+module Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers, loginUserForm) where
 
 import Network.Gitit.State
 import Network.Gitit.Types
@@ -395,6 +395,19 @@ registerUserForm = registerForm >>=
                     pgTitle = "Register for an account"
                     }
 
+formAuthHandlers :: [Handler]
+formAuthHandlers =
+  [ dir "_register"  $ methodSP GET  registerUserForm
+  , dir "_register"  $ methodSP POST $ withData registerUser
+  , dir "_login"     $ methodSP GET  loginUserForm
+  , dir "_login"     $ methodSP POST $ withData loginUser
+  , dir "_logout"    $ methodSP GET  $ withData logoutUser
+  , dir "_resetPassword"   $ methodSP GET  $ withData resetPasswordRequestForm
+  , dir "_resetPassword"   $ methodSP POST $ withData resetPasswordRequest
+  , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
+  , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
+  ]
+
 loginUserHTTP :: Params -> Handler
 loginUserHTTP params = do
   base' <- getWikiBase
@@ -404,3 +417,7 @@ loginUserHTTP params = do
 logoutUserHTTP :: Handler
 logoutUserHTTP = unauthorized $ toResponse ()  -- will this work?
 
+httpAuthHandlers :: [Handler]
+httpAuthHandlers =
+  [ dir "_logout" $ logoutUserHTTP
+  , dir "_login"  $ withData loginUserHTTP ]
