@@ -349,10 +349,12 @@ applyTransform inp transform = do
   context <- get
   conf <- lift getConfig
   user <- lift getLoggedInUser
+  fs <- lift getFileStore
   req <- lift askRq
   let pluginData = PluginData{ pluginConfig = conf
                              , pluginUser = user
-                             , pluginRequest = req }
+                             , pluginRequest = req
+                             , pluginFileStore = fs }
   (result', context') <- liftIO $ runPluginM (transform inp) pluginData context
   put context'
   return result'

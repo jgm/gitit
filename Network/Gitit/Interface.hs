@@ -114,6 +114,7 @@ module Network.Gitit.Interface ( Plugin(..)
                                , askConfig
                                , askUser
                                , askRequest
+                               , askFileStore
                                , doNotCache
                                , getContext
                                , modifyContext
@@ -133,6 +134,7 @@ import Network.Gitit.Server (Request(..))
 import Control.Monad.Reader (ask)
 import Control.Monad.Trans (liftIO)
 import Control.Monad (liftM)
+import Data.FileStore (FileStore)
 
 -- | Returns the current wiki configuration.
 askConfig :: PluginM Config
@@ -145,6 +147,10 @@ askUser = liftM pluginUser ask
 -- | Returns the complete HTTP request.
 askRequest :: PluginM Request
 askRequest = liftM pluginRequest ask
+
+-- | Returns the wiki filestore.
+askFileStore :: PluginM FileStore
+askFileStore = liftM pluginFileStore ask
 
 -- | Indicates that the current page or file is not to be cached.
 doNotCache :: PluginM ()

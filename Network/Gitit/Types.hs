@@ -169,9 +169,10 @@ data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
 
-data PluginData = PluginData { pluginConfig  :: Config
-                             , pluginUser    :: Maybe User
-                             , pluginRequest :: Request
+data PluginData = PluginData { pluginConfig    :: Config
+                             , pluginUser      :: Maybe User
+                             , pluginRequest   :: Request
+                             , pluginFileStore :: FileStore
                              }
 
 type PluginM = ReaderT PluginData (StateT Context IO)
