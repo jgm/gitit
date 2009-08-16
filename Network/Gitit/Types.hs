@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Types for Gitit modules.
+{- | Types for Gitit modules.
 -}
 
 module Network.Gitit.Types where
@@ -126,6 +126,7 @@ data Config = Config {
   feedRefreshTime      :: Integer
   }
 
+-- | Data for rendering a wiki page.
 data Page = Page {
     pageName        :: String
   , pageFormat      :: PageType
@@ -155,6 +156,7 @@ data User = User {
   uEmail    :: String
 } deriving (Show,Read)
 
+-- | Common state for all gitit wikis in an application.
 data GititState = GititState {
   sessions       :: Sessions SessionData,
   users          :: M.Map String User,
@@ -352,6 +354,7 @@ instance FromData Command where
                                     "showraw", "history", "export", "diff",
                                     "cancel", "update", "delete", "discuss"]
 
+-- | State for a single wiki.
 data WikiState = WikiState { 
                      wikiConfig    :: Config
                    , wikiFileStore :: FileStore
