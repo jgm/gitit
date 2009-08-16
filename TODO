@@ -10,6 +10,12 @@ _         _         Network.Gitit.Types
 
 _ texmath plugin (mathml)
 
+_ get wiki up to speed as main home page (demogitit).
+  Add good Installing page.  Up-to-date User's Guide.
+  Front page should list features and link to good demos.
+
+................................................................
+
 _ use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
   don't have to manually merge changes to templates they haven't
