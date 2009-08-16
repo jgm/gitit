@@ -102,27 +102,27 @@ install directory and @X.Y.Z@ is the version number of gitit.
 -}
 
 module Network.Gitit.Interface ( Plugin(..)
-                       , PluginM
-                       , mkPageTransform
-                       , mkPageTransformM
-                       , module Text.Pandoc.Definition
-                       , Config(..)
-                       , Request(..)
-                       , askConfig
-                       , askUser
-                       , askRequest
-                       , User(..)
-                       , doNotCache
-                       , getContext
-                       , modifyContext
-                       , Context(..)
-                       , PageType(..)
-                       , PageLayout(..)
-                       , inlinesToURL
-                       , inlinesToString
-                       , liftIO
-                       , withTempDir
-                       )
+                               , PluginM
+                               , mkPageTransform
+                               , mkPageTransformM
+                               , Config(..)
+                               , Request(..)
+                               , User(..)
+                               , Context(..)
+                               , PageType(..)
+                               , PageLayout(..)
+                               , askConfig
+                               , askUser
+                               , askRequest
+                               , doNotCache
+                               , getContext
+                               , modifyContext
+                               , inlinesToURL
+                               , inlinesToString
+                               , liftIO
+                               , withTempDir
+                               , module Text.Pandoc.Definition
+                               )
 where
 import Text.Pandoc.Definition
 import Data.Data
@@ -134,15 +134,19 @@ import Control.Monad.Reader (ask)
 import Control.Monad.Trans (liftIO)
 import Control.Monad (liftM)
 
+-- | Returns the current wiki configuration.
 askConfig :: PluginM Config
 askConfig = liftM pluginConfig ask
 
+-- | Returns @Just@ the logged in user, or @Nothing@ if nobody is logged in.
 askUser :: PluginM (Maybe User)
 askUser = liftM pluginUser ask
 
+-- | Returns the complete HTTP request.
 askRequest :: PluginM Request
 askRequest = liftM pluginRequest ask
 
+-- | Indicates that the current page or file is not to be cached.
 doNotCache :: PluginM ()
 doNotCache = modifyContext (\ctx -> ctx{ ctxCacheable = False })
 
