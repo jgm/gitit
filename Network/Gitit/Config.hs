@@ -27,7 +27,7 @@ where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
-import Network.Gitit.Handlers (formAuthHandlers, httpAuthHandlers)
+import Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers)
 import Network.Gitit.Util (parsePageType)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
