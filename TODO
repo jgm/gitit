@@ -8,10 +8,6 @@ _         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
 
-_ should some things in GititState be in WikiState?
-  templates?
-_ the Context and Page structures seem very similar.
-  Can we combine them?
 _ texmath plugin (mathml)
 
 _ use addSubgroup or mergeSTGroups to let templates in templates/
