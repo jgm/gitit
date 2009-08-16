@@ -1,12 +1,14 @@
 haddock   hlint     module
 x         x         Network.Gitit
-_         _         Network.Gitit.Interface
+x         x         Network.Gitit.Interface
 x         x         Network.Gitit.Config
 _         _         Network.Gitit.ContentTransformer
 _         _         Network.Gitit.Initialize
 _         _         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
+
+_ texmath plugin (mathml)
 
 _ use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
