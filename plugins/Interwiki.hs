@@ -35,19 +35,18 @@ plugin = mkPageTransform convertInterwikiLinks
      the Link unchanged. -}
 convertInterwikiLinks :: Inline -> Inline
 convertInterwikiLinks (Link ref (interwiki, article)) =
-  if head interwiki == '!'
-     then case M.lookup interwiki' interwikiMap of
+  case interwiki of
+    ('!':interwiki') ->
+        case M.lookup interwiki' interwikiMap of
                 Just url  -> case article of
                                   "" -> Link ref (url ++ (inlinesToURL ref), (summary $ unEscapeString $ inlinesToURL ref))
-                                  _ -> Link ref (interwikiurl article url, summary article)
+                                  _  -> Link ref (interwikiurl article url, summary article)
                 Nothing -> Link ref (interwiki, article)
-     else Link ref (interwiki, article)
- where -- '!Wookieepedia' -> 'Wookieepedia'
-       interwiki' = tail interwiki
-       -- 'http://starwars.wikia.com/wiki/Emperor_Palpatine'
-       interwikiurl a u = escapeURIString isAllowedInURI $ u ++ a
-       -- 'Wookieepedia: Emperor Palpatine'
-       summary a = interwiki' ++ ": " ++ a
+            where -- 'http://starwars.wikia.com/wiki/Emperor_Palpatine'
+                  interwikiurl a u = escapeURIString isAllowedInURI $ u ++ a
+                  -- 'Wookieepedia: Emperor Palpatine'
+                  summary a = interwiki' ++ ": " ++ a
+    _ -> Link ref (interwiki, article)
 convertInterwikiLinks x = x
 
 {- | Large table of constants; this is a mapping from shortcuts to a URL. The URL can be used by
