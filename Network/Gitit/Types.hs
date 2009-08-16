@@ -176,7 +176,6 @@ runPluginM plugin conf user = runStateT (runReaderT plugin (conf, user))
 
 data Context = Context { ctxFile            :: String
                        , ctxLayout          :: PageLayout
-                       , ctxParams          :: Params
                        , ctxCacheable       :: Bool
                        , ctxTOC             :: Bool
                        , ctxBirdTracks      :: Bool
