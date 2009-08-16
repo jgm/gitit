@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Functions for parsing command line options and reading the config file.
+{- | Functions for parsing command line options and reading the config file.
 -}
 
 module Network.Gitit.Config ( getConfigFromOpts
@@ -98,7 +98,7 @@ compileInfo =
 #endif
 
 forceEither :: Show e => Either e a -> a
-forceEither = either (\e -> error (show e)) id
+forceEither = either (error . show) id
 
 handleFlag :: ConfigParser -> Config -> Opt -> IO Config
 handleFlag cp conf opt = do
@@ -186,7 +186,7 @@ extractConfig cp = do
                                                "CRITICAL", "ALERT", "EMERGENCY"]
                                  in  if levelString `elem` levels
                                         then read levelString
-                                        else error $ "Invalid log-level.\nLegal values are: " ++ (intercalate ", " levels)
+                                        else error $ "Invalid log-level.\nLegal values are: " ++ intercalate ", " levels
         , staticDir            = cfStaticDir
         , pluginModules        = splitCommaList cfPlugins
         , tableOfContents      = cfTableOfContents
@@ -257,9 +257,14 @@ getDefaultConfigParser = do
   cp <- getDataFileName "data/default.conf" >>= readfile emptyCP
   return $ forceEither cp
 
+-- | Returns the default gitit configuration.
 getDefaultConfig :: IO Config
 getDefaultConfig = getDefaultConfigParser >>= extractConfig
 
+-- | Parses command line options and returns configuration
+-- based on the options (-f FILE specifies a configuration
+-- file; some settings, such as port number, can be overridden
+-- by a command line option).
 getConfigFromOpts :: IO Config
 getConfigFromOpts = do
   cp' <- getDefaultConfigParser
@@ -275,7 +280,7 @@ readMimeTypesFile f = catch
   (liftM (foldr go M.empty . map words . lines) $ readFile f)
   handleMimeTypesFileNotFound
      where go []     m = m  -- skip blank lines
-           go (x:xs) m = foldr (\ext m' -> M.insert ext x m') m xs
+           go (x:xs) m = foldr (\ext -> M.insert ext x) m xs
            handleMimeTypesFileNotFound e = do
              logM "gitit" WARNING $ "Could not read mime types file: " ++
                f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
