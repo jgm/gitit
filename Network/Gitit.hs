@@ -29,7 +29,7 @@ The following is a minimal standalone wiki program:
 >   createTemplateIfMissing conf
 >   createRepoIfMissing conf
 >   initializeGititState conf
->   simpleHTTP nullConf{port = 5001} $ wikiHandler conf
+>   simpleHTTP nullConf{port = 5001} $ wiki conf
 
 Here is a more complex example, which serves different wikis
 under different paths, and uses a custom authentication scheme:
@@ -57,9 +57,9 @@ under different paths, and uses a custom authentication scheme:
 >
 > handlerFor :: Config -> WikiSpec -> ServerPart Response
 > handlerFor conf (path', fstype, pagetype) = dir path' $
->   wikiHandler conf{ repositoryPath = path'
->                   , repositoryType = fstype
->                   , defaultPageType = pagetype}
+>   wiki conf{ repositoryPath = path'
+>            , repositoryType = fstype
+>            , defaultPageType = pagetype}
 >
 > indexPage :: ServerPart Response
 > indexPage = ok $ toResponse $
@@ -101,7 +101,7 @@ module Network.Gitit (
                      -- * Wiki handlers
                      , GititServerPart
                      , Handler
-                     , wikiHandler
+                     , wiki
                      , reloadTemplates
                      , loginUserForm
                      )
@@ -118,8 +118,9 @@ import System.FilePath
 import Prelude hiding (readFile)
 import Codec.Binary.UTF8.String (decodeString)
 
-wikiHandler :: Config -> ServerPart Response
-wikiHandler conf = do
+-- | Happstack handler for a gitit wiki.
+wiki :: Config -> ServerPart Response
+wiki conf = do
   let static = staticDir conf
   let staticHandler = dir "_static" $ withExpiresHeaders $ msum
                          [ dir "css" $ fileServeStrict [] (static </> "css")
@@ -132,7 +133,7 @@ wikiHandler conf = do
   if compressResponses conf
      then compressedResponseFilter
      else return ""
-  staticHandler `mplus` (mapServerPartT (unpackReaderT ws) $ withUser conf $ msum handlers)
+  staticHandler `mplus` (runHandler ws $ withUser conf $ msum handlers)
 
 wikiHandlers :: [Handler]
 wikiHandlers =
@@ -180,10 +181,15 @@ wikiHandlers =
   , createPage
   ]
 
+-- | Recompiles the gitit templates.
 reloadTemplates :: ServerPart Response
 reloadTemplates = do
   liftIO $ recompilePageTemplate
   ok $ toResponse "Page templates have been recompiled."
+
+-- | Converts a gitit Handler into a standard happstack ServerPart.
+runHandler :: WikiState -> Handler -> ServerPart Response
+runHandler ws = mapServerPartT (unpackReaderT ws)
 
 unpackReaderT:: (Monad m)
     => c 
