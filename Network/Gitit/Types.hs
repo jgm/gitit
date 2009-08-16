@@ -169,10 +169,16 @@ data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
 
-type PluginM = ReaderT (Config, Maybe User) (StateT Context IO)
+data PluginData = PluginData { pluginConfig  :: Config
+                             , pluginUser    :: Maybe User
+                             , pluginRequest :: Request
+                             }
 
-runPluginM :: PluginM a -> Config -> Maybe User -> Context -> IO (a, Context)
-runPluginM plugin conf user = runStateT (runReaderT plugin (conf, user))
+type PluginM = ReaderT PluginData (StateT Context IO)
+
+runPluginM :: PluginM a -> PluginData -> Context -> IO (a, Context)
+runPluginM plugin pluginData =
+  runStateT (runReaderT plugin pluginData)
 
 data Context = Context { ctxFile            :: String
                        , ctxLayout          :: PageLayout
