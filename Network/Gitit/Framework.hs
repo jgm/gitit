@@ -14,38 +14,46 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- General framework for defining wiki actions. 
+{- | Useful functions for defining wiki handlers.
 -}
 
-module Network.Gitit.Framework ( withUserFromSession
+module Network.Gitit.Framework (
+                               -- * Combinators for dealing with users 
+                                 withUserFromSession
                                , withUserFromHTTPAuth
                                , requireUserThat
                                , requireUser
                                , getLoggedInUser
                                , sessionTime
+                               -- * Combinators to exclude certain actions
                                , unlessNoEdit
                                , unlessNoDelete
+                               -- * Guards for routing
+                               , guardCommand
+                               , guardPath
+                               , guardIndex
+                               , guardBareBase
+                               -- * Functions to get info from the request
                                , getPath
                                , getPage
                                , getReferer
                                , getWikiBase
                                , uriPath
+                               -- * Useful predicates
                                , isPage
                                , isPageFile
                                , isDiscussPage
                                , isDiscussPageFile
                                , isSourceCode
                                , isPreview
+                               -- * Combinators that change the request locally
+                               , withMessages
+                               , withInput
+                               -- * Miscellaneous
                                , urlForPage
                                , pathForPage
                                , getMimeTypeForExtension
                                , validate
-                               , guardCommand
-                               , guardPath
-                               , guardIndex
-                               , guardBareBase
-                               , withMessages
-                               , withInput
                                , filestoreFromConfig
                                )
 where
