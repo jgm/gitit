@@ -2,8 +2,8 @@ haddock   hlint     module
 x         x         Network.Gitit
 x         x         Network.Gitit.Interface
 x         x         Network.Gitit.Config
+x         x         Network.Gitit.Initialize
 _         _         Network.Gitit.ContentTransformer
-_         _         Network.Gitit.Initialize
 _         _         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 

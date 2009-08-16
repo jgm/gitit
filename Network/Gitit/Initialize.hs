@@ -13,7 +13,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Functions for initializing a Gitit wiki.
+{- | Functions for initializing a Gitit wiki.
 -}
 
 module Network.Gitit.Initialize ( initializeGititState
@@ -99,7 +99,7 @@ createRepoIfMissing conf = do
   repoExists <- try (initialize fs) >>= \res ->
     case res of
          Right _               -> do
-           logM "gitit" WARNING $ "Created repository in " ++ (repositoryPath conf)
+           logM "gitit" WARNING $ "Created repository in " ++ repositoryPath conf
            return False
          Left RepositoryExists -> return True
          Left e                -> throwIO e >> return False
