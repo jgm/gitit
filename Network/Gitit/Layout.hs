@@ -70,7 +70,6 @@ defaultRenderPage templ layout htmlContents = do
   let scriptLink x = script ! [src (base' ++ "/_static/js/" ++ x),
         thetype "text/javascript"] << noHtml
   let javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
-  let pageTitle' = pgTitle layout
   let tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
@@ -82,7 +81,7 @@ defaultRenderPage templ layout htmlContents = do
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
                    T.setAttribute "feed" (pgLinkToFeed layout) .
-                   setStrAttr "pagetitle" pageTitle' .
+                   setStrAttr "pagetitle" (pgTitle layout) .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
                    setStrAttr "pageUrl" (urlForPage "" page) .
