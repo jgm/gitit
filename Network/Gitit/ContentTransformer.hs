@@ -46,7 +46,6 @@ module Network.Gitit.ContentTransformer
   , exportPandoc
   , applyWikiTemplate
   -- * Content-type transformation combinators
-  , pageToWikiPandocPage
   , pageToWikiPandoc
   , pageToPandoc
   , pandocToHtml
@@ -189,7 +188,7 @@ exportViaPandoc :: ContentTransformer Response
 exportViaPandoc = rawContents >>=
                   maybe mzero return >>=
                   contentsToPage >>=
-                  pageToWikiPandocPage >>=
+                  pageToWikiPandoc >>=
                   exportPandoc
 
 -- | Responds with a wiki page. Uses the cache when
@@ -303,14 +302,13 @@ applyWikiTemplate c = do
 --
 
 -- | Converts Page to Pandoc, applies page transforms, and adds page
--- title to Pandoc meta info.
-pageToWikiPandocPage :: Page -> ContentTransformer Pandoc
-pageToWikiPandocPage page' =
-  pageToWikiPandoc page' >>= addPageTitleToPandoc (pageTitle page')
-
--- | Converts source text to Pandoc and applies page transforms.
+-- title.
 pageToWikiPandoc :: Page -> ContentTransformer Pandoc
-pageToWikiPandoc = applyPreParseTransforms >=>
+pageToWikiPandoc page' =
+  pageToWikiPandoc' page' >>= addPageTitleToPandoc (pageTitle page')
+
+pageToWikiPandoc' :: Page -> ContentTransformer Pandoc
+pageToWikiPandoc' = applyPreParseTransforms >=>
                      pageToPandoc >=> applyPageTransforms
 
 -- | Converts source text to Pandoc using default page type.
