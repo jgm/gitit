@@ -8,6 +8,10 @@ _         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
 
+_ introduce "skins" - a skin directory contains templates dir,
+a css dir whose files override those in css if present, and
+a js dir whose files override those in js if present... 
+
 _ get wiki up to speed as main home page (demogitit).
   Add good Installing page.  Up-to-date User's Guide.
   Front page should list features and link to good demos.
