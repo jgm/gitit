@@ -137,13 +137,13 @@ Pages may optionally begin with a metadata block.  Here is an example:
 
     \section{Why Category Theory?}
 
-The metadata block consists of a list of key-value pairs, each on a separate
-line. If needed, the value can be continued on one or more additional
-line, which must begin with a space. (This is illustrated by the "title"
-example above.)  The metadata block must begin with a line `---` and end with
-a line `...` followed by one or more blank lines. (The metadata block is a
-valid YAML document, though not all YAML documents will be valid metadata
-blocks.)
+The metadata block consists of a list of key-value pairs, each on a
+separate line. If needed, the value can be continued on one or more
+additional line, which must begin with a space. (This is illustrated by
+the "title" example above.) The metadata block must begin with a line
+`---` and end with a line `...` optionally followed by one or more blank
+lines. (The metadata block is a valid YAML document, though not all YAML
+documents will be valid metadata blocks.)
 
 Currently the following keys are supported:
 
