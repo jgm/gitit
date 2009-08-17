@@ -179,12 +179,21 @@ applyPreCommitPlugins = runPageTransformer . applyPreCommitTransforms
 -- Top level, composed transformers
 --
 
+-- | Responds with raw source.
 rawTextResponse :: ContentTransformer Response
 rawTextResponse = rawContents >>= textResponse
 
+-- | Responds with a wiki page in the format specified
+-- by the @format@ parameter. 
 exportViaPandoc :: ContentTransformer Response
-exportViaPandoc = rawContents >>= maybe mzero return >>= contentsToPage >>= pageToWikiPandocPage >>= exportPandoc
+exportViaPandoc = rawContents >>=
+                  maybe mzero return >>=
+                  contentsToPage >>=
+                  pageToWikiPandocPage >>=
+                  exportPandoc
 
+-- | Responds with a wiki page. Uses the cache when
+-- possible and caches the rendered page when appropriate.
 htmlViaPandoc :: ContentTransformer Response
 htmlViaPandoc = cachedHtml `mplus`
                   (rawContents >>=
@@ -197,6 +206,9 @@ htmlViaPandoc = cachedHtml `mplus`
                    applyWikiTemplate >>=
                    cacheHtml)
 
+-- | Responds with highlighted source code in a wiki
+-- page template.  Uses the cache when possible and
+-- caches the rendered page when appropriate.
 highlightRawSource :: ContentTransformer Response
 highlightRawSource =
   cachedHtml `mplus`
@@ -210,6 +222,8 @@ highlightRawSource =
 -- Cache support for transformers
 --
 
+-- | Caches a response (actually just the response body) on disk,
+-- unless the context indicates that the page is not cacheable. 
 cacheHtml :: Response -> ContentTransformer Response 
 cacheHtml resp = do
   params <- getParams
@@ -234,7 +248,7 @@ cachedHtml = do
 -- Content retrieval combinators
 --
 
--- | Returns raw file contents
+-- | Returns raw file contents.
 rawContents :: ContentTransformer (Maybe String)
 rawContents = do
   params <- getParams
@@ -248,20 +262,26 @@ rawContents = do
 -- Response-generating combinators
 --
 
+-- | Converts raw contents to a text/plain response.
 textResponse :: Maybe String -> ContentTransformer Response
 textResponse Nothing  = mzero  -- fail quietly if file not found
 textResponse (Just c) = mimeResponse c "text/plain; charset=utf-8"
 
+-- | Converts raw contents to a response that is appropriate with
+-- a mime type derived from the page's extension.
 mimeFileResponse :: Maybe String -> ContentTransformer Response
 mimeFileResponse Nothing = error "Unable to retrieve file contents."
 mimeFileResponse (Just c) =
   mimeResponse c =<< lift . getMimeTypeForExtension . takeExtension =<< getFileName
 
-mimeResponse :: Monad m => String -> String -> m Response
+mimeResponse :: Monad m
+             => String        -- ^ Raw contents for response body
+             -> String        -- ^ Mime type
+             -> m Response
 mimeResponse c mimeType =
   return . setContentType mimeType . toResponse $ c
 
--- | Exports Pandoc as Response using format specified in Params
+-- | Converts Pandoc to response using format specified in parameters. 
 exportPandoc :: Pandoc -> ContentTransformer Response
 exportPandoc doc = do
   params <- getParams
@@ -271,6 +291,8 @@ exportPandoc doc = do
        Nothing     -> error $ "Unknown export format: " ++ format
        Just writer -> lift (writer page doc)
 
+-- | Adds the sidebar, page tabs, and other elements of the wiki page
+-- layout to the raw content.
 applyWikiTemplate :: Html -> ContentTransformer Response
 applyWikiTemplate c = do
   Context { ctxLayout = layout } <- get
@@ -281,24 +303,24 @@ applyWikiTemplate c = do
 --
 
 -- | Converts Page to Pandoc, applies page transforms, and adds page
--- title to Pandoc meta info
+-- title to Pandoc meta info.
 pageToWikiPandocPage :: Page -> ContentTransformer Pandoc
 pageToWikiPandocPage page' =
   pageToWikiPandoc page' >>= addPageTitleToPandoc (pageTitle page')
 
--- | Converts source text to Pandoc and applies page transforms
+-- | Converts source text to Pandoc and applies page transforms.
 pageToWikiPandoc :: Page -> ContentTransformer Pandoc
 pageToWikiPandoc = applyPreParseTransforms >=>
                      pageToPandoc >=> applyPageTransforms
 
--- | Converts source text to Pandoc using default page type
+-- | Converts source text to Pandoc using default page type.
 pageToPandoc :: Page -> ContentTransformer Pandoc
 pageToPandoc page' = do
   modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
                              , ctxCategories = pageCategories page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
--- | Converts contents of page file to Page object
+-- | Converts contents of page file to Page object.
 contentsToPage :: String -> ContentTransformer Page
 contentsToPage s = do
   cfg <- lift getConfig
@@ -319,6 +341,7 @@ pandocToHtml pandocContents = do
                       , writerLiterateHaskell = bird
                       } pandocContents
 
+-- | Returns highlighted source code.
 highlightSource :: Maybe String -> ContentTransformer Html
 highlightSource Nothing = mzero
 highlightSource (Just source) = do
@@ -349,6 +372,7 @@ getPreCommitTransforms = liftM (mapMaybe preCommitTransform) $
   where preCommitTransform (PreCommitTransform x) = Just x
         preCommitTransform _                      = Nothing
 
+-- | @applyTransform a t@ applies the transform @t@ to input @a@.
 applyTransform :: a -> (a -> PluginM a) -> ContentTransformer a
 applyTransform inp transform = do
   context <- get
@@ -364,14 +388,17 @@ applyTransform inp transform = do
   put context'
   return result'
 
+-- | Applies all the page transform plugins to a Pandoc document.
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
 applyPageTransforms c = liftM (wikiLinksTransform : ) getPageTransforms >>=
                         foldM applyTransform c
 
+-- | Applies all the pre-parse transform plugins to a Page object.
 applyPreParseTransforms :: Page -> ContentTransformer Page
 applyPreParseTransforms page' = getPreParseTransforms >>= foldM applyTransform (pageText page') >>=
                                 (\t -> return page'{ pageText = t })
 
+-- | Applies all the pre-commit transform plugins to a raw string.
 applyPreCommitTransforms :: String -> ContentTransformer String
 applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
 
@@ -379,6 +406,8 @@ applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
 -- Content or context augmentation combinators
 --
 
+-- | Puts rendered page content into a wikipage div, adding
+-- categories and  a double-click-to-edit javascript.
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
   params <- getParams
@@ -396,6 +425,7 @@ wikiDivify c = do
   return $ thediv ! [identifier "wikipage",
                      strAttr "onDblClick" dblClickJs] << [c, htmlCategories]
 
+-- | Adds page title to a Pandoc document.
 addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
 addPageTitleToPandoc title' (Pandoc _ blocks) = do
   updateLayout $ \layout -> layout{ pgTitle = title' }
@@ -403,12 +433,14 @@ addPageTitleToPandoc title' (Pandoc _ blocks) = do
               then Pandoc (Meta [] [] []) blocks
               else Pandoc (Meta [Str title'] [] []) blocks
 
+-- | Adds javascript links for jsMath support.
 addMathSupport :: a -> ContentTransformer a
 addMathSupport c = do
   conf <- lift getConfig
   updateLayout $ \l -> addScripts l ["jsMath/easy/load.js" | jsMath conf]
   return c
 
+-- | Adds javascripts to page layout.
 addScripts :: PageLayout -> [String] -> PageLayout
 addScripts layout scriptPaths =
   layout{ pgScripts = scriptPaths ++ pgScripts layout }
@@ -463,6 +495,7 @@ convertWikiLinks (Link ref ("", "")) =
   Link ref (inlinesToURL ref, "Go to wiki page")
 convertWikiLinks x = x
 
+-- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
 inlinesToURL = escapeURIString isAllowedInURI  . encodeString . inlinesToString
 
