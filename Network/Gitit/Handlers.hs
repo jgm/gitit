@@ -736,8 +736,7 @@ feedHandler :: Handler
 feedHandler = do
   cfg <- getConfig
   when (not $ useFeed cfg) mzero
-  base' <- getWikiBase >>= \b ->   -- drop '_feed/' from base
-    return . reverse . dropWhile (/='/') . drop 1 . reverse $ b
+  base' <- getWikiBase
   feedBase <- if null (baseUrl cfg)  -- if baseUrl blank, try to get it from Host header
                  then do
                    mbHost <- getHost
