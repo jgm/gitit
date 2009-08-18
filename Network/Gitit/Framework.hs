@@ -67,7 +67,7 @@ import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
-import Data.List (intercalate, isSuffixOf, isInfixOf, (\\))
+import Data.List (intercalate, isPrefixOf, isSuffixOf, isInfixOf, (\\))
 import System.FilePath ((<.>), takeExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
@@ -191,23 +191,29 @@ getReferer = do
 getWikiBase :: ServerMonad m => m String
 getWikiBase = do
   path' <- getPath
-  uri <- liftM (fromJust . decString True . rqUri) askRq
-  if null path' -- we're at / or something like /_index
-     then return $ takePrefix uri 
-     else do
-       let path'' = if last uri == '/' then path' ++ "/" else path'
-       if path'' `isSuffixOf` uri
-          then let pref = take (length uri - length path'') uri
-               in  return $ if not (null pref) && last pref == '/'
-                               then init pref
-                               else pref
-          else error $ "Could not getWikiBase: (path, uri) = " ++ show (path'',uri)
+  uri' <- liftM (fromJust . decString True . rqUri) askRq
+  let revpaths = reverse . filter (not . null) $ splitOn '/' path'
+      revuris  = reverse . filter (not . null) $ splitOn '/' uri'
+  if revpaths `isPrefixOf` revuris
+     then let revbase = drop (length revpaths) revuris
+              -- a path like _feed is not part of the base...
+              revbase' = case revbase of
+                           (x:xs) | startsWithUnderscore x -> xs
+                           xs                              -> xs
+              base'    = intercalate "/" $ reverse revbase'
+          in  return $ if null base' then "" else '/' : base'
+      else error $ "Could not getWikiBase: (path, uri) = " ++ show (path',uri')
 
-takePrefix :: String -> String
-takePrefix "" = ""
-takePrefix "/" = ""
-takePrefix ('/':'_':_) = ""
-takePrefix (x:xs) = x : takePrefix xs
+startsWithUnderscore :: String -> Bool
+startsWithUnderscore ('_':_) = True
+startsWithUnderscore _ = False
+
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn c cs =
+  let (next, rest) = break (==c) cs
+  in  if null rest
+         then [next]
+         else next : splitOn c (tail rest)
 
 -- | Returns path portion of URI, without initial /.
 -- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
