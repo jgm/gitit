@@ -14,6 +14,14 @@ _ is there a bug in showPage (& probably source) in
   before checking to see whether an older revision was
   requested.
 
+_ consider inserting
+
+  <meta name="ROBOTS" content="NOINDEX, NOFOLLOW"/>
+
+  on all history pages. These are the only pages with links to diff
+  pages, so the NOFOLLOW should prevent robots from trying to index
+  the diff pages, which is a resource hit
+
 _ change how static files are served: rather than having
   a dedicated /_static/ path, use a fall-through method:
   a request to /foo/bar first checks for a static file
