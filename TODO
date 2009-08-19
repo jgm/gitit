@@ -8,9 +8,34 @@ _         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
 
-_ introduce "skins" - a skin directory contains templates dir,
-a css dir whose files override those in css if present, and
-a js dir whose files override those in js if present... 
+_ change how static files are served: rather than having
+  a dedicated /_static/ path, use a fall-through method:
+  a request to /foo/bar first checks for a static file
+  foo/bar; if not found, we go on to other handlers. This
+  would allow you to have /robots.txt and favicon.ico
+  at root, add custom static HTML pages, etc..
+
+    the fall-through requires something like this:
+
+  let staticHandler = do
+         resp <- withExpiresHeaders $ msum
+                         [ dir "css" $ fileServeStrict [] (static </> "css")
+                         , dir "js"  $ fileServeStrict [] (static </> "js")
+                         , ignoreFilters >>  -- don't compress images, pdfs, etc.
+                             fileServeStrict [] static ]
+         if rsCode resp == 404
+            then mzero  -- pass through if not found
+            else return resp
+
+_ see proposal on mailing list about fall-through to
+  data directory for static files and templates. This wd
+  require some rearranging of data directory.  perhaps we
+  need a static/ dir.
+
+_ while we're at it, we cd do the same thing with cached files,
+  using a staticHandler to serve them and then falling back.
+  We'd need to change the names (no .page extension), and we'd
+  need to add the text/html mime type manually.
 
 _ get wiki up to speed as main home page (demogitit).
   Add good Installing page.  Up-to-date User's Guide.
