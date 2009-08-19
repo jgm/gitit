@@ -7,6 +7,12 @@ x         x         Network.Gitit.ContentTransformer
 _         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
+_ move handlers frm ContentTransformer to Handlers?
+
+_ is there a bug in showPage (& probably source) in
+  ContentTransformer?  It seems to go to the cache
+  before checking to see whether an older revision was
+  requested.
 
 _ change how static files are served: rather than having
   a dedicated /_static/ path, use a fall-through method:
