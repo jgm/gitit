@@ -56,6 +56,7 @@ module Network.Gitit.ContentTransformer
   , addPageTitleToPandoc
   , addMathSupport
   , addScripts
+  , allowSpiders
   -- * ContentTransformer context API
   , getFileName
   , getPageName
@@ -146,7 +147,7 @@ showFileAsText = runFileTransformer rawTextResponse
 
 -- | Responds with rendered wiki page.
 showPage :: Handler
-showPage = runPageTransformer htmlViaPandoc
+showPage = runPageTransformer $ allowSpiders >> htmlViaPandoc
 
 -- | Responds with page exported into selected format.
 exportPage :: Handler 
@@ -154,7 +155,7 @@ exportPage = runPageTransformer exportViaPandoc
 
 -- | Responds with highlighted source code.
 showHighlightedSource :: Handler
-showHighlightedSource = runFileTransformer highlightRawSource
+showHighlightedSource = runFileTransformer $ allowSpiders >> highlightRawSource
 
 -- | Responds with non-highlighted source code.
 showFile :: Handler
@@ -442,6 +443,15 @@ addMathSupport c = do
 addScripts :: PageLayout -> [String] -> PageLayout
 addScripts layout scriptPaths =
   layout{ pgScripts = scriptPaths ++ pgScripts layout }
+
+-- | Prevents addition of meta tag excluding web spiders,
+-- provided a specific revision hasn't been requested.
+allowSpiders :: ContentTransformer () 
+allowSpiders = do
+  params <- getParams
+  case pRevision params of
+       Just _  -> return ()
+       Nothing -> updateLayout $ \l -> l{pgAllowSpiders = True}
 
 --
 -- ContentTransformer context API

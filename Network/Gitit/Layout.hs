@@ -51,6 +51,7 @@ defaultPageLayout = PageLayout
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   , pgLinkToFeed     = False
+  , pgAllowSpiders   = False
   }
 
 -- | Returns formatted page
@@ -85,6 +86,7 @@ defaultRenderPage templ layout htmlContents = do
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
                    setStrAttr "pageUrl" (urlForPage "" page) .
+                   setBoolAttr "allowspiders" (pgAllowSpiders layout) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .

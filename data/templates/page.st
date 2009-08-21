@@ -3,6 +3,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    $if(!allowspiders)$
+    <meta name="robots" content="noindex,nofollow" />
+    $endif$
     $if(feed)$
     <link href="$base$/_feed" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed" />
     <link href="$base$/_feed$pageUrl$" type="application/atom+xml" rel="alternate" title="This page's ATOM Feed" />

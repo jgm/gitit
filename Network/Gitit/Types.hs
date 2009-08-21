@@ -217,6 +217,7 @@ data PageLayout = PageLayout
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   , pgLinkToFeed     :: Bool
+  , pgAllowSpiders   :: Bool
   }
 
 data Tab = ViewTab
