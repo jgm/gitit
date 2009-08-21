@@ -40,6 +40,9 @@ _ get wiki up to speed as main home page (demogitit).
   Add good Installing page.  Up-to-date User's Guide.
   Front page should list features and link to good demos.
 
+_ think about making texmath a built-in option for displaying
+  math, perhaps the default.
+
 ................................................................
 
 _ use addSubgroup or mergeSTGroups to let templates in templates/
