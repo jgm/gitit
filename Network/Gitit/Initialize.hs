@@ -22,7 +22,7 @@ module Network.Gitit.Initialize ( initializeGititState
                                 , createRepoIfMissing
                                 , createTemplateIfMissing )
 where
-import System.FilePath ((</>), (<.>), takeExtension)
+import System.FilePath ((</>), (<.>))
 import Data.FileStore
 import qualified Data.Map as M
 import Network.Gitit.Types
@@ -32,7 +32,7 @@ import Network.Gitit.Plugins
 import Network.Gitit.Layout (defaultRenderPage)
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
-import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, getDirectoryContents, doesFileExist)
+import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
 import Control.Monad (unless, forM_, liftM)
 import Prelude hiding (readFile)
 import System.IO.UTF8
@@ -90,9 +90,11 @@ createTemplateIfMissing conf' = do
   unless templateExists $ do
     createDirectoryIfMissing True (templatesDir conf')
     templatePath <- getDataFileName $ "data" </> "templates"
-    templs <- liftM (filter (`notElem` [".",".."])) $
-      getDirectoryContents templatePath
-    forM_ templs $ \t -> do
+    -- templs <- liftM (filter (`notElem` [".",".."])) $
+    --  getDirectoryContents templatePath
+    -- Copy footer.st, since this is the component users
+    -- are most likely to want to customize:
+    forM_ ["footer.st"] $ \t -> do
       copyFile (templatePath </> t) (templatesDir conf' </> t)
       logM "gitit" WARNING $ "Created " ++ (templatesDir conf' </> t)
 
@@ -147,11 +149,12 @@ createStaticIfMissing conf = do
     let cssdir = staticdir </> "css"
     createDirectoryIfMissing True cssdir
     cssDataDir <- getDataFileName $ "data" </> "static" </> "css"
-    cssFiles <- liftM (filter (\f -> takeExtension f == ".css")) $ getDirectoryContents cssDataDir
-    forM_ cssFiles $ \f -> do
+    -- cssFiles <- liftM (filter (\f -> takeExtension f == ".css")) $ getDirectoryContents cssDataDir
+    forM_ ["custom.css"] $ \f -> do
       copyFile (cssDataDir </> f) (cssdir </> f)
       logM "gitit" WARNING $ "Created " ++ (cssdir </> f)
 
+    {-
     let icondir = staticdir </> "img" </> "icons" 
     createDirectoryIfMissing True icondir
     iconDataDir <- getDataFileName $ "data" </> "static" </> "img" </> "icons"
@@ -159,11 +162,14 @@ createStaticIfMissing conf = do
     forM_ iconFiles $ \f -> do
       copyFile (iconDataDir </> f) (icondir </> f)
       logM "gitit" WARNING $ "Created " ++ (icondir </> f)
+    -}
 
     logopath <- getDataFileName $ "data" </> "static" </> "img" </> "gitit-dog.png"
+    createDirectoryIfMissing True $ staticdir </> "img"
     copyFile logopath $ staticdir </> "img" </> "logo.png"
     logM "gitit" WARNING $ "Created " ++ (staticdir </> "img" </> "logo.png")
 
+    {-
     let jsdir = staticdir </> "js"
     createDirectoryIfMissing True jsdir
     jsDataDir <- getDataFileName $ "data" </> "static" </> "js"
@@ -171,5 +177,5 @@ createStaticIfMissing conf = do
     forM_ javascripts $ \f -> do
       copyFile (jsDataDir </> f) (jsdir </> f)
       logM "gitit" WARNING $ "Created " ++ (jsdir </> f)
-
+    -}
 

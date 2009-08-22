@@ -63,13 +63,13 @@ main = do
 
   let conf' = conf{jsMath = jsMathExists, logLevel = level}  
 
-  -- initialize state
-  initializeGititState conf'
-
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf'
   createStaticIfMissing conf'
   createTemplateIfMissing conf'
+
+  -- initialize state
+  initializeGititState conf'
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
   -- start the server

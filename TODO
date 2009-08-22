@@ -21,10 +21,12 @@ x see proposal on mailing list about fall-through to
 
 x do same for templates
 
-_ fix initialize so it doesn't copy everything.
+x fix initialize so it doesn't copy everything.
   think about using a custom.css.
 
 _ get rid of googlecode page/ move issues to github??
+
+_ images are being sent gzipped - fix 
 
 _ while we're at it, we cd do the same thing with cached files,
   using a staticHandler to serve them and then falling back.
