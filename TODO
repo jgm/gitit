@@ -26,13 +26,6 @@ x fix initialize so it doesn't copy everything.
 
 _ get rid of googlecode page/ move issues to github??
 
-_ images are being sent gzipped - fix 
-
-_ while we're at it, we cd do the same thing with cached files,
-  using a staticHandler to serve them and then falling back.
-  We'd need to change the names (no .page extension), and we'd
-  need to add the text/html mime type manually.
-
 _ get wiki up to speed as main home page (demogitit).
   Add good Installing page.  Up-to-date User's Guide.
   Front page should list features and link to good demos.
