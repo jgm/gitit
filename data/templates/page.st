@@ -12,15 +12,15 @@
     $endif$
     <title>Wiki - $pagetitle$</title>
     $if(printable)$
-    <link href="$base$/_static/css/print.css" rel="stylesheet" media="all" type= "text/css" />
+    <link href="$base$/css/print.css" rel="stylesheet" media="all" type= "text/css" />
     $else$
-    <link href="$base$/_static/css/reset-fonts-grids.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="$base$/_static/css/base-min.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="$base$/_static/css/hk-pyg.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="$base$/_static/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
-    <link href="$base$/_static/css/print.css" rel="stylesheet" media="print" type= "text/css" />
+    <link href="$base$/css/reset-fonts-grids.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/base-min.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/hk-pyg.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/print.css" rel="stylesheet" media="print" type= "text/css" />
     $endif$
-    <!--[if IE]><link href="$base$/_static/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
+    <!--[if IE]><link href="$base$/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" /><![endif]-->
   </head>
   <body>
     <div id="doc3" class="yui-t1">

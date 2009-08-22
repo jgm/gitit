@@ -68,7 +68,7 @@ defaultRenderPage templ layout htmlContents = do
   let page = pgPageName layout
   base' <- getWikiBase
   let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
-  let scriptLink x = script ! [src (base' ++ "/_static/js/" ++ x),
+  let scriptLink x = script ! [src (base' ++ "/js/" ++ x),
         thetype "text/javascript"] << noHtml
   let javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
   let tabli tab = if tab == pgSelectedTab layout
