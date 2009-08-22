@@ -14,10 +14,16 @@ x change how static files are served: rather than having
   would allow you to have /robots.txt and favicon.ico
   at root, add custom static HTML pages, etc..
 
-_ see proposal on mailing list about fall-through to
+x see proposal on mailing list about fall-through to
   data directory for static files and templates. This wd
   require some rearranging of data directory.  perhaps we
   need a static/ dir.
+
+x do same for templates
+
+_ get rid of googlecode page/ move issues to github??
+
+_ fix http://localhost:5001/_category/furry
 
 _ while we're at it, we cd do the same thing with cached files,
   using a staticHandler to serve them and then falling back.
