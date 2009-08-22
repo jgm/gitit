@@ -71,11 +71,15 @@ recompilePageTemplate = do
 -- | Compile a master page template named @page.st@ in the directory specified.
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
 compilePageTemplate tempsDir = do
+  defaultGroup <- getDataFileName ("data" </> "templates") >>= T.directoryGroup
   templateExists <- doesDirectoryExist tempsDir
-  templs <- if templateExists
-               then T.directoryGroup tempsDir
-               else getDataFileName ("data" </> "templates") >>= T.directoryGroup
-  case T.getStringTemplate "page" templs of
+  customGroup <- if templateExists
+                    then T.directoryGroup tempsDir
+                    else return T.nullGroup
+  -- default templates from data directory will be "shadowed"
+  -- by templates from the user's template dir
+  let combinedGroup = T.addSubGroup defaultGroup customGroup
+  case T.getStringTemplate "page" combinedGroup of
         Just t    -> return t
         Nothing   -> error "Could not get string template"
  
