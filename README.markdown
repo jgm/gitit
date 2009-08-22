@@ -216,6 +216,8 @@ So, you can throw anything you want to be served statically (for
 example, a `robots.txt` file or `favicon.ico`) in the `static`
 directory. You can override any of gitit's default css, javascript, or
 image files by putting a file with the same relative path in `static`.
+Note that gitit has a default `robots.txt` file that excludes all
+URLs beginning with `/_`.
 
 Note:  if you set `static-dir` to be a subdirectory of `repository-path`,
 and then add the files in the static directory to your repository, you
