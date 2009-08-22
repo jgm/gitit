@@ -22,9 +22,13 @@ _ change how static files are served: rather than having
                          , dir "js"  $ fileServeStrict [] (static </> "js")
                          , ignoreFilters >>  -- don't compress images, pdfs, etc.
                              fileServeStrict [] static ]
+
          if rsCode resp == 404
             then mzero  -- pass through if not found
             else return resp
+         -- better:  use getHeaderM "Content-Type", if it starts with 'text'
+         -- then return (ignoreFilters >> resp) else return (resp)
+         -- and avoid the junk above
 
 _ see proposal on mailing list about fall-through to
   data directory for static files and templates. This wd
