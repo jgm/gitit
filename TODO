@@ -23,8 +23,6 @@ x do same for templates
 
 _ get rid of googlecode page/ move issues to github??
 
-_ fix http://localhost:5001/_category/furry
-
 _ while we're at it, we cd do the same thing with cached files,
   using a staticHandler to serve them and then falling back.
   We'd need to change the names (no .page extension), and we'd
