@@ -192,17 +192,24 @@ getWikiBase :: ServerMonad m => m String
 getWikiBase = do
   path' <- getPath
   uri' <- liftM (fromJust . decString True . rqUri) askRq
+  case calculateWikiBase path' uri' of
+       Just b    -> return b
+       Nothing   -> error $ "Could not getWikiBase: (path, uri) = " ++ show (path',uri')
+
+-- | The pure core of getWikiBase.
+calculateWikiBase :: String -> String -> Maybe String
+calculateWikiBase path' uri' =
   let revpaths = reverse . filter (not . null) $ splitOn '/' path'
       revuris  = reverse . filter (not . null) $ splitOn '/' uri'
-  if revpaths `isPrefixOf` revuris
-     then let revbase = drop (length revpaths) revuris
-              -- a path like _feed is not part of the base...
-              revbase' = case revbase of
-                           (x:xs) | startsWithUnderscore x -> xs
-                           xs                              -> xs
-              base'    = intercalate "/" $ reverse revbase'
-          in  return $ if null base' then "" else '/' : base'
-      else error $ "Could not getWikiBase: (path, uri) = " ++ show (path',uri')
+  in  if revpaths `isPrefixOf` revuris
+         then let revbase = drop (length revpaths) revuris
+                  -- a path like _feed is not part of the base...
+                  revbase' = case revbase of
+                             (x:xs) | startsWithUnderscore x -> xs
+                             xs                              -> xs
+                  base'    = intercalate "/" $ reverse revbase'
+              in  Just $ if null base' then "" else '/' : base'
+          else Nothing
 
 startsWithUnderscore :: String -> Bool
 startsWithUnderscore ('_':_) = True
