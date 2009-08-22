@@ -448,9 +448,9 @@ addMathSupport c = do
   updateLayout $ \l ->
     case mathMethod conf of
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
-         -- eventually this should be added dynamically only
-         -- on pages with math:
-         MathML       -> addScripts l ["MathMLinHTML.js"]
+         -- for MathML, the script is added by mathMLTransform, only
+         -- if the page contains math:
+         MathML       -> l
          RawTeX       -> l
   return c
 
@@ -519,16 +519,24 @@ convertWikiLinks (Link ref ("", "")) =
 convertWikiLinks x = x
 
 mathMLTransform :: Pandoc -> PluginM Pandoc
-mathMLTransform = return . processWith convertTeXMathToMathML
+mathMLTransform inp = do
+  let (Pandoc m blks, mathUsed) = runState (processWithM convertTeXMathToMathML inp) False
+  let scriptLink = RawHtml "<script type=\"text/javascript\" src=\"/js/MathMLinHTML.js\"></script>"
+  let blks' = if mathUsed
+                 then blks ++ [scriptLink]
+                 else blks
+  return $ Pandoc m blks'
 
--- | Convert math to MathML.
-convertTeXMathToMathML :: Inline -> Inline
-convertTeXMathToMathML (Math t x) =
+-- | Convert math to MathML.  We put this in a Writer monad
+-- to keep track of whether we've actually got any MathML; if not,
+-- we can avoid linking a script.
+convertTeXMathToMathML :: Inline -> State Bool Inline
+convertTeXMathToMathML (Math t x) = do
   case texMathToMathML t' x of
-       Left _  -> Math t x 
-       Right v -> HtmlInline $ ppElement v
+       Left _  -> return $ Math t x
+       Right v -> put True >> return (HtmlInline $ ppElement v)
     where t' = if t == DisplayMath then DisplayBlock else DisplayInline
-convertTeXMathToMathML x = x
+convertTeXMathToMathML x = return x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
