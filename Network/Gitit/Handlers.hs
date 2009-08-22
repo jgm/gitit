@@ -749,7 +749,7 @@ feedHandler = do
             , fcBaseUrl = feedBase
             , fcFeedDays = feedDays cfg }
   path' <- getPath     -- e.g. "foo/bar" if they hit /_feed/foo/bar
-  let file = (path' `orIfNull` "[main]") <.> "feed"
+  let file = (path' `orIfNull` "_site") <.> "feed"
   let mbPath = if null path' then Nothing else Just path'
   fs <- getFileStore
   -- first, check for a cached version that is recent enough
