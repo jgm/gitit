@@ -118,6 +118,7 @@ extractConfig cp = do
       cfRepositoryType <- get cp "DEFAULT" "repository-type"
       cfRepositoryPath <- get cp "DEFAULT" "repository-path"
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"
+      cfMathMethod <- get cp "DEFAULT" "math"
       cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
       cfAuthenticationMethod <- get cp "DEFAULT" "authentication-method"
       cfUserFile <- get cp "DEFAULT" "user-file"
@@ -168,6 +169,10 @@ extractConfig cp = do
           repositoryPath       = cfRepositoryPath
         , repositoryType       = repotype'
         , defaultPageType      = pt
+        , mathMethod           = case map toLower cfMathMethod of
+                                      "jsmath"   -> JsMathScript
+                                      "mathml"   -> MathML
+                                      _          -> RawTeX
         , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
         , withUser             = case authMethod of
@@ -207,7 +212,6 @@ extractConfig cp = do
         , useCache             = cfUseCache
         , cacheDir             = cfCacheDir
         , mimeMap              = mimeMap'
-        , jsMath               = False
         , mailCommand          = cfMailCommand
         , resetPasswordMessage = fromQuotedMultiline cfResetPasswordMessage
         , markupHelp           = markupHelpText
