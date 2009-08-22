@@ -93,6 +93,8 @@ import Network.HTTP (urlEncodeVars)
 import Network.URI (isAllowedInURI, escapeURIString)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
+import Text.XML.Light
+import Text.TeXMath
 
 --
 -- ContentTransformer runners
@@ -391,8 +393,13 @@ applyTransform inp transform = do
 
 -- | Applies all the page transform plugins to a Pandoc document.
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
-applyPageTransforms c = liftM (wikiLinksTransform : ) getPageTransforms >>=
-                        foldM applyTransform c
+applyPageTransforms c = do
+  xforms <- getPageTransforms
+  cfg <- lift getConfig
+  let xforms' = case mathMethod cfg of
+                      MathML -> mathMLTransform : xforms
+                      _      -> xforms
+  foldM applyTransform c (wikiLinksTransform : xforms')
 
 -- | Applies all the pre-parse transform plugins to a Page object.
 applyPreParseTransforms :: Page -> ContentTransformer Page
@@ -434,11 +441,17 @@ addPageTitleToPandoc title' (Pandoc _ blocks) = do
               then Pandoc (Meta [] [] []) blocks
               else Pandoc (Meta [Str title'] [] []) blocks
 
--- | Adds javascript links for jsMath support.
+-- | Adds javascript links for math support.
 addMathSupport :: a -> ContentTransformer a
 addMathSupport c = do
   conf <- lift getConfig
-  updateLayout $ \l -> addScripts l ["jsMath/easy/load.js" | jsMath conf]
+  updateLayout $ \l ->
+    case mathMethod conf of
+         JsMathScript -> addScripts l ["jsMath/easy/load.js"]
+         -- eventually this should be added dynamically only
+         -- on pages with math:
+         MathML       -> addScripts l ["MathMLinHTML.js"]
+         RawTeX       -> l
   return c
 
 -- | Adds javascripts to page layout.
@@ -504,6 +517,18 @@ convertWikiLinks :: Inline -> Inline
 convertWikiLinks (Link ref ("", "")) =
   Link ref (inlinesToURL ref, "Go to wiki page")
 convertWikiLinks x = x
+
+mathMLTransform :: Pandoc -> PluginM Pandoc
+mathMLTransform = return . processWith convertTeXMathToMathML
+
+-- | Convert math to MathML.
+convertTeXMathToMathML :: Inline -> Inline
+convertTeXMathToMathML (Math t x) =
+  case texMathToMathML t' x of
+       Left _  -> Math t x 
+       Right v -> HtmlInline $ ppElement v
+    where t' = if t == DisplayMath then DisplayBlock else DisplayInline
+convertTeXMathToMathML x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String

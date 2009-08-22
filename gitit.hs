@@ -23,11 +23,10 @@ import Network.Gitit.Server
 import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
-import System.FilePath ((</>))
 import Network.Gitit.Config (getConfigFromOpts)
 import Data.Maybe (isNothing)
 import Control.Monad.Reader
-import System.Log.Logger (logM, Priority(..), setLevel, setHandlers,
+import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
 import Data.Char (toLower)
@@ -54,14 +53,7 @@ main = do
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
 
-  jsMathExists <- liftIO $ doesFileExist $
-                  staticDir conf </> "js" </> "jsMath" </> "easy" </> "load.js"
-  logM "gitit" NOTICE $
-    if jsMathExists
-       then "Found jsMath scripts -- using jsMath"
-       else "Did not find jsMath scripts -- not using jsMath"
-
-  let conf' = conf{jsMath = jsMathExists, logLevel = level}  
+  let conf' = conf{logLevel = level}
 
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf'

@@ -44,6 +44,9 @@ data PageType = Markdown | RST | LaTeX | HTML
 
 data FileStoreType = Git | Darcs deriving Show
 
+data MathMethod = MathML | JsMathScript | RawTeX
+                  deriving (Read, Show, Eq)
+
 -- | Data structure for information read from config file.
 data Config = Config {
   -- | Path of repository containing filestore
@@ -52,6 +55,8 @@ data Config = Config {
   repositoryType       :: FileStoreType,
   -- | Default page markup type for this wiki
   defaultPageType      :: PageType,
+  -- | How to handle LaTeX math in pages?
+  mathMethod           :: MathMethod,
   -- | Treat as literate haskell by default?
   defaultLHS           :: Bool,
   -- | Show Haskell code with bird tracks
@@ -106,8 +111,6 @@ data Config = Config {
   cacheDir             :: FilePath,
   -- | Map associating mime types with file extensions
   mimeMap              :: M.Map String String,
-  -- | Are jsMath files present?
-  jsMath               :: Bool,
   -- | Command to send notification emails
   mailCommand          :: String,
   -- | Text of password reset email

@@ -58,6 +58,7 @@ data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/js/uploadForm.js, data/static/js/jquery-ui.packed.js,
                      data/static/js/jquery.hotkeys-0.7.9.min.js,
                      data/static/js/preview.js, data/static/js/search.js,
+                     data/static/js/MathMLinHTML.js,
                      data/post-update, data/FrontPage.page, data/Help.page,
                      data/markup.Markdown, data/markup.RST,
                      data/markup.HTML, data/markup.LaTeX,
@@ -115,7 +116,7 @@ Executable           gitit
                      datetime, zlib, url, happstack-server >= 0.3.3 && < 0.4,
                      happstack-util >= 0.3.2 && < 0.4, xml >= 1.3.4,
                      hslogger >= 1 && < 1.1, ConfigFile >= 1, feed >= 0.3.6,
-                     cautious-file >= 0.1.5 && < 0.2
+                     cautious-file >= 0.1.5 && < 0.2, texmath
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)
