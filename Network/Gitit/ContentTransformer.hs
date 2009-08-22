@@ -229,7 +229,8 @@ cacheHtml resp = do
   params <- getParams
   file <- getFileName
   cacheable <- getCacheable
-  when (isNothing (pRevision params) && not (pPrintable params) && cacheable) $
+  cfg <- lift getConfig
+  when (useCache cfg && cacheable && isNothing (pRevision params) && not (pPrintable params)) $
     lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp 
   return resp 
 
@@ -238,7 +239,8 @@ cachedHtml :: ContentTransformer Response
 cachedHtml = do
   file <- getFileName
   params <- getParams
-  if not (pPrintable params) && isNothing (pRevision params)
+  cfg <- lift getConfig
+  if useCache cfg && not (pPrintable params) && isNothing (pRevision params)
      then do mbCached <- lift $ lookupCache file
              let emptyResponse = setContentType "text/html; charset=utf-8" . toResponse $ ()
              maybe mzero (\(_modtime, contents) -> lift . ok $ emptyResponse{rsBody = L.fromChunks [contents]}) mbCached

@@ -39,25 +39,21 @@ expireCachedFile :: String -> GititServerPart ()
 expireCachedFile file = do
   cfg <- getConfig
   let target = cacheDir cfg </> file
-  when (useCache cfg) $ do
-    exists <- liftIO $ doesFileExist target
-    if exists
-       then liftIO (removeFile target)
-       else mzero
+  exists <- liftIO $ doesFileExist target
+  if exists
+     then liftIO (removeFile target)
+     else mzero
 
 lookupCache :: String -> GititServerPart (Maybe (ClockTime, B.ByteString))
 lookupCache file = do
   cfg <- getConfig
   let target = cacheDir cfg </> file
-  if useCache cfg
-     then do
-       exists <- liftIO $ doesFileExist target
-       if exists
-          then liftIO $ do
-            modtime <- getModificationTime target
-            contents <- B.readFile target
-            return $ Just (modtime, contents)
-          else return Nothing
+  exists <- liftIO $ doesFileExist target
+  if exists
+     then liftIO $ do
+       modtime <- getModificationTime target
+       contents <- B.readFile target
+       return $ Just (modtime, contents)
      else return Nothing
 
 cacheContents :: String -> B.ByteString -> GititServerPart ()
@@ -65,6 +61,6 @@ cacheContents file contents = do
   cfg <- getConfig
   let target = cacheDir cfg </> file
   let targetDir = takeDirectory target
-  when (useCache cfg) $ liftIO $ do
+  liftIO $ do
     createDirectoryIfMissing True targetDir
     B.writeFile (cacheDir cfg </> file) contents
