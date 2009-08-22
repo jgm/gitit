@@ -145,12 +145,10 @@ fileServeStrict' ps p = do
   if rsCode resp == 404 || last (rqUri rq) == '/'
      then mzero  -- pass through if not found or directory index
      else do
-       mbContentType <- getHeaderM "Content-Type"
        -- turn off compresion filter unless it's text
-       case mbContentType of
-            Just ct | B.pack "text/" `B.isPrefixOf` ct -> ignoreFilters
-            _ -> return ()
-       return resp
+       case getHeader "Content-Type" resp of
+            Just ct | B.pack "text/" `B.isPrefixOf` ct -> return resp
+            _ -> ignoreFilters >> return resp
 
 wikiHandlers :: [Handler]
 wikiHandlers =
