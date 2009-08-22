@@ -142,7 +142,7 @@ createStaticIfMissing conf = do
 
     let cssdir = staticdir </> "css"
     createDirectoryIfMissing True cssdir
-    cssDataDir <- getDataFileName "css"
+    cssDataDir <- getDataFileName $ "data" </> "static" </> "css"
     cssFiles <- liftM (filter (\f -> takeExtension f == ".css")) $ getDirectoryContents cssDataDir
     forM_ cssFiles $ \f -> do
       copyFile (cssDataDir </> f) (cssdir </> f)
@@ -150,19 +150,19 @@ createStaticIfMissing conf = do
 
     let icondir = staticdir </> "img" </> "icons" 
     createDirectoryIfMissing True icondir
-    iconDataDir <- getDataFileName ("img" </> "icons")
+    iconDataDir <- getDataFileName $ "data" </> "static" </> "img" </> "icons"
     iconFiles <- liftM (filter (\f -> takeExtension f == ".png")) $ getDirectoryContents iconDataDir
     forM_ iconFiles $ \f -> do
       copyFile (iconDataDir </> f) (icondir </> f)
       logM "gitit" WARNING $ "Created " ++ (icondir </> f)
 
-    logopath <- getDataFileName $ "img" </> "gitit-dog.png"
+    logopath <- getDataFileName $ "data" </> "static" </> "img" </> "gitit-dog.png"
     copyFile logopath $ staticdir </> "img" </> "logo.png"
     logM "gitit" WARNING $ "Created " ++ (staticdir </> "img" </> "logo.png")
 
     let jsdir = staticdir </> "js"
     createDirectoryIfMissing True jsdir
-    jsDataDir <- getDataFileName "js"
+    jsDataDir <- getDataFileName $ "data" </> "static" </> "js"
     javascripts <- liftM (filter (`notElem` [".", ".."])) $ getDirectoryContents jsDataDir
     forM_ javascripts $ \f -> do
       copyFile (jsDataDir </> f) (jsdir </> f)
