@@ -96,8 +96,8 @@ will be created here. To start gitit, just type:
 If all goes well, gitit will do the following:
 
  1.  Create a git repository, `wikidata`, and add a default front page.
- 2.  Create a `static` directory containing the scripts, images,
-     and stylesheets used by gitit.
+ 2.  Create a `static` directory containing files to be treated as
+     static files by gitit.
  3.  Create a `templates` directory containing HStringTemplate templates
      for wiki pages.
  4.  Start a web server on port 5001.
@@ -185,8 +185,8 @@ To see what languages are available:
 
 [delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
 
-Configuring gitit
-=================
+Configuring and customizing gitit
+=================================
 
 Configuration options
 ---------------------
@@ -202,12 +202,20 @@ The default configuration file is documented with comments throughout.
 The `static` directory
 ----------------------
 
-If there is no wiki page or uploaded file corresponding to a request,
-gitit always looks last in the `static` directory. So, for example,
-a file `foo.jpg` in the `img` subdirectory of the `static` directory
-will be accessible at the url `/img/foo.jpg`. Gitit creates three
-subdirectories of `static`, `css`, `img`, and `js`, which include the
-icons, stylesheets, and javascripts it uses.
+On receiving a request, gitit always looks first in the `static`
+directory (or in whatever directory is specified for `static-dir` in
+the configuration file). If a file corresponding to the request is
+found there, it is served immediately. If the file is not found in
+`static`, gitit next looks in the `static` subdirectory of gitit's data
+file (`$CABALDIR/share/gitit-x.y.z/data`). This is where default css,
+images, and javascripts are stored. If the file is not found there
+either, gitit treats the request as a request for a wiki page or wiki
+command.
+
+So, you can throw anything you want to be served statically (for
+example, a `robots.txt` file or `favicon.ico`) in the `static`
+directory. You can override any of gitit's default css, javascript, or
+image files by putting a file with the same relative path in `static`.
 
 Note:  if you set `static-dir` to be a subdirectory of `repository-path`,
 and then add the files in the static directory to your repository, you
@@ -241,27 +249,22 @@ repository.
 Changing the theme
 ------------------
 
-To change the look of the wiki, you can modify `screen.css` in
-`static/css`.  But a better approach is to add a line to
-`templates/page.st` that imports your own custom stylesheet. This line
-should go after the line that links to `/css/screen.css`:
+To change the look of the wiki, you can modify `custom.css` in
+`static/css`.
 
-    <link href="/css/my-screen.css" rel="stylesheet" media="screen, projection" type="text/css" />
-
-Then add `my-screen.css` to the `static/css` directory and customize
-it as you see fit.  The advantage of this approach is that you won't
-need to merge changes in `screen.css` when gitit is updated.  You can
-just copy the revised `screen.css` into your `static/css` directory.
-
-To change the look of printed pages, modify `print.css`.
+To change the look of printed pages, copy gitit's default `print.css`
+to `static/css` and modify it.
 
 The logo picture can be changed by copying a new PNG file to
 `static/img/logo.png`.
 
-For more radical changes, you can modify any of the templates in
-`templates`. The `page.st` template is the master template; it includes
-the others.  Interpolated variables are surrounded by `$`s, so
-`literal $` must be backslash-escaped.
+To change the footer, modify `templates/footer.st`.
+
+For more radical changes, you can override any of the default
+templates in `$CABALDIR/share/gitit-x.y.z/templates` by copying
+the file into `templates` and modifying it. The `page.st` template is
+the master template; it includes the others. Interpolated variables are
+surrounded by `$`s, so `literal $` must be backslash-escaped.
 
 Adding support for math
 -----------------------
