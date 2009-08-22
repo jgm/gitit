@@ -671,8 +671,9 @@ fileListToHtml base' prefix files =
 -- NOTE:  The current implementation of categoryPage does not go via the
 -- filestore abstraction.  That is bad, but can only be fixed if we add
 -- more sophisticated searching options to filestore.
-categoryPage :: String -> Handler
-categoryPage category = do
+categoryPage :: Handler
+categoryPage = do
+  category <- getPath
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ category

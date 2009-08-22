@@ -116,7 +116,6 @@ import Network.Gitit.Authentication (loginUserForm)
 import Paths_gitit (getDataFileName)
 import Control.Monad.Reader
 import Prelude hiding (readFile)
-import Codec.Binary.UTF8.String (decodeString)
 import qualified Data.ByteString.Char8 as B
 import System.FilePath ((</>))
 
@@ -167,7 +166,7 @@ wikiHandlers =
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_feed"     feedHandler
-  , dir "_category" $ path $ categoryPage . decodeString
+  , dir "_category" categoryPage
   , dir "_categories" categoryListPage
   , dir "_expire"     expireCache
   , guardCommand "showraw" >> msum
