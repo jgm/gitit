@@ -110,7 +110,7 @@ createRepoIfMissing conf = do
   let defOpts = defaultWriterOptions{
                         writerStandalone = False
                       , writerHTMLMathMethod = JsMath
-                               (Just "/_static/js/jsMath/easy/load.js")
+                               (Just "/js/jsMath/easy/load.js")
                       , writerLiterateHaskell = showLHSBirdTracks conf
                       }
   -- note: we convert this (markdown) to the default page format

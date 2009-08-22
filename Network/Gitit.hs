@@ -114,26 +114,38 @@ import Network.Gitit.State (getFileStore, getUser, getConfig)
 import Network.Gitit.ContentTransformer
 import Network.Gitit.Authentication (loginUserForm)
 import Control.Monad.Reader
-import System.FilePath
 import Prelude hiding (readFile)
 import Codec.Binary.UTF8.String (decodeString)
+import qualified Data.ByteString.Char8 as B
 
 -- | Happstack handler for a gitit wiki.
 wiki :: Config -> ServerPart Response
 wiki conf = do
   let static = staticDir conf
-  let staticHandler = dir "_static" $ withExpiresHeaders $ msum
-                         [ dir "css" $ fileServeStrict [] (static </> "css")
-                         , dir "js"  $ fileServeStrict [] (static </> "js")
-                         , ignoreFilters >>  -- don't compress images, pdfs, etc.
-                             fileServeStrict [] static ]
-  let handlers = [ debugHandler | debugMode conf] ++ (authHandler conf : wikiHandlers)
+  let staticHandler = withExpiresHeaders $ fileServeStrict' [] static
+  let handlers = [debugHandler | debugMode conf] ++ (authHandler conf : wikiHandlers)
   let fs = filestoreFromConfig conf
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
   if compressResponses conf
      then compressedResponseFilter
      else return ""
   staticHandler `mplus` runHandler ws (withUser conf $ msum handlers)
+
+-- | Like 'fileServeStrict', but if file is not found, fail instead of
+-- returning a 404 error.
+fileServeStrict' :: [FilePath] -> FilePath -> ServerPart Response
+fileServeStrict' ps p = do
+  rq <- askRq
+  resp <- fileServeStrict ps p
+  if rsCode resp == 404 || last (rqUri rq) == '/'
+     then mzero  -- pass through if not found or directory index
+     else do
+       mbContentType <- getHeaderM "Content-Type"
+       -- turn off compresion filter unless it's text
+       case mbContentType of
+            Just ct | B.pack "text/" `B.isPrefixOf` ct -> ignoreFilters
+            _ -> return ()
+       return resp
 
 wikiHandlers :: [Handler]
 wikiHandlers =

@@ -205,7 +205,7 @@ The `static` directory
 If there is no wiki page or uploaded file corresponding to a request,
 gitit always looks last in the `static` directory. So, for example,
 a file `foo.jpg` in the `img` subdirectory of the `static` directory
-will be accessible at the url `/img/foo.jpg`. Pandoc creates three
+will be accessible at the url `/img/foo.jpg`. Gitit creates three
 subdirectories of `static`, `css`, `img`, and `js`, which include the
 icons, stylesheets, and javascripts it uses.
 
