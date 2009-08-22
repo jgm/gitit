@@ -42,35 +42,6 @@ input.search_term { width: 95% }
 button:hover, a.button:hover { background-color:#dff4ff; border:1px solid #c2e1ef; color:#336699; }
 a.button:active, button:active { background-color:#6299c5; border:1px solid #6299c5; color:#fff; }
 
-/* Link icons */
-/* Use this class if a link gets an icon when it shouldn't. */
-body a.noicon { background:none; padding:0; margin:0; }
-
-/* Make sure the icons are not cut */
-a[href^="http:"], a[href^="https:"], a[href^="mailto:"],
-a[href$=".pdf"], a[href$=".doc"], a[href$=".xls"], a[href$=".rss"],
-a[href$=".rdf"], a[href^="aim:"] {
-  padding:2px 22px 2px 0;
-  margin:-2px 0;
-  background-repeat: no-repeat;
-  background-position: right center;
-}
-
-/* External links */
-a[href^="http:"]          { background-image: url(../img/icons/external.png); padding-right: 14px; }
-a[href^="https:"]         { background-image: url(../img/icons/external.png); padding-right: 14px; }
-a[href^="mailto:"]        { background-image: url(../img/icons/email.png); }
-
-/* Files */
-a[href$=".pdf"]   { background-image: url(../img/icons/pdf.png); }
-a[href$=".doc"]   { background-image: url(../img/icons/doc.png); }
-a[href$=".xls"]   { background-image: url(../img/icons/xls.png); }
-
-/* Misc */
-a[href$=".rss"],
-a[href$=".rdf"]   { background-image: url(../img/icons/feed.png); }
-a[href^="aim:"]   { background-image: url(../img/icons/im.png); }
-
 h1 > a:link, h1 > a:active, h1 > a:hover, h1 > a:focus, h1 > a:visited,
 h2 > a:link, h2 > a:active, h2 > a:hover, h2 > a:focus, h2 > a:visited,
 h3 > a:link, h3 > a:active, h3 > a:hover, h3 > a:focus, h3 > a:visited,
