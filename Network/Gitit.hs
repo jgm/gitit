@@ -113,16 +113,22 @@ import Network.Gitit.Config
 import Network.Gitit.State (getFileStore, getUser, getConfig)
 import Network.Gitit.ContentTransformer
 import Network.Gitit.Authentication (loginUserForm)
+import Paths_gitit (getDataFileName)
 import Control.Monad.Reader
 import Prelude hiding (readFile)
 import Codec.Binary.UTF8.String (decodeString)
 import qualified Data.ByteString.Char8 as B
+import System.FilePath ((</>))
 
 -- | Happstack handler for a gitit wiki.
 wiki :: Config -> ServerPart Response
 wiki conf = do
   let static = staticDir conf
-  let staticHandler = withExpiresHeaders $ fileServeStrict' [] static
+  defaultStatic <- liftIO $ getDataFileName $ "data" </> "static"
+  -- if file not found in staticDir, we check also in the data/static
+  -- directory, which contains defaults
+  let staticHandler = withExpiresHeaders $
+        fileServeStrict' [] static `mplus` fileServeStrict' [] defaultStatic
   let handlers = [debugHandler | debugMode conf] ++ (authHandler conf : wikiHandlers)
   let fs = filestoreFromConfig conf
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
