@@ -111,8 +111,7 @@ revToEntry cfg path' Revision{
            -- Enclosure seems to be for conveying media, see
            -- https://secure.wikimedia.org/wikipedia/en/wiki/RSS_enclosure
         }
-    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/" ++ firstpath ++ "?diff&to=" ++ rid ++ "&from=" ++
-                                                revId prevRevision
+    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/_diff/" ++ firstpath ++ "?to=" ++ rid ++ fromrev
                          , linkRel = Nothing
                          , linkType = Nothing
                          , linkHrefLang = Nothing
@@ -120,12 +119,13 @@ revToEntry cfg path' Revision{
                          , linkLength = Nothing
                          , linkAttrs = []
                          , linkOther = [] } 
-          firstpath = if null path'
+          (firstpath, fromrev) =
+                      if null path'
                          then case head rv of
-                                   Modified f -> dePage f
-                                   Added f    -> dePage f
-                                   Deleted f  -> dePage f 
-                         else path'
+                                   Modified f -> (dePage f, "&from=" ++ revId prevRevision)
+                                   Added f    -> (dePage f, "")
+                                   Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
+                         else (path',"")
           baseEntry = nullEntry (fcBaseUrl cfg ++ "/" ++ path' ++ "?revision=" ++ rid)
                         (TextString (intercalate ", " $ map showRev rv)) (formatFeedTime rdt)
           showRev (Modified f) = dePage f

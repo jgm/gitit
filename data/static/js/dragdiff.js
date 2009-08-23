@@ -6,6 +6,7 @@ $(document).ready(function(){
          drop: function(ev, ui) {
             var targetOrder = parseInt($(this).attr("order"));
             var sourceOrder = parseInt($(ui.draggable).attr("order"));
+            var diffurl = $(this).attr("diffurl");
             if (targetOrder < sourceOrder) {
                 var fromRev = $(this).attr("revision");
                 var toRev   = $(ui.draggable).attr("revision");
@@ -13,8 +14,7 @@ $(document).ready(function(){
                 var toRev   = $(this).attr("revision");
                 var fromRev = $(ui.draggable).attr("revision");
             };
-            location.href = location.protocol + '//' + location.host + location.pathname +
-                             '?diff&from=' + fromRev + '&to=' + toRev;
+            location.href = diffurl + '?from=' + fromRev + '&to=' + toRev;
             }
         });
 });

@@ -51,7 +51,6 @@ defaultPageLayout = PageLayout
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   , pgLinkToFeed     = False
-  , pgAllowSpiders   = False
   }
 
 -- | Returns formatted page
@@ -85,8 +84,7 @@ defaultRenderPage templ layout htmlContents = do
                    setStrAttr "pagetitle" (pgTitle layout) .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
-                   setStrAttr "pageUrl" (urlForPage "" page) .
-                   setBoolAttr "allowspiders" (pgAllowSpiders layout) .
+                   setStrAttr "pageUrl" (urlForPage page) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
@@ -104,7 +102,7 @@ defaultRenderPage templ layout htmlContents = do
 
 exportBox :: String -> String -> Maybe String -> Html
 exportBox base' page rev | not (isSourceCode page) =
-  gui (urlForPage base' page) ! [identifier "exportbox"] <<
+  gui (base' ++ urlForPage page) ! [identifier "exportbox"] <<
     ([ textfield "revision" ! [thestyle "display: none;",
          value (fromJust rev)] | isJust rev ] ++
      [ select ! [name "format"] <<
@@ -116,7 +114,7 @@ exportBox _ _ _ = noHtml
 
 linkForTab :: (Tab -> Html -> Html) -> String -> String -> Maybe String -> Tab -> Html
 linkForTab tabli base' page _ HistoryTab =
-  tabli HistoryTab << anchor ! [href $ urlForPage base' page ++ "?history"] << "history"
+  tabli HistoryTab << anchor ! [href $ base' ++ "/_history" ++ urlForPage page] << "history"
 linkForTab tabli _ _ _ DiffTab =
   tabli DiffTab << anchor ! [href ""] << "diff"
 linkForTab tabli base' page rev ViewTab =
@@ -125,21 +123,21 @@ linkForTab tabli base' page rev ViewTab =
                       else s
   in if isDiscussPage page
         then tabli DiscussTab << anchor !
-              [href $ urlForPage base' $ origPage page] << "page"
+              [href $ base' ++ urlForPage (origPage page)] << "page"
         else tabli ViewTab << anchor !
-              [href $ urlForPage base' page ++
+              [href $ base' ++ urlForPage page ++
                       case rev of
                            Just r  -> "?revision=" ++ r
                            Nothing -> ""] << "view"
 linkForTab tabli base' page _ DiscussTab =
   tabli (if isDiscussPage page then ViewTab else DiscussTab) <<
-  anchor ! [href $ urlForPage base' page ++
-            if isDiscussPage page then "" else "?discuss"] << "discuss"
+  anchor ! [href $ base' ++ if isDiscussPage page then "" else "/_discuss" ++
+                   urlForPage page] << "discuss"
 linkForTab tabli base' page rev EditTab =
   tabli EditTab << anchor !
-    [href $ urlForPage base' page ++ "?edit" ++
+    [href $ base' ++ "/_edit" ++ urlForPage page ++
             case rev of
-                  Just r   -> "&revision=" ++ r ++ "&" ++
+                  Just r   -> "?revision=" ++ r ++ "&" ++
                                urlEncodeVars [("logMsg", "Revert to " ++ r)]
                   Nothing  -> ""] << if isNothing rev
                                          then "edit"

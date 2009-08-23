@@ -56,7 +56,6 @@ module Network.Gitit.ContentTransformer
   , addPageTitleToPandoc
   , addMathSupport
   , addScripts
-  , allowSpiders
   -- * ContentTransformer context API
   , getFileName
   , getPageName
@@ -89,7 +88,6 @@ import Codec.Binary.UTF8.String (encodeString)
 import System.FilePath
 import Control.Monad.State
 import Control.Exception (throwIO, catch)
-import Network.HTTP (urlEncodeVars)
 import Network.URI (isAllowedInURI, escapeURIString)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
@@ -149,7 +147,7 @@ showFileAsText = runFileTransformer rawTextResponse
 
 -- | Responds with rendered wiki page.
 showPage :: Handler
-showPage = runPageTransformer $ allowSpiders >> htmlViaPandoc
+showPage = runPageTransformer htmlViaPandoc
 
 -- | Responds with page exported into selected format.
 exportPage :: Handler 
@@ -157,7 +155,7 @@ exportPage = runPageTransformer exportViaPandoc
 
 -- | Responds with highlighted source code.
 showHighlightedSource :: Handler
-showHighlightedSource = runFileTransformer $ allowSpiders >> highlightRawSource
+showHighlightedSource = runFileTransformer highlightRawSource
 
 -- | Responds with non-highlighted source code.
 showFile :: Handler
@@ -415,23 +413,16 @@ applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
 --
 
 -- | Puts rendered page content into a wikipage div, adding
--- categories and  a double-click-to-edit javascript.
+-- categories.
 wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
-  params <- getParams
   categories <- liftM ctxCategories get
   base' <- lift getWikiBase
   let categoryLink ctg = li (anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg)
   let htmlCategories = if null categories
                           then noHtml
                           else thediv ! [identifier "categoryList"] << ulist << map categoryLink categories
-  let dblClickJs = "window.location = window.location + '?edit" ++
-                   case pRevision params of
-                        Nothing   -> "';"
-                        Just r    -> ("&" ++ urlEncodeVars [("revision", r),
-                              ("logMsg", "Revert to " ++ r)] ++ "';")
-  return $ thediv ! [identifier "wikipage",
-                     strAttr "onDblClick" dblClickJs] << [c, htmlCategories]
+  return $ thediv ! [identifier "wikipage"] << [c, htmlCategories]
 
 -- | Adds page title to a Pandoc document.
 addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
@@ -458,15 +449,6 @@ addMathSupport c = do
 addScripts :: PageLayout -> [String] -> PageLayout
 addScripts layout scriptPaths =
   layout{ pgScripts = scriptPaths ++ pgScripts layout }
-
--- | Prevents addition of meta tag excluding web spiders,
--- provided a specific revision hasn't been requested.
-allowSpiders :: ContentTransformer () 
-allowSpiders = do
-  params <- getParams
-  case pRevision params of
-       Just _  -> return ()
-       Nothing -> updateLayout $ \l -> l{pgAllowSpiders = True}
 
 --
 -- ContentTransformer context API

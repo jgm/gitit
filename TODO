@@ -34,6 +34,10 @@ x think about making texmath a built-in option for displaying
   math, perhaps the default.
 _ document this
 
+_ change ?command -. _command
+  _ data/static/js/diff.js
+  _
+
 ................................................................
 
 _ use addSubgroup or mergeSTGroups to let templates in templates/

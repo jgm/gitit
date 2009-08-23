@@ -32,8 +32,8 @@ import Text.XHtml (Html)
 import qualified Data.ByteString.Lazy.UTF8 as L (ByteString)
 import qualified Data.ByteString.Lazy as L (empty)
 import qualified Data.Map as M
-import Data.DateTime
 import Data.List (intersect)
+import Data.DateTime
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
@@ -220,7 +220,6 @@ data PageLayout = PageLayout
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   , pgLinkToFeed     :: Bool
-  , pgAllowSpiders   :: Bool
   }
 
 data Tab = ViewTab
@@ -354,9 +353,7 @@ instance FromData Command where
        return $ case map fst pairs `intersect` commandList of
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
-               where commandList = ["page", "request", "params", "edit", "expire",
-                                    "showraw", "history", "export", "diff",
-                                    "cancel", "update", "delete", "discuss"]
+               where commandList = ["update", "cancel", "export"]
 
 -- | State for a single wiki.
 data WikiState = WikiState { 
