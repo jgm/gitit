@@ -32,6 +32,8 @@ description:         Gitit is a wiki backed by a git or darcs filestore.
                      .
                      * a library, "Network.Gitit", that makes it simple
                        to include a gitit wiki in any happstack application
+                     .
+                     You can see a running demo at <http://gitit.johnmacfarlane.net>.
 
 category:            Network
 license:             GPL
