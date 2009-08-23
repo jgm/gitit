@@ -506,6 +506,10 @@ A number of people have contributed patches:
   and contributed a patch to ifLoggedIn that was needed to
   make gitit usable with a custom authentication scheme.
 
+I am especially grateful to the darcs team for using darcsit for
+their public-facing wiki.  This has helped immensely in identifying
+issues and improving performance.
+
 Gitit's default visual layout is shamelessly borrowed from Wikipedia.
 The stylesheets are influenced by Wikipedia's stylesheets and by the
 bluetrip CSS framework (see BLUETRIP-LICENSE). Some of the icons in
