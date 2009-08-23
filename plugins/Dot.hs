@@ -36,7 +36,7 @@ transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classe
     if ec == ExitSuccess
        then writeFile (staticDir cfg </> "img" </> outfile) out
        else error $ "dot returned an error status: " ++ err
-  return $ Para [Image name ("/_static/img" </> outfile, "")]
+  return $ Para [Image name ("/img" </> outfile, "")]
 transformBlock x = return x
 
 -- | Generate a unique filename given the file's contents.

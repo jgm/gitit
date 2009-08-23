@@ -68,7 +68,7 @@ transformBlock (CodeBlock (id, classes, namevals) contents)
     setCurrentDirectory curr
     system $ "dvipng -T tight -bd 1000 -freetype0 -Q 5 --gamma 1.3 " ++
               (tmpdir </> outfile <.> "dvi") ++ " -o " ++ (staticDir cfg </> "img" </> outfile)
-    return $ Para [Image name ("/_static/img" </> outfile, "")]
+    return $ Para [Image name ("/img" </> outfile, "")]
 transformBlock x = return x
 
 uniqueName :: String -> String
