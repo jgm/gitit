@@ -167,33 +167,32 @@ wikiHandlers =
   , dir "_category" categoryPage
   , dir "_categories" categoryListPage
   , dir "_expire"     expireCache
-  , guardCommand "showraw" >> msum
+  , dir "_showraw"  $ msum
       [ showRawPage
       , guardPath isSourceCode >> showFileAsText ]
-  , guardCommand "history" >> msum
+  , dir "_history"  $ msum
       [ showPageHistory
       , guardPath isSourceCode >> showFileHistory ]
-  , guardCommand "edit" >>
-      requireUser (unlessNoEdit editPage showPage)
-  , guardCommand "diff" >> msum
+  , dir "_edit" $ requireUser (unlessNoEdit editPage showPage)
+  , dir "_diff" $ msum
       [ showPageDiff
       , guardPath isSourceCode >> showFileDiff ]
-  , guardCommand "export"  >> exportPage
-  , guardCommand "cancel"  >> showPage
-  , guardCommand "discuss" >> discussPage
-  , guardCommand "update"  >> methodOnly POST >>
-      requireUser (unlessNoEdit updatePage showPage)
-  , guardCommand "delete"  >> msum
+  , dir "_discuss" discussPage
+  , dir "_delete" $ msum
       [ methodOnly GET  >>
           requireUser (unlessNoDelete confirmDelete showPage)
       , methodOnly POST >>
           requireUser (unlessNoDelete deletePage showPage) ]
+  , dir "_preview" preview
   , guardIndex >> indexPage
-  , guardPath isPreview >> preview
-  , showPage
-  , guardPath isSourceCode >> showHighlightedSource
+  , guardCommand "export" >> exportPage
+  , methodOnly POST >> guardCommand "cancel" >> showPage
+  , methodOnly POST >> guardCommand "update" >>
+      requireUser (unlessNoEdit updatePage showPage)
+  , methodOnly GET >> showPage
+  , guardPath isSourceCode >> methodOnly GET >> showHighlightedSource
   , handleAny
-  , createPage
+  , guardPath isPage >> createPage
   ]
 
 -- | Recompiles the gitit templates.

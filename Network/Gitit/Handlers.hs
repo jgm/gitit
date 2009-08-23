@@ -124,14 +124,14 @@ randomPage = do
        TOD _ picosecs <- liftIO getClockTime
        let newPage = pages !!
                      ((fromIntegral picosecs `div` 1000000) `mod` length pages)
-       seeOther (urlForPage base' newPage) $ toResponse $
+       seeOther (base' ++ urlForPage newPage) $ toResponse $
          p << "Redirecting to a random page"
 
 discussPage :: Handler
 discussPage = do
   page <- getPage
   base' <- getWikiBase
-  seeOther (urlForPage base' $ if isDiscussPage page then page else ('@':page)) $
+  seeOther (base' ++ urlForPage (if isDiscussPage page then page else ('@':page))) $
                      toResponse "Redirecting to discussion page"
 
 createPage :: Handler
@@ -147,7 +147,7 @@ createPage = do
                                     } $
                     p << [ stringToHtml ("There is no page '" ++ page ++
                               "'.  You may create the page by "),
-                            anchor ! [href $ urlForPage base' page ++ "?edit"] <<
+                            anchor ! [href $ base' ++ "/_edit" ++ urlForPage page] <<
                               "clicking here." ]
 
 uploadForm :: Handler
@@ -240,13 +240,13 @@ goToPage = withData $ \(params :: Params) -> do
   let prefixMatch f = (map toLower gotopage) `isPrefixOf` (map toLower f)
   base' <- getWikiBase
   case findPage exactMatch of
-       Just m  -> seeOther (urlForPage base' m) $ toResponse
+       Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
                      "Redirecting to exact match"
        Nothing -> case findPage insensitiveMatch of
-                       Just m  -> seeOther (urlForPage base' m) $ toResponse
+                       Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
                                     "Redirecting to case-insensitive match"
                        Nothing -> case findPage prefixMatch of
-                                       Just m  -> seeOther (urlForPage base' m) $
+                                       Just m  -> seeOther (base' ++ urlForPage m) $
                                                   toResponse $ "Redirecting" ++
                                                     " to partial match"
                                        Nothing -> withInput "patterns" gotopage searchResults
@@ -287,7 +287,7 @@ searchResults = withData $ \(params :: Params) -> do
                                 " matches found for '", unwords patterns, "':"]
   base' <- getWikiBase
   let toMatchListItem (file, contents) = li <<
-        [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file
+        [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file
         , stringToHtml (" (" ++ show (length contents) ++ " matching lines)")
         , stringToHtml " "
         , anchor ! [href "#", theclass "showmatch",
@@ -327,24 +327,25 @@ showHistory file page params =  do
   hist <- liftIO $ history fs [file] (TimeRange since Nothing)
   base' <- getWikiBase
   let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
-                                    strAttr "revision" $ revId rev] <<
+                                    strAttr "revision" (revId rev),
+                                    strAttr "diffurl" (base' ++ "/_diff/" ++ page)] <<
         [ thespan ! [theclass "date"] << (show $ revDateTime rev)
         , stringToHtml " ("
         , thespan ! [theclass "author"] << anchor ! [href $ base' ++ "/_activity?" ++
             urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
               (authorName $ revAuthor rev)
         , stringToHtml "): "
-        , anchor ! [href (urlForPage base' page ++ "?revision=" ++ revId rev)] <<
+        , anchor ! [href (base' ++ urlForPage page ++ "?revision=" ++ revId rev)] <<
            thespan ! [theclass "subject"] <<  revDescription rev
         , noscript <<
             ([ stringToHtml " [compare with "
-             , anchor ! [href $ urlForPage base' page ++ "?diff&to=" ++ revId rev] <<
+             , anchor ! [href $ base' ++ "/_diff" ++ urlForPage page ++ "?to=" ++ revId rev] <<
                   "previous" ] ++
              (if pos /= 1
                   then [ primHtmlChar "nbsp"
                        , primHtmlChar "bull"
                        , primHtmlChar "nbsp"
-                       , anchor ! [href $ urlForPage base' page ++ "?diff&from=" ++
+                       , anchor ! [href $ base' ++ "/_diff" ++ urlForPage page ++ "?from=" ++
                                   revId rev] << "current"
                        ]
                   else []) ++
@@ -389,7 +390,7 @@ showActivity = withData $ \(params :: Params) -> do
                             else file
   base' <- getWikiBase
   let fileAnchor revis file =
-        anchor ! [href $ urlForPage base' file ++ "?diff&to=" ++ revis] << file
+        anchor ! [href $ base' ++ "/_diff" ++ urlForPage file ++ "?to=" ++ revis] << file
   let filesFor changes revis = intersperse (primHtmlChar "nbsp") $
         map (fileAnchor revis . dropDotPage . fileFromChange) changes
   let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
@@ -506,7 +507,7 @@ editPage = withData $ \(params :: Params) -> do
                     else []
   base' <- getWikiBase
   cfg <- getConfig
-  let editForm = gui (urlForPage base' page) ! [identifier "editform"] <<
+  let editForm = gui (base' ++ urlForPage page) ! [identifier "editform"] <<
                    [ sha1Box
                    , textarea ! (readonly ++ [cols "80", name "editedText",
                                   identifier "editedText"]) << raw
@@ -583,7 +584,7 @@ deletePage = withData $ \(params :: Params) -> do
        fs <- getFileStore
        liftIO $ delete fs file author descrip
        seeOther (base' ++ "/") $ toResponse $ p << "File deleted"
-     else seeOther (urlForPage base' page) $ toResponse $ p << "Not deleted"
+     else seeOther (base' ++ urlForPage page) $ toResponse $ p << "Not deleted"
 
 updatePage :: Handler
 updatePage = withData $ \(params :: Params) -> do
@@ -619,7 +620,7 @@ updatePage = withData $ \(params :: Params) -> do
                                                then return (Right ())
                                                else throwIO e)
        case modifyRes of
-            Right () -> seeOther (urlForPage base' page) $ toResponse $ p << "Page updated"
+            Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p << "Page updated"
             Left (MergeInfo mergedWithRev conflicts mergedText) -> do
                let mergeMsg = "The page has been edited since you checked it out. " ++
                       "Changes from revision " ++ revId mergedWithRev ++
@@ -688,7 +689,7 @@ categoryPage = do
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
-        [ anchor ! [href $ urlForPage base' $ dropExtension file] << dropExtension file ]
+        [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file ]
   let htmlMatches = ulist << map toMatchListItem matches
   formattedPage defaultPageLayout{
                   pgPageName = categoryDescription,

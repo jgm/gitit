@@ -45,7 +45,6 @@ module Network.Gitit.Framework (
                                , isDiscussPage
                                , isDiscussPageFile
                                , isSourceCode
-                               , isPreview
                                -- * Combinators that change the request locally
                                , withMessages
                                , withInput
@@ -67,7 +66,7 @@ import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
-import Data.List (intercalate, isPrefixOf, isSuffixOf, isInfixOf, (\\))
+import Data.List (intercalate, isPrefixOf, isInfixOf, (\\))
 import System.FilePath ((<.>), takeExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
@@ -82,9 +81,9 @@ requireUserThat :: (User -> Bool) -> Handler -> Handler
 requireUserThat predicate handler = do
   mbUser <- getLoggedInUser
   rq <- askRq
-  let url = rqURL rq
+  let url = rqUri rq ++ rqQuery rq
   case mbUser of
-       Nothing   -> tempRedirect ("/_login?" ++ urlEncodeVars [("destination",url)]) $ toResponse ()
+       Nothing   -> tempRedirect ("/_login?" ++ urlEncodeVars [("destination", url)]) $ toResponse ()
        Just u    -> if predicate u
                        then handler
                        else error "Not authorized."
@@ -228,7 +227,9 @@ uriPath :: String -> String
 uriPath = unwords . words . drop 1 . takeWhile (/='?')
 
 isPage :: String -> Bool
-isPage s = all (`notElem` "*?") s && not (".." `isInfixOf` s)
+isPage "" = False
+isPage ('_':_) = False
+isPage s = all (`notElem` "*?") s && not (".." `isInfixOf` s) && not ("/_" `isInfixOf` s)
 -- for now, we disallow * and ? in page names, because git filestore
 -- does not deal with them properly, and darcs filestore disallows them.
 
@@ -249,15 +250,8 @@ isSourceCode path' =
       langs = languagesByExtension ext \\ ["Postscript"]
   in  not . null $ langs
 
-isPreview :: String -> Bool
-isPreview x = "/___preview" `isSuffixOf` x
--- We choose something that is unlikely to occur naturally as a suffix.
--- Why suffix and not prefix?  Because the link is added by a script,
--- and mod_proxy_html doesn't rewrite links in scripts.  So this is
--- to make it possible to use gitit with an alternative docroot.
-
-urlForPage :: String -> String -> String
-urlForPage base' page = base' ++ "/" ++
+urlForPage :: String -> String
+urlForPage page = "/" ++
   encString True (\c -> isAscii c && (c `notElem` "?&")) page
 -- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
