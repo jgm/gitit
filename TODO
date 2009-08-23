@@ -33,8 +33,6 @@ _ get wiki up to speed as main home page (demogitit).
 x think about making texmath a built-in option for displaying
   math, perhaps the default.
 _ document this
-_ mathml doesn't work in preview -- have preview
-  trigger the convert() method?
 
 ................................................................
 
