@@ -1,43 +1,10 @@
-haddock   hlint     module
-x         x         Network.Gitit
-x         x         Network.Gitit.Interface
-x         x         Network.Gitit.Config
-x         x         Network.Gitit.Initialize
-x         x         Network.Gitit.ContentTransformer
-x         x         Network.Gitit.Framework
-_         _         Network.Gitit.Types
-
-x change how static files are served: rather than having
-  a dedicated /_static/ path, use a fall-through method:
-  a request to /foo/bar first checks for a static file
-  foo/bar; if not found, we go on to other handlers. This
-  would allow you to have /robots.txt and favicon.ico
-  at root, add custom static HTML pages, etc..
-
-x see proposal on mailing list about fall-through to
-  data directory for static files and templates. This wd
-  require some rearranging of data directory.  perhaps we
-  need a static/ dir.
-
-x do same for templates
-
-x fix initialize so it doesn't copy everything.
-  think about using a custom.css.
-
 _ get rid of googlecode page/ move issues to github??
 
 _ get wiki up to speed as main home page (demogitit).
   Add good Installing page.  Up-to-date User's Guide.
   Front page should list features and link to good demos.
 
-x think about making texmath a built-in option for displaying
-  math, perhaps the default.
-_ document this
-
-x use addSubgroup or mergeSTGroups to let templates in templates/
-  dir "shadow" those in the data/templates dir.  THis way users
-  don't have to manually merge changes to templates they haven't
-  modified. But this would need good documentation.
+_ document math options
 
 ................................................................
 
