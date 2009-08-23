@@ -13,7 +13,7 @@ input[type='text'] { cursor: text; }
 textarea,  input { padding: .3em .4em .15em .4em; }
 select { padding: .1em .2em 0 .2em; }
 option { padding: 0 .4em; }
-
+table, tr, td { border: none; }
 hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0; }
 
 h1, h2, h3, h4, h5, h6 { font-weight: normal; border-bottom: 1px solid black; }
