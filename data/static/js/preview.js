@@ -8,6 +8,7 @@ function updatePreviewPane() {
                                 , "title": $("#title").attr("value")
                                 , "categories": $("#categories").attr("value")
                                 });
+    jQuery.getScript("/js/MathMLinHTML.js", function() {convert()});
     $("#previewpane").fadeIn(1000);
 };
 $(document).ready(function(){
