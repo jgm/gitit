@@ -12,6 +12,27 @@ formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
 Gitit can be configured to display TeX math (using [texmath][]) and
 highlighted source code (using [highlighting-kate][]).
 
+Other features include
+
+* plugins: dynamically loaded page transformations written in Haskell
+  (see "Network.Gitit.Interface")
+
+* categories
+
+* TeX math
+
+* syntax highlighting of source code files and code snippets (using
+  highlighting-kate)
+
+* caching
+
+* Atom feeds (site-wide and per-page)
+
+* a library, "Network.Gitit", that makes it simple to include a gitit
+  wiki in any happstack application
+
+You can see a running demo at <http://gitit.johnmacfarlane.net>.
+
 [git]: http://git.or.cz
 [darcs]: http://darcs.net
 [pandoc]: http://johnmacfarlane.net/pandoc
