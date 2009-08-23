@@ -64,7 +64,7 @@ under different paths, and uses a custom authentication scheme:
 > indexPage :: ServerPart Response
 > indexPage = ok $ toResponse $
 >   (p << "Wiki index") +++
->   ulist << map (\(path', _, _) -> li << hotlink path' << path') wikis
+>   ulist << map (\(path', _, _) -> li << hotlink (path' ++ "/") << path') wikis
 > 
 > main = do
 >   conf <- getDefaultConfig
