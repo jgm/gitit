@@ -21,7 +21,7 @@ description:         Gitit is a wiki backed by a git or darcs filestore.
                      .
                      * categories
                      .
-                     * TeX math (using jsMath)
+                     * TeX math
                      .
                      * syntax highlighting of source code
                        files and code snippets (using highlighting-kate)
