@@ -175,7 +175,7 @@ unlessNoDelete responder fallback = withData $ \(params :: Params) -> do
      then withMessages ("Page cannot be deleted." : pMessages params) fallback
      else responder
 
--- | Returns the current path (subtracting initial commands like /_edit).
+-- | Returns the current path (subtracting initial commands like @\/_edit@).
 getPath :: ServerMonad m => m String
 getPath = liftM (fromJust . decString True . intercalate "/" . rqPaths) askRq
 
@@ -202,9 +202,9 @@ getReferer = do
                  Nothing -> base'
 
 -- | Returns the base URL of the wiki in the happstack server.
--- So, if the wiki handlers are behind a dir "foo", getWikiBase will
--- return '/foo/'.  getWikiBase doesn't know anything about HTTP
--- proxies, so if you use proxies to map a gitit wiki to /foo/,
+-- So, if the wiki handlers are behind a @dir 'foo'@, getWikiBase will
+-- return @\/foo/@.  getWikiBase doesn't know anything about HTTP
+-- proxies, so if you use proxies to map a gitit wiki to @\/foo/@,
 -- you'll still need to follow the instructions in README.
 getWikiBase :: ServerMonad m => m String
 getWikiBase = do
@@ -214,7 +214,7 @@ getWikiBase = do
        Just b    -> return b
        Nothing   -> error $ "Could not getWikiBase: (path, uri) = " ++ show (path',uri')
 
--- | The pure core of getWikiBase.
+-- | The pure core of 'getWikiBase'.
 calculateWikiBase :: String -> String -> Maybe String
 calculateWikiBase path' uri' =
   let revpaths = reverse . filter (not . null) $ splitOn '/' path'
@@ -240,8 +240,9 @@ splitOn c cs =
          then [next]
          else next : splitOn c (tail rest)
 
--- | Returns path portion of URI, without initial /.
--- Consecutive spaces are collapsed.  We don't want to distinguish 'Hi There' and 'Hi  There'.
+-- | Returns path portion of URI, without initial @\/@.
+-- Consecutive spaces are collapsed.  We don't want to distinguish
+-- @Hi There@ and @Hi  There@.
 uriPath :: String -> String
 uriPath = unwords . words . drop 1 . takeWhile (/='?')
 
@@ -249,7 +250,7 @@ isPage :: String -> Bool
 isPage "" = False
 isPage ('_':_) = False
 isPage s = all (`notElem` "*?") s && not (".." `isInfixOf` s) && not ("/_" `isInfixOf` s)
--- for now, we disallow * and ? in page names, because git filestore
+-- for now, we disallow @*@ and @?@ in page names, because git filestore
 -- does not deal with them properly, and darcs filestore disallows them.
 
 isPageFile :: FilePath -> Bool
@@ -269,11 +270,14 @@ isSourceCode path' =
       langs = languagesByExtension ext \\ ["Postscript"]
   in  not . null $ langs
 
+-- | Returns encoded URL path for the page with the given name, relative to
+-- the wiki base.
 urlForPage :: String -> String
 urlForPage page = "/" ++
   encString True (\c -> isAscii c && (c `notElem` "?&")) page
 -- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
+-- | Returns the filestore path of the file containing the page's source.
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
 
@@ -285,6 +289,7 @@ getMimeTypeForExtension ext = do
                 Nothing -> "application/octet-stream"
                 Just t  -> t
 
+-- | Simple helper for validation of forms.
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
          -> [String]           -- ^ list of error messages
 validate = foldl go []
@@ -299,7 +304,7 @@ guardCommand command = withData $ \(com :: Command) ->
 guardPath :: (String -> Bool) -> GititServerPart ()
 guardPath pred' = guardRq (pred' . rqUri)
 
--- | Succeeds if path is an index path:  e.g. @/foo/bar/@.
+-- | Succeeds if path is an index path:  e.g. @\/foo\/bar/@.
 guardIndex :: GititServerPart ()
 guardIndex = do
   base <- getWikiBase
@@ -309,8 +314,8 @@ guardIndex = do
      then return ()
      else mzero
 
--- Guard against a path like /wiki when the wiki is being
--- served at /wiki.
+-- Guard against a path like @\/wiki@ when the wiki is being
+-- served at @\/wiki@.
 guardBareBase :: GititServerPart ()
 guardBareBase = do
   base' <- getWikiBase
