@@ -9,15 +9,15 @@ wiki's web interface. By default, pandoc's extended version of markdown
 is used as a markup language, but reStructuredText, LaTeX, or HTML
 can also be used. Pages can be exported in a number of different
 formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
-Gitit can be configured to display TeX math (using [jsMath][]) and
+Gitit can be configured to display TeX math (using [texmath][]) and
 highlighted source code (using [highlighting-kate][]).
 
 [git]: http://git.or.cz
 [darcs]: http://darcs.net
 [pandoc]: http://johnmacfarlane.net/pandoc
 [Happstack]: http://happstack.com
-[jsMath]: http://www.math.union.edu/~dpvc/jsMath/
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
+[texmath]: http://github.com/jgm/texmath/tree/master
 
 Getting started
 ===============
@@ -271,17 +271,6 @@ surrounded by `$`s, so `literal $` must be backslash-escaped.
 Adding support for math
 -----------------------
 
-Gitit is designed to work with [jsMath][] to display LaTeX math in
-HTML. Download `jsMath` and `jsMath Image Fonts` from the [jsMath
-download page][]. You'll have two `.zip` archives. Unzip them both
-in the `static/js` directory (a new subdirectory, `jsMath`, will be
-created). You can test to see if math is working properly by clicking
-"help" on the top navigation bar and looking for the math example (the
-quadratic formula). Note that if you copied the `jsMath` directory into
-`static` *after* starting gitit, you will have to restart gitit for the
-change to be noticed. Gitit checks for the existence of the jsMath files
-when it starts, and will not include links to them unless they exist.
-
 To write math on a markdown-formatted wiki page, just enclose it
 in dollar signs, as in LaTeX:
 
@@ -290,6 +279,22 @@ in dollar signs, as in LaTeX:
 You can write display math by enclosing it in double dollar signs:
 
     $$\frac{1}{\sqrt{c^2}}$$
+
+Gitit can display TeX math in three different ways, depending on the
+setting of `math` in the configuration file:
+
+1.  `mathml` (default): Math will be converted to MathML using
+    [texmath][]. This method works with IE+mathplayer, Firefox, and
+    Opera, but not Safari.
+
+2.  `jsMath`: Math will be rendered using the [jsMath][] javascript.
+    If you want to use this method, download `jsMath` and `jsMath
+    Image Fonts` from the [jsMath download page][]. You'll have two
+    `.zip` archives. Unzip them both in the `static/js` directory (a new
+    subdirectory, `jsMath`, will be created).  This works with all
+    browsers, but is slower and not as nice looking as MathML.
+
+3.  `raw`: Math will be rendered as raw LaTeX codes.
 
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 
