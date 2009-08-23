@@ -74,9 +74,14 @@ import Network.URL (decString, encString)
 import Happstack.Crypto.Base64 (decode)
 import Network.HTTP (urlEncodeVars)
 
+-- | Run the handler if a user is logged in, otherwise redirect
+-- to login page.
 requireUser :: Handler -> Handler 
 requireUser = requireUserThat (const True)
 
+-- | Run the handler if a user satisfying the predicate is logged in.
+-- Redirect to login if nobody logged in; raise error if someone is
+-- logged in but doesn't satisfy the predicate.
 requireUserThat :: (User -> Bool) -> Handler -> Handler
 requireUserThat predicate handler = do
   mbUser <- getLoggedInUser
@@ -88,6 +93,8 @@ requireUserThat predicate handler = do
                        then handler
                        else error "Not authorized."
 
+-- | Run the handler after setting @REMOTE_USER@ with the user from
+-- the session.
 withUserFromSession :: Handler -> Handler
 withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
   mbSd <- maybe (return Nothing) getSession sk
@@ -99,6 +106,8 @@ withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
   let user = maybe "" uUsername mbUser
   localRq (setHeader "REMOTE_USER" user) handler
 
+-- | Run the handler after setting @REMOTE_USER@ from the "authorization"
+-- header.  Works with simple HTTP authentication or digest authentication.
 withUserFromHTTPAuth :: Handler -> Handler
 withUserFromHTTPAuth handler = do
   req <- askRq
@@ -109,6 +118,7 @@ withUserFromHTTPAuth handler = do
                                   Right u -> u
   localRq (setHeader "REMOTE_USER" user) handler
 
+-- | Returns @Just@ logged in user or @Nothing@.
 getLoggedInUser :: GititServerPart (Maybe User)
 getLoggedInUser = do
   req <- askRq
@@ -139,6 +149,9 @@ pBasicHeader = do
 sessionTime :: Int
 sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
+-- | @unlessNoEdit responder fallback@ runs @responder@ unless the
+-- page has been designated not editable in configuration; in that
+-- case, runs @fallback@.
 unlessNoEdit :: Handler
              -> Handler
              -> Handler
@@ -149,6 +162,9 @@ unlessNoEdit responder fallback = withData $ \(params :: Params) -> do
      then withMessages ("Page is locked." : pMessages params) fallback
      else responder
 
+-- | @unlessNoDelete responder fallback@ runs @responder@ unless the
+-- page has been designated not deletable in configuration; in that
+-- case, runs @fallback@.
 unlessNoDelete :: Handler
                -> Handler
                -> Handler
@@ -159,9 +175,11 @@ unlessNoDelete responder fallback = withData $ \(params :: Params) -> do
      then withMessages ("Page cannot be deleted." : pMessages params) fallback
      else responder
 
+-- | Returns the current path (subtracting initial commands like /_edit).
 getPath :: ServerMonad m => m String
 getPath = liftM (fromJust . decString True . intercalate "/" . rqPaths) askRq
 
+-- | Returns the current page name (derived from the path).
 getPage :: GititServerPart String
 getPage = do
   conf <- getConfig
@@ -172,6 +190,7 @@ getPage = do
              then return path'
              else mzero  -- fail if not valid page name
 
+-- | Returns the contents of the "referer" header.
 getReferer :: ServerMonad m => m String
 getReferer = do
   req <- askRq
@@ -258,6 +277,7 @@ urlForPage page = "/" ++
 pathForPage :: String -> FilePath
 pathForPage page = page <.> "page"
 
+-- | Retrieves a mime type based on file extension.
 getMimeTypeForExtension :: String -> GititServerPart String
 getMimeTypeForExtension ext = do
   mimes <- liftM mimeMap getConfig
@@ -279,6 +299,7 @@ guardCommand command = withData $ \(com :: Command) ->
 guardPath :: (String -> Bool) -> GititServerPart ()
 guardPath pred' = guardRq (pred' . rqUri)
 
+-- | Succeeds if path is an index path:  e.g. @/foo/bar/@.
 guardIndex :: GititServerPart ()
 guardIndex = do
   base <- getWikiBase
@@ -298,9 +319,13 @@ guardBareBase = do
      then return ()
      else mzero
 
+-- | Runs a server monad in a local context after setting
+-- the "messages" request header.
 withMessages :: ServerMonad m => [String] -> m a -> m a
 withMessages = withInput "messages" . show
 
+-- | Runs a server monad in a local context after setting
+-- request header.
 withInput :: ServerMonad m => String -> String -> m a -> m a
 withInput name val handler = do
   req <- askRq
@@ -314,6 +339,8 @@ withInput name val handler = do
                             })
   localRq (\rq -> rq{ rqInputs = newInp : inps }) handler
 
+-- | Returns a filestore object derived from the
+-- repository path and filestore type specified in configuration.
 filestoreFromConfig :: Config -> FileStore
 filestoreFromConfig conf =
   case repositoryType conf of

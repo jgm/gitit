@@ -4,7 +4,7 @@ x         x         Network.Gitit.Interface
 x         x         Network.Gitit.Config
 x         x         Network.Gitit.Initialize
 x         x         Network.Gitit.ContentTransformer
-_         x         Network.Gitit.Framework
+x         x         Network.Gitit.Framework
 _         _         Network.Gitit.Types
 
 x change how static files are served: rather than having
@@ -34,12 +34,12 @@ x think about making texmath a built-in option for displaying
   math, perhaps the default.
 _ document this
 
-................................................................
-
-_ use addSubgroup or mergeSTGroups to let templates in templates/
+x use addSubgroup or mergeSTGroups to let templates in templates/
   dir "shadow" those in the data/templates dir.  THis way users
   don't have to manually merge changes to templates they haven't
   modified. But this would need good documentation.
+
+................................................................
 
 _ consider making the library independent of datafiles, moving
   all of that to a separate gitit executable package?
