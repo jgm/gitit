@@ -183,8 +183,7 @@ data PluginData = PluginData { pluginConfig    :: Config
 type PluginM = ReaderT PluginData (StateT Context IO)
 
 runPluginM :: PluginM a -> PluginData -> Context -> IO (a, Context)
-runPluginM plugin pluginData =
-  runStateT (runReaderT plugin pluginData)
+runPluginM plugin = runStateT . runReaderT plugin
 
 data Context = Context { ctxFile            :: String
                        , ctxLayout          :: PageLayout
@@ -279,8 +278,8 @@ instance FromData Params where
          rv <- (look' "revision" >>= \s ->
                  return (if null s then Nothing else Just s))
                  `mplus` return Nothing
-         fu <- (liftM Just $ look' "forUser") `mplus` return Nothing
-         si <- (liftM (parseDateTime "%Y-%m-%d") $ look' "since")
+         fu <- liftM Just (look' "forUser") `mplus` return Nothing
+         si <- liftM (parseDateTime "%Y-%m-%d") (look' "since")
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- look' "destination" `mplus` return ""
          ra <- look' "raw"            `mplus` return ""
@@ -289,9 +288,9 @@ instance FromData Params where
          gt <- look' "gotopage"       `mplus` return ""
          ft <- look' "filetodelete"   `mplus` return ""
          me <- lookRead "messages"   `mplus` return [] 
-         fm <- (liftM Just $ look' "from") `mplus` return Nothing
-         to <- (liftM Just $ look' "to")   `mplus` return Nothing
-         et <- (liftM (Just . filter (/='\r')) $ look' "editedText")
+         fm <- liftM Just (look' "from") `mplus` return Nothing
+         to <- liftM Just (look' "to")   `mplus` return Nothing
+         et <- liftM (Just . filter (/='\r')) (look' "editedText")
                  `mplus` return Nothing
          fo <- look' "format"         `mplus` return ""
          sh <- look' "sha1"           `mplus` return ""
@@ -300,13 +299,13 @@ instance FromData Params where
          na <- look' "full_name_1"    `mplus` return ""
          wn <- look' "wikiname"       `mplus` return ""
          pr <- (look' "printable" >> return True) `mplus` return False
-         ow <- (liftM (=="yes") $ look' "overwrite") `mplus` return False
-         fn <- (liftM (fromMaybe "" . inputFilename) $ lookInput "file")
+         ow <- liftM (=="yes") (look' "overwrite") `mplus` return False
+         fn <- liftM (fromMaybe "" . inputFilename) (lookInput "file")
                  `mplus` return ""
-         fc <- (liftM inputValue $ lookInput "file") `mplus` return L.empty
+         fc <- liftM inputValue (lookInput "file") `mplus` return L.empty
          ac <- look' "accessCode"     `mplus` return ""
          cn <- (look' "confirm" >> return True) `mplus` return False
-         sk <- (liftM Just $ readCookieValue "sid") `mplus` return Nothing
+         sk <- liftM Just (readCookieValue "sid") `mplus` return Nothing
          rc <- look' "recaptcha_challenge_field" `mplus` return ""
          rr <- look' "recaptcha_response_field" `mplus` return ""
          rk <- look' "reset_code" `mplus` return ""
