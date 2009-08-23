@@ -14,8 +14,7 @@ Instructions for upgrading from 0.5.3:
   be replaced by the newest versions when you run gitit. If you have
   customized these, you should back them up first, then merge your
   changes into the new versions after they are created. (Note that
-  template.html will be replaced by a templates/ directory containing
-  multiple template files.)
+  template.html will be replaced by a templates/ directory.)
 
 Summary of main changes:
 
@@ -63,6 +62,19 @@ Summary of main changes:
   made into an ajax request to /_user.  jQuery is now loaded on every
   page.
 
+* Math is converted to MathML by default (using the texmath library),
+  and a javascript is linked in that renders it correctly in IE+mathplayer,
+  Firefox, and Opera.  The 'math' configuration setting can alternatively
+  be set to 'jsMath' (to use jsMath javascript, which is more portable
+  but ugly and slower) or 'raw' (plain LaTeX code).
+
+* Routing changes for better handling of web spiders.  Instead of
+  "/foo?history" we now have "/_history/foo"; instead of "/foo?edit"
+  we haev "/_edit/foo"; etc.  This makes it possible to exclude web
+  spiders from non-cached pages by excluding URLs that start with
+  '/_'.  A default robots.txt file is now provided.  Users need not
+  do anything special for this to be enabled.
+
 * The authentication system has been revised and made much more
   flexible. In the configuration file, you can specify either
   'form', 'http', or 'generic' as authentication-method. Form
@@ -106,6 +118,17 @@ Summary of main changes:
   A new function, 'withInput', is used to avoid the need to pass Params
   between handlers.
 
+* The static handler now "falls back" to the cabal data directory if the
+  requested file is not in "static" (or staticDir).  So the user need
+  no longer have a copy of the standard gitit CSS, javascript, and
+  image files in "static" (unless these are to be overridden). This
+  should make updates easier.  By default only 'custom.css' and
+  'logo.png' are put in the user's static directory.
+
+* Similarly, the templates in "templates" "fall back" to defaults in
+  the cabal data directory.  By default only 'footer.st' is put in
+  the user's static directory.
+
 * Gitit State now includes a renderPage function. This is more flexible
   than storing a page template, since the user may want to use a custom
   page rendering function, even one not based on string templates.
@@ -138,6 +161,10 @@ Summary of main changes:
   confusing, since it limited total matches (usually to just a few files)
   rather than limiting the number of matches in each file.
 
+* rdgreen's cautious-file library is now used to write the gitit-users
+  file. This makes it less likely that the file will be corrupted on
+  a power outage or hardware failure.
+
 * Redirects set properly after account creation.  If users go from
   the Login form to the Register form, they are no longer redirected
   back to the Login form after creating an account.
@@ -149,16 +176,12 @@ Summary of main changes:
 
 * URLs of the form /a/b/ are now equivalent to /_index/a/b.
 
-* All static content has been moved to the path /_static, so
-  it doesn't interfere with user-created `css`, `js`, `img`
-  directories.
-
 * Improvements and bug fixes to deleting. Deleting a non-page now works.
   You get a nice informative message if you try to delete a nonexistent
   page or file.
 
-* Page names containing "..", "?", or "*" are disallowed.
-  Page names may now contain periods.
+* Page names containing "..", "?", or "*", and '_' at beginning are
+  disallowed. Page names may now contain periods.
 
 * The "Permanent link" link has been removed. It relied on the sha1
   parameter always being set, but we've changed that for performance
@@ -176,6 +199,7 @@ Summary of main changes:
 * Moved search box and go box to templates.
 
 * Yahoo YUI CSS framework is now used for better consistency across browsers.
+  CSS cleaned up.  Icons for page types removed.
 
 * Fixed handling of 'forUser' parameter in 'recent activity'.
 
