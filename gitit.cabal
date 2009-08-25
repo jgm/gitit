@@ -13,20 +13,17 @@ description:         Gitit is a wiki backed by a git or darcs filestore.
                      formats, including LaTeX, ConTeXt, DocBook, RTF,
                      OpenOffice ODT, and MediaWiki markup.
                      .
-                     Other features include
+                     Notable features include
                      .
                      * plugins: dynamically loaded page
                        transformations written in Haskell (see
                        "Network.Gitit.Interface")
                      .
-                     * categories
-                     .
-                     * TeX math
+                     * conversion of TeX math to MathML for display in
+                       web browsers
                      .
                      * syntax highlighting of source code
-                       files and code snippets (using highlighting-kate)
-                     .
-                     * caching
+                       files and code snippets
                      .
                      * Atom feeds (site-wide and per-page)
                      .
@@ -34,6 +31,8 @@ description:         Gitit is a wiki backed by a git or darcs filestore.
                        to include a gitit wiki in any happstack application
                      .
                      You can see a running demo at <http://gitit.johnmacfarlane.net>.
+                     .
+                     For usage information:  @gitit --help@
 
 category:            Network
 license:             GPL
