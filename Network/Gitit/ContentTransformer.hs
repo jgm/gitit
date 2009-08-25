@@ -80,7 +80,7 @@ import Network.Gitit.Cache (lookupCache, cacheContents)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc
-import Text.Pandoc.Shared (HTMLMathMethod(..))
+import Text.Pandoc.Shared (HTMLMathMethod(..), ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.Highlighting.Kate
 import Data.Maybe (isNothing)
@@ -340,6 +340,8 @@ pandocToHtml pandocContents = do
                                (Just $ base' ++ "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
                       , writerLiterateHaskell = bird
+                      -- note: javascript obfuscation gives problems on preview
+                      , writerEmailObfuscation = ReferenceObfuscation
                       } pandocContents
 
 -- | Returns highlighted source code.
