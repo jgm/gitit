@@ -133,11 +133,15 @@ createRepoIfMissing conf = do
     markuppath <- getDataFileName $ "data" </> "markup" <.> show pt
     helpcontentsMarkup <- liftM converter $ readFile markuppath
     let helpcontents = helpcontentsInitial ++ "\n\n" ++ helpcontentsMarkup
-    -- add front page and help page
+    usersguidepath <- getDataFileName "README.markdown"
+    usersguidecontents <- liftM converter $ readFile usersguidepath
+    -- add front page, help page, and user's guide
     create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
     logM "gitit" WARNING $ "Added " ++ (frontPage conf <.> "page") ++ " to repository"
     create fs "Help.page" (Author "Gitit" "") "Default help page" helpcontents
     logM "gitit" WARNING $ "Added " ++ "Help.page" ++ " to repository"
+    create fs "Gitit User's Guide.page" (Author "Gitit" "") "User's guide (README)" usersguidecontents
+    logM "gitit" WARNING $ "Added " ++ "Gitit User's Guide.page" ++ " to repository"
 
 -- | Create static directory unless it exists.
 createStaticIfMissing :: Config -> IO ()
