@@ -27,14 +27,56 @@ wiki from the same browser in the future.
 
 ## Editing a page
 
-To edit a page, just double-click it, or click the "edit" button at
-the bottom right corner of the page.
+To edit a page, just click the "edit" button at the bottom right corner
+of the page.
 
 You can click "Preview" at any time to see how your changes will look.
 Nothing is saved until you press "Save."
 
 Note that you must provide a description of your changes.  This is to
 make it easier for others to see how a wiki page has been changed.
+
+## Page metadata
+
+Pages may optionally begin with a metadata block.  Here is an example:
+
+    ---
+    format: latex+lhs
+    categories: haskell math
+    toc: no
+    title: Haskell and
+      Category Theory
+    ...
+
+    \section{Why Category Theory?}
+
+The metadata block consists of a list of key-value pairs, each on a
+separate line. If needed, the value can be continued on one or more
+additional line, which must begin with a space. (This is illustrated by
+the "title" example above.) The metadata block must begin with a line
+`---` and end with a line `...` optionally followed by one or more blank
+lines.
+
+Currently the following keys are supported:
+
+format
+:   Overrides the default page type as specified in the configuration file.
+    Possible values are `markdown`, `rst`, `latex`, `html`, `markdown+lhs`,
+    `rst+lhs`, `latex+lhs`.  (Capitalization is ignored, so you can also
+    use `LaTeX`, `HTML`, etc.)  The `+lhs` variants indicate that the page
+    is to be interpreted as literate Haskell.  If this field is missing,
+    the default page type will be used.
+
+categories
+:   A space or comma separated list of categories to which the page belongs.
+
+toc
+:   Overrides default setting for table-of-contents in the configuration file.
+    Values can be `yes`, `no`, `true`, or `false` (capitalization is ignored).
+
+title
+:   By default the displayed page title is the page name.  This metadata element
+    overrides that default.
 
 ## Creating a new page
 
