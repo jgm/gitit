@@ -1,0 +1,98 @@
+I'm pleased to announce the release of gitit 0.6.1.
+
+Gitit is a wiki program that runs on happstack, the Haskell web
+application server stack, and stores pages and other content in a
+git or darcs filestore. The wiki can be updated either directly
+through the VCS or through gitit's web interface. Pages can be written
+in (extended) markdown, reStructuredText, HTML, or LaTeX, and exported
+in ten different formats. TeX math is rendered using MathML by default,
+and syntax highlighting is provided for over fifty languages.
+
+demo:   http://gitit.johnmacfarlane.net
+manual: http://gitit.johnmacfarlane.net/README
+api:    http://hackage.haskell.org/package/gitit-0.6.1
+code:   http://github.com/jgm/gitit
+bugs:   http://code.google.com/p/gitit/issues/list
+group:  http://groups.google.com/group/gitit-discuss
+
+Here is how you can install and run gitit. You'll need GHC and
+cabal-install. If you don't have these, install the Haskell Platform
+<http://hackage.haskell.org/platform/>. Then:
+
+    cabal update
+    cabal install gitit
+    mkdir mywiki
+    cd mywiki
+    gitit      # now browse to http://localhost:5001
+
+Or, if you want to change the defaults (say, reStructuredText
+instead of markdown, or darcs instead of git):
+
+    gitit --print-default-config > gitit.conf
+    # edit gitit.conf, which is self-documenting
+    gitit -f gitit.conf
+
+The whole code base has been overhauled since the last release.
+Gitit is now faster, more memory efficient, more modular, and more
+secure. It also has many new features, including
+
+  - page metadata and categories
+  - atom feeds (sitewide and per-page)
+  - support for literate Haskell
+  - a better configuration system
+  - an improved caching system
+  - a Haskell library exporting happstack wiki handlers
+  - a plugin system
+
+The last two items are the most exciting and deserve special comment.
+
+First, in addition to providing an executable, gitit now provides a
+library, Network.Gitit, which makes it easy to include a gitit
+wiki (or many of them) in any happstack application. It is
+even possible to use the containing application's authentication
+system for the wiki.
+
+Second, gitit can now be extended through plugins, short Haskell
+programs that are loaded dynamically when the server starts. For
+examples of the things that can be done with plugins, see the
+plugins directory, which contains (among other things) a plugin
+for adding graphviz diagrams to pages and a plugin for adding
+interwiki links.  For a full description of the plugin system,
+see the haddock documentation for Network.Gitit.Interface.
+
+Full changes from version 0.5.3, as well as upgrade instructions,
+are available in the file CHANGES.
+
+Thanks are due to
+
+- the happstack team, for big improvements in happstack-server
+  that make it much easier to work with,
+
+- the darcs team, for using gitit/darcsit for <http://wiki.darcs.net>,
+  giving gitit a real-world test,
+
+- Gwern Branwen, who helped to optimize gitit, wrote the
+  InterwikiPlugin, and wrote the guts of the Feed module,
+
+- Simon Michael, who contributed several patches,
+
+- Henry Laxen, who added support for password resets and helped with
+  the apache proxy instructions,
+
+- Anton van Straaten, who made the process of page generation
+  more modular by adding Gitit.ContentTransformer,
+
+- Robin Green, who helped improve the plugin API and interface,
+  fixed a security problem with the reset password code, and made
+  saving of the user's file more robust,
+
+- Thomas Hartman, who helped improve the index page, making directory
+  browsing persistent,
+
+- Kohei Ozaki, who contributed the ImgTexPlugin,
+
+- mightybyte, who suggested making gitit available as a library,
+  and contributed a patch to the authentication system,
+
+- and everyone else who contributed suggestions and bug reports.
+
