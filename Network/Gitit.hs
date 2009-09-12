@@ -189,7 +189,7 @@ wikiHandlers =
   , methodOnly POST >> guardCommand "cancel" >> showPage
   , methodOnly POST >> guardCommand "update" >>
       requireUser (unlessNoEdit updatePage showPage)
-  , methodOnly GET >> showPage
+  , showPage
   , guardPath isSourceCode >> methodOnly GET >> showHighlightedSource
   , handleAny
   , guardPath isPage >> createPage
