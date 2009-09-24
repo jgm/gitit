@@ -200,7 +200,7 @@ support (see above), you can get highlighted source code by using
                    qsort (filter (>= x) xs) 
     ~~~
 
-To see what languages are available:
+To see what languages your pandoc was compiled to highlight:
 
     pandoc -v
 
