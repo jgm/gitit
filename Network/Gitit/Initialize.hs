@@ -78,7 +78,7 @@ compilePageTemplate tempsDir = do
                     else return T.nullGroup
   -- default templates from data directory will be "shadowed"
   -- by templates from the user's template dir
-  let combinedGroup = T.addSubGroup defaultGroup customGroup
+  let combinedGroup = T.mergeSTGroups customGroup defaultGroup
   case T.getStringTemplate "page" combinedGroup of
         Just t    -> return t
         Nothing   -> error "Could not get string template"
