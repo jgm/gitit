@@ -1,3 +1,17 @@
+Version 0.6.3 released 27 Sep 2009
+
+* Fixed MathML conversion so it doesn't happen when exporting to
+  non-HTML output formats.
+
+* Fixed shadowing on page templates: previously page.st was always
+  taken from the defaults, even if a modified version existed
+  in templates/.
+
+* Modified YUI CSS reset so that ordered list enumerators can be
+  styled properly.
+
+* Modified showPage to work with both POST and GET requests.
+
 Version 0.6.2 released 25 Aug 2009
 
 * Use "reference obfuscation" for emails, rather than javascript
