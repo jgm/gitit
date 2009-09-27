@@ -396,8 +396,9 @@ applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = do
   xforms <- getPageTransforms
   cfg <- lift getConfig
+  params <- getParams
   let xforms' = case mathMethod cfg of
-                      MathML -> mathMLTransform : xforms
+                      MathML -> mathMLTransform (pFormat params) : xforms
                       _      -> xforms
   foldM applyTransform c (wikiLinksTransform : xforms')
 
@@ -502,14 +503,15 @@ convertWikiLinks (Link ref ("", "")) =
   Link ref (inlinesToURL ref, "Go to wiki page")
 convertWikiLinks x = x
 
-mathMLTransform :: Pandoc -> PluginM Pandoc
-mathMLTransform inp = do
+mathMLTransform :: String -> Pandoc -> PluginM Pandoc
+mathMLTransform format inp | format `elem` ["","S5"] = do
   let (Pandoc m blks, mathUsed) = runState (processWithM convertTeXMathToMathML inp) False
   let scriptLink = RawHtml "<script type=\"text/javascript\" src=\"/js/MathMLinHTML.js\"></script>"
   let blks' = if mathUsed
                  then blks ++ [scriptLink]
                  else blks
   return $ Pandoc m blks'
+mathMLTransform _ inp = return inp
 
 -- | Convert math to MathML.  We put this in a Writer monad
 -- to keep track of whether we've actually got any MathML; if not,
