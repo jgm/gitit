@@ -1,3 +1,8 @@
+Version 0.6.4 released 28 Sep 2009
+
+* Fixed preview javascript so that tex math works properly in
+  preview.
+
 Version 0.6.3 released 27 Sep 2009
 
 * Fixed MathML conversion so it doesn't happen when exporting to
