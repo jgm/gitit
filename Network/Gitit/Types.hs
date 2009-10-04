@@ -138,6 +138,7 @@ data Page = Page {
   , pageTitle       :: String
   , pageCategories  :: [String]
   , pageText        :: String
+  , pageMeta        :: [(String, String)]
 } deriving (Read, Show)
 
 type SessionKey = Integer
@@ -191,6 +192,7 @@ data Context = Context { ctxFile            :: String
                        , ctxTOC             :: Bool
                        , ctxBirdTracks      :: Bool
                        , ctxCategories      :: [String]
+                       , ctxMeta            :: [(String, String)]
                        }
 
 class (Monad m) => HasContext m where

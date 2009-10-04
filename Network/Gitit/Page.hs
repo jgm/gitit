@@ -97,7 +97,8 @@ stringToPage conf pagename raw =
                    , pageTOC         = tableOfContents conf
                    , pageTitle       = pagename
                    , pageCategories  = []
-                   , pageText        = filter (/= '\r') rest }
+                   , pageText        = filter (/= '\r') rest
+                   , pageMeta        = ls }
   in  foldr adjustPage page' ls
 
 adjustPage :: (String, String) -> Page -> Page

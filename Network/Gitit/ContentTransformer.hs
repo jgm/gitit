@@ -116,7 +116,8 @@ runTransformer pathFor xform = withData $ \params -> do
                            , ctxCacheable = True
                            , ctxTOC = tableOfContents cfg
                            , ctxBirdTracks = showLHSBirdTracks cfg
-                           , ctxCategories = [] }
+                           , ctxCategories = []
+                           , ctxMeta = [] }
 
 -- | Converts a @ContentTransformer@ into a @GititServerPart@;
 -- specialized to wiki pages.
@@ -318,7 +319,8 @@ pageToWikiPandoc' = applyPreParseTransforms >=>
 pageToPandoc :: Page -> ContentTransformer Pandoc
 pageToPandoc page' = do
   modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
-                             , ctxCategories = pageCategories page' }
+                             , ctxCategories = pageCategories page'
+                             , ctxMeta = pageMeta page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
 -- | Converts contents of page file to Page object.
