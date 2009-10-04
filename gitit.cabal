@@ -95,6 +95,8 @@ Library
                      Network.Gitit.Authentication, Network.Gitit.Page, Network.Gitit.Feed
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
+    build-depends:   ghc, ghc-paths
+    cpp-options:     -D_PLUGINS
   build-depends:     base >= 3, pandoc >= 1.1, filepath
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
