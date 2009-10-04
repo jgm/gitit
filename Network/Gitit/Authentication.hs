@@ -368,7 +368,7 @@ loginUser params = do
       addCookie sessionTime (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
-      loginUserForm
+      withMessages ["Invalid username or password."] loginUserForm
 
 encUrl :: String -> String
 encUrl = encString True isAscii
