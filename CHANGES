@@ -8,6 +8,8 @@ Version 0.6.5 released 06 Oct 2009
 
 * Display informative message on authentication failure.
 
+* Fixed library stanza in cabal file so plugins are properly enabled.
+
 Version 0.6.4 released 28 Sep 2009
 
 * Fixed preview javascript so that tex math works properly in
