@@ -1,47 +1,41 @@
 \begin{hcarentry}[updated]{gitit}
 \label{gitit}
-\report{John MacFarlane}%11/08
+\report{John MacFarlane}%11/10
 \participants{Gwern Branwen, Simon Michael, Henry Laxen, Anton
-van Straaten, Robin Green, Thomas Hartman, Justin Bogner, Kohei Ozaki}
+van Straaten, Robin Green, Thomas Hartman, Justin Bogner, Kohei Ozaki,
+Dmitry Golubovsky, Anton Tayanovskyy, Dan Cook}
 \status{active development}
 \makeheader
 
-Gitit is a wiki program written in Haskell. It uses~\cref{Happstack}
-for the web server and~\cref{Pandoc} for markup processing. Pages and
-uploaded files are stored in a Git or~\cref{Darcs} repository and may
-be modified either by using the VCS's command-line tools or through the
-wiki's web interface. By default, Pandoc's extended version of markdown
-is used as a markup language, but reStructuredText, LaTeX, or
-HTML can also be used.
-Pages can be exported in a number of different formats, including LaTeX,
-RTF, OpenOffice ODT, and MediaWiki markup. Gitit can be configured to
-display TeX math (using jsMath) and highlighted source code
-(using~\cref{highlighting-kate}).
+Gitit is a wiki built on \cref{Happstack} and backed by a git or darcs
+filestore. Pages and uploaded files can be modified either directly
+via the VCS's command-line tools or through the wiki's web interface.
+\cref{Pandoc} is used for markup processing, so pages may be written in
+(extended) markdown, reStructuredText, LaTeX, HTML, or literate Haskell,
+and exported in ten different formats, including LaTeX, ConTeXt,
+DocBook, RTF, OpenOffice ODT, and MediaWiki markup.
 
-Gitit is currently being used by a number of people and projects, such
-as~\cref{LHC} and Darcs.
-
-Gitit features:
+Notable features of gitit include
 \begin{itemize}
-\item Distributed wiki
-\item Automatic syntax highlighting of source code files
-\item Export pages in any format supported by pandoc
-\item Customizable through plugins that can transform pages at
-  the AST level
-\end{itemize}
-
-We are currently working on the following:
-\begin{itemize}
-\item Literate Haskell support
-\item RSS feeds for pages
-\item Using new Happstack architecture
+\item
+  Plugins: users can write their own dynamically loaded page transformations,
+  which operate directly on the abstract syntax tree.
+\item
+  Math support:  LaTeX inline and display math is automatically converted
+  to MathML, using the \texttt{texmath} library.
+\item
+  Highlighting:  Any git or darcs repository can be made a gitit wiki.
+  Directories can be browsed, and source code files are
+  automatically syntax-highlighted.  Code snippets in wiki pages
+  can also be highlighted.
+\item
+  Library: Gitit now exports a library, \texttt{Network.Gitit}, that makes it
+  easy to include a gitit wiki (or wikis) in any \cref{Happstack} application.
+\item
+  Literate Haskell: Pages can be written directly in literate Haskell.
 \end{itemize}
 
 \FurtherReading
-\begin{itemize}
-\item Documentation and source: \text{\url{http://github.com/jgm/gitit/tree/master}} 
-\item HackageDB: \texttt{cabal install}
- \text{\url{http://hackage.haskell.org/cgi-bin/hackage-scripts/package/gitit}}
-\item Demo: \text{\url{http://gitit.johnmacfarlane.net}}
-\end{itemize}
+For more information, see the gitit home page, which is itself
+a running demo of gitit:  \text{\url{http://gitit.net}}.
 \end{hcarentry}
