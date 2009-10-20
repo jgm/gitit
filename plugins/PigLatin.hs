@@ -5,7 +5,7 @@ module PigLatin (plugin) where
 -- metadata in a plugin.
 
 import Network.Gitit.Interface
-import Data.Char (toLower, toUpper, isLower)
+import Data.Char (toLower, toUpper, isLower, isUpper, isLetter)
 
 plugin :: Plugin
 plugin = PageTransform $ \doc -> do
@@ -17,12 +17,14 @@ plugin = PageTransform $ \doc -> do
 
 pigLatinStr :: Inline -> Inline
 pigLatinStr (Str "") = Str ""
-pigLatinStr (Str x) | isLower (head x) && head x `notElem` "aeiou" =
-  Str (tail x ++ (head x : "ay"))
-pigLatinStr (Str x) | toLower (head x) `notElem` "aeiou" =
-  Str (capitalize (tail x) ++ (toLower (head x) : "ay"))
-pigLatinStr (Str x) = Str (x ++ "yay")
+pigLatinStr (Str (c:cs)) | isLower c && isConsonant c =
+  Str (cs ++ (c : "ay"))
+pigLatinStr (Str (c:cs)) | isUpper c && isConsonant c =
+  Str (capitalize cs ++ (toLower c : "ay"))
+pigLatinStr (Str x@(c:cs)) | isLetter c = Str (x ++ "yay")
 pigLatinStr x       = x
+
+isConsonant c = c `notElem` "aeiouAEIOU" 
 
 capitalize :: String -> String
 capitalize "" = ""
