@@ -77,7 +77,8 @@ compilePageTemplate tempsDir = do
     if customExists
       then do customGroup <- T.directoryGroup tempsDir
               return $ T.mergeSTGroups customGroup defaultGroup
-      else return defaultGroup
+      else do Prelude.putStrLn "custom template dir not found, there's nothing to recompile. we'll just use default templates"
+              return defaultGroup
     -- default templates from data directory will be "shadowed"
     -- by templates from the user's template dir
   case T.getStringTemplate "page" combinedGroup of
