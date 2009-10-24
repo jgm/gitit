@@ -248,9 +248,12 @@ splitCommaList :: String -> [String]
 splitCommaList l =
   let (first,rest) = break (== ',') l
       first' = lrStrip first
-  in  if null rest
+{-  in  if null rest
          then if null first' then [] else [first']
-         else first' : splitCommaList (tail rest)
+         else first' : splitCommaList (tail rest) -}
+  in case rest of
+         [] -> if null first' then [] else [first']
+         (r:rs) -> first' : splitCommaList rs
 
 lrStrip :: String -> String
 lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace
