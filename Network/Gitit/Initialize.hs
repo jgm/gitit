@@ -72,15 +72,15 @@ recompilePageTemplate = do
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
 compilePageTemplate tempsDir = do
   defaultGroup <- getDataFileName ("data" </> "templates") >>= T.directoryGroup
-  combinedGroup <- do
-    customExists <- doesDirectoryExist tempsDir
+  customExists <- doesDirectoryExist tempsDir
+  combinedGroup <-
     if customExists
-      then do customGroup <- T.directoryGroup tempsDir
-              return $ T.mergeSTGroups customGroup defaultGroup
-      else do Prelude.putStrLn "custom template dir not found, there's nothing to recompile. we'll just use default templates"
-              return defaultGroup
-    -- default templates from data directory will be "shadowed"
-    -- by templates from the user's template dir
+       -- default templates from data directory will be "shadowed"
+       -- by templates from the user's template dir
+       then do customGroup <- T.directoryGroup tempsDir
+               return $ T.mergeSTGroups customGroup defaultGroup
+       else do logM "gitit" WARNING $ "Custom template directory not found"
+               return defaultGroup
   case T.getStringTemplate "page" combinedGroup of
         Just t    -> return t
         Nothing   -> error "Could not get string template"
