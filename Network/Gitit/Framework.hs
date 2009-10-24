@@ -236,9 +236,12 @@ startsWithUnderscore _ = False
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn c cs =
   let (next, rest) = break (==c) cs
-  in  if null rest
+{-  in  if null rest
          then [next]
-         else next : splitOn c (tail rest)
+         else next : splitOn c (tail rest) -}
+  in case rest of
+         [] -> [next]
+         (r:rs) -> next : splitOn c rs 
 
 -- | Returns path portion of URI, without initial @\/@.
 -- Consecutive spaces are collapsed.  We don't want to distinguish
