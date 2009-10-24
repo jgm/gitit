@@ -664,7 +664,7 @@ fileListToHtml base' prefix files =
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
                   concatHtml [ anchor ! [theclass "updir",
-                                         href $ if length d == 1
+                                         href $ if length d <= 1
                                                    then base' ++ "/_index"
                                                    else base' ++ joinPath d] <<
                   last d, accum]) noHtml updirs

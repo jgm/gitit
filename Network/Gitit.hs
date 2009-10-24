@@ -142,7 +142,7 @@ fileServeStrict' :: [FilePath] -> FilePath -> ServerPart Response
 fileServeStrict' ps p = do
   rq <- askRq
   resp <- fileServeStrict ps p
-  if rsCode resp == 404 || last (rqUri rq) == '/'
+  if rsCode resp == 404 || ((not . null $ rqUri rq) && last (rqUri rq) == '/')
      then mzero  -- pass through if not found or directory index
      else do
        -- turn off compresion filter unless it's text
