@@ -192,7 +192,7 @@ wikiHandlers =
   , showPage
   , guardPath isSourceCode >> methodOnly GET >> showHighlightedSource
   , handleAny
-  , guardPath isPage >> createPage
+  , notFound =<< (guardPath isPage >> createPage)
   ]
 
 -- | Recompiles the gitit templates.
