@@ -107,6 +107,7 @@ exportBox base' page rev | not (isSourceCode page) =
          value (fromJust rev)] | isJust rev ] ++
      [ select ! [name "format"] <<
          map ((\f -> option ! [value f] << f) . fst) exportFormats
+     , primHtmlChar "nbsp" 
      , submit "export" "Export" ])
 exportBox _ _ _ = noHtml
 
