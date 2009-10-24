@@ -47,9 +47,13 @@ filestoreToFeed cfg a mbPath = do
   let path' = maybe "" id mbPath
   when (null $ fcBaseUrl cfg) $ error "base-url in the config file is null."
   rs <- changeLog cfg a mbPath
-  let rsShifted = if null rs
+{-  let rsShifted = if null rs
                      then []
                      else head rs : init rs   -- so we can get revids for diffs
+-}
+  let rsShifted = case rs of
+                     [] -> []
+                     (x:_) -> x : init rs   -- so we can get revids for diffs
   now <- liftM formatFeedTime getCurrentTime
   return $ Feed { feedId = fcBaseUrl cfg ++ "/" ++ path'
                 , feedTitle = TextString $ fcTitle cfg
@@ -121,8 +125,15 @@ revToEntry cfg path' Revision{
                          , linkOther = [] } 
           (firstpath, fromrev) =
                       if null path'
-                         then case head rv of
+                         {- then case head rv of
                                    Modified f -> (dePage f, "&from=" ++ revId prevRevision)
+                                   Added f    -> (dePage f, "")
+                                   Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
+                         else (path',"") -}
+                         then case rv of
+                                [] -> error "revToEntry, null rv"
+                                (rev:_) -> case rev of 
+                                   Modified f -> (dePage f, "&from=" ++ revId prevRevision)                                
                                    Added f    -> (dePage f, "")
                                    Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
                          else (path',"")
