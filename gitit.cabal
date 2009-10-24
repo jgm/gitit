@@ -98,7 +98,7 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.1, filepath
+  build-depends:     base >= 3, pandoc >= 1.1, filepath, safe
   ghc-options:       -Wall
   ghc-prof-options:  -auto-all -caf-all
 

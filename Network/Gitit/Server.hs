@@ -57,7 +57,8 @@ lookupIPAddr hostname = do
   addrs <- getAddrInfo (Just defaultHints) (Just hostname) Nothing
   if null addrs
      then return Nothing
-     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ head addrs
-
+     else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ case addrs of -- head addrs
+                                                                     [] -> error $ "lookupIPAddr, no addrs"
+                                                                     (x:_) -> x
 getHost :: ServerMonad m => m (Maybe String)
 getHost = liftM (maybe Nothing (Just . U.toString)) $ getHeaderM "Host"

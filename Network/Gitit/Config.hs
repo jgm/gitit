@@ -24,6 +24,7 @@ module Network.Gitit.Config ( getConfigFromOpts
                             , readMimeTypesFile
                             , getDefaultConfig )
 where
+import Safe
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
@@ -235,7 +236,7 @@ fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
 readNumber :: (Read a) => String -> String -> a
 readNumber opt "" = error $ opt ++ " must be a number."
 readNumber opt x  =
-  let x' = case last x of
+  let x' = case lastNote "readNumber" x of
                 'K'  -> init x ++ "000"
                 'M'  -> init x ++ "000000"
                 'G'  -> init x ++ "000000000"
@@ -248,9 +249,12 @@ splitCommaList :: String -> [String]
 splitCommaList l =
   let (first,rest) = break (== ',') l
       first' = lrStrip first
-  in  if null rest
+{-  in  if null rest
          then if null first' then [] else [first']
-         else first' : splitCommaList (tail rest)
+         else first' : splitCommaList (tail rest) -}
+  in case rest of
+         [] -> if null first' then [] else [first']
+         (r:rs) -> first' : splitCommaList rs
 
 lrStrip :: String -> String
 lrStrip = reverse . dropWhile isWhitespace . reverse . dropWhile isWhitespace

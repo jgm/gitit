@@ -53,6 +53,7 @@ module Network.Gitit.Handlers (
                       , feedHandler
                       )
 where
+import Safe
 import Data.FileStore
 import Network.Gitit.Server
 import Network.Gitit.Framework
@@ -667,7 +668,7 @@ fileListToHtml base' prefix files =
                                          href $ if length d <= 1
                                                    then base' ++ "/_index"
                                                    else base' ++ joinPath d] <<
-                  last d, accum]) noHtml updirs
+                  lastNote "fileListToHtml" d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
 -- NOTE:  The current implementation of categoryPage does not go via the

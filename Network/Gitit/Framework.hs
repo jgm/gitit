@@ -56,6 +56,7 @@ module Network.Gitit.Framework (
                                , filestoreFromConfig
                                )
 where
+import Safe
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
@@ -236,9 +237,12 @@ startsWithUnderscore _ = False
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn c cs =
   let (next, rest) = break (==c) cs
-  in  if null rest
+{-  in  if null rest
          then [next]
-         else next : splitOn c (tail rest)
+         else next : splitOn c (tail rest) -}
+  in case rest of
+         [] -> [next]
+         (r:rs) -> next : splitOn c rs 
 
 -- | Returns path portion of URI, without initial @\/@.
 -- Consecutive spaces are collapsed.  We don't want to distinguish
@@ -310,7 +314,7 @@ guardIndex = do
   base <- getWikiBase
   uri' <- liftM rqUri askRq
   let localpath = drop (length base) uri'
-  if length localpath > 1 && last uri' == '/'
+  if length localpath > 1 && lastNote "guardIndex" uri' == '/'
      then return ()
      else mzero
 
