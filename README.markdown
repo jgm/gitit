@@ -520,9 +520,10 @@ A number of people have contributed patches:
 - Robin Green helped improve the plugin API and interface, and
   fixed a security problem with the reset password code.
 - Thomas Hartman helped improve the index page, making directory
-  browsing persistent.
+  browsing persistent, and fixed a bug in template recompilation.
 - Justin Bogner improved the appearance of the preview button.
 - Kohei Ozaki contributed the ImgTexPlugin.
+- Michael Terepeta improved validation of change descriptions.
 - mightybyte suggested making gitit available as a library,
   and contributed a patch to ifLoggedIn that was needed to
   make gitit usable with a custom authentication scheme.
