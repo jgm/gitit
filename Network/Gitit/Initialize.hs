@@ -68,21 +68,23 @@ recompilePageTemplate = do
   ct <- compilePageTemplate tempsDir
   updateGititState $ \st -> st{renderPage = defaultRenderPage ct}
 
--- | Compile a master page template named @page.st@ in the directory specified.
+--- | Compile a master page template named @page.st@ in the directory specified.
 compilePageTemplate :: FilePath -> IO (T.StringTemplate String)
 compilePageTemplate tempsDir = do
   defaultGroup <- getDataFileName ("data" </> "templates") >>= T.directoryGroup
-  templateExists <- doesDirectoryExist tempsDir
-  customGroup <- if templateExists
-                    then T.directoryGroup tempsDir
-                    else return T.nullGroup
-  -- default templates from data directory will be "shadowed"
-  -- by templates from the user's template dir
-  let combinedGroup = T.mergeSTGroups customGroup defaultGroup
+  combinedGroup <- do
+    customExists <- doesDirectoryExist tempsDir
+    if customExists
+      then do customGroup <- T.directoryGroup tempsDir
+              return $ T.mergeSTGroups customGroup defaultGroup
+      else do Prelude.putStrLn "custom template dir not found, there's nothing to recompile. we'll just use default templates"
+              return defaultGroup
+    -- default templates from data directory will be "shadowed"
+    -- by templates from the user's template dir
   case T.getStringTemplate "page" combinedGroup of
         Just t    -> return t
         Nothing   -> error "Could not get string template"
- 
+
 -- | Create templates dir if it doesn't exist.
 createTemplateIfMissing :: Config -> IO ()
 createTemplateIfMissing conf' = do
