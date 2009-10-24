@@ -118,6 +118,7 @@ import Control.Monad.Reader
 import Prelude hiding (readFile)
 import qualified Data.ByteString.Char8 as B
 import System.FilePath ((</>))
+import Safe
 
 -- | Happstack handler for a gitit wiki.
 wiki :: Config -> ServerPart Response
@@ -142,7 +143,7 @@ fileServeStrict' :: [FilePath] -> FilePath -> ServerPart Response
 fileServeStrict' ps p = do
   rq <- askRq
   resp <- fileServeStrict ps p
-  if rsCode resp == 404 || last (rqUri rq) == '/'
+  if rsCode resp == 404 || lastNote "fileServeStrict'" (rqUri rq) == '/'
      then mzero  -- pass through if not found or directory index
      else do
        -- turn off compresion filter unless it's text

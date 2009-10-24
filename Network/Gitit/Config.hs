@@ -24,6 +24,7 @@ module Network.Gitit.Config ( getConfigFromOpts
                             , readMimeTypesFile
                             , getDefaultConfig )
 where
+import Safe
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
@@ -235,7 +236,7 @@ fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
 readNumber :: (Read a) => String -> String -> a
 readNumber opt "" = error $ opt ++ " must be a number."
 readNumber opt x  =
-  let x' = case last x of
+  let x' = case lastNote "readNumber" x of
                 'K'  -> init x ++ "000"
                 'M'  -> init x ++ "000000"
                 'G'  -> init x ++ "000000000"

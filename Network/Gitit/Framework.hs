@@ -56,6 +56,7 @@ module Network.Gitit.Framework (
                                , filestoreFromConfig
                                )
 where
+import Safe
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
@@ -313,7 +314,7 @@ guardIndex = do
   base <- getWikiBase
   uri' <- liftM rqUri askRq
   let localpath = drop (length base) uri'
-  if length localpath > 1 && last uri' == '/'
+  if length localpath > 1 && lastNote "guardIndex" uri' == '/'
      then return ()
      else mzero
 
