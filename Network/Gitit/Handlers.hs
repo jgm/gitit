@@ -77,7 +77,7 @@ import qualified Text.XHtml as X ( method )
 import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
-import Data.Char (toLower)
+import Data.Char (toLower, isSpace)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as S
@@ -199,7 +199,8 @@ uploadFile = withData $ \(params :: Params) -> do
                          else throwIO e >> return True
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate
-                 [ (null logMsg, "Description cannot be empty.")
+                 [ (null . filter (not . isSpace) $ logMsg,
+                    "Description cannot be empty.")
                  , (null origPath, "File not found.")
                  , (not overwrite && exists, "A file named '" ++ wikiname ++
                     "' already exists in the repository: choose a new name " ++
@@ -601,7 +602,7 @@ updatePage = withData $ \(params :: Params) -> do
   let oldSHA1 = pSHA1 params
   fs <- getFileStore
   base' <- getWikiBase
-  if null logMsg
+  if null . filter (not . isSpace) $ logMsg
      then withMessages ["Description cannot be empty."] editPage
      else do
        when (length editedText > fromIntegral (maxUploadSize cfg)) $
