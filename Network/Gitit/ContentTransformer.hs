@@ -353,8 +353,8 @@ highlightSource (Just source) = do
   file <- getFileName
   -- let lang' = head $ languagesByExtension $ takeExtension file
   let lang' = case languagesByExtension $ takeExtension file of
-               [] -> error "highlightSource, no lang'"
-               (l:ls) -> l
+               []    -> error "highlightSource, no lang'"
+               (l:_) -> l
   case highlightAs lang' (filter (/='\r') source) of
        Left _       -> mzero
        Right res    -> return $ formatAsXHtml [OptNumberLines] lang' $! res
