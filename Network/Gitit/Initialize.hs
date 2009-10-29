@@ -170,7 +170,7 @@ createStaticIfMissing conf = do
       logM "gitit" WARNING $ "Created " ++ (icondir </> f)
     -}
 
-    logopath <- getDataFileName $ "data" </> "static" </> "img" </> "gitit-dog.png"
+    logopath <- getDataFileName $ "data" </> "static" </> "img" </> "logo.png"
     createDirectoryIfMissing True $ staticdir </> "img"
     copyFile logopath $ staticdir </> "img" </> "logo.png"
     logM "gitit" WARNING $ "Created " ++ (staticdir </> "img" </> "logo.png")
