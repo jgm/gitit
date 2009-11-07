@@ -1,3 +1,36 @@
+Version 0.6.6 released 06 Nov 2009
+
+* Require filestore >= 0.3.3, which closes a security
+  vulnerability.
+
+* Don't allow web file uploads to the static or templates directory,
+  even if these are subdirectories of the repository directory.
+  We don't want users uploading new CSS, javascript, or templates
+  that might break the site.
+
+* Renamed gitit-dog.png -> logo.png in data/static/img.
+  This way the logo will show up even without a local img directory.
+  Thanks to Thomas Hartmann for the patch.
+
+* Return 404 when page not found.  Thanks to Richard Fergie.
+
+* Improved layout of Export button.
+
+* Added links for atom feeds to sitenav.st and pagetools.st, to
+  make the feeds more discoverable.
+
+* Minor code safety improvements.
+
+* Check for commit messages consisting of whitespace.
+  Commit messages consisting only of whitespace characters are
+  rejected by Git as empty. Gitit should behave similarly.
+
+* Allow gitit to start up if custom template directory not found.
+  Thanks to Thomas Hartmann.
+
+* Fixed incorrect usage of nullGroup (a debugging function).  Thanks
+  to Thomas Hartmann.
+
 Version 0.6.5 released 06 Oct 2009
 
 * Added metadata to Page and Context, provided askMeta for plugins.
