@@ -109,7 +109,7 @@ Executable           gitit
                      pandoc >= 1.2, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate, bytestring,
                      utf8-string, SHA > 1, HTTP, HStringTemplate, random,
-                     network >= 2.1.0.0, recaptcha >= 0.1, filestore >= 0.3.2,
+                     network >= 2.1.0.0, recaptcha >= 0.1, filestore >= 0.3.3,
                      datetime, zlib, url, happstack-server >= 0.3.3 && < 0.4,
                      happstack-util >= 0.3.2 && < 0.4, xml >= 1.3.4,
                      hslogger >= 1 && < 1.1, ConfigFile >= 1, feed >= 0.3.6,
