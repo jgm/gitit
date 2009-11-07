@@ -55,6 +55,7 @@ module Network.Gitit.Handlers (
 where
 import Safe
 import Data.FileStore
+import Data.FileStore.Utils (isInsideDir)
 import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.Layout
@@ -198,11 +199,17 @@ uploadFile = withData $ \(params :: Params) -> do
                       if e == NotFound
                          then return False
                          else throwIO e >> return True
+  inStaticDir <- liftIO $
+                  (repositoryPath cfg </> wikiname) `isInsideDir` staticDir cfg
+  inTemplatesDir <- liftIO $
+                  (repositoryPath cfg </> wikiname) `isInsideDir` templatesDir cfg
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate
                  [ (null . filter (not . isSpace) $ logMsg,
                     "Description cannot be empty.")
                  , (null origPath, "File not found.")
+                 , (inStaticDir,  "Destination is inside static directory.")
+                 , (inTemplatesDir,  "Destination is inside templates directory.")
                  , (not overwrite && exists, "A file named '" ++ wikiname ++
                     "' already exists in the repository: choose a new name " ++
                     "or check the box to overwrite the existing file.")
