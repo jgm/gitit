@@ -266,11 +266,15 @@ searchResults = withData $ \(params :: Params) -> do
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
-                   else liftIO $ search fs SearchQuery{
-                                            queryPatterns = patterns
-                                          , queryWholeWords = True
-                                          , queryMatchAll = True
-                                          , queryIgnoreCase = True }
+                   else liftIO $ catch (search fs SearchQuery{
+                                                  queryPatterns = patterns
+                                                , queryWholeWords = True
+                                                , queryMatchAll = True
+                                                , queryIgnoreCase = True })
+                                       -- catch error, because newer versions of git
+                                       -- return 1 on no match, and filestore <=0.3.3
+                                       -- doesn't handle this properly:
+                                       (\(_ :: FileStoreError)  -> return [])
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
   let slashToSpace = map (\c -> if c == '/' then ' ' else c)
