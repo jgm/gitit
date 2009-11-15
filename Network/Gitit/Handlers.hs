@@ -292,8 +292,8 @@ searchResults = withData $ \(params :: Params) -> do
                                   then ["Please enter a search term."]
                                   else ["No matches found for '",
                                          unwords patterns, "':"]
-                    else h3 << [(show $ length matches),
-                                " matches found for '", unwords patterns, "':"]
+                    else h3 << [ stringToHtml (show (length matches) ++ " matches found for ")
+                               , thespan ! [identifier "pattern"] << unwords patterns]
   base' <- getWikiBase
   let toMatchListItem (file, contents) = li <<
         [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file

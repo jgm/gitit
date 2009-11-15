@@ -90,6 +90,8 @@ div#categoryList { padding: 0em; margin: 1em 0 0 0; border: 1px dashed #ccc; }
 
 code { font-size: 93%; }
 pre.matches { margin: 0; padding: 0; }
+#pattern { background-color: yellow; font-weight: bold; }
+pre.matches span.highlighted { background-color: yellow; }
 
 .added { background-color: yellow; }
 .deleted { text-decoration: line-through; color: gray; }
