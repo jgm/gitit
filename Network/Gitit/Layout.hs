@@ -81,6 +81,7 @@ defaultRenderPage templ layout htmlContents = do
   let filledTemp = T.render .
                    T.setAttribute "base" base' .
                    T.setAttribute "feed" (pgLinkToFeed layout) .
+                   setStrAttr "wikititle" (wikiTitle cfg) .
                    setStrAttr "pagetitle" (pgTitle layout) .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
