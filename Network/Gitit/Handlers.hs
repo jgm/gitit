@@ -273,7 +273,8 @@ searchResults = withData $ \(params :: Params) -> do
                                           , queryIgnoreCase = True }
   let contentMatches = map matchResourceName matchLines
   allPages <- liftM (filter isPageFile) $ liftIO $ index fs
-  let inPageName pageName' x = x `elem` (words $ dropExtension pageName')
+  let slashToSpace = map (\c -> if c == '/' then ' ' else c)
+  let inPageName pageName' x = x `elem` (words $ slashToSpace $ dropExtension pageName')
   let matchesPatterns pageName' = not (null patterns) &&
        all (inPageName (map toLower pageName')) (map (map toLower) patterns)
   let pageNameMatches = filter matchesPatterns allPages
