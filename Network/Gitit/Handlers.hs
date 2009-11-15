@@ -287,11 +287,8 @@ searchResults = withData $ \(params :: Params) -> do
   let relevance (f, ms) = length ms + if f `elem` pageNameMatches
                                          then 100
                                          else 0
-  let preamble = if null matches
-                    then h3 << if null patterns
-                                  then ["Please enter a search term."]
-                                  else ["No matches found for '",
-                                         unwords patterns, "':"]
+  let preamble = if null patterns 
+                    then h3 << ["Please enter a search term."]
                     else h3 << [ stringToHtml (show (length matches) ++ " matches found for ")
                                , thespan ! [identifier "pattern"] << unwords patterns]
   base' <- getWikiBase
