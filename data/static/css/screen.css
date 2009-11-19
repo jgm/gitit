@@ -1,7 +1,7 @@
 @import url("reset-fonts-grids.css");
-@import url("base-min.css");
 
 html { background: #f9f9f9; color: black; } 
+body { margin: 10px; }
 
 fieldset { border: 1px solid #ccc; padding: 1em; }
 legend { font-weight: bold; margin-left: 1em; padding: 4px; }
@@ -27,8 +27,25 @@ h4 { font-size: 116%; margin: 1.33em 0 .67em; }
 h5 { font-size: 108%; margin: 1.6em 0 .8em; }
 h6 { font-size: 100%; margin: 1.6em 0 .8em; }
 
+strong { font-weight: bold; }
 ul { list-style-type: square; }
 dt { font-weight: bold; margin-bottom: .1em; }
+
+optgroup{ font-weight: normal; }
+abbr, acronym { border-bottom:1px dotted #000; cursor:help; }
+em { font-style: italic; }
+del { text-decoration: line-through; }
+
+blockquote, ul, ol, dl { margin: 1em; }
+ol, ul, dl { margin-left: 2em; }
+dl dd { margin-left: 1em; }
+th, td { padding: .5em; }
+th { font-weight: bold; }
+caption { margin-bottom: .5em; text-align: center; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+p, fieldset, table, pre { margin-bottom: 1em; }
+button, input[type="checkbox"], input[type="radio"], input[type="reset"], input[type="submit"] { padding: 1px; }
 
 blockquote { padding: 0 1.6em; color: #666; }
 
