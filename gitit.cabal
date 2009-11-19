@@ -44,7 +44,7 @@ homepage:            http://github.com/jgm/gitit/tree/master
 stability:           experimental 
 data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/css/ie.css, data/static/css/hk-pyg.css,
-                     data/static/css/reset-fonts-grids.css, data/static/css/base-min.css,
+                     data/static/css/reset-fonts-grids.css,
                      data/static/css/custom.css,
                      data/static/img/logo.png, data/static/img/icons/feed.png,
                      data/static/img/icons/folder.png, data/static/img/icons/page.png,
