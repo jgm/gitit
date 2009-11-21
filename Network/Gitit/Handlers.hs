@@ -754,8 +754,10 @@ feedHandler = do
                    mbHost <- getHost
                    case mbHost of
                         Nothing    -> error "Could not determine base URL"
-                        Just hn    -> return ("http://" ++ hn ++ base')
-                 else return (baseUrl cfg ++ base')
+                        Just hn    -> return $ "http://" ++ hn ++ base'
+                 else case baseUrl cfg ++ base' of
+                           x@('h':'t':'t':'p':':':'/':'/':_) -> return x
+                           y                                 -> return $ "http://" ++ y
   let fc = FeedConfig{
               fcTitle = wikiTitle cfg
             , fcBaseUrl = feedBase

@@ -9,7 +9,7 @@
       <li><a href="$base$/_activity">Recent activity</a></li>
       <li><a href="$base$/_upload">Upload a file</a></li>
       $if(feed)$
-      <li><a href="$base$/_feed" type="application/atom+xml" rel="alternate" title="ATOM Feed">Atom feed</a> <img alt="feed icon" src="$base$/img/icons/feed.png"/></li>
+      <li><a href="$base$/_feed/" type="application/atom+xml" rel="alternate" title="ATOM Feed">Atom feed</a> <img alt="feed icon" src="$base$/img/icons/feed.png"/></li>
       $endif$
       <li><a href="$base$/Help">Help</a></li>
     </ul>
