@@ -22,16 +22,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
+import Control.Monad
+import Data.DateTime
+import Data.List (intercalate, sortBy)
+import Data.Maybe
+import Data.Ord (comparing)
+import Network.URI (isAllowedInURI, escapeURIString)
+import System.FilePath
+
+import Data.FileStore.Types
+
 import Text.Atom.Feed
 import Text.Atom.Feed.Export
 import Text.XML.Light
-import Data.FileStore.Types
-import Data.Maybe
-import Data.DateTime
-import System.FilePath
-import Control.Monad
-import Data.List (intercalate, sortBy)
-import Data.Ord (comparing)
 
 data FeedConfig = FeedConfig {
     fcTitle    :: String
@@ -55,7 +58,7 @@ filestoreToFeed cfg a mbPath = do
                      [] -> []
                      (x:_) -> x : init rs   -- so we can get revids for diffs
   now <- liftM formatFeedTime getCurrentTime
-  return $ Feed { feedId = fcBaseUrl cfg ++ "/" ++ path'
+  return $ Feed { feedId = fcBaseUrl cfg ++ "/" ++ escape path'
                 , feedTitle = TextString $ fcTitle cfg
                 , feedUpdated = now
                 , feedAuthors = []
@@ -65,7 +68,7 @@ filestoreToFeed cfg a mbPath = do
                                                 , genVersion = Nothing
                                                 , genText = "gitit" }
                 , feedIcon = Nothing
-                , feedLinks = []
+                , feedLinks = [ (nullLink (fcBaseUrl cfg ++ "/_feed/" ++ escape path')) {linkRel = Just (Left "self")} ]
                 , feedLogo = Nothing
                 , feedRights = Nothing
                 , feedSubtitle = Nothing
@@ -92,7 +95,9 @@ revToEntry cfg path' Revision{
   baseEntry{ entrySummary = Just $ TextString rd
            , entryAuthors = [Person { personName = authorName ra
                                     , personURI = Nothing 
-                                    , personEmail = Just $ authorEmail ra
+                                    , personEmail = Nothing
+                                      -- gitit is set up not to reveal registration emails. To change this:
+                                      -- let e = authorEmail ra in if e /= "" then Just e else Nothing
                                     , personOther = [] }]
            , entryLinks = [diffLink]
 
@@ -115,8 +120,8 @@ revToEntry cfg path' Revision{
            -- Enclosure seems to be for conveying media, see
            -- https://secure.wikimedia.org/wikipedia/en/wiki/RSS_enclosure
         }
-    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/_diff/" ++ firstpath ++ "?to=" ++ rid ++ fromrev
-                         , linkRel = Nothing
+    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/_diff/" ++ escape firstpath ++ "?to=" ++ rid ++ fromrev
+                         , linkRel = Just (Left "alternate")
                          , linkType = Nothing
                          , linkHrefLang = Nothing
                          , linkTitle = Nothing
@@ -137,7 +142,7 @@ revToEntry cfg path' Revision{
                                    Added f    -> (dePage f, "")
                                    Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
                          else (path',"")
-          baseEntry = nullEntry (fcBaseUrl cfg ++ "/" ++ path' ++ "?revision=" ++ rid)
+          baseEntry = nullEntry (fcBaseUrl cfg ++ "/" ++ escape path' ++ "?revision=" ++ rid)
                         (TextString (intercalate ", " $ map showRev rv)) (formatFeedTime rdt)
           showRev (Modified f) = dePage f
           showRev (Added f)    = "added " ++ dePage f
@@ -145,6 +150,9 @@ revToEntry cfg path' Revision{
           dePage f = if takeExtension f == ".page"
                         then dropExtension f
                         else f
+
+escape :: String -> String
+escape = escapeURIString isAllowedInURI
 
 formatFeedTime :: DateTime -> String
 formatFeedTime = formatDateTime "%Y-%m%--%dT%TZ"  -- Why the double hyphen between %m and %d? It works.
