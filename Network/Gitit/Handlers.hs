@@ -664,18 +664,19 @@ fileListToHtml :: String -> String -> [Resource] -> Html
 fileListToHtml base' prefix files =
   let fileLink (FSFile f) | isPageFile f =
         li ! [theclass "page"  ] <<
-          anchor ! [href $ base' ++ "/" ++ prefix ++ dropExtension f] << dropExtension f
+          anchor ! [href $ base' ++ urlForPage (prefix ++ dropExtension f)] <<
+            dropExtension f
       fileLink (FSFile f) =
-        li ! [theclass "upload"] << anchor ! [href $ base' ++ "/" ++ prefix ++ f] << f
+        li ! [theclass "upload"] << anchor ! [href $ base' ++ urlForPage (prefix ++ f)] << f
       fileLink (FSDirectory f) =
         li ! [theclass "folder"] <<
-          anchor ! [href $ base' ++ "/" ++ prefix ++ f ++ "/"] << f
+          anchor ! [href $ base' ++ urlForPage (prefix ++ f) ++ "/"] << f
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
                   concatHtml [ anchor ! [theclass "updir",
                                          href $ if length d <= 1
                                                    then base' ++ "/_index"
-                                                   else base' ++ joinPath d] <<
+                                                   else base' ++ urlForPage (joinPath d)] <<
                   lastNote "fileListToHtml" d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
@@ -722,7 +723,7 @@ categoryListPage = do
                 liftM extractCategories . (readFile . (repoPath </>))
   base' <- getWikiBase
   let toCatLink ctg = li <<
-        [ anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg ]
+        [ anchor ! [href $ base' ++ "/_category" ++ urlForPage ctg] << ctg ]
   let htmlMatches = ulist << map toCatLink categories
   formattedPage defaultPageLayout{
                   pgPageName = "Categories",

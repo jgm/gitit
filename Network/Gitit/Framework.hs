@@ -275,7 +275,9 @@ isSourceCode path' =
 -- the wiki base.
 urlForPage :: String -> String
 urlForPage page = "/" ++
-  encString True (\c -> isAscii c && (c `notElem` "?&")) page
+  encString True (\c -> isAscii c && (c `notElem` "?&")) (map spaceToPlus page)
+    where spaceToPlus ' ' = '+'
+          spaceToPlus c   = c
 -- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
 
 -- | Returns the filestore path of the file containing the page's source.
