@@ -32,13 +32,14 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
 import Control.Monad.Trans (liftIO)
+import Codec.Binary.UTF8.String (encodeString)
 
 -- | Expire a cached file, identified by its filename in the filestore.
 -- Returns () after deleting a file from the cache, fails if no cached file.
 expireCachedFile :: String -> GititServerPart ()
 expireCachedFile file = do
   cfg <- getConfig
-  let target = cacheDir cfg </> file
+  let target = encodeString $ cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
   if exists
      then liftIO (removeFile target)
@@ -47,7 +48,7 @@ expireCachedFile file = do
 lookupCache :: String -> GititServerPart (Maybe (ClockTime, B.ByteString))
 lookupCache file = do
   cfg <- getConfig
-  let target = cacheDir cfg </> file
+  let target = encodeString $ cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
   if exists
      then liftIO $ do
@@ -59,8 +60,8 @@ lookupCache file = do
 cacheContents :: String -> B.ByteString -> GititServerPart ()
 cacheContents file contents = do
   cfg <- getConfig
-  let target = cacheDir cfg </> file
+  let target = encodeString $ cacheDir cfg </> file
   let targetDir = takeDirectory target
   liftIO $ do
     createDirectoryIfMissing True targetDir
-    B.writeFile (cacheDir cfg </> file) contents
+    B.writeFile target contents
