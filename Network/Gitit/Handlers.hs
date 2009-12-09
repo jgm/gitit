@@ -68,7 +68,6 @@ import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (extractCategories)
 import Control.Exception (throwIO, catch, try)
-import Codec.Binary.UTF8.String (encodeString)
 import Prelude hiding (writeFile, readFile, catch)
 import Data.ByteString.UTF8 (toString)
 import System.Time
@@ -695,7 +694,7 @@ categoryPage = do
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   matches <- liftM catMaybes $
              forM pages $ \f ->
-               liftIO (readFile $ encodeString $ repoPath </> f) >>= \s ->
+               liftIO (readFile $ repoPath </> f) >>= \s ->
                return $ if category `elem` (extractCategories s)
                            then Just $ dropExtension f
                            else Nothing
@@ -721,7 +720,7 @@ categoryListPage = do
   categories <- liftIO $
                 liftM (nub . sort . concat) $
                 forM pages $
-                liftM extractCategories . (readFile . encodeString . (repoPath </>))
+                liftM extractCategories . (readFile . (repoPath </>))
   base' <- getWikiBase
   let toCatLink ctg = li <<
         [ anchor ! [href $ base' ++ "/_category" ++ urlForPage ctg] << ctg ]
