@@ -352,5 +352,6 @@ withInput name val handler = do
 filestoreFromConfig :: Config -> FileStore
 filestoreFromConfig conf =
   case repositoryType conf of
-         Git   -> gitFileStore $ repositoryPath conf
-         Darcs -> darcsFileStore $ repositoryPath conf
+         Git       -> gitFileStore       $ repositoryPath conf
+         Darcs     -> darcsFileStore     $ repositoryPath conf
+         Mercurial -> mercurialFileStore $ repositoryPath conf

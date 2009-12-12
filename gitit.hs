@@ -29,7 +29,6 @@ import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
-import Data.Char (toLower)
 
 main :: IO ()
 main = do
@@ -38,7 +37,10 @@ main = do
   conf <- getConfigFromOpts
 
   -- check for external programs that are needed
-  let repoProg = map toLower $ show $ repositoryType conf
+  let repoProg = case repositoryType conf of
+                       Mercurial   -> "hg"
+                       Darcs       -> "darcs"
+                       Git         -> "git"
   let prereqs = ["grep", repoProg]
   forM_ prereqs $ \prog ->
     findExecutable prog >>= \mbFind ->

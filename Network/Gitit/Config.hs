@@ -162,9 +162,10 @@ extractConfig cp = do
       let authMethod = map toLower cfAuthenticationMethod
       let stripTrailingSlash = reverse . dropWhile (=='/') . reverse
       let repotype' = case map toLower cfRepositoryType of
-                        "git"   -> Git
-                        "darcs" -> Darcs
-                        x       -> error $ "Unknown repository type: " ++ x
+                        "git"       -> Git
+                        "darcs"     -> Darcs
+                        "mercurial" -> Mercurial
+                        x           -> error $ "Unknown repository type: " ++ x
 
       return $! Config{
           repositoryPath       = cfRepositoryPath

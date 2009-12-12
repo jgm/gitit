@@ -42,7 +42,7 @@ import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 data PageType = Markdown | RST | LaTeX | HTML
                 deriving (Read, Show, Eq)
 
-data FileStoreType = Git | Darcs deriving Show
+data FileStoreType = Git | Darcs | Mercurial deriving Show
 
 data MathMethod = MathML | JsMathScript | RawTeX
                   deriving (Read, Show, Eq)
