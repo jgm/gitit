@@ -1,13 +1,13 @@
 Gitit
 =====
 
-Gitit is a wiki program written in Haskell. It uses [Happstack][]
-for the web server and [pandoc][] for markup processing. Pages and
-uploaded files are stored in a [git][] or [darcs][] repository and may
-be modified either by using the VCS's command-line tools or through the
-wiki's web interface. By default, pandoc's extended version of markdown
-is used as a markup language, but reStructuredText, LaTeX, or HTML
-can also be used. Pages can be exported in a number of different
+Gitit is a wiki program written in Haskell. It uses [Happstack][] for
+the web server and [pandoc][] for markup processing. Pages and uploaded
+files are stored in a [git][], [darcs][], or [mercurial][] repository
+and may be modified either by using the VCS's command-line tools or
+through the wiki's web interface. By default, pandoc's extended version
+of markdown is used as a markup language, but reStructuredText, LaTeX,
+or HTML can also be used. Pages can be exported in a number of different
 formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
 Gitit can be configured to display TeX math (using [texmath][]) and
 highlighted source code (using [highlighting-kate][]).
@@ -35,6 +35,7 @@ You can see a running demo at <http://gitit.johnmacfarlane.net>.
 
 [git]: http://git.or.cz
 [darcs]: http://darcs.net
+[mercurial]: http://mercurial.selenic.com/
 [pandoc]: http://johnmacfarlane.net/pandoc
 [Happstack]: http://happstack.com
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
@@ -99,8 +100,8 @@ is compiled with highlighting support, then install gitit as above:
 Running gitit
 -------------
 
-To run gitit, you'll need [git][] in your system path. (Or
-[darcs][], if you're using darcs to store the wiki data.)
+To run gitit, you'll need `git` in your system path. (Or `darcs` or
+`hg`, if you're using darcs or mercurial to store the wiki data.)
 
 Gitit assumes that the page files (stored in the git repository) are
 encoded as UTF-8. Even page names may be UTF-8 if the file system
@@ -246,7 +247,7 @@ can ensure that others who clone your wiki repository get these files
 as well.  It will not be possible to modify these files using the web
 interface, but they will be modifiable via git.
 
-Using darcs instead of git
+Using a VCS other than git
 --------------------------
 
 By default, gitit will store wiki pages in a git repository in the
@@ -254,6 +255,10 @@ By default, gitit will store wiki pages in a git repository in the
 you need to add the following field to the configuration file:
 
     repository-type: Darcs
+
+If you'd prefer to use mercurial, add:
+
+    repository-type: Mercurial
 
 This program may be called "darcsit" instead of "gitit" when a darcs
 backend is used.
@@ -339,22 +344,26 @@ support.  To do this, unset the `plugins` Cabal flag:
 Note also that if you compile gitit for executable profiling, attempts
 to load plugins will result in "internal error: PAP object entered!"
 
-Accessing the wiki via git or darcs
-===================================
+Accessing the wiki through git
+==============================
 
-All the pages and uploaded files are stored in a git or darcs
-repository. By default, this lives in the `wikidata` directory (though
-this can be changed through configuration options). So you can interact
-with the wiki using git command line tools:
+All the pages and uploaded files are stored in a git repository. By
+default, this lives in the `wikidata` directory (though this can be
+changed through configuration options). So you can interact with the
+wiki using git command line tools:
 
     git clone ssh://my.server.edu/path/of/wiki/wikidata
     cd wikidata
     vim Front\ Page.page  # edit the page
     git commit -m "Added message about wiki etiquette" Front\ Page.page
-    git push 
+    git push
 
 If you now look at the Front Page on the wiki, you should see your changes
 reflected there.  Note that the pages all have the extension `.page`.
+
+If you are using the darcs or mercurial backend, the commands will
+be slightly different.  See the documentation for your VCS for
+details.
 
 Caching
 =======
