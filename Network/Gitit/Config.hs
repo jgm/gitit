@@ -36,7 +36,7 @@ import System.Environment
 import System.Exit
 import System.IO (stdout, stderr)
 import System.Console.GetOpt
-import Data.ConfigFile
+import Data.ConfigFile hiding (readfile)
 import Control.Monad.Error
 import System.Log.Logger ()
 import Data.List (intercalate)
@@ -100,6 +100,15 @@ compileInfo =
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
+
+-- | A version of readfile that treats the file as UTF-8.
+readfile :: MonadError CPError m
+          => ConfigParser
+          -> FilePath
+          -> IO (m ConfigParser)
+readfile cp path' = do
+  contents <- readFile path'
+  return $ readstring cp contents
 
 handleFlag :: ConfigParser -> Config -> Opt -> IO Config
 handleFlag cp conf opt = do
