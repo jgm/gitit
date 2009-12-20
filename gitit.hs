@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -23,18 +24,28 @@ import Network.Gitit.Server
 import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
 import Prelude hiding (writeFile, readFile, catch)
 import System.Directory
-import Network.Gitit.Config (getConfigFromOpts)
+import Network.Gitit.Config (getConfigFromFile)
 import Data.Maybe (isNothing)
 import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
+import System.Environment
+import System.Exit
+import System.IO (stdout, stderr)
+import System.Console.GetOpt
+import Data.Version (showVersion)
+import Prelude hiding (readFile)
+import System.IO.UTF8
+import Paths_gitit (version, getDataFileName)
 
 main :: IO ()
 main = do
 
   -- parse options to get config file
-  conf <- getConfigFromOpts
+  opts <- getArgs >>= parseArgs
+  defaultConfig <- getDefaultConfig
+  conf <- foldM handleFlag defaultConfig opts
 
   -- check for external programs that are needed
   let repoProg = case repositoryType conf of
@@ -66,8 +77,71 @@ main = do
   initializeGititState conf'
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
+
   -- start the server
-  simpleHTTP serverConf $ msum [
-      wiki conf'
-    , dir "_reloadTemplates" reloadTemplates
-    ]
+  simpleHTTP serverConf $ msum [ wiki conf'
+                               , dir "_reloadTemplates" reloadTemplates
+                               ]
+
+data Opt
+    = Help
+    | ConfigFile FilePath
+    | Port Int
+    | Debug
+    | Version
+    | PrintDefaultConfig
+    deriving (Eq)
+
+flags :: [OptDescr Opt]
+flags =
+   [ Option ['h'] ["help"] (NoArg Help)
+        "Print this help message"
+   , Option ['v'] ["version"] (NoArg Version)
+        "Print version information"
+   , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
+        "Specify port"
+   , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
+        "Print default configuration"
+   , Option [] ["debug"] (NoArg Debug)
+        "Print debugging information on each request"
+   , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
+        "Specify configuration file"
+   ]
+
+parseArgs :: [String] -> IO [Opt]
+parseArgs argv = do
+  progname <- getProgName
+  case getOpt Permute flags argv of
+    (opts,_,[])  -> return opts
+    (_,_,errs)   -> hPutStrLn stderr (concat errs ++ usageInfo (usageHeader progname) flags) >>
+                       exitWith (ExitFailure 1)
+
+usageHeader :: String -> String
+usageHeader progname = "Usage:  " ++ progname ++ " [opts...]"
+
+copyrightMessage :: String
+copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
+                   "This is free software; see the source for copying conditions.  There is no\n" ++
+                   "warranty, not even for merchantability or fitness for a particular purpose."
+
+compileInfo :: String
+compileInfo =
+#ifdef _PLUGINS
+  " +plugins"
+#else
+  " -plugins"
+#endif
+
+handleFlag :: Config -> Opt -> IO Config
+handleFlag conf opt = do
+  progname <- getProgName
+  case opt of
+    Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
+    Version            -> hPutStrLn stderr (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
+    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>=
+                          hPutStrLn stdout >> exitWith ExitSuccess
+    Debug              -> return conf{ debugMode = True }
+    Port p             -> return conf{ portNumber = p }
+    ConfigFile fname   -> getConfigFromFile fname
+
+
