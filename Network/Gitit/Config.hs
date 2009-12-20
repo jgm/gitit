@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- | Functions for parsing command line options and reading the config file.
 -}
 
-module Network.Gitit.Config ( getConfigFromOpts
-                            , readMimeTypesFile
-                            , getDefaultConfig )
+module Network.Gitit.Config ( getConfigFromFile
+                            , getDefaultConfig
+                            , readMimeTypesFile )
 where
 import Safe
 import Network.Gitit.Types
@@ -32,74 +32,26 @@ import Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers)
 import Network.Gitit.Util (parsePageType)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
-import System.Environment
-import System.Exit
-import System.IO (stdout, stderr)
-import System.Console.GetOpt
 import Data.ConfigFile hiding (readfile)
 import Control.Monad.Error
 import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
-import Data.Version (showVersion)
-import Paths_gitit (getDataFileName, version)
+import Paths_gitit (getDataFileName)
 import Prelude hiding (readFile)
 import System.IO.UTF8
 import System.FilePath ((</>))
 import Control.Monad (liftM)
 import Text.Pandoc
 
-data Opt
-    = Help
-    | ConfigFile FilePath
-    | Port Int
-    | Debug
-    | Version
-    | PrintDefaultConfig
-    deriving (Eq)
-
-flags :: [OptDescr Opt]
-flags =
-   [ Option ['h'] ["help"] (NoArg Help)
-        "Print this help message"
-   , Option ['v'] ["version"] (NoArg Version)
-        "Print version information"
-   , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
-        "Specify port"
-   , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
-        "Print default configuration"
-   , Option ['d'] ["debug"] (NoArg Debug)
-        "Print debugging information on each request"
-   , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
-        "Specify configuration file"
-   ]
-
-parseArgs :: [String] -> IO [Opt]
-parseArgs argv = do
-  progname <- getProgName
-  case getOpt Permute flags argv of
-    (opts,_,[])  -> return opts
-    (_,_,errs)   -> hPutStrLn stderr (concat errs ++ usageInfo (usageHeader progname) flags) >>
-                       exitWith (ExitFailure 1)
-
-usageHeader :: String -> String
-usageHeader progname = "Usage:  " ++ progname ++ " [opts...]"
-
-copyrightMessage :: String
-copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
-                   "This is free software; see the source for copying conditions.  There is no\n" ++
-                   "warranty, not even for merchantability or fitness for a particular purpose."
-
-compileInfo :: String
-compileInfo =
-#ifdef _PLUGINS
-  " +plugins"
-#else
-  " -plugins"
-#endif
-
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
+
+-- | Get configuration from config file.
+getConfigFromFile :: FilePath -> IO Config
+getConfigFromFile fname = do
+  cp <- getDefaultConfigParser
+  readfile cp fname >>= extractConfig . forceEither
 
 -- | A version of readfile that treats the file as UTF-8.
 readfile :: MonadError CPError m
@@ -109,18 +61,6 @@ readfile :: MonadError CPError m
 readfile cp path' = do
   contents <- readFile path'
   return $ readstring cp contents
-
-handleFlag :: ConfigParser -> Config -> Opt -> IO Config
-handleFlag cp conf opt = do
-  progname <- getProgName
-  case opt of
-    Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version            -> hPutStrLn stderr (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
-    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>=
-                          hPutStrLn stdout >> exitWith ExitSuccess
-    Debug              -> return conf{ debugMode = True }
-    Port p             -> return conf{ portNumber = p }
-    ConfigFile fname   -> readfile cp fname >>= extractConfig . forceEither
 
 extractConfig :: ConfigParser -> IO Config
 extractConfig cp = do
@@ -275,16 +215,6 @@ getDefaultConfigParser = do
 -- | Returns the default gitit configuration.
 getDefaultConfig :: IO Config
 getDefaultConfig = getDefaultConfigParser >>= extractConfig
-
--- | Parses command line options and returns configuration
--- based on the options (-f FILE specifies a configuration
--- file; some settings, such as port number, can be overridden
--- by a command line option).
-getConfigFromOpts :: IO Config
-getConfigFromOpts = do
-  cp' <- getDefaultConfigParser
-  defaultConfig <- extractConfig cp'
-  getArgs >>= parseArgs >>= foldM (handleFlag cp') defaultConfig
 
 -- | Read a file associating mime types with extensions, and return a
 -- map from extensions to types. Each line of the file consists of a
