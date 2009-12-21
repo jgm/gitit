@@ -525,8 +525,9 @@ convertTeXMathToMathML :: Inline -> State Bool Inline
 convertTeXMathToMathML (Math t x) = do
   case texMathToMathML t' x of
        Left _  -> return $ Math t x
-       Right v -> put True >> return (HtmlInline $ ppElement v)
+       Right v -> put True >> return (HtmlInline $ showXml v)
     where t' = if t == DisplayMath then DisplayBlock else DisplayInline
+          showXml = ppcElement (useShortEmptyTags (const False) defaultConfigPP)
 convertTeXMathToMathML x = return x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
