@@ -1,21 +1,26 @@
--- | Scans page of Markdown looking for http links. When it finds them, it submits them
--- to webcitation.org / https://secure.wikimedia.org/wikipedia/en/wiki/WebCite
---
--- Limitations:
--- * Only parses Markdown, not ReST or any other format; this is because 'readMarkdown'
--- is hardwired into it.
---
--- By: Gwern Branwen; placed in the public domain
+{-| Scans page of Markdown looking for http links. When it finds them, it submits them
+to webcitation.org / https://secure.wikimedia.org/wikipedia/en/wiki/WebCite
+(It will also submit them to Alexa (the source for the Internet Archive), but Alexa says that
+its bots take weeks to visit and may not ever.)
+
+Limitations:
+* Only parses Markdown, not ReST or any other format; this is because 'readMarkdown'
+is hardwired into it.
+
+By: Gwern Branwen; placed in the public domain -}
 
 module WebArchiver (plugin) where
 
-import Network.Gitit.Interface (askUser, liftIO, processWithM, uEmail, Plugin(PreCommitTransform), Inline(Link))
+import Control.Concurrent (forkIO, ThreadId)
 import Control.Monad (when)
-import Network.URI (isURI)
-import Control.Concurrent (forkIO)
-import Network.HTTP (getRequest, simpleHTTP)
-import Text.Pandoc (defaultParserState, readMarkdown)
 import Control.Monad.Trans (MonadIO)
+import Data.Maybe (fromJust)
+import Network.Browser (browse, formToRequest, request, Form(..))
+import Network.HTTP (getRequest, rspBody, simpleHTTP, RequestMethod(POST))
+import Network.URI (isURI, parseURI, uriPath)
+
+import Network.Gitit.Interface (askUser, liftIO, processWithM, uEmail, Plugin(PreCommitTransform), Inline(Link))
+import Text.Pandoc (defaultParserState, readMarkdown)
 
 plugin :: Plugin
 plugin = PreCommitTransform archivePage
@@ -32,12 +37,20 @@ archivePage x = do mbUser <- askUser
 
 archiveLinks :: String -> Inline -> IO Inline
 archiveLinks e x@(Link _ (uln, _)) = checkArchive e uln >> return x
-archiveLinks _ x = return x
+archiveLinks _ x                   = return x
 
--- | Error check the URL.
+-- | Error check the URL and then archive it both ways
 checkArchive :: (MonadIO m) => String -> String -> m ()
-checkArchive e u = when (isURI u) (liftIO $ archiveURL e u)
+checkArchive email url = when (isURI url) $ liftIO (webciteArchive email url >> alexaArchive url)
 
-archiveURL :: String -> String -> IO ()
-archiveURL eml url = forkIO (openURL ("http://www.webcitation.org/archive?url=" ++ url ++ "&email=" ++ eml) >> return ()) >> return ()
+webciteArchive :: String -> String -> IO ThreadId
+webciteArchive email url = forkIO (ignore $ openURL ("http://www.webcitation.org/archive?url=" ++ url ++ "&email=" ++ email))
    where openURL = simpleHTTP . getRequest
+         ignore = fmap $ const ()
+
+alexaArchive :: String -> IO ()
+alexaArchive url = do let archiveform = Form POST (fromJust $ parseURI "http://www.alexa.com/help/crawlrequest")
+                                                                             [("url", url), ("submit", "")]
+                      (uri, resp) <- browse $ request $ formToRequest archiveform
+                      when (uriPath uri /= "/help/crawlthanks") $
+                           error $ "Request failed! Did Alexa change webpages? Response:" ++ rspBody resp
