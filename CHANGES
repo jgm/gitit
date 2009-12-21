@@ -1,3 +1,55 @@
+Version 0.7 released 20 Dec 2009
+
+* Updated cabal file to allow happstack 0.4.
+
+* Added support for the new mercurial filestore backend.
+  (Depending on filestore >= 0.3.4.)
+
+* Depend on xml >= 1.3.5.  This fixes a bug in the display of
+  mathml.  Previously the self-closed tags in matrices with empty
+  cells confused browsers and caused them to construct the
+  DOM incorrectly. The problem is fixed by using xml's new
+  ppcElement function to render the MathML without self-closed tags.
+
+* Depend on pandoc >= 1.3.
+
+* Properly handle UTF-8 in config files.
+
+* Moved option parsing code from Config module to main program.
+  The Config module now exports getConfigFromFile instead of
+  getConfigFromOpts. This should be more useful for those using gitit as
+  a library.
+
+* Use wikiTitle config field in default HTML title.
+
+* Improved search results:
+  + Highlight search terms in search results.
+    Partially resolves Issue #76.
+  + Made search results message uniform when no results.
+  + Search: don't match page name against empty patterns.
+  + Allow search matches on subdirectory part of page name.
+  + Search:  catch error status from filestore search.
+    Filestore <= 0.3.3 does not properly handle the error status
+    returned by later versions of 'git grep' when no match is found.
+    The problem has been fixed in darcs filestore.
+
+* CSS tweaks:
+  + Removed base-min.css, folded necessary styles into screen.css.
+  + Removed 'text-align: left' for th from CSS reset.
+
+* Feed improvements:
+  + Modified feed handling so that feeds validate.
+  + Perform proper escaping in Feed.hs (thanks to gwern).
+  + Don't reveal author email in feeds.
+  + Sitewide feed is /_feed/ (with trailing slash).
+  + Add "http://" to base-url config option if needed.
+
+* Use + for spaces in URLs linking to wiki pages and folders.
+
+* Updated plugins:
+  + Updated Interwiki plugin (gwern).
+  + Modified WebArchiver plugin to make Alexa requests (gwern).
+
 Version 0.6.6 released 06 Nov 2009
 
 * Require filestore >= 0.3.3, which closes a security
