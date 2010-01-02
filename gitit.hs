@@ -38,8 +38,9 @@ import Data.Version (showVersion)
 -- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
 -- So we use System.IO.UTF8 only if we have an earlier version
 #if MIN_VERSION_base(4,2,0)
+import Prelude (writeFile, readFile)
+import System.IO (hPutStrLn)
 #else
-import Prelude hiding (readFile)
 import System.IO.UTF8
 #endif
 import Paths_gitit (version, getDataFileName)
