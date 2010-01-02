@@ -99,7 +99,11 @@ Library
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
   build-depends:     base >= 3, pandoc >= 1.4, filepath, safe
-  ghc-options:       -Wall
+  extensions:        CPP
+  if impl(ghc >= 6.12)
+    ghc-options:     -Wall -fno-warn-unused-do-bind
+  else
+    ghc-options:     -Wall
   ghc-prof-options:  -auto-all -caf-all
 
 Executable           gitit
@@ -119,7 +123,11 @@ Executable           gitit
   if flag(plugins)
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  ghc-options:       -Wall -threaded
+  extensions:        CPP
+  if impl(ghc >= 6.12)
+    ghc-options:     -Wall -threaded -fno-warn-unused-do-bind
+  else
+    ghc-options:     -Wall -threaded
   ghc-prof-options:  -auto-all -caf-all
 
 Executable           expireGititCache
