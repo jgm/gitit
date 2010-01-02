@@ -3,8 +3,8 @@ version:             0.7.1
 Cabal-version:       >= 1.2
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
-description:         Gitit is a wiki backed by a git or darcs filestore.
-                     Pages and uploaded files can be modified either
+description:         Gitit is a wiki backed by a git, darcs, or mercurial
+                     filestore.  Pages and uploaded files can be modified either
                      directly via the VCS's command-line tools or through
                      the wiki's web interface. Pandoc is used for markup
                      processing, so pages may be written in
