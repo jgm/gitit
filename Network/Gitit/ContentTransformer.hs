@@ -80,7 +80,7 @@ import Network.Gitit.Cache (lookupCache, cacheContents)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc
-import Text.Pandoc.Shared (HTMLMathMethod(..), ObfuscationMethod(..))
+import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.Highlighting.Kate
 import Data.Maybe (isNothing)

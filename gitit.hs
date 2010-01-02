@@ -21,10 +21,8 @@ module Main where
 
 import Network.Gitit
 import Network.Gitit.Server
-import Network.Gitit.Initialize (createStaticIfMissing, createRepoIfMissing)
-import Prelude hiding (writeFile, readFile, catch)
+import Prelude hiding (readFile, catch)
 import System.Directory
-import Network.Gitit.Config (getConfigFromFile)
 import Data.Maybe (isNothing)
 import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
@@ -38,7 +36,7 @@ import Data.Version (showVersion)
 -- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
 -- So we use System.IO.UTF8 only if we have an earlier version
 #if MIN_VERSION_base(4,2,0)
-import Prelude (writeFile, readFile)
+import Prelude (readFile)
 import System.IO (hPutStrLn)
 #else
 import System.IO.UTF8

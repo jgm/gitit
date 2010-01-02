@@ -46,7 +46,6 @@ import Prelude hiding (readFile)
 import System.IO.UTF8
 #endif
 import System.FilePath ((</>))
-import Control.Monad (liftM)
 import Text.Pandoc
 
 forceEither :: Show e => Either e a -> a
