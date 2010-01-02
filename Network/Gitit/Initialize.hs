@@ -34,8 +34,13 @@ import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
 import Control.Monad (unless, forM_, liftM)
+-- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
+-- So we use System.IO.UTF8 only if we have an earlier version
+#if MIN_VERSION_base(4,2,0)
+#else
 import Prelude hiding (readFile)
 import System.IO.UTF8
+#endif
 import Text.Pandoc
 import Text.Pandoc.Shared (HTMLMathMethod(..))
 import System.Log.Logger (logM, Priority(..))

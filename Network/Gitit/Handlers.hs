@@ -68,11 +68,17 @@ import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (extractCategories)
 import Control.Exception (throwIO, catch, try)
-import Prelude hiding (writeFile, readFile, catch)
 import Data.ByteString.UTF8 (toString)
 import System.Time
 import System.FilePath
-import System.IO.UTF8 (readFile)
+import Prelude hiding (readFile, writeFile, catch)
+-- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
+-- So we use System.IO.UTF8 only if we have an earlier version
+#if MIN_VERSION_base(4,2,0)
+import Prelude (readFile, writeFile)
+#else
+import System.IO.UTF8
+#endif
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )

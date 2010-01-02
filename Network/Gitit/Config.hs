@@ -38,8 +38,13 @@ import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
+-- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
+-- So we use System.IO.UTF8 only if we have an earlier version
+#if MIN_VERSION_base(4,2,0)
+#else
 import Prelude hiding (readFile)
 import System.IO.UTF8
+#endif
 import System.FilePath ((</>))
 import Control.Monad (liftM)
 import Text.Pandoc
