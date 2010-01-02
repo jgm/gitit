@@ -1,3 +1,10 @@
+Version 0.7.1 released 02 Jan 2010
+
+* Updated exports to work with pandoc 1.4.
+
+* Began updating to work with GHC 6.12. (Still untested; there may
+  be further issues involving filestore.)
+
 Version 0.7 released 20 Dec 2009
 
 * Updated cabal file to allow happstack 0.4.
