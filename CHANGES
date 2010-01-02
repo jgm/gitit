@@ -1,3 +1,7 @@
+Version 0.7.2 released 02 Jan 2010
+
+* Now compiles with GHC 6.12.
+
 Version 0.7.1 released 02 Jan 2010
 
 * Updated exports to work with pandoc 1.4.
