@@ -38,7 +38,6 @@ import Happstack.Server
 import Happstack.Server.Parts (compressedResponseFilter)
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import Control.Monad.Reader
-import Data.Maybe
 import Data.ByteString.UTF8 as U
 
 withExpiresHeaders :: ServerMonad m => m Response -> m Response

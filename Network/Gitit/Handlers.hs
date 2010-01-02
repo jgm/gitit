@@ -54,12 +54,10 @@ module Network.Gitit.Handlers (
                       )
 where
 import Safe
-import Data.FileStore
 import Data.FileStore.Utils (isInsideDir)
 import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.Layout
-import Network.Gitit.State
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
@@ -71,11 +69,11 @@ import Control.Exception (throwIO, catch, try)
 import Data.ByteString.UTF8 (toString)
 import System.Time
 import System.FilePath
-import Prelude hiding (readFile, writeFile, catch)
+import Prelude hiding (readFile, catch)
 -- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
 -- So we use System.IO.UTF8 only if we have an earlier version
 #if MIN_VERSION_base(4,2,0)
-import Prelude (readFile, writeFile)
+import Prelude (readFile)
 #else
 import System.IO.UTF8
 #endif

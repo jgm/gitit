@@ -42,7 +42,6 @@ import Prelude hiding (readFile)
 import System.IO.UTF8
 #endif
 import Text.Pandoc
-import Text.Pandoc.Shared (HTMLMathMethod(..))
 import System.Log.Logger (logM, Priority(..))
 import qualified Text.StringTemplate as T
 

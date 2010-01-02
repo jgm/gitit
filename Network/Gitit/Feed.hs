@@ -25,7 +25,6 @@ module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 import Control.Monad
 import Data.DateTime
 import Data.List (intercalate, sortBy)
-import Data.Maybe
 import Data.Ord (comparing)
 import Network.URI (isAllowedInURI, escapeURIString)
 import System.FilePath
