@@ -88,7 +88,7 @@ import Codec.Binary.UTF8.String (encodeString)
 import System.FilePath
 import Control.Monad.State
 import Control.Exception (throwIO, catch)
-import Network.URI (isAllowedInURI, escapeURIString)
+import Network.URI (isUnescapedInURI, escapeURIString)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import Text.XML.Light
@@ -532,7 +532,7 @@ convertTeXMathToMathML x = return x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
-inlinesToURL = escapeURIString isAllowedInURI  . encodeString . inlinesToString
+inlinesToURL = escapeURIString isUnescapedInURI  . encodeString . inlinesToString
 
 -- | Convert a list of inlines into a string.
 inlinesToString :: [Inline] -> String

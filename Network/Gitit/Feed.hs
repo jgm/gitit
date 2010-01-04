@@ -26,7 +26,7 @@ import Control.Monad
 import Data.DateTime
 import Data.List (intercalate, sortBy)
 import Data.Ord (comparing)
-import Network.URI (isAllowedInURI, escapeURIString)
+import Network.URI (isUnescapedInURI, escapeURIString)
 import System.FilePath
 
 import Data.FileStore.Types
@@ -151,7 +151,7 @@ revToEntry cfg path' Revision{
                         else f
 
 escape :: String -> String
-escape = escapeURIString isAllowedInURI
+escape = escapeURIString isUnescapedInURI
 
 formatFeedTime :: DateTime -> String
 formatFeedTime = formatDateTime "%Y-%m%--%dT%TZ"  -- Why the double hyphen between %m and %d? It works.
