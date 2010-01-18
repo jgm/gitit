@@ -99,7 +99,7 @@ defaultRenderPage templ layout htmlContents = do
                    T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  ok $ setContentType "text/html" $ toResponse filledTemp
+  ok $ setContentType "text/html; charset=utf-8" $ toResponse filledTemp
 
 exportBox :: String -> String -> Maybe String -> Html
 exportBox base' page rev | not (isSourceCode page) =
