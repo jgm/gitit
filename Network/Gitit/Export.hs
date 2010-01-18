@@ -51,7 +51,7 @@ respond mimetype ext fn page = ok . setContentType mimetype .
 respondX :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
          -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
-  template' <- liftIO $ getDefaultTemplate templ
+  template' <- liftIO $ getDefaultTemplate Nothing templ
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -79,7 +79,7 @@ respondMan = respondX "man" "text/plain; charset=utf-8" ""
 
 respondS5 :: String -> Pandoc -> Handler
 respondS5 pg doc = do
-  inc <- liftIO $ s5HeaderIncludes
+  inc <- liftIO $ s5HeaderIncludes Nothing
   respondX "s5" "text/html; charset=utf-8" ""
     writeS5String
     defaultRespOptions{writerS5 = True, writerIncremental = True,
@@ -100,7 +100,7 @@ respondMediaWiki = respondX "mediawiki" "text/plain; charset=utf-8" ""
 
 respondODT :: String -> Pandoc -> Handler
 respondODT page doc = do
-  template' <- liftIO $ getDefaultTemplate "odt"
+  template' <- liftIO $ getDefaultTemplate Nothing "odt"
   template <-  case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -110,7 +110,7 @@ respondODT page doc = do
   conf <- getConfig
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-                saveOpenDocumentAsODT tempfile (repositoryPath conf) Nothing openDoc
+                saveOpenDocumentAsODT Nothing tempfile (repositoryPath conf) Nothing openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
