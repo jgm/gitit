@@ -21,6 +21,7 @@ module Network.Gitit.Initialize ( initializeGititState
                                 , compilePageTemplate
                                 , createStaticIfMissing
                                 , createRepoIfMissing
+                                , createDefaultPages
                                 , createTemplateIfMissing )
 where
 import System.FilePath ((</>), (<.>))
@@ -116,23 +117,28 @@ createRepoIfMissing conf = do
            return False
          Left RepositoryExists -> return True
          Left e                -> throwIO e >> return False
-  let pt = defaultPageType conf
-  let toPandoc = readMarkdown
-                 defaultParserState{ stateSanitizeHTML = True
-                                   , stateSmart = True }
-  let defOpts = defaultWriterOptions{
-                        writerStandalone = False
-                      , writerHTMLMathMethod = JsMath
-                               (Just "/js/jsMath/easy/load.js")
-                      , writerLiterateHaskell = showLHSBirdTracks conf
-                      }
-  -- note: we convert this (markdown) to the default page format
-  let converter = case defaultPageType conf of
-                     Markdown -> id
-                     LaTeX    -> writeLaTeX defOpts . toPandoc
-                     HTML     -> writeHtmlString defOpts . toPandoc
-                     RST      -> writeRST defOpts . toPandoc
-  unless repoExists $ do
+  unless repoExists $ createDefaultPages conf
+
+createDefaultPages :: Config -> IO ()
+createDefaultPages conf = do
+    let fs = filestoreFromConfig conf
+        pt = defaultPageType conf
+        toPandoc = readMarkdown
+                   defaultParserState{ stateSanitizeHTML = True
+                                     , stateSmart = True }
+        defOpts = defaultWriterOptions{
+                          writerStandalone = False
+                        , writerHTMLMathMethod = JsMath
+                                 (Just "/js/jsMath/easy/load.js")
+                        , writerLiterateHaskell = showLHSBirdTracks conf
+                        }
+        -- note: we convert this (markdown) to the default page format
+        converter = case defaultPageType conf of
+                       Markdown -> id
+                       LaTeX    -> writeLaTeX defOpts . toPandoc
+                       HTML     -> writeHtmlString defOpts . toPandoc
+                       RST      -> writeRST defOpts . toPandoc
+
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
     welcomecontents <- liftM converter $ readFile welcomepath
     helppath <- getDataFileName $ "data" </> "Help" <.> "page"
@@ -143,12 +149,18 @@ createRepoIfMissing conf = do
     usersguidepath <- getDataFileName "README.markdown"
     usersguidecontents <- liftM converter $ readFile usersguidepath
     -- add front page, help page, and user's guide
-    create fs (frontPage conf <.> "page") (Author "Gitit" "") "Default front page" welcomecontents
-    logM "gitit" WARNING $ "Added " ++ (frontPage conf <.> "page") ++ " to repository"
-    create fs "Help.page" (Author "Gitit" "") "Default help page" helpcontents
-    logM "gitit" WARNING $ "Added " ++ "Help.page" ++ " to repository"
-    create fs "Gitit User's Guide.page" (Author "Gitit" "") "User's guide (README)" usersguidecontents
-    logM "gitit" WARNING $ "Added " ++ "Gitit User's Guide.page" ++ " to repository"
+    let auth = Author "Gitit" ""
+    createIfMissing fs (frontPage conf <.> "page") auth "Default front page" welcomecontents
+    createIfMissing fs "Help.page" auth "Default help page" helpcontents
+    createIfMissing fs "Gitit User's Guide.page" auth "User's guide (README)" usersguidecontents
+
+createIfMissing :: FileStore -> FilePath -> Author -> Description -> String -> IO ()
+createIfMissing fs p a comm cont = do
+  res <- try $ create fs p a comm cont
+  case res of
+       Right _ -> logM "gitit" WARNING ("Added " ++ p ++ " to repository")
+       Left ResourceExists -> return ()
+       Left e              -> throwIO e >> return ()
 
 -- | Create static directory unless it exists.
 createStaticIfMissing :: Config -> IO ()
