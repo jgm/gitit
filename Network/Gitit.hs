@@ -98,10 +98,13 @@ module Network.Gitit (
                      , module Network.Gitit.Types
                      -- * Tools for building handlers
                      , module Network.Gitit.Framework
+                     , module Network.Gitit.Layout
                      , module Network.Gitit.ContentTransformer
                      , getFileStore
                      , getUser
                      , getConfig
+                     , queryGititState
+                     , updateGititState
                      )
 where
 import Network.Gitit.Types
@@ -110,7 +113,9 @@ import Network.Gitit.Framework
 import Network.Gitit.Handlers
 import Network.Gitit.Initialize
 import Network.Gitit.Config
-import Network.Gitit.State (getFileStore, getUser, getConfig)
+import Network.Gitit.Layout
+import Network.Gitit.State
+        (getFileStore, getUser, getConfig, queryGititState, updateGititState)
 import Network.Gitit.ContentTransformer
 import Network.Gitit.Authentication (loginUserForm)
 import Paths_gitit (getDataFileName)
