@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Layout ( defaultPageLayout
                             , defaultRenderPage
                             , formattedPage
+                            , filledPageTemplate
                             )
 where
 import Network.Gitit.Server
@@ -63,23 +64,29 @@ formattedPage layout htmlContents = do
 defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
   cfg <- getConfig
-  let rev  = pgRevision layout
-  let page = pgPageName layout
   base' <- getWikiBase
-  let scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
-  let scriptLink x = script ! [src (base' ++ "/js/" ++ x),
+  ok . setContentType "text/html; charset=utf-8" . toResponse . T.render .
+       filledPageTemplate base' cfg layout htmlContents $ templ
+
+-- | Returns a page template with gitit variables filled in.
+filledPageTemplate :: String -> Config -> PageLayout -> Html ->
+                      T.StringTemplate String -> T.StringTemplate String 
+filledPageTemplate base' cfg layout htmlContents templ = 
+  let rev  = pgRevision layout
+      page = pgPageName layout
+      scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
+      scriptLink x = script ! [src (base' ++ "/js/" ++ x),
         thetype "text/javascript"] << noHtml
-  let javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
-  let tabli tab = if tab == pgSelectedTab layout
+      javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
+      tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
-  let tabs' = [x | x <- pgTabs layout,
+      tabs' = [x | x <- pgTabs layout,
                 not (x == EditTab && page `elem` noEdit cfg)]
-  let tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) tabs'
-  let setStrAttr  attr = T.setAttribute attr . stringToHtmlString
-  let setBoolAttr attr test = if test then T.setAttribute attr "true" else id
-  let filledTemp = T.render .
-                   T.setAttribute "base" base' .
+      tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) tabs'
+      setStrAttr  attr = T.setAttribute attr . stringToHtmlString
+      setBoolAttr attr test = if test then T.setAttribute attr "true" else id
+  in               T.setAttribute "base" base' .
                    T.setAttribute "feed" (pgLinkToFeed layout) .
                    setStrAttr "wikititle" (wikiTitle cfg) .
                    setStrAttr "pagetitle" (pgTitle layout) .
@@ -99,7 +106,8 @@ defaultRenderPage templ layout htmlContents = do
                    T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) $
                    templ
-  ok $ setContentType "text/html; charset=utf-8" $ toResponse filledTemp
+
+
 
 exportBox :: String -> String -> Maybe String -> Html
 exportBox base' page rev | not (isSourceCode page) =
