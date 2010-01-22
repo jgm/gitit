@@ -217,11 +217,15 @@ Configuring and customizing gitit
 Configuration options
 ---------------------
 
-You can set some configuration options when starting gitit, using the
-option `-f [filename]`. To get a copy of the default configuration file,
-which you can customize, just type:
+Use the option `-f [filename]` to specify a configuration file:
 
-    gitit --print-default-config > default.conf
+    gitit -f my.conf
+
+If this option is not used, gitit will use a default configuration.
+To get a copy of the default configuration file, which you
+can customize, just type:
+
+    gitit --print-default-config > my.conf
 
 The default configuration file is documented with comments throughout.
 
