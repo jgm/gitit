@@ -24,6 +24,7 @@ module Network.Gitit.Layout ( defaultPageLayout
                             , defaultRenderPage
                             , formattedPage
                             , filledPageTemplate
+                            , uploadsAllowed
                             )
 where
 import Network.Gitit.Server
@@ -104,7 +105,8 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
-                   T.setAttribute "content" (renderHtmlFragment htmlContents) $
+                   T.setAttribute "content" (renderHtmlFragment htmlContents) . 
+                   setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
                    templ
 
 
@@ -153,3 +155,5 @@ linkForTab tabli base' page rev EditTab =
                                          then "edit"
                                          else "revert"
 
+uploadsAllowed :: Config -> Bool
+uploadsAllowed = (0 <) . maxUploadSize

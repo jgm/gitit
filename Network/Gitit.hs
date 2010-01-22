@@ -165,8 +165,9 @@ wikiHandlers =
   , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
-  , dir "_upload"   $ methodOnly GET  >> requireUser uploadForm 
-  , dir "_upload"   $ methodOnly POST >> requireUser uploadFile
+  , dir "_upload"   $  do guard =<< return . uploadsAllowed =<< getConfig
+                          msum [ methodOnly GET  >> requireUser uploadForm 
+                                 , methodOnly POST >> requireUser uploadFile ]
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_feed"     feedHandler
