@@ -355,9 +355,10 @@ highlightSource (Just source) = do
   let lang' = case languagesByExtension $ takeExtension file of
                []    -> error "highlightSource, no lang'"
                (l:_) -> l
+  let formatOpts = [OptNumberLines, OptLineAnchors]
   case highlightAs lang' (filter (/='\r') source) of
        Left _       -> mzero
-       Right res    -> return $ formatAsXHtml [OptNumberLines] lang' $! res
+       Right res    -> return $ formatAsXHtml formatOpts lang' $! res
 
 --
 -- Plugin combinators
