@@ -770,16 +770,17 @@ feedHandler = do
   path' <- getPath     -- e.g. "foo/bar" if they hit /_feed/foo/bar
   let file = (path' `orIfNull` "_site") <.> "feed"
   let mbPath = if null path' then Nothing else Just path'
-  fs <- getFileStore
   -- first, check for a cached version that is recent enough
   now <- liftIO $ getClockTime
-  let isRecentEnough t = diffClockTimes now t > noTimeDiff{tdMin = fromIntegral $ feedRefreshTime cfg}
+  let isRecentEnough t = normalizeTimeDiff (diffClockTimes now t) <
+                         normalizeTimeDiff (noTimeDiff{tdMin = fromIntegral $ feedRefreshTime cfg})
   mbCached <- lookupCache file
   case mbCached of
        Just (modtime, contents) | isRecentEnough modtime -> do
             let emptyResponse = setContentType "application/atom+xml; charset=utf-8" . toResponse $ ()
             ok $ emptyResponse{rsBody = B.fromChunks [contents]}
        _ -> do
+            fs <- getFileStore
             resp <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
             cacheContents file $ S.concat $ B.toChunks $ rsBody resp
             ok . setContentType "application/atom+xml; charset=UTF-8" $ resp
