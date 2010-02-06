@@ -99,7 +99,7 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.4.1, filepath, safe
+  build-depends:     base >= 3, pandoc >= 1.5, filepath, safe
   extensions:        CPP
   if impl(ghc >= 6.12)
     ghc-options:     -Wall -fno-warn-unused-do-bind
@@ -111,7 +111,7 @@ Executable           gitit
   hs-source-dirs:    .
   main-is:           gitit.hs
   build-depends:     base >=3 && < 5, parsec < 3, pretty, xhtml, containers,
-                     pandoc >= 1.2, process, filepath, directory, mtl, cgi,
+                     pandoc >= 1.5, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate >= 0.2.6, bytestring,
                      utf8-string >= 0.3 && < 0.4,
                      SHA > 1 && < 1.5, HTTP >= 4000.0 && < 4000.1,
