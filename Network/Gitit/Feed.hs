@@ -17,142 +17,105 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
-{- Functions for creating atom feeds for gitit wikis and pages.
--}
+-- | Functions for creating Atom feeds for Gitit wikis and pages.
 
 module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
-import Control.Monad
-import Data.DateTime
-import Data.List (intercalate, sortBy)
+import Data.DateTime (addMinutes, formatDateTime, getCurrentTime)
+import Data.Foldable as F (concatMap)
+import Data.List (intercalate, sortBy, nub)
+import Data.Maybe (fromMaybe)
 import Data.Ord (comparing)
 import Network.URI (isUnescapedInURI, escapeURIString)
-import System.FilePath
-
-import Data.FileStore.Types
-
-import Text.Atom.Feed
-import Text.Atom.Feed.Export
-import Text.XML.Light
+import System.FilePath (dropExtension, takeExtension, (<.>))
+import Data.FileStore.Types (history, Author(authorName), Change(..),
+         DateTime, FileStore, Revision(..), TimeRange(..))
+import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
+         Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
+         Person(personName), TextContent(TextString))
+import Text.Atom.Feed.Export (xmlFeed)
+import Text.XML.Light (ppTopElement)
+import Data.Version (showVersion)
+import Paths_gitit (version)
 
 data FeedConfig = FeedConfig {
     fcTitle    :: String
   , fcBaseUrl  :: String
   , fcFeedDays :: Integer
-  } deriving (Show, Read)
+ } deriving (Show, Read)
 
-filestoreToXmlFeed :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO String
-filestoreToXmlFeed cfg f mbPath = filestoreToFeed cfg f mbPath >>= return . ppTopElement . xmlFeed
+filestoreToXmlFeed :: FeedConfig -> FileStore -> Maybe FilePath -> IO String
+filestoreToXmlFeed cfg f = fmap xmlFeedToString . generateFeed cfg f
 
-filestoreToFeed :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO Feed
-filestoreToFeed cfg a mbPath = do
-  let path' = maybe "" id mbPath
-  when (null $ fcBaseUrl cfg) $ error "base-url in the config file is null."
-  rs <- changeLog cfg a mbPath
-{-  let rsShifted = if null rs
-                     then []
-                     else head rs : init rs   -- so we can get revids for diffs
--}
-  let rsShifted = case rs of
-                     [] -> []
-                     (x:_) -> x : init rs   -- so we can get revids for diffs
-  now <- liftM formatFeedTime getCurrentTime
-  return $ Feed { feedId = fcBaseUrl cfg ++ "/" ++ escape path'
-                , feedTitle = TextString $ fcTitle cfg
-                , feedUpdated = now
-                , feedAuthors = []
-                , feedCategories = []
-                , feedContributors = []
-                , feedGenerator = Just Generator{ genURI = Just "http://github.com/jgm/gitit"
-                                                , genVersion = Nothing
-                                                , genText = "gitit" }
-                , feedIcon = Nothing
-                , feedLinks = [ (nullLink (fcBaseUrl cfg ++ "/_feed/" ++ escape path')) {linkRel = Just (Left "self")} ]
-                , feedLogo = Nothing
-                , feedRights = Nothing
-                , feedSubtitle = Nothing
-                , feedAttrs = []
-                , feedOther = []  
-                , feedEntries = reverse $ zipWith (revToEntry cfg path') rs rsShifted }
+xmlFeedToString :: Feed -> String
+xmlFeedToString = ppTopElement . xmlFeed
+
+generateFeed :: FeedConfig -> FileStore -> Maybe FilePath -> IO Feed
+generateFeed cfg fs mbPath = do
+  now <- getCurrentTime
+  revs <- changeLog (fcFeedDays cfg) fs mbPath now
+  let home = fcBaseUrl cfg ++ "/"
+  -- TODO: 'nub . sort' `persons` - but no Eq or Ord instances!
+      persons = map authorToPerson $ nub $ sortBy (comparing authorName) $ map revAuthor revs
+      basefeed = generateEmptyfeed (fcTitle cfg) home mbPath persons (formatFeedTime now)
+      revisions = map (revisionToEntry home) revs
+  return basefeed {feedEntries = revisions}
 
 -- | Get the last N days history.
-changeLog :: FeedConfig -> FileStore -> (Maybe FilePath) -> IO [Revision]
-changeLog cfg a mbPath = do
-  let files = maybe [] (\f -> [f, f <.> "page"]) mbPath
-  now <- getCurrentTime
-  let startTime = addMinutes (-60 * 24 * fcFeedDays cfg) now
-  rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now}
+changeLog :: Integer -> FileStore -> Maybe FilePath ->DateTime -> IO [Revision]
+changeLog days a mbPath now' = do
+  let files = F.concatMap (\f -> [f, f <.> "page"]) mbPath
+  let startTime = addMinutes (-60 * 24 * days) now'
+  rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
   return $ sortBy (comparing revDateTime) rs
- 
-revToEntry :: FeedConfig -> String -> Revision -> Revision -> Entry
-revToEntry cfg path' Revision{
-                     revId = rid,
-                     revDateTime = rdt,
-                     revAuthor = ra,
-                     revDescription = rd,
-                     revChanges = rv } prevRevision =
+
+generateEmptyfeed :: String ->String ->Maybe String -> [Person] -> Date -> Feed
+generateEmptyfeed title home mbPath authors now =
+  baseNull {feedAuthors = authors,
+            feedGenerator = Just gititGenerator,
+            feedLinks = [ (nullLink $ home ++ "_feed/" ++ escape (fromMaybe "" mbPath))
+                           {linkRel = Just (Left "self")}]
+            }
+    where baseNull = nullFeed home (TextString title) now
+          gititGenerator :: Generator
+          gititGenerator = Generator {genURI = Just "http://github.com/jgm/gitit"
+                                     , genVersion = Just (showVersion version)
+                                     , genText = "gitit"}
+
+revisionToEntry :: String -> Revision -> Entry
+revisionToEntry home Revision{ revId = rid, revDateTime = rdt,
+                               revAuthor = ra, revDescription = rd,
+                               revChanges = rv} =
   baseEntry{ entrySummary = Just $ TextString rd
-           , entryAuthors = [Person { personName = authorName ra
-                                    , personURI = Nothing 
-                                    , personEmail = Nothing
-                                      -- gitit is set up not to reveal registration emails. To change this:
-                                      -- let e = authorEmail ra in if e /= "" then Just e else Nothing
-                                    , personOther = [] }]
-           , entryLinks = [diffLink]
+           , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
+   where baseEntry = nullEntry url (TextString (intercalate ", " $ map show rv))
+                        (formatFeedTime rdt)
+         url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
+         ln = (nullLink url) {linkRel = Just (Left "alternate")}
 
-           -- Comments omitted; needs to be done by Gitit
-           -- only Gitit knows the Url of the Talk: page. See
-           -- http://www.rssboard.org/rss-2-0-1-rv-6#ltcommentsgtSubelementOfLtitemgt
+-- gitit is set up not to reveal registration emails
+authorToPerson :: Author -> Person
+authorToPerson ra = nullPerson {personName = authorName ra}
 
-           -- FIXME: True field seems to tell Guid that it's a 'long-term'/'permanent'
-           -- GUID. This may not be correct. See
-           -- https://secure.wikimedia.org/wikipedia/en/wiki/Globally_Unique_Identifier
-           -- entryId = rid,
-
-           -- Source is not entirely relevant, and is only handleable by web software,
-           -- not by a filestore-level function. See
-           -- http://www.rssboard.org/rss-2-0-1-rv-6#ltsourcegtSubelementOfLtitemgt
-
-           -- The following are omitted:
-           -- Category is omitted, see
-           -- http://www.rssboard.org/rss-2-0-1-rv-6#syndic8
-           -- Enclosure seems to be for conveying media, see
-           -- https://secure.wikimedia.org/wikipedia/en/wiki/RSS_enclosure
-        }
-    where diffLink = Link{ linkHref = fcBaseUrl cfg ++ "/_diff/" ++ escape firstpath ++ "?to=" ++ rid ++ fromrev
-                         , linkRel = Just (Left "alternate")
-                         , linkType = Nothing
-                         , linkHrefLang = Nothing
-                         , linkTitle = Nothing
-                         , linkLength = Nothing
-                         , linkAttrs = []
-                         , linkOther = [] } 
-          (firstpath, fromrev) =
-                      if null path'
-                         {- then case head rv of
-                                   Modified f -> (dePage f, "&from=" ++ revId prevRevision)
-                                   Added f    -> (dePage f, "")
-                                   Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
-                         else (path',"") -}
-                         then case rv of
-                                [] -> error "revToEntry, null rv"
-                                (rev:_) -> case rev of 
-                                   Modified f -> (dePage f, "&from=" ++ revId prevRevision)                                
-                                   Added f    -> (dePage f, "")
-                                   Deleted f  -> (dePage f, "&from=" ++ revId prevRevision)
-                         else (path',"")
-          baseEntry = nullEntry (fcBaseUrl cfg ++ "/" ++ escape path' ++ "?revision=" ++ rid)
-                        (TextString (intercalate ", " $ map showRev rv)) (formatFeedTime rdt)
-          showRev (Modified f) = dePage f
-          showRev (Added f)    = "added " ++ dePage f
-          showRev (Deleted f)  = "deleted " ++ dePage f
-          dePage f = if takeExtension f == ".page"
-                        then dropExtension f
-                        else f
-
+-- TODO: replace with Network.URI version of shortcut if it ever is added
 escape :: String -> String
 escape = escapeURIString isUnescapedInURI
 
 formatFeedTime :: DateTime -> String
-formatFeedTime = formatDateTime "%Y-%m%--%dT%TZ"  -- Why the double hyphen between %m and %d? It works.
-                                                  -- A single hyphen seems to disappear - I don't know why!
+formatFeedTime = formatDateTime "%FT%TZ"
+
+-- TODO: this boilerplate can be removed by changing Data.FileStore.Types to say
+-- data Change = Modified {extract :: FilePath} | Deleted {extract :: FilePath} | Added
+--                   {extract :: FilePath}
+-- so then it would be just 'escape (extract $ head rv)' without the 4 line definition
+extract :: Change -> FilePath
+extract x = dePage $ case x of {Modified n -> n; Deleted n -> n; Added n -> n}
+          where dePage f = if takeExtension f == ".page" then dropExtension f else f
+
+-- TODO: figure out how to create diff links in a non-broken manner
+{-
+diff :: String -> String -> Revision -> Link
+diff home path' Revision{revId = rid} =
+                        let n = nullLink (home ++ "_diff/" ++ escape path' ++ "?to=" ++ rid) -- ++ fromrev)
+                        in n {linkRel = Just (Left "alternate")}
+-}
