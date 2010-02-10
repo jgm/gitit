@@ -36,10 +36,11 @@ import Unsafe.Coerce
 loadPlugin :: FilePath -> IO Plugin
 loadPlugin pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
-  defaultCleanupHandler defaultDynFlags $
-    runGhc (Just libdir) $ do
-      dflags <- getSessionDynFlags
-      setSessionDynFlags dflags
+  runGhc (Just libdir) $ do
+    dflags <- getSessionDynFlags
+    setSessionDynFlags dflags
+    defaultCleanupHandler dflags $ do
+      -- initDynFlags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
         $ do
             addTarget =<< guessTarget pluginName Nothing
