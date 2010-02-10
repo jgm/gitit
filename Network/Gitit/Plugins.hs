@@ -30,7 +30,6 @@ import System.Log.Logger (logM, Priority(..))
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
 import GHC.Paths
-import DynFlags
 import Unsafe.Coerce
 
 loadPlugin :: FilePath -> IO Plugin
