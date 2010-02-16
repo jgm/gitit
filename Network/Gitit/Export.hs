@@ -51,11 +51,7 @@ respond mimetype ext fn page = ok . setContentType mimetype .
 respondX :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
          -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
-#if MIN_VERSION_pandoc(1,5,0)
   template' <- liftIO $ getDefaultTemplate Nothing templ
-#else
-  template' <- liftIO $ getDefaultTemplate templ
-#endif
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -83,11 +79,7 @@ respondMan = respondX "man" "text/plain; charset=utf-8" ""
 
 respondS5 :: String -> Pandoc -> Handler
 respondS5 pg doc = do
-#if MIN_VERSION_pandoc(1,5,0)
   inc <- liftIO $ s5HeaderIncludes Nothing
-#else
-  inc <- liftIO s5HeaderIncludes
-#endif
   respondX "s5" "text/html; charset=utf-8" ""
     writeS5String
     defaultRespOptions{writerS5 = True, writerIncremental = True,
@@ -108,11 +100,7 @@ respondMediaWiki = respondX "mediawiki" "text/plain; charset=utf-8" ""
 
 respondODT :: String -> Pandoc -> Handler
 respondODT page doc = do
-#if MIN_VERSION_pandoc(1,5,0)
   template' <- liftIO $ getDefaultTemplate Nothing "odt"
-#else
-  template' <- liftIO $ getDefaultTemplate "odt"
-#endif
   template <-  case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -122,11 +110,7 @@ respondODT page doc = do
   conf <- getConfig
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-#if MIN_VERSION_pandoc(1,5,0)
                 saveOpenDocumentAsODT Nothing tempfile (repositoryPath conf) Nothing openDoc
-#else
-                saveOpenDocumentAsODT tempfile (repositoryPath conf) Nothing openDoc
-#endif
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
