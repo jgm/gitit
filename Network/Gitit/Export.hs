@@ -19,24 +19,30 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Functions for exporting wiki pages in various formats.
 -}
 
-module Network.Gitit.Export ( exportFormats )
-where
+module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc
 import Text.Pandoc.Writers.S5 (s5HeaderIncludes)
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
+import Text.Pandoc.Shared (escapeStringUsing)
 import Network.Gitit.Server
 import Network.Gitit.Util (withTempDir)
-import Network.Gitit.State
+import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Control.Monad.Trans (liftIO)
+import Control.Monad (unless)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString.Lazy as B
 import System.FilePath ((<.>), (</>))
 import Control.Exception (throwIO)
+import System.Environment (getEnvironment)
+import System.Exit (ExitCode(..))
+import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
+import System.IO (openTempFile)
+import System.Process (runProcess, waitForProcess)
+import Codec.Binary.UTF8.String (encodeString, decodeString)
 
 defaultRespOptions :: WriterOptions
-defaultRespOptions = defaultWriterOptions { writerStandalone = True
-                                          , writerWrapText = True }
+defaultRespOptions = defaultWriterOptions { writerStandalone = True }
 
 respond :: String
         -> String
@@ -49,7 +55,7 @@ respond mimetype ext fn page = ok . setContentType mimetype .
   toResponse . fn
 
 respondX :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
-         -> WriterOptions -> String -> Pandoc -> Handler
+          -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
   template' <- liftIO $ getDefaultTemplate Nothing templ
   template <- case template' of
@@ -64,6 +70,7 @@ respondLaTeX = respondX "latex" "application/x-latex" "tex"
 respondConTeXt :: String -> Pandoc -> Handler
 respondConTeXt = respondX "context" "application/x-context" "tex"
   writeConTeXt defaultRespOptions
+
 
 respondRTF :: String -> Pandoc -> Handler
 respondRTF = respondX "rtf" "application/rtf" "rtf"
@@ -115,8 +122,61 @@ respondODT page doc = do
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
 
-exportFormats :: [(String, String -> Pandoc -> Handler)]
-exportFormats = [ ("LaTeX",     respondLaTeX)     -- (description, writer)
+-- | Run shell command and return error status, standard output, and error output.  Assumes
+-- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
+runShellCommand :: FilePath                     -- ^ Working directory
+                -> Maybe [(String, String)]     -- ^ Environment
+                -> String                       -- ^ Command
+                -> [String]                     -- ^ Arguments
+                -> IO (ExitCode, String, String)
+runShellCommand workingDir environment command optionList = do
+  (outputPath, hOut) <- openTempFile workingDir "out"
+  (errorPath, hErr) <- openTempFile workingDir "err"
+  hProcess <- runProcess (encodeString command) (map encodeString optionList)
+               (Just workingDir) environment Nothing (Just hOut) (Just hErr)
+  status <- waitForProcess hProcess
+  errorOutput <- readFile errorPath
+  output <- readFile outputPath
+  removeFile errorPath
+  removeFile outputPath
+  return (status, decodeString errorOutput, decodeString output)
+
+respondPDF :: String -> Pandoc -> Handler
+respondPDF page pndc = do
+  cfg <- getConfig
+  unless (pdfExport cfg) $ error "PDF export not enabled."
+  pdf' <- liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
+             template' <- liftIO $ getDefaultTemplate Nothing "latex"
+             template  <- either throwIO return template'
+             let toc = tableOfContents cfg
+             let latex = writeLaTeX defaultRespOptions{writerTemplate = template
+                                                      ,writerTableOfContents = toc} pndc
+             let tempfile = page <.> "tex"
+             curdir <- getCurrentDirectory
+             setCurrentDirectory tempdir
+             writeFile tempfile latex
+             -- run pdflatex twice to get the references and toc right
+             let cmd = "pdflatex"
+             oldEnv <- getEnvironment
+             let env = Just $ ("TEXINPUTS",".:" ++ 
+                              escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
+                              (curdir </> repositoryPath cfg) ++ ":") : oldEnv
+             let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
+             (_, _, _) <- runShellCommand tempdir env cmd opts
+             (canary, err, out) <- runShellCommand tempdir env cmd opts
+             setCurrentDirectory curdir -- restore original location
+             case canary of
+                 ExitSuccess   -> B.readFile (tempdir </> page <.> "pdf")
+                 ExitFailure n -> error ("PDF creation failed with code: " ++ show n ++ "\n" ++
+                                         out ++ "\n" ++ err)
+  ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
+       (toResponse noHtml) {rsBody = pdf'}
+
+exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
+exportFormats cfg = if pdfExport cfg
+                       then ("PDF", respondPDF) : rest
+                       else rest
+   where rest = [ ("LaTeX",     respondLaTeX)     -- (description, writer)
                 , ("ConTeXt",   respondConTeXt)
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)

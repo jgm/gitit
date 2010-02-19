@@ -289,8 +289,9 @@ exportPandoc :: Pandoc -> ContentTransformer Response
 exportPandoc doc = do
   params <- getParams
   page <- getPageName
+  cfg <- lift getConfig
   let format = pFormat params
-  case lookup format exportFormats of
+  case lookup format (exportFormats cfg) of
        Nothing     -> error $ "Unknown export format: " ++ format
        Just writer -> lift (writer page doc)
 

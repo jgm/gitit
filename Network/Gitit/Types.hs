@@ -126,7 +126,9 @@ data Config = Config {
   -- | Number of days history to be included in feed
   feedDays             :: Integer,
   -- | Number of minutes to cache feeds before refreshing
-  feedRefreshTime      :: Integer
+  feedRefreshTime      :: Integer,
+  -- | Allow PDF export?
+  pdfExport            :: Bool
   }
 
 -- | Data for rendering a wiki page.

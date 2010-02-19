@@ -101,7 +101,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    setBoolAttr "printable" (pgPrintable layout) .
                    maybe id (T.setAttribute "revision") rev .
                    T.setAttribute "exportbox"
-                       (renderHtmlFragment $  exportBox base' page rev) .
+                       (renderHtmlFragment $  exportBox base' cfg page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
@@ -111,16 +111,16 @@ filledPageTemplate base' cfg layout htmlContents templ =
 
 
 
-exportBox :: String -> String -> Maybe String -> Html
-exportBox base' page rev | not (isSourceCode page) =
+exportBox :: String -> Config -> String -> Maybe String -> Html
+exportBox base' cfg page rev | not (isSourceCode page) =
   gui (base' ++ urlForPage page) ! [identifier "exportbox"] <<
     ([ textfield "revision" ! [thestyle "display: none;",
          value (fromJust rev)] | isJust rev ] ++
      [ select ! [name "format"] <<
-         map ((\f -> option ! [value f] << f) . fst) exportFormats
+         map ((\f -> option ! [value f] << f) . fst) (exportFormats cfg)
      , primHtmlChar "nbsp" 
      , submit "export" "Export" ])
-exportBox _ _ _ = noHtml
+exportBox _ _ _ _ = noHtml
 
 -- auxiliary functions:
 

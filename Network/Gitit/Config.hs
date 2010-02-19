@@ -105,6 +105,7 @@ extractConfig cp = do
       cfWikiTitle <- get cp "DEFAULT" "wiki-title"
       cfFeedDays <- get cp "DEFAULT" "feed-days"
       cfFeedRefreshTime <- get cp "DEFAULT" "feed-refresh-time"
+      cfPDFExport <- get cp "DEFAULT" "pdf-export"
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
@@ -174,7 +175,8 @@ extractConfig cp = do
         , baseUrl              = stripTrailingSlash cfBaseUrl
         , wikiTitle            = cfWikiTitle
         , feedDays             = readNumber "feed-days" cfFeedDays
-        , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime }
+        , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime
+        , pdfExport            = cfPDFExport }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
