@@ -128,7 +128,9 @@ data Config = Config {
   -- | Number of minutes to cache feeds before refreshing
   feedRefreshTime      :: Integer,
   -- | Allow PDF export?
-  pdfExport            :: Bool
+  pdfExport            :: Bool,
+  -- | Directory to search for pandoc customizations
+  pandocUserData       :: Maybe FilePath
   }
 
 -- | Data for rendering a wiki page.
