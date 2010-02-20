@@ -338,7 +338,8 @@ pandocToHtml pandocContents = do
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   return $ writeHtml defaultWriterOptions{
-                        writerStandalone = False
+                        writerStandalone = True
+                      , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
                       , writerHTMLMathMethod = JsMath
                                (Just $ base' ++ "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
