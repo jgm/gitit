@@ -352,14 +352,12 @@ highlightSource :: Maybe String -> ContentTransformer Html
 highlightSource Nothing = mzero
 highlightSource (Just source) = do
   file <- getFileName
-  -- let lang' = head $ languagesByExtension $ takeExtension file
-  let lang' = case languagesByExtension $ takeExtension file of
-               []    -> error "highlightSource, no lang'"
-               (l:_) -> l
   let formatOpts = [OptNumberLines, OptLineAnchors]
-  case highlightAs lang' (filter (/='\r') source) of
-       Left _       -> mzero
-       Right res    -> return $ formatAsXHtml formatOpts lang' $! res
+  case languagesByExtension $ takeExtension file of
+        []    -> mzero
+        (l:_) -> case highlightAs l (filter (/='\r') source) of
+                   Left _       -> mzero
+                   Right res    -> return $ formatAsXHtml formatOpts l $! res
 
 --
 -- Plugin combinators
