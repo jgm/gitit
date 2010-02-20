@@ -25,13 +25,16 @@ import Text.Pandoc.Writers.S5 (s5HeaderIncludes)
 import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Shared (escapeStringUsing)
 import Network.Gitit.Server
+import Network.Gitit.Framework (pathForPage)
 import Network.Gitit.Util (withTempDir)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
+import Network.Gitit.Cache (cacheContents, lookupCache)
 import Control.Monad.Trans (liftIO)
-import Control.Monad (unless, liftM)
+import Control.Monad (unless, when)
 import Text.XHtml (noHtml)
-import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as L
 import System.FilePath ((<.>), (</>))
 import Control.Exception (throwIO)
 import System.Environment (getEnvironment)
@@ -120,7 +123,7 @@ respondODT cfg page doc = do
                 let tempfile = tempdir </> page <.> "odt"
                 saveOpenDocumentAsODT (pandocUserData cfg) 
                    tempfile (repositoryPath conf) Nothing openDoc
-                B.readFile tempfile
+                L.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
 
@@ -143,35 +146,45 @@ respondPDF :: String -> Pandoc -> Handler
 respondPDF page pndc = do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export disabled"
-  pdf' <- liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
-             template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
-             template  <- either throwIO return template'
-             let toc = tableOfContents cfg
-             let latex = writeLaTeX defaultRespOptions{writerTemplate = template
-                                                      ,writerTableOfContents = toc} pndc
-             let tempfile = page <.> "tex"
-             curdir <- getCurrentDirectory
-             setCurrentDirectory tempdir
-             writeFile tempfile latex
-             -- run pdflatex twice to get the references and toc right
-             let cmd = "pdflatex"
-             oldEnv <- getEnvironment
-             let env = Just $ ("TEXINPUTS",".:" ++ 
-                              escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
-                              (curdir </> repositoryPath cfg) ++ ":") : oldEnv
-             let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
-             _ <- runShellCommand tempdir env cmd opts
-             canary <- runShellCommand tempdir env cmd opts
-             setCurrentDirectory curdir -- restore original location
-             case canary of
-                 ExitSuccess   -> liftM Right $ B.readFile (tempdir </> page <.> "pdf")
-                 ExitFailure n -> do l <- readFile (tempdir </> page <.> "log")
-                                     return $ Left (n, l)
+  let cacheName = pathForPage page ++ ".export.pdf"
+  cached <- if useCache cfg
+               then lookupCache cacheName
+               else return Nothing
+  pdf' <- case cached of
+            Just (_modtime, bs) -> return $ Right (False, L.fromChunks [bs])
+            Nothing -> liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
+              template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
+              template  <- either throwIO return template'
+              let toc = tableOfContents cfg
+              let latex = writeLaTeX defaultRespOptions{writerTemplate = template
+                                                       ,writerTableOfContents = toc} pndc
+              let tempfile = page <.> "tex"
+              curdir <- getCurrentDirectory
+              setCurrentDirectory tempdir
+              writeFile tempfile latex
+              -- run pdflatex twice to get the references and toc right
+              let cmd = "pdflatex"
+              oldEnv <- getEnvironment
+              let env = Just $ ("TEXINPUTS",".:" ++ 
+                               escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
+                               (curdir </> repositoryPath cfg) ++ ":") : oldEnv
+              let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
+              _ <- runShellCommand tempdir env cmd opts
+              canary <- runShellCommand tempdir env cmd opts
+              setCurrentDirectory curdir -- restore original location
+              case canary of
+                  ExitSuccess   -> do pdfBS <- L.readFile (tempdir </> page <.> "pdf")
+                                      return $ Right (useCache cfg, pdfBS)
+                  ExitFailure n -> do l <- readFile (tempdir </> page <.> "log")
+                                      return $ Left (n, l)
   case pdf' of
        Left (n,logOutput) -> simpleErrorHandler ("PDF creation failed with code: " ++
                                show n ++ "\n" ++ logOutput)
-       Right pdfBS    -> ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
-                               (toResponse noHtml) {rsBody = pdfBS}
+       Right (needsCaching, pdfBS) -> do
+              when needsCaching $
+                 cacheContents cacheName $ B.concat . L.toChunks $ pdfBS
+              ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
+                        (toResponse noHtml) {rsBody = pdfBS}
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg

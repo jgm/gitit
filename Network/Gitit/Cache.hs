@@ -34,6 +34,7 @@ import Control.Monad
 import Control.Monad.Trans (liftIO)
 
 -- | Expire a cached file, identified by its filename in the filestore.
+-- If there is an associated exported PDF, expire it too.
 -- Returns () after deleting a file from the cache, fails if no cached file.
 expireCachedFile :: String -> GititServerPart ()
 expireCachedFile file = do
@@ -41,8 +42,17 @@ expireCachedFile file = do
   let target = cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
   if exists
-     then liftIO (removeFile target)
+     then liftIO $ do
+       removeFile target
+       expireCachedPDF (cacheDir cfg </> file)
      else mzero
+
+expireCachedPDF :: String -> IO ()
+expireCachedPDF file =
+  when (takeExtension file == ".page") $ do
+     let pdfname = file ++ ".export.pdf"
+     exists <- doesFileExist pdfname
+     when exists $ removeFile pdfname
 
 lookupCache :: String -> GititServerPart (Maybe (ClockTime, B.ByteString))
 lookupCache file = do
@@ -64,3 +74,4 @@ cacheContents file contents = do
   liftIO $ do
     createDirectoryIfMissing True targetDir
     B.writeFile (cacheDir cfg </> file) contents
+    expireCachedPDF (cacheDir cfg </> file)
