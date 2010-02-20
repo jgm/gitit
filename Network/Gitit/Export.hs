@@ -29,7 +29,7 @@ import Network.Gitit.Util (withTempDir)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Control.Monad.Trans (liftIO)
-import Control.Monad (unless)
+import Control.Monad (unless, liftM)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString.Lazy as B
 import System.FilePath ((<.>), (</>))
@@ -142,7 +142,7 @@ runShellCommand workingDir environment command optionList = do
 respondPDF :: String -> Pandoc -> Handler
 respondPDF page pndc = do
   cfg <- getConfig
-  unless (pdfExport cfg) $ error "PDF export not enabled."
+  unless (pdfExport cfg) $ error "PDF export disabled"
   pdf' <- liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
              template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
              template  <- either throwIO return template'
@@ -164,12 +164,14 @@ respondPDF page pndc = do
              canary <- runShellCommand tempdir env cmd opts
              setCurrentDirectory curdir -- restore original location
              case canary of
-                 ExitSuccess   -> B.readFile (tempdir </> page <.> "pdf")
-                 ExitFailure n -> readFile (tempdir </> page <.> "log") >>= \logOutput ->
-                                  error ("PDF creation failed with code: " ++ show n ++ "\n" ++
-                                         logOutput)
-  ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
-       (toResponse noHtml) {rsBody = pdf'}
+                 ExitSuccess   -> liftM Right $ B.readFile (tempdir </> page <.> "pdf")
+                 ExitFailure n -> do l <- readFile (tempdir </> page <.> "log")
+                                     return $ Left (n, l)
+  case pdf' of
+       Left (n,logOutput) -> simpleErrorHandler ("PDF creation failed with code: " ++
+                               show n ++ "\n" ++ logOutput)
+       Right pdfBS    -> ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
+                               (toResponse noHtml) {rsBody = pdfBS}
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg
