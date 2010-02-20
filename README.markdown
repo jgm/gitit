@@ -128,7 +128,7 @@ Check that it worked: open a web browser and go to
 <http://localhost:5001>.
 
 You can control the port that gitit runs on using the `-p` option:
-`gitit -p 4000' will start gitit on port 4000. Additional runtime
+`gitit -p 4000` will start gitit on port 4000. Additional runtime
 options are described by `gitit -h`.
 
 Using gitit
