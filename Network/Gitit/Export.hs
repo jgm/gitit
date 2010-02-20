@@ -36,10 +36,10 @@ import System.FilePath ((<.>), (</>))
 import Control.Exception (throwIO)
 import System.Environment (getEnvironment)
 import System.Exit (ExitCode(..))
-import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
 import System.IO (openTempFile)
+import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
 import System.Process (runProcess, waitForProcess)
-import Codec.Binary.UTF8.String (encodeString, decodeString)
+import Codec.Binary.UTF8.String (encodeString)
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True }
@@ -57,7 +57,8 @@ respond mimetype ext fn page = ok . setContentType mimetype .
 respondX :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
           -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
-  template' <- liftIO $ getDefaultTemplate Nothing templ
+  cfg <- getConfig
+  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) templ
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -84,9 +85,9 @@ respondMan :: String -> Pandoc -> Handler
 respondMan = respondX "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
 
-respondS5 :: String -> Pandoc -> Handler
-respondS5 pg doc = do
-  inc <- liftIO $ s5HeaderIncludes Nothing
+respondS5 :: Config -> String -> Pandoc -> Handler
+respondS5 cfg pg doc = do
+  inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
   respondX "s5" "text/html; charset=utf-8" ""
     writeS5String
     defaultRespOptions{writerS5 = True, writerIncremental = True,
@@ -105,9 +106,9 @@ respondMediaWiki :: String -> Pandoc -> Handler
 respondMediaWiki = respondX "mediawiki" "text/plain; charset=utf-8" ""
   writeMediaWiki defaultRespOptions
 
-respondODT :: String -> Pandoc -> Handler
-respondODT page doc = do
-  template' <- liftIO $ getDefaultTemplate Nothing "odt"
+respondODT :: Config -> String -> Pandoc -> Handler
+respondODT cfg page doc = do
+  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg)  "odt"
   template <-  case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
@@ -117,36 +118,33 @@ respondODT page doc = do
   conf <- getConfig
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
                 let tempfile = tempdir </> page <.> "odt"
-                saveOpenDocumentAsODT Nothing tempfile (repositoryPath conf) Nothing openDoc
+                saveOpenDocumentAsODT (pandocUserData cfg) 
+                   tempfile (repositoryPath conf) Nothing openDoc
                 B.readFile tempfile
   ok $ setContentType "application/vnd.oasis.opendocument.text" $
        setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
 
--- | Run shell command and return error status, standard output, and error output.  Assumes
+-- | Run shell command and return error status.  Assumes
 -- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
 runShellCommand :: FilePath                     -- ^ Working directory
                 -> Maybe [(String, String)]     -- ^ Environment
                 -> String                       -- ^ Command
                 -> [String]                     -- ^ Arguments
-                -> IO (ExitCode, String, String)
+                -> IO ExitCode
 runShellCommand workingDir environment command optionList = do
-  (outputPath, hOut) <- openTempFile workingDir "out"
-  (errorPath, hErr) <- openTempFile workingDir "err"
+  (errPath, err) <- openTempFile workingDir "err"
   hProcess <- runProcess (encodeString command) (map encodeString optionList)
-               (Just workingDir) environment Nothing (Just hOut) (Just hErr)
+               (Just workingDir) environment Nothing (Just err) (Just err)
   status <- waitForProcess hProcess
-  errorOutput <- readFile errorPath
-  output <- readFile outputPath
-  removeFile errorPath
-  removeFile outputPath
-  return (status, decodeString errorOutput, decodeString output)
+  removeFile errPath
+  return status
 
 respondPDF :: String -> Pandoc -> Handler
 respondPDF page pndc = do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export not enabled."
   pdf' <- liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
-             template' <- liftIO $ getDefaultTemplate Nothing "latex"
+             template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
              template  <- either throwIO return template'
              let toc = tableOfContents cfg
              let latex = writeLaTeX defaultRespOptions{writerTemplate = template
@@ -162,13 +160,14 @@ respondPDF page pndc = do
                               escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
                               (curdir </> repositoryPath cfg) ++ ":") : oldEnv
              let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
-             (_, _, _) <- runShellCommand tempdir env cmd opts
-             (canary, err, out) <- runShellCommand tempdir env cmd opts
+             _ <- runShellCommand tempdir env cmd opts
+             canary <- runShellCommand tempdir env cmd opts
              setCurrentDirectory curdir -- restore original location
              case canary of
                  ExitSuccess   -> B.readFile (tempdir </> page <.> "pdf")
-                 ExitFailure n -> error ("PDF creation failed with code: " ++ show n ++ "\n" ++
-                                         out ++ "\n" ++ err)
+                 ExitFailure n -> readFile (tempdir </> page <.> "log") >>= \logOutput ->
+                                  error ("PDF creation failed with code: " ++ show n ++ "\n" ++
+                                         logOutput)
   ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
        (toResponse noHtml) {rsBody = pdf'}
 
@@ -183,6 +182,6 @@ exportFormats cfg = if pdfExport cfg
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
                 , ("DocBook",   respondDocbook)
-                , ("S5",        respondS5)
-                , ("ODT",       respondODT)
+                , ("S5",        respondS5 cfg)
+                , ("ODT",       respondODT cfg )
                 , ("RTF",       respondRTF) ]

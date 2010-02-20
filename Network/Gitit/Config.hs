@@ -106,6 +106,7 @@ extractConfig cp = do
       cfFeedDays <- get cp "DEFAULT" "feed-days"
       cfFeedRefreshTime <- get cp "DEFAULT" "feed-refresh-time"
       cfPDFExport <- get cp "DEFAULT" "pdf-export"
+      cfPandocUserData <- get cp "DEFAULT" "pandoc-user-data"
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
@@ -176,7 +177,10 @@ extractConfig cp = do
         , wikiTitle            = cfWikiTitle
         , feedDays             = readNumber "feed-days" cfFeedDays
         , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime
-        , pdfExport            = cfPDFExport }
+        , pdfExport            = cfPDFExport
+        , pandocUserData       = if null cfPandocUserData
+                                    then Nothing
+                                    else Just cfPandocUserData }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
