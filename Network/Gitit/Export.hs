@@ -152,7 +152,7 @@ respondPDF page pndc = do
                else return Nothing
   pdf' <- case cached of
             Just (_modtime, bs) -> return $ Right (False, L.fromChunks [bs])
-            Nothing -> liftIO $ withTempDir "gitit-tmp-context" $ \tempdir -> do
+            Nothing -> liftIO $ withTempDir "gitit-tmp-pdf" $ \tempdir -> do
               template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
               template  <- either throwIO return template'
               let toc = tableOfContents cfg
