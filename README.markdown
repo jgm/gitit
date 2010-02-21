@@ -373,15 +373,18 @@ If you are using the darcs or mercurial backend, the commands will
 be slightly different.  See the documentation for your VCS for
 details.
 
+Performance
+===========
+
 Caching
-=======
+-------
 
 By default, gitit does not cache content.  If your wiki receives a lot of
 traffic or contains pages that are slow to render, you may want to activate
 caching.  To do this, set the configuration option `use-cache` to `yes`.
-By default, rendered pages and highlighted source files will be cached
-in the `cache` directory. (Another directory can be specified by setting
-the `cache-dir` configuration option.)
+By default, rendered pages, highlighted source files, and exported PDFs
+will be cached in the `cache` directory. (Another directory can be
+specified by setting the `cache-dir` configuration option.)
 
 Cached pages are updated when pages are modified using the web
 interface. They are not updated when pages are modified directly through
@@ -410,6 +413,19 @@ and a failure status (> 0) otherwise.
 
 The cache is persistent through restarts of gitit.  To expire all cached
 pages, simply remove the `cache` directory.
+
+Idle
+----
+
+By default, GHC's runtime will repeatedly attempt to collect garbage
+when an executable like Gitit is idle. This means that gitit will, after
+the first page request, never use 0% CPU time and sleep, but will use
+~1%. This can be bad for battery life, among other things.
+
+To fix this, one can disable the idle-time GC with the runtime flag
+`-I0`:
+
+    gitit -f my.conf +RTS -I0 -RTS
 
 Using gitit with apache
 =======================
