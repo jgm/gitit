@@ -11,7 +11,7 @@ plugin :: Plugin
 plugin = mkPageTransform capsTransform
 
 capsTransform :: [Inline] -> [Inline]
-capsTransform ((Emph x):xs) = processWith capStr x ++ capsTransform xs
+capsTransform (Emph x : xs) = processWith capStr x ++ capsTransform xs
 capsTransform (x:xs)        = x : capsTransform xs
 capsTransform []            = []
 

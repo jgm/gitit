@@ -4,9 +4,7 @@ module Signature (plugin) where
 -- of the last edit, prior to saving the page in the repository.
 
 import Network.Gitit.Interface
-import Data.Maybe (fromMaybe)
-import Data.DateTime
-import Control.Monad
+import Data.DateTime (getCurrentTime, formatDateTime)
 
 plugin :: Plugin
 plugin = PreCommitTransform replacedate
@@ -14,12 +12,12 @@ plugin = PreCommitTransform replacedate
 replacedate :: String -> PluginM String
 replacedate [] = return ""
 replacedate ('$':'S':'I':'G':'$':xs) = do
-  datetime <- liftIO $ getCurrentTime
+  datetime <- liftIO getCurrentTime
   mbuser <- askUser
   let username = case mbuser of
                    Nothing  -> "???"
                    Just u   -> uUsername u
-  let sig = "-- " ++ username ++ " (" ++ formatDateTime "%c" datetime ++ ")"
-  liftM (sig ++ ) $ replacedate xs
-replacedate (x:xs) = liftM (x : ) $ replacedate xs
+  let sig = concat ["-- ", username, " (", formatDateTime "%c" datetime, ")"]
+  fmap (sig ++ ) $ replacedate xs
+replacedate (x:xs) = fmap (x : ) $ replacedate xs
 

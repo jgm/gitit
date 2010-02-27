@@ -26,11 +26,8 @@ modified by John MacFarlane to use withTempDir
 -}
 
 import Network.Gitit.Interface
-import Text.Pandoc.Shared
 import System.Process (system)
-import System.Exit
 import System.Directory
-import Data.Char (ord)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Digest.Pure.SHA
 import System.FilePath
@@ -39,22 +36,21 @@ import Control.Monad.Trans (liftIO)
 plugin :: Plugin
 plugin = mkPageTransformM transformBlock
 
-templateHeader =
-    ( "\\documentclass[12pt]{article}\n"
-      ++ "\\usepackage{amsmath,amssymb,bm}\n"
-      ++ "\\begin{document}\n"
-      ++ "\\thispagestyle{empty}\n"
-      ++ "\\[\n"
-    )
+templateHeader, templateFooter :: String
+templateHeader = concat
+    [ "\\documentclass[12pt]{article}\n"
+      , "\\usepackage{amsmath,amssymb,bm}\n"
+      , "\\begin{document}\n"
+      , "\\thispagestyle{empty}\n"
+      , "\\[\n"]
 
 templateFooter =
-    ( "\n"
+      "\n"
       ++ "\\]\n"
       ++ "\\end{document}\n"
-    )
 
 transformBlock :: Block -> PluginM Block
-transformBlock (CodeBlock (id, classes, namevals) contents)
+transformBlock (CodeBlock (_, classes, namevals) contents)
     | "dvipng" `elem` classes = do
   cfg <- askConfig
   let (name, outfile) =  case lookup "name" namevals of

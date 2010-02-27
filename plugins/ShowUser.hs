@@ -4,7 +4,6 @@ module ShowUser (plugin) where
 -- user, or the empty string if no one is logged in.
 
 import Network.Gitit.Interface
-import Data.Maybe (fromMaybe)
 
 plugin :: Plugin
 plugin = mkPageTransformM showuser

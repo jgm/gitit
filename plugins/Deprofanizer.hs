@@ -13,6 +13,6 @@ deprofanize (Str x) | isBadWord x = Str "XXXXX"
 deprofanize x                     = x
 
 isBadWord :: String -> Bool
-isBadWord x = (map toLower x) `elem` ["darn", "blasted", "stinker"]
+isBadWord x = map toLower x `elem` ["darn", "blasted", "stinker"]
 -- there are more, but this is a family program
 
