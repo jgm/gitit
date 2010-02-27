@@ -49,8 +49,9 @@ webciteArchive email url = forkIO (ignore $ openURL ("http://www.webcitation.org
          ignore = fmap $ const ()
 
 alexaArchive :: String -> IO ()
-alexaArchive url = do let archiveform = Form POST (fromJust $ parseURI "http://www.alexa.com/help/crawlrequest")
-                                                                             [("url", url), ("submit", "")]
+alexaArchive url = do let archiveform = Form POST
+                             (fromJust $ parseURI "http://www.alexa.com/help/crawlrequest")
+                                 [("url", url), ("submit", "")]
                       (uri, resp) <- browse $ request $ formToRequest archiveform
                       when (uriPath uri /= "/help/crawlthanks") $
                            error $ "Request failed! Did Alexa change webpages? Response:" ++ rspBody resp

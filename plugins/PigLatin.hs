@@ -21,9 +21,10 @@ pigLatinStr (Str (c:cs)) | isLower c && isConsonant c =
   Str (cs ++ (c : "ay"))
 pigLatinStr (Str (c:cs)) | isUpper c && isConsonant c =
   Str (capitalize cs ++ (toLower c : "ay"))
-pigLatinStr (Str x@(c:cs)) | isLetter c = Str (x ++ "yay")
+pigLatinStr (Str x@(c:_)) | isLetter c = Str (x ++ "yay")
 pigLatinStr x       = x
 
+isConsonant :: Char -> Bool
 isConsonant c = c `notElem` "aeiouAEIOU" 
 
 capitalize :: String -> String

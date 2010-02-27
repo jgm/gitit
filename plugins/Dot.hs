@@ -13,13 +13,13 @@ module Dot (plugin) where
 -- of the file contents.
 
 import Network.Gitit.Interface
-import System.Process
-import System.Exit
+import System.Process (readProcessWithExitCode)
+import System.Exit (ExitCode(ExitSuccess))
 -- from the utf8-string package on HackageDB:
 import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
-import Data.Digest.Pure.SHA
-import System.FilePath
+import Data.Digest.Pure.SHA (sha1, showDigest)
+import System.FilePath ((</>))
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin

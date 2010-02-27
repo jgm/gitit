@@ -39,7 +39,7 @@ convertInterwikiLinks (Link ref (interwiki, article)) =
     ('!':interwiki') ->
         case M.lookup interwiki' interwikiMap of
                 Just url  -> case article of
-                                  "" -> Link ref (url ++ (inlinesToURL ref), (summary $ unEscapeString $ inlinesToURL ref))
+                                  "" -> Link ref (url ++ inlinesToURL ref, summary $ unEscapeString $ inlinesToURL ref)
                                   _  -> Link ref (interwikiurl article url, summary article)
                 Nothing -> Link ref (interwiki, article)
             where -- 'http://starwars.wikia.com/wiki/Emperor_Palpatine'
