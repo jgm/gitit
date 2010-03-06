@@ -84,6 +84,10 @@ respondRST :: String -> Pandoc -> Handler
 respondRST = respondX "rst" "text/plain; charset=utf-8" ""
   writeRST defaultRespOptions{writerReferenceLinks = True}
 
+respondMarkdown :: String -> Pandoc -> Handler
+respondMarkdown = respondX "markdown" "text/plain; charset=utf-8" ""
+  writeMarkdown defaultRespOptions{writerReferenceLinks = True}
+
 respondMan :: String -> Pandoc -> Handler
 respondMan = respondX "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
@@ -194,6 +198,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("ConTeXt",   respondConTeXt)
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
+                , ("markdown",  respondMarkdown)
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
                 , ("DocBook",   respondDocbook)
