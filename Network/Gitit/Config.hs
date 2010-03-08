@@ -24,7 +24,6 @@ module Network.Gitit.Config ( getConfigFromFile
                             , getDefaultConfig
                             , readMimeTypesFile )
 where
-import Safe
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
@@ -152,7 +151,7 @@ extractConfig cp = do
         , staticDir            = cfStaticDir
         , pluginModules        = splitCommaList cfPlugins
         , tableOfContents      = cfTableOfContents
-        , maxUploadSize        = readNumber "max-upload-size" cfMaxUploadSize
+        , maxUploadSize        = readSize "max-upload-size" cfMaxUploadSize
         , portNumber           = readNumber "port" cfPort
         , debugMode            = cfDebugMode
         , frontPage            = cfFrontPage
@@ -193,17 +192,17 @@ fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
         dropGt ('>':xs) = xs
         dropGt x = x
 
-readNumber :: (Read a) => String -> String -> a
-readNumber opt "" = error $ opt ++ " must be a number."
-readNumber opt x  =
-  let x' = case lastNote "readNumber" x of
-                'K'  -> init x ++ "000"
-                'M'  -> init x ++ "000000"
-                'G'  -> init x ++ "000000000"
-                _    -> x
-  in if all isDigit x'
-        then read x'
-        else error $ opt ++ " must be a number."
+readNumber :: (Num a, Read a) => String -> String -> a
+readNumber _   x | all isDigit x = read x
+readNumber opt _ = error $ opt ++ " must be a number."
+
+readSize :: (Num a, Read a) => String -> String -> a
+readSize opt x =
+  case reverse x of
+       ('K':_) -> readNumber opt (init x) * 1000
+       ('M':_) -> readNumber opt (init x) * 1000000
+       ('G':_) -> readNumber opt (init x) * 1000000000
+       _       -> readNumber opt x
 
 splitCommaList :: String -> [String]
 splitCommaList l =
