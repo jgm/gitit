@@ -75,6 +75,7 @@ extractConfig cp = do
       cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
       cfAuthenticationMethod <- get cp "DEFAULT" "authentication-method"
       cfUserFile <- get cp "DEFAULT" "user-file"
+      cfSessionTimeout <- get cp "DEFAULT" "session-timeout"
       cfTemplatesDir <- get cp "DEFAULT" "templates-dir"
       cfLogFile <- get cp "DEFAULT" "log-file"
       cfLogLevel <- get cp "DEFAULT" "log-level"
@@ -140,6 +141,7 @@ extractConfig cp = do
                                       "http"     -> msum httpAuthHandlers
                                       _          -> mzero
         , userFile             = cfUserFile
+        , sessionTimeout       = readNumber "session-timeout" cfSessionTimeout * 60  -- convert minutes -> seconds
         , templatesDir         = cfTemplatesDir
         , logFile              = cfLogFile
         , logLevel             = let levelString = map toUpper cfLogLevel

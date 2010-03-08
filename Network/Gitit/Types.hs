@@ -67,6 +67,8 @@ data Config = Config {
   authHandler          :: Handler,
   -- | Path of users database
   userFile             :: FilePath,
+  -- | Seconds of inactivity before session expires
+  sessionTimeout       :: Int,
   -- | Directory containing page templates
   templatesDir         :: FilePath,
   -- | Path of server log file

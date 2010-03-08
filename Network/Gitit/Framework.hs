@@ -24,7 +24,6 @@ module Network.Gitit.Framework (
                                , requireUserThat
                                , requireUser
                                , getLoggedInUser
-                               , sessionTime
                                -- * Combinators to exclude certain actions
                                , unlessNoEdit
                                , unlessNoDelete
@@ -99,10 +98,11 @@ requireUserThat predicate handler = do
 withUserFromSession :: Handler -> Handler
 withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
   mbSd <- maybe (return Nothing) getSession sk
+  cfg <- getConfig
   mbUser <- case mbSd of
             Nothing    -> return Nothing
             Just sd    -> do
-              addCookie sessionTime (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
+              addCookie (sessionTimeout cfg) (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
               getUser $! sessionUser sd
   let user = maybe "" uUsername mbUser
   localRq (setHeader "REMOTE_USER" user) handler
@@ -146,9 +146,6 @@ pBasicHeader = do
   string "Basic "
   result' <- many (noneOf " \t\n")
   return $ takeWhile (/=':') $ decode result'
-
-sessionTime :: Int
-sessionTime = 60 * 60     -- session will expire 1 hour after page request
 
 -- | @unlessNoEdit responder fallback@ runs @responder@ unless the
 -- page has been designated not editable in configuration; in that

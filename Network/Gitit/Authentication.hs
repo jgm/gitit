@@ -362,10 +362,11 @@ loginUser params = do
   let pword = pPassword params
   let destination = pDestination params
   allowed <- authUser uname pword
+  cfg <- getConfig
   if allowed
     then do
       key <- newSession (SessionData uname)
-      addCookie sessionTime (mkCookie "sid" (show key))
+      addCookie (sessionTimeout cfg) (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
       withMessages ["Invalid username or password."] loginUserForm
