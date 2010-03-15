@@ -38,7 +38,6 @@ under different paths, and uses a custom authentication scheme:
 > import Control.Monad
 > import Text.XHtml hiding (dir)
 > import Happstack.Server.SimpleHTTP
-> import My.Auth.System (myGetUser, myLoginUser, myLogoutUser)
 > 
 > type WikiSpec = (String, FileStoreType, PageType)
 > 
@@ -46,14 +45,16 @@ under different paths, and uses a custom authentication scheme:
 >         , ("latexWiki", Darcs, LaTeX) ]
 > 
 > -- custom authentication
-> withUser :: Handler -> Handler
-> withUser handler = do
->   user <- myGetUser
+> myWithUser :: Handler -> Handler
+> myWithUser handler = do
+>   -- replace the following with a function that retrieves
+>   -- the logged in user for your happstack app:
+>   user <- return "testuser"
 >   localRq (setHeader "REMOTE_USER" user) handler
 >
 > myAuthHandler = msum
->   [ dir "_login" myLoginUser
->   , dir "_logout" myLogoutUser ]
+>   [ dir "_login"  $ seeOther "/your/login/url"  $ toResponse ()
+>   , dir "_logout" $ seeOther "/your/logout/url" $ toResponse () ]
 >
 > handlerFor :: Config -> WikiSpec -> ServerPart Response
 > handlerFor conf (path', fstype, pagetype) = dir path' $
@@ -68,7 +69,7 @@ under different paths, and uses a custom authentication scheme:
 > 
 > main = do
 >   conf <- getDefaultConfig
->   let conf' = conf{authHandler = myAuthHandler}
+>   let conf' = conf{authHandler = myAuthHandler, withUser = myWithUser}
 >   forM wikis $ \(path', fstype, pagetype) -> do
 >     let conf'' = conf'{ repositoryPath = path'
 >                       , repositoryType = fstype
@@ -80,7 +81,6 @@ under different paths, and uses a custom authentication scheme:
 >   initializeGititState conf'
 >   simpleHTTP nullConf{port = 5001} $
 >     (nullDir >> indexPage) `mplus` msum (map (handlerFor conf') wikis)
-
 
 -}
 
