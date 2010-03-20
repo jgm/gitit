@@ -45,7 +45,7 @@ import Prelude hiding (readFile)
 import System.IO.UTF8
 #endif
 import System.FilePath ((</>))
-import Text.Pandoc
+import Text.Pandoc hiding (MathML)
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
