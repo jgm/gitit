@@ -1,3 +1,56 @@
+Version 0.7.3 released 20 Mar 2010
+
+* Added PDF export option and pdf-export config field.
+  (Based on a patch by gwern.)
+
+* Added markdown export.
+    
+* Improved multi-wiki example code in haddocks.
+
+* Added session-timeout config setting.
+
+* Config module:  Added readSize (recognizing K,M,G suffix).
+  Previously readNumber always recognized K,M,G suffixes,
+  but these only make sense in some contexts (not e.g. for
+  times).
+
+* Added Subst plugin (thanks to gwern).
+
+* Added notes on PDF caching and idle.
+
+* Fixed table of contents in wiki pages (resolving Issue #91).
+
+* Added pandoc-user-data config option, allowing the user
+  to specify a directory with e.g. templates that override
+  the defaults used for exported pages.
+    
+* Fix filesToClean GHC panic when loading plugins on GHC HEAD
+
+* Fixed problem with doubled // in updir links.
+  Resolves Issue #88.
+
+* Updated interwiki plugin.
+
+* Fixed caching for feeds. Thanks to brian.sniffen for pointing
+  out the need to normalize the time diff. Resolves Issue #87.
+
+* Improved Feed module (gwern).
+
+* Use line anchors from highlighting-source, so that you can link
+  directly to a particular line in a source file.
+
+* Disable upload functionality if maxUploadSize is 0.
+
+* Exported queryGititState, updateGititState, Network.Gitit.Layout.
+  Exported filledPageTemplate. (Thanks to tphyahoo.)
+  Split off and expose createDefaultPages.
+  Exposed compilePageTemplate.
+
+* Use charset=utf-8 on output from Layout.
+
+* Use isUnescapedInURI with escapeURIString rather than isAllowedInURI.
+  The latter does not escape % signs.
+
 Version 0.7.2 released 02 Jan 2010
 
 * Now compiles with GHC 6.12.
