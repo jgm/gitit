@@ -1,3 +1,7 @@
+Version 0.7.3.1 released 20 Mar 2010
+
+* Changed "In" to "in" in MathMLinJS.js link.
+
 Version 0.7.3 released 20 Mar 2010
 
 * Added PDF export option and pdf-export config field.
