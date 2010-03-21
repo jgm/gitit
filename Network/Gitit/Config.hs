@@ -83,6 +83,7 @@ extractConfig cp = do
       cfPlugins <- get cp "DEFAULT" "plugins"
       cfTableOfContents <- get cp "DEFAULT" "table-of-contents"
       cfMaxUploadSize <- get cp "DEFAULT" "max-upload-size"
+      cfMaxPageSize <- get cp "DEFAULT" "max-page-size"
       cfPort <- get cp "DEFAULT" "port"
       cfDebugMode <- get cp "DEFAULT" "debug-mode"
       cfFrontPage <- get cp "DEFAULT" "front-page"
@@ -154,6 +155,7 @@ extractConfig cp = do
         , pluginModules        = splitCommaList cfPlugins
         , tableOfContents      = cfTableOfContents
         , maxUploadSize        = readSize "max-upload-size" cfMaxUploadSize
+        , maxPageSize          = readSize "max-page-size" cfMaxPageSize
         , portNumber           = readNumber "port" cfPort
         , debugMode            = cfDebugMode
         , frontPage            = cfFrontPage

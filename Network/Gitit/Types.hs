@@ -82,8 +82,10 @@ data Config = Config {
   pluginModules        :: [String],
   -- | Show table of contents on each page?
   tableOfContents      :: Bool,
-  -- | Max size of pages and file uploads
+  -- | Max size of file uploads
   maxUploadSize        :: Integer,
+  -- | Max size of page uploads
+  maxPageSize          :: Integer,
   -- | Port number to serve content on
   portNumber           :: Int,
   -- | Print debug info to the console?
