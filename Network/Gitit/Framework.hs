@@ -60,7 +60,7 @@ import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
 import Data.FileStore
-import Data.Char (toLower, isAscii)
+import Data.Char (toLower)
 import Control.Monad (mzero, liftM, MonadPlus)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
@@ -71,6 +71,7 @@ import System.FilePath ((<.>), takeExtension)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
+import Network.URI (isUnescapedInURI)
 import Happstack.Crypto.Base64 (decode)
 import Network.HTTP (urlEncodeVars)
 
@@ -272,8 +273,7 @@ isSourceCode path' =
 -- the wiki base.
 urlForPage :: String -> String
 urlForPage page = "/" ++
-  encString True (\c -> isAscii c && (c `notElem` "?&")) page
--- / and @ are left unescaped so that browsers recognize relative URLs and talk pages correctly
+  encString False isUnescapedInURI page
 
 -- | Returns the filestore path of the file containing the page's source.
 pathForPage :: String -> FilePath
