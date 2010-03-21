@@ -618,8 +618,6 @@ updatePage = withData $ \(params :: Params) -> do
   if null . filter (not . isSpace) $ logMsg
      then withMessages ["Description cannot be empty."] editPage
      else do
-       when (length editedText > fromIntegral (maxUploadSize cfg)) $
-          error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
        modifyRes <- if null oldSHA1
                        then liftIO $ create fs (pathForPage page)
