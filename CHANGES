@@ -1,5 +1,11 @@
 Version 0.7.3.1 released 20 Mar 2010
 
+* Fixed editing of pages when max-upload-size=0.
+  max-upload-size should not double as max-page-size.
+  Resolves Issue #96.
+
+Version 0.7.3.1 released 20 Mar 2010
+
 * Changed "In" to "in" in MathMLinJS.js link.
 
 Version 0.7.3 released 20 Mar 2010
