@@ -745,7 +745,8 @@ expireCache :: Handler
 expireCache = do
   page <- getPage
   -- try it as a page first, then as an uploaded file
-  expireCachedFile (pathForPage page) `mplus` expireCachedFile page
+  expireCachedFile (pathForPage page)
+  expireCachedFile page
   ok $ toResponse ()
 
 feedHandler :: Handler
