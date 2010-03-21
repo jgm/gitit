@@ -446,7 +446,7 @@ addMathSupport c = do
   updateLayout $ \l ->
     case mathMethod conf of
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
-         MathML       -> addScripts l ["MathMLInHTML.js"]
+         MathML       -> addScripts l ["MathMLinHTML.js"]
          RawTeX       -> l
   return c
 
