@@ -85,11 +85,9 @@ import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.Highlighting.Kate
 import Data.Maybe (isNothing)
-import Codec.Binary.UTF8.String (encodeString)
 import System.FilePath
 import Control.Monad.State
 import Control.Exception (throwIO, catch)
-import Network.URI (isUnescapedInURI, escapeURIString)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 
@@ -507,7 +505,7 @@ convertWikiLinks x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
-inlinesToURL = escapeURIString isUnescapedInURI  . encodeString . inlinesToString
+inlinesToURL = urlForPage . inlinesToString
 
 -- | Convert a list of inlines into a string.
 inlinesToString :: [Inline] -> String
