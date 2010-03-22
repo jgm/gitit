@@ -1,3 +1,10 @@
+Version 0.7.3.4 released 21 Mar 2010
+
+* Use custom readFileUTF8 (exported in Network.Gitit.Util) instead of
+  broken System.IO.UTF8. This way we have a uniform solution for GHC
+  6.10 and 6.12, and don't have to use CPP tricks. This change fixes
+  categories on GHC 6.12. Resolves Issue #98.
+
 Version 0.7.3.3 released 21 Mar 2010
 
 * Reverted to handling math in MathML mode in the old way, using
