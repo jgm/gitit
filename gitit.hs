@@ -21,7 +21,7 @@ module Main where
 
 import Network.Gitit
 import Network.Gitit.Server
-import Prelude hiding (readFile, catch)
+import Network.Gitit.Util (readFileUTF8)
 import System.Directory
 import Data.Maybe (isNothing)
 import Control.Monad.Reader
@@ -30,17 +30,12 @@ import System.Log.Logger (Priority(..), setLevel, setHandlers,
 import System.Log.Handler.Simple (fileHandler)
 import System.Environment
 import System.Exit
-import System.IO (stdout, stderr)
+import System.IO (stderr)
 import System.Console.GetOpt
 import Data.Version (showVersion)
--- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
--- So we use System.IO.UTF8 only if we have an earlier version
-#if MIN_VERSION_base(4,2,0)
-import Prelude (readFile)
-import System.IO (hPutStrLn)
-#else
-import System.IO.UTF8
-#endif
+import qualified Data.ByteString as B
+import Data.ByteString.UTF8 (fromString)
+
 import Paths_gitit (version, getDataFileName)
 
 main :: IO ()
@@ -50,7 +45,6 @@ main = do
   opts <- getArgs >>= parseArgs
   defaultConfig <- getDefaultConfig
   conf <- foldM handleFlag defaultConfig opts
-
   -- check for external programs that are needed
   let repoProg = case repositoryType conf of
                        Mercurial   -> "hg"
@@ -117,8 +111,7 @@ parseArgs argv = do
   progname <- getProgName
   case getOpt Permute flags argv of
     (opts,_,[])  -> return opts
-    (_,_,errs)   -> hPutStrLn stderr (concat errs ++ usageInfo (usageHeader progname) flags) >>
-                       exitWith (ExitFailure 1)
+    (_,_,errs)   -> putErr (ExitFailure 1) (concat errs ++ usageInfo (usageHeader progname) flags)
 
 usageHeader :: String -> String
 usageHeader progname = "Usage:  " ++ progname ++ " [opts...]"
@@ -140,12 +133,12 @@ handleFlag :: Config -> Opt -> IO Config
 handleFlag conf opt = do
   progname <- getProgName
   case opt of
-    Help               -> hPutStrLn stderr (usageInfo (usageHeader progname) flags) >> exitWith ExitSuccess
-    Version            -> hPutStrLn stderr (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage) >> exitWith ExitSuccess
-    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFile >>=
-                          hPutStrLn stdout >> exitWith ExitSuccess
+    Help               -> putErr ExitSuccess (usageInfo (usageHeader progname) flags)
+    Version            -> putErr ExitSuccess (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage)
+    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
     Debug              -> return conf{ debugMode = True }
     Port p             -> return conf{ portNumber = p }
     ConfigFile fname   -> getConfigFromFile fname
 
-
+putErr :: ExitCode -> String -> IO a
+putErr c s = B.hPutStrLn stderr (fromString s) >> exitWith c

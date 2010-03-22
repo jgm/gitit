@@ -27,6 +27,7 @@ where
 import System.FilePath ((</>), (<.>))
 import Data.FileStore
 import qualified Data.Map as M
+import Network.Gitit.Util (readFileUTF8)
 import Network.Gitit.Types
 import Network.Gitit.State
 import Network.Gitit.Framework
@@ -36,13 +37,6 @@ import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
 import Control.Monad (unless, forM_, liftM)
--- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
--- So we use System.IO.UTF8 only if we have an earlier version
-#if MIN_VERSION_base(4,2,0)
-#else
-import Prelude hiding (readFile)
-import System.IO.UTF8
-#endif
 import Text.Pandoc
 import System.Log.Logger (logM, Priority(..))
 import qualified Text.StringTemplate as T
@@ -56,7 +50,7 @@ initializeGititState conf = do
 
   userFileExists <- doesFileExist userFile'
   users' <- if userFileExists
-               then liftM (M.fromList . read) $ readFile userFile'
+               then liftM (M.fromList . read) $ readFileUTF8 userFile'
                else return M.empty
 
   templ <- compilePageTemplate (templatesDir conf)
@@ -140,14 +134,14 @@ createDefaultPages conf = do
                        RST      -> writeRST defOpts . toPandoc
 
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
-    welcomecontents <- liftM converter $ readFile welcomepath
+    welcomecontents <- liftM converter $ readFileUTF8 welcomepath
     helppath <- getDataFileName $ "data" </> "Help" <.> "page"
-    helpcontentsInitial <- liftM converter $ readFile helppath
+    helpcontentsInitial <- liftM converter $ readFileUTF8 helppath
     markuppath <- getDataFileName $ "data" </> "markup" <.> show pt
-    helpcontentsMarkup <- liftM converter $ readFile markuppath
+    helpcontentsMarkup <- liftM converter $ readFileUTF8  markuppath
     let helpcontents = helpcontentsInitial ++ "\n\n" ++ helpcontentsMarkup
     usersguidepath <- getDataFileName "README.markdown"
-    usersguidecontents <- liftM converter $ readFile usersguidepath
+    usersguidecontents <- liftM converter $ readFileUTF8 usersguidepath
     -- add front page, help page, and user's guide
     let auth = Author "Gitit" ""
     createIfMissing fs (frontPage conf <.> "page") auth "Default front page" welcomecontents

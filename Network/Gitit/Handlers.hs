@@ -60,7 +60,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
-import Network.Gitit.Util (orIfNull)
+import Network.Gitit.Util (orIfNull, readFileUTF8)
 import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
@@ -69,14 +69,7 @@ import Control.Exception (throwIO, catch, try)
 import Data.ByteString.UTF8 (toString)
 import System.Time
 import System.FilePath
-import Prelude hiding (readFile, catch)
--- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
--- So we use System.IO.UTF8 only if we have an earlier version
-#if MIN_VERSION_base(4,2,0)
-import Prelude (readFile)
-#else
-import System.IO.UTF8
-#endif
+import Prelude hiding (catch)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
@@ -699,7 +692,7 @@ categoryPage = do
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   matches <- liftM catMaybes $
              forM pages $ \f ->
-               liftIO (readFile $ repoPath </> f) >>= \s ->
+               liftIO (readFileUTF8 $ repoPath </> f) >>= \s ->
                return $ if category `elem` (extractCategories s)
                            then Just $ dropExtension f
                            else Nothing
@@ -724,8 +717,8 @@ categoryListPage = do
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   categories <- liftIO $
                 liftM (nub . sort . concat) $
-                forM pages $
-                liftM extractCategories . (readFile . (repoPath </>))
+                forM pages $ \f ->
+                liftM extractCategories (readFileUTF8 (repoPath </> f))
   base' <- getWikiBase
   let toCatLink ctg = li <<
         [ anchor ! [href $ base' ++ "/_category" ++ urlForPage ctg] << ctg ]
