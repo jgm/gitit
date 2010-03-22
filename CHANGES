@@ -1,3 +1,8 @@
+Version 0.7.3.5 released 21 Mar 2010
+
+* Returned to using pandoc's MathML writer option.
+  This is fixed in pandoc 1.5.0.1. Depend on pandoc >= 1.5.0.1.
+
 Version 0.7.3.4 released 21 Mar 2010
 
 * Use custom readFileUTF8 (exported in Network.Gitit.Util) instead of
