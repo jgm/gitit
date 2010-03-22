@@ -16,7 +16,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Utility functions for Gitit.
 -}
 
-module Network.Gitit.Util ( inDir
+module Network.Gitit.Util ( readFileUTF8
+                          , inDir
                           , withTempDir
                           , orIfNull
                           , splitCategories
@@ -31,7 +32,15 @@ import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower)
+import Data.ByteString.Lazy.UTF8 (toString)
+import qualified Data.ByteString.Lazy as B
 import Network.Gitit.Types
+import Control.Monad (liftM)
+import Codec.Binary.UTF8.String (encodeString)
+
+-- | Read file as UTF-8 string.  Encode filename as UTF-8.
+readFileUTF8 :: FilePath -> IO String
+readFileUTF8 f = liftM toString $ B.readFile $ encodeString f
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a

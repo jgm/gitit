@@ -26,7 +26,7 @@ import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Shared (escapeStringUsing)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage)
-import Network.Gitit.Util (withTempDir)
+import Network.Gitit.Util (withTempDir, readFileUTF8)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Network.Gitit.Cache (cacheContents, lookupCache)
@@ -179,7 +179,7 @@ respondPDF page pndc = do
               case canary of
                   ExitSuccess   -> do pdfBS <- L.readFile (tempdir </> page <.> "pdf")
                                       return $ Right (useCache cfg, pdfBS)
-                  ExitFailure n -> do l <- readFile (tempdir </> page <.> "log")
+                  ExitFailure n -> do l <- readFileUTF8 (tempdir </> page <.> "log")
                                       return $ Left (n, l)
   case pdf' of
        Left (n,logOutput) -> simpleErrorHandler ("PDF creation failed with code: " ++

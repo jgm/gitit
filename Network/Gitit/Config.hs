@@ -28,7 +28,7 @@ import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
 import Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers)
-import Network.Gitit.Util (parsePageType)
+import Network.Gitit.Util (parsePageType, readFileUTF8)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import Data.ConfigFile hiding (readfile)
@@ -37,13 +37,6 @@ import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
--- Note: ghc >= 6.12 (base >=4.2) supports unicode through iconv
--- So we use System.IO.UTF8 only if we have an earlier version
-#if MIN_VERSION_base(4,2,0)
-#else
-import Prelude hiding (readFile)
-import System.IO.UTF8
-#endif
 import System.FilePath ((</>))
 import Text.Pandoc hiding (MathML)
 
@@ -62,7 +55,7 @@ readfile :: MonadError CPError m
           -> FilePath
           -> IO (m ConfigParser)
 readfile cp path' = do
-  contents <- readFile path'
+  contents <- readFileUTF8 path'
   return $ readstring cp contents
 
 extractConfig :: ConfigParser -> IO Config
@@ -112,7 +105,7 @@ extractConfig cp = do
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
       markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
-                            liftIO $ readFile markupHelpPath
+                            liftIO $ readFileUTF8 markupHelpPath
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
       let authMethod = map toLower cfAuthenticationMethod
@@ -235,7 +228,7 @@ getDefaultConfig = getDefaultConfigParser >>= extractConfig
 -- extensions, separated by spaces. Example: text/plain txt text
 readMimeTypesFile :: FilePath -> IO (M.Map String String)
 readMimeTypesFile f = catch
-  (liftM (foldr go M.empty . map words . lines) $ readFile f)
+  (liftM (foldr go M.empty . map words . lines) $ readFileUTF8 f)
   handleMimeTypesFileNotFound
      where go []     m = m  -- skip blank lines
            go (x:xs) m = foldr (\ext -> M.insert ext x) m xs
