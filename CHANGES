@@ -1,4 +1,20 @@
-Version 0.7.3.1 released 20 Mar 2010
+Version 0.7.3.3 released 21 Mar 2010
+
+* Reverted to handling math in MathML mode in the old way, using
+  a transform, rather than relying on pandoc's MathML writer option.
+  The latter was causing amazing CPU and memory usage, for reasons
+  I don't yet understand.  This should fix the problem for now.
+
+* Fixed caching for unicode page names.
+
+* Added max-page-size config option. Thanks to Jinjing Wang for the patch.
+
+* Prevented _expire/ from failing if the page is not cached.
+
+* Fixed URL encoding for pages. (Note: Don't use + for spaces;
+  that breaks the Ctrl-R cache expiration.)
+
+Version 0.7.3.2 released 20 Mar 2010
 
 * Fixed editing of pages when max-upload-size=0.
   max-upload-size should not double as max-page-size.
