@@ -80,7 +80,6 @@ import Network.Gitit.Cache (lookupCache, cacheContents)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
 import Text.Pandoc hiding (MathML)
-import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.Highlighting.Kate
@@ -90,6 +89,8 @@ import Control.Monad.State
 import Control.Exception (throwIO, catch)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
+import Text.XML.Light
+import Text.TeXMath
 
 --
 -- ContentTransformer runners
@@ -334,15 +335,11 @@ pandocToHtml pandocContents = do
   base' <- lift getWikiBase
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
-  cfg <- lift getConfig
   return $ writeHtml defaultWriterOptions{
                         writerStandalone = True
                       , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
-                      , writerHTMLMathMethod =
-                            case mathMethod cfg of
-                                 MathML -> Pandoc.MathML Nothing
-                                 _      -> JsMath (Just $ base' ++
-                                                      "/js/jsMath/easy/load.js")
+                      , writerHTMLMathMethod = JsMath
+                               (Just $ base' ++ "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
                       , writerLiterateHaskell = bird
                       -- note: javascript obfuscation gives problems on preview
@@ -402,7 +399,12 @@ applyTransform inp transform = do
 applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
 applyPageTransforms c = do
   xforms <- getPageTransforms
-  foldM applyTransform c (wikiLinksTransform : xforms)
+  cfg <- lift getConfig
+  params <- getParams
+  let xforms' = case mathMethod cfg of
+                      MathML -> mathMLTransform (pFormat params) : xforms
+                      _      -> xforms
+  foldM applyTransform c (wikiLinksTransform : xforms')
 
 -- | Applies all the pre-parse transform plugins to a Page object.
 applyPreParseTransforms :: Page -> ContentTransformer Page
@@ -444,7 +446,9 @@ addMathSupport c = do
   updateLayout $ \l ->
     case mathMethod conf of
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
-         MathML       -> addScripts l ["MathMLinHTML.js"]
+         -- for MathML, the script is added by mathMLTransform, only
+         -- if the page contains math:
+         MathML       -> l
          RawTeX       -> l
   return c
 
@@ -502,6 +506,28 @@ convertWikiLinks :: Inline -> Inline
 convertWikiLinks (Link ref ("", "")) =
   Link ref (inlinesToURL ref, "Go to wiki page")
 convertWikiLinks x = x
+
+mathMLTransform :: String -> Pandoc -> PluginM Pandoc
+mathMLTransform format inp | format `elem` ["","S5"] = do
+  let (Pandoc m blks, mathUsed) = runState (processWithM convertTeXMathToMathML inp) False
+  let scriptLink = RawHtml "<script type=\"text/javascript\" src=\"/js/MathMLinHTML.js\"></script>"
+  let blks' = if mathUsed
+                 then blks ++ [scriptLink]
+                 else blks
+  return $ Pandoc m blks'
+mathMLTransform _ inp = return inp
+
+-- | Convert math to MathML.  We put this in a Writer monad
+-- to keep track of whether we've actually got any MathML; if not,
+-- we can avoid linking a script.
+convertTeXMathToMathML :: Inline -> State Bool Inline
+convertTeXMathToMathML (Math t x) = do
+  case texMathToMathML t' x of
+       Left _  -> return $ Math t x
+       Right v -> put True >> return (HtmlInline $ showXml v)
+    where t' = if t == DisplayMath then DisplayBlock else DisplayInline
+          showXml = ppcElement (useShortEmptyTags (const False) defaultConfigPP)
+convertTeXMathToMathML x = return x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
