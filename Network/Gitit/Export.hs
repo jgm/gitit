@@ -114,7 +114,7 @@ respondMediaWiki = respondX "mediawiki" "text/plain; charset=utf-8" ""
   writeMediaWiki defaultRespOptions
 
 respondODT :: Config -> String -> Pandoc -> Handler
-respondODT cfg page doc = do
+respondODT cfg page old_doc = fixURLs old_doc >>= \doc -> do
   template' <- liftIO $ getDefaultTemplate (pandocUserData cfg)  "odt"
   template <-  case template' of
                   Right t  -> return t
@@ -147,7 +147,7 @@ runShellCommand workingDir environment command optionList = do
   return status
 
 respondPDF :: String -> Pandoc -> Handler
-respondPDF page pndc = do
+respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export disabled"
   let cacheName = pathForPage page ++ ".export.pdf"
@@ -189,6 +189,26 @@ respondPDF page pndc = do
                  cacheContents cacheName $ B.concat . L.toChunks $ pdfBS
               ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
                         (toResponse noHtml) {rsBody = pdfBS}
+
+-- | When we create a PDF or ODT from a Gitit page, we need to fix the URLs of any
+-- images on the page. Those URLs will often be relative to the staticDir, but the
+-- PDF or ODT processor only understands paths relative to the working directory.
+--
+-- Because the working directory will not in general be the root of the gitit instance
+-- at the time the Pandoc is fed to e.g. pdflatex, this function replaces the URLs of
+-- images in the staticDir with their correct absolute file path.
+fixURLs :: Pandoc -> GititServerPart Pandoc
+fixURLs pndc = do
+    curdir <- liftIO getCurrentDirectory
+    cfg <- getConfig
+    
+    let go (Image ils (url, title)) = Image ils (fixURL url, title)
+        go x                        = x
+        
+        fixURL ('/':url) = curdir </> staticDir cfg </> url
+        fixURL url       = url
+    
+    return $ processWith go pndc
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg
