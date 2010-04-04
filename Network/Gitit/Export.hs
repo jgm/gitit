@@ -124,7 +124,7 @@ respondODT cfg page old_doc = fixURLs old_doc >>= \doc -> do
                 doc
   conf <- getConfig
   contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
-                let tempfile = tempdir </> page <.> "odt"
+                let tempfile = tempdir </> "export" <.> "odt"
                 saveOpenDocumentAsODT (pandocUserData cfg) 
                    tempfile (repositoryPath conf) Nothing openDoc
                 L.readFile tempfile
@@ -162,7 +162,7 @@ respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
               let toc = tableOfContents cfg
               let latex = writeLaTeX defaultRespOptions{writerTemplate = template
                                                        ,writerTableOfContents = toc} pndc
-              let tempfile = page <.> "tex"
+              let tempfile = "export" <.> "tex"
               curdir <- getCurrentDirectory
               setCurrentDirectory tempdir
               writeFile tempfile latex
@@ -177,9 +177,9 @@ respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
               canary <- runShellCommand tempdir env cmd opts
               setCurrentDirectory curdir -- restore original location
               case canary of
-                  ExitSuccess   -> do pdfBS <- L.readFile (tempdir </> page <.> "pdf")
+                  ExitSuccess   -> do pdfBS <- L.readFile (tempdir </> "export" <.> "pdf")
                                       return $ Right (useCache cfg, pdfBS)
-                  ExitFailure n -> do l <- readFileUTF8 (tempdir </> page <.> "log")
+                  ExitFailure n -> do l <- readFileUTF8 (tempdir </> "export" <.> "log")
                                       return $ Left (n, l)
   case pdf' of
        Left (n,logOutput) -> simpleErrorHandler ("PDF creation failed with code: " ++
