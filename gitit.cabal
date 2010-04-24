@@ -111,7 +111,7 @@ Library
 Executable           gitit
   hs-source-dirs:    .
   main-is:           gitit.hs
-  build-depends:     base >=3 && < 5, parsec < 3, pretty, xhtml, containers,
+  build-depends:     base >=3 && < 5, parsec, pretty, xhtml, containers,
                      pandoc >= 1.5, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate >= 0.2.6, bytestring,
                      utf8-string >= 0.3 && < 0.4,
