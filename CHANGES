@@ -1,3 +1,18 @@
+Version 0.7.3.6 released 05 May 2010
+
+* Fixed ODT/PDF export for files in subdirectories.  Resolves Issue #81.
+
+* Fix image URLs before calling the ODT or PDF processors
+
+* Added plain text export format.
+
+* Raised upper bound for datetime, parsec, and happstack dependencies.
+
+* Fix wikilinks to they don't get a leading slash.
+  This reverts a bug introduced by 2128afb070b7, which added leading
+  slashes to wikilinks, breaking them for people using gitit as a
+  library on a path other than /.
+
 Version 0.7.3.5 released 21 Mar 2010
 
 * Returned to using pandoc's MathML writer option.
