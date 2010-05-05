@@ -90,6 +90,8 @@ import Control.Monad.State
 import Control.Exception (throwIO, catch)
 import qualified Data.ByteString as S (concat) 
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
+import Network.URL (encString)
+import Network.URI (isUnescapedInURI)
 
 --
 -- ContentTransformer runners
@@ -505,7 +507,7 @@ convertWikiLinks x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
-inlinesToURL = urlForPage . inlinesToString
+inlinesToURL = encString False isUnescapedInURI . inlinesToString
 
 -- | Convert a list of inlines into a string.
 inlinesToString :: [Inline] -> String
