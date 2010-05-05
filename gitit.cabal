@@ -112,7 +112,7 @@ Executable           gitit
   hs-source-dirs:    .
   main-is:           gitit.hs
   build-depends:     base >=3 && < 5, parsec, pretty, xhtml, containers,
-                     pandoc >= 1.5, process, filepath, directory, mtl, cgi,
+                     pandoc >= 1.5.1, process, filepath, directory, mtl, cgi,
                      network, old-time, highlighting-kate >= 0.2.6, bytestring,
                      utf8-string >= 0.3 && < 0.4,
                      SHA > 1 && < 1.5, HTTP >= 4000.0 && < 4000.1,
