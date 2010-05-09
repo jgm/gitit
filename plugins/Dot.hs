@@ -32,11 +32,11 @@ transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classe
                                 Just fn   -> ([Str fn], fn ++ ".png")
                                 Nothing   -> ([], uniqueName contents ++ ".png")
   liftIO $ do
-    (ec, out, err) <- readProcessWithExitCode "dot" ["-Tpng"] contents
+    (ec, _out, err) <- readProcessWithExitCode "dot" ["-Tpng", "-o",
+                         staticDir cfg </> "img" </> outfile] contents
     if ec == ExitSuccess
-       then writeFile (staticDir cfg </> "img" </> outfile) out
+       then return $ Para [Image name ("/img" </> outfile, "")]
        else error $ "dot returned an error status: " ++ err
-  return $ Para [Image name ("/img" </> outfile, "")]
 transformBlock x = return x
 
 -- | Generate a unique filename given the file's contents.
