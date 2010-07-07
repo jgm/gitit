@@ -11,7 +11,7 @@ By: Gwern Branwen; placed in the public domain -}
 
 module WebArchiver (plugin) where
 
-import Control.Concurrent (forkIO, ThreadId)
+import Control.Concurrent (forkIO)
 import Control.Monad (when)
 import Control.Monad.Trans (MonadIO)
 import Data.Maybe (fromJust)
@@ -36,15 +36,15 @@ archivePage x = do mbUser <- askUser
                    return x -- note: this is read-only - don't actually change page!
 
 archiveLinks :: String -> Inline -> IO Inline
-archiveLinks e x@(Link _ (uln, _)) = checkArchive e uln >> return x
+archiveLinks e x@(Link _ (uln, _)) = forkIO (checkArchive e uln) >> return x
 archiveLinks _ x                   = return x
 
 -- | Error check the URL and then archive it both ways
 checkArchive :: (MonadIO m) => String -> String -> m ()
 checkArchive email url = when (isURI url) $ liftIO (webciteArchive email url >> alexaArchive url)
 
-webciteArchive :: String -> String -> IO ThreadId
-webciteArchive email url = forkIO (ignore $ openURL ("http://www.webcitation.org/archive?url=" ++ url ++ "&email=" ++ email))
+webciteArchive :: String -> String -> IO ()
+webciteArchive email url = ignore $ openURL ("http://www.webcitation.org/archive?url=" ++ url ++ "&email=" ++ email)
    where openURL = simpleHTTP . getRequest
          ignore = fmap $ const ()
 
