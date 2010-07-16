@@ -44,7 +44,7 @@ data PageType = Markdown | RST | LaTeX | HTML
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
 
-data MathMethod = MathML | JsMathScript | RawTeX
+data MathMethod = MathML | JsMathScript | WebTeX String | RawTeX
                   deriving (Read, Show, Eq)
 
 -- | Data structure for information read from config file.

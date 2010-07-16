@@ -79,7 +79,7 @@ import Network.Gitit.Page (stringToPage)
 import Network.Gitit.Cache (lookupCache, cacheContents)
 import qualified Data.FileStore as FS
 import Data.Maybe (mapMaybe)
-import Text.Pandoc hiding (MathML)
+import Text.Pandoc hiding (MathML, WebTeX)
 import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
@@ -343,6 +343,7 @@ pandocToHtml pandocContents = do
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML Nothing
+                                 WebTeX u -> Pandoc.WebTeX u
                                  _      -> JsMath (Just $ base' ++
                                                       "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
@@ -447,6 +448,7 @@ addMathSupport c = do
     case mathMethod conf of
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
          MathML       -> addScripts l ["MathMLinHTML.js"]
+         WebTeX       -> l
          RawTeX       -> l
   return c
 
