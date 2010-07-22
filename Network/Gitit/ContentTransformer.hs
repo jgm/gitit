@@ -448,7 +448,7 @@ addMathSupport c = do
     case mathMethod conf of
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
          MathML       -> addScripts l ["MathMLinHTML.js"]
-         WebTeX       -> l
+         WebTeX _     -> l
          RawTeX       -> l
   return c
 
