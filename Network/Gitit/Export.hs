@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc
 import Text.Pandoc.Writers.S5 (s5HeaderIncludes)
-import Text.Pandoc.ODT (saveOpenDocumentAsODT)
 import Text.Pandoc.Shared (escapeStringUsing)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage)
@@ -35,6 +34,7 @@ import Control.Monad (unless, when)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
+import Data.ByteString.Lazy.UTF8 (fromString)
 import System.FilePath ((<.>), (</>))
 import Control.Exception (throwIO)
 import System.Environment (getEnvironment)
@@ -49,15 +49,17 @@ defaultRespOptions = defaultWriterOptions { writerStandalone = True }
 
 respond :: String
         -> String
-        -> (Pandoc -> String)
+        -> (Pandoc -> IO L.ByteString)
         -> String
         -> Pandoc
         -> Handler
-respond mimetype ext fn page = ok . setContentType mimetype .
+respond mimetype ext fn page doc = liftIO (fn doc) >>=
+  ok . setContentType mimetype .
   (if null ext then id else setFilename (page ++ "." ++ ext)) .
-  toResponse . fn
+  toResponseBS (B.empty)
 
-respondX :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
+respondX :: String -> String -> String
+          -> (WriterOptions -> Pandoc -> IO L.ByteString)
           -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
   cfg <- getConfig
@@ -67,73 +69,76 @@ respondX templ mimetype ext fn opts page doc = do
                   Left e   -> liftIO $ throwIO e
   respond mimetype ext (fn opts{writerTemplate = template}) page doc 
 
+respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
+          -> WriterOptions -> String -> Pandoc -> Handler
+respondS templ mimetype ext fn =
+  respondX templ mimetype ext (\o d -> return $ fromString $ fn o d)
+
 respondLaTeX :: String -> Pandoc -> Handler
-respondLaTeX = respondX "latex" "application/x-latex" "tex"
+respondLaTeX = respondS "latex" "application/x-latex" "tex"
   writeLaTeX defaultRespOptions
 
 respondConTeXt :: String -> Pandoc -> Handler
-respondConTeXt = respondX "context" "application/x-context" "tex"
+respondConTeXt = respondS "context" "application/x-context" "tex"
   writeConTeXt defaultRespOptions
 
 
 respondRTF :: String -> Pandoc -> Handler
-respondRTF = respondX "rtf" "application/rtf" "rtf"
+respondRTF = respondS "rtf" "application/rtf" "rtf"
   writeRTF defaultRespOptions
 
 respondRST :: String -> Pandoc -> Handler
-respondRST = respondX "rst" "text/plain; charset=utf-8" ""
+respondRST = respondS "rst" "text/plain; charset=utf-8" ""
   writeRST defaultRespOptions{writerReferenceLinks = True}
 
 respondMarkdown :: String -> Pandoc -> Handler
-respondMarkdown = respondX "markdown" "text/plain; charset=utf-8" ""
+respondMarkdown = respondS "markdown" "text/plain; charset=utf-8" ""
   writeMarkdown defaultRespOptions{writerReferenceLinks = True}
 
 respondPlain :: String -> Pandoc -> Handler
-respondPlain = respondX "plain" "text/plain; charset=utf-8" ""
+respondPlain = respondS "plain" "text/plain; charset=utf-8" ""
   writePlain defaultRespOptions
 
 respondMan :: String -> Pandoc -> Handler
-respondMan = respondX "man" "text/plain; charset=utf-8" ""
+respondMan = respondS "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
 
-respondS5 :: Config -> String -> Pandoc -> Handler
-respondS5 cfg pg doc = do
+respondS5 :: String -> Pandoc -> Handler
+respondS5 pg doc = do
+  cfg <- getConfig
   inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
-  respondX "s5" "text/html; charset=utf-8" ""
+  respondS "s5" "text/html; charset=utf-8" ""
     writeS5String
-    defaultRespOptions{writerS5 = True, writerIncremental = True,
+    defaultRespOptions{writerSlideVariant = S5Slides, writerIncremental = True,
                        writerVariables = [("header-includes",inc)]}
     pg doc
 
 respondTexinfo :: String -> Pandoc -> Handler
-respondTexinfo = respondX "texinfo" "application/x-texinfo" "texi"
+respondTexinfo = respondS "texinfo" "application/x-texinfo" "texi"
   writeTexinfo defaultRespOptions
 
 respondDocbook :: String -> Pandoc -> Handler
-respondDocbook = respondX "docbook" "application/docbook+xml" "xml"
+respondDocbook = respondS "docbook" "application/docbook+xml" "xml"
   writeDocbook defaultRespOptions
 
 respondMediaWiki :: String -> Pandoc -> Handler
-respondMediaWiki = respondX "mediawiki" "text/plain; charset=utf-8" ""
+respondMediaWiki = respondS "mediawiki" "text/plain; charset=utf-8" ""
   writeMediaWiki defaultRespOptions
 
-respondODT :: Config -> String -> Pandoc -> Handler
-respondODT cfg page old_doc = fixURLs old_doc >>= \doc -> do
-  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg)  "odt"
-  template <-  case template' of
+respondODT :: String -> Pandoc -> Handler
+respondODT page doc = do
+  cfg <- getConfig
+  doc' <- fixURLs doc
+  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "opendocument"
+  template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
-  let openDoc = writeOpenDocument
-                defaultRespOptions{writerTemplate = template}
-                doc
-  conf <- getConfig
-  contents <- liftIO $ withTempDir "gitit-temp-odt" $ \tempdir -> do
-                let tempfile = tempdir </> "export" <.> "odt"
-                saveOpenDocumentAsODT (pandocUserData cfg) 
-                   tempfile (repositoryPath conf) Nothing openDoc
-                L.readFile tempfile
-  ok $ setContentType "application/vnd.oasis.opendocument.text" $
-       setFilename (page ++ ".odt") $ (toResponse noHtml) {rsBody = contents}
+  respondX "opendocument" "application/vnd.oasis.opendocument.text" "odt"
+    (writeODT Nothing) defaultRespOptions{
+                         writerSourceDirectory = repositoryPath cfg
+                       , writerUserDataDir = pandocUserData cfg
+                       , writerTemplate = template
+                       } page doc'
 
 -- | Run shell command and return error status.  Assumes
 -- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
@@ -227,6 +232,6 @@ exportFormats cfg = if pdfExport cfg
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
                 , ("DocBook",   respondDocbook)
-                , ("S5",        respondS5 cfg)
-                , ("ODT",       respondODT cfg )
+                , ("S5",        respondS5)
+                , ("ODT",       respondODT)
                 , ("RTF",       respondRTF) ]
