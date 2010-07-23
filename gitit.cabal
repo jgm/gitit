@@ -113,7 +113,7 @@ Executable           gitit
   main-is:           gitit.hs
   build-depends:     base >=3 && < 5, parsec, pretty, xhtml, containers,
                      pandoc >= 1.6, process, filepath, directory, mtl, cgi,
-                     network, old-time, highlighting-kate >= 0.2.6, bytestring,
+                     network, old-time, highlighting-kate >= 0.2.7.1, bytestring,
                      utf8-string >= 0.3 && < 0.4,
                      SHA > 1 && < 1.5, HTTP >= 4000.0 && < 4000.1,
                      HStringTemplate >= 0.6 && < 0.7, random,
