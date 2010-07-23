@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc
-import Text.Pandoc.Writers.S5 (s5HeaderIncludes)
+import Text.Pandoc.S5 (s5HeaderIncludes)
 import Text.Pandoc.Shared (escapeStringUsing)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage)
@@ -114,10 +114,10 @@ respondS5 pg doc = do
   cfg <- getConfig
   inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
   respondS "s5" "text/html; charset=utf-8" ""
-    writeS5String
+    writeHtmlString
     defaultRespOptions{writerSlideVariant = S5Slides
                       ,writerIncremental = True,
-                       writerVariables = [("header-includes",inc)]}
+                       writerVariables = [("s5includes",inc)]}
     pg doc
 
 respondSlidy :: String -> Pandoc -> Handler
