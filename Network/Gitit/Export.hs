@@ -115,8 +115,17 @@ respondS5 pg doc = do
   inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
   respondS "s5" "text/html; charset=utf-8" ""
     writeS5String
-    defaultRespOptions{writerSlideVariant = S5Slides, writerIncremental = True,
+    defaultRespOptions{writerSlideVariant = S5Slides
+                      ,writerIncremental = True,
                        writerVariables = [("header-includes",inc)]}
+    pg doc
+
+respondSlidy :: String -> Pandoc -> Handler
+respondSlidy pg doc = do
+  respondS "slidy" "text/html; charset=utf-8" ""
+    writeHtmlString
+    defaultRespOptions{writerSlideVariant = SlidySlides
+                      ,writerIncremental = True}
     pg doc
 
 respondTexinfo :: String -> Pandoc -> Handler
@@ -231,6 +240,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
                 , ("DocBook",   respondDocbook)
+                , ("Slidy",     respondSlidy)
                 , ("S5",        respondS5)
                 , ("ODT",       respondODT)
                 , ("EPUB",      respondEPUB)
