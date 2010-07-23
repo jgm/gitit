@@ -67,7 +67,13 @@ respondX templ mimetype ext fn opts page doc = do
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
-  respond mimetype ext (fn opts{writerTemplate = template}) page doc 
+  doc' <- if ext `elem` ["odt","pdf","epub"]
+             then fixURLs doc
+             else return doc
+  respond mimetype ext (fn opts{writerTemplate = template
+                               ,writerSourceDirectory = repositoryPath cfg
+                               ,writerUserDataDir = pandocUserData cfg})
+          page doc'
 
 respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
           -> WriterOptions -> String -> Pandoc -> Handler
@@ -126,19 +132,12 @@ respondMediaWiki = respondS "mediawiki" "text/plain; charset=utf-8" ""
   writeMediaWiki defaultRespOptions
 
 respondODT :: String -> Pandoc -> Handler
-respondODT page doc = do
-  cfg <- getConfig
-  doc' <- fixURLs doc
-  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "opendocument"
-  template <- case template' of
-                  Right t  -> return t
-                  Left e   -> liftIO $ throwIO e
-  respondX "opendocument" "application/vnd.oasis.opendocument.text" "odt"
-    (writeODT Nothing) defaultRespOptions{
-                         writerSourceDirectory = repositoryPath cfg
-                       , writerUserDataDir = pandocUserData cfg
-                       , writerTemplate = template
-                       } page doc'
+respondODT = respondX "opendocument" "application/vnd.oasis.opendocument.text"
+              "odt" (writeODT Nothing) defaultRespOptions
+
+respondEPUB :: String -> Pandoc -> Handler
+respondEPUB = respondX "html" "application/epub+zip" "epub" (writeEPUB Nothing)
+               defaultRespOptions
 
 -- | Run shell command and return error status.  Assumes
 -- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
@@ -234,4 +233,5 @@ exportFormats cfg = if pdfExport cfg
                 , ("DocBook",   respondDocbook)
                 , ("S5",        respondS5)
                 , ("ODT",       respondODT)
+                , ("EPUB",      respondEPUB)
                 , ("RTF",       respondRTF) ]
