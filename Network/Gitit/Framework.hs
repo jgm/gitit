@@ -66,8 +66,8 @@ import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Maybe (fromJust)
-import Data.List (intercalate, isPrefixOf, isInfixOf, (\\))
-import System.FilePath ((<.>), takeExtension)
+import Data.List (intercalate, isPrefixOf, isInfixOf)
+import System.FilePath ((<.>), takeExtension, takeFileName)
 import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
@@ -265,8 +265,7 @@ isDiscussPageFile _ = False
 
 isSourceCode :: String -> Bool
 isSourceCode path' =
-  let ext   = map toLower $ takeExtension path'
-      langs = languagesByExtension ext \\ ["Postscript"]
+  let langs = languagesByFilename $ takeFileName path'
   in  not . null $ langs
 
 -- | Returns encoded URL path for the page with the given name, relative to
