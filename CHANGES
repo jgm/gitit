@@ -1,3 +1,21 @@
+Version 0.7.3.7 released 24 July 2010
+
+* Depend on pandoc >= 1.6, highlighting-kate >= 0.2.7.1
+
+* Added epub and slidy export formats.
+
+* Require happstack >= 0.5.
+
+* Added google math option (uses google charts api).
+  Slightly modified from a patch by lpeterse.
+
+* Made WebArchiver plugin more parallel (gwern).
+
+* Fixed Dot plugin to work with GHC 6.12.
+  We were having string encoding issues reading the output
+  of dot with readProcess. Solution is to pass dot an output
+  filename so we don't have to read its output.
+
 Version 0.7.3.6 released 05 May 2010
 
 * Fixed ODT/PDF export for files in subdirectories.  Resolves Issue #81.
