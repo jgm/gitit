@@ -1,3 +1,9 @@
+Version 0.7.3.8 released 24 July 2010
+
+* Fixed MathML in Slidy and S5 exports.
+
+* Use languagesByFilename instead of languagesByExtension in isSource.
+
 Version 0.7.3.7 released 24 July 2010
 
 * Depend on pandoc >= 1.6, highlighting-kate >= 0.2.7.1
