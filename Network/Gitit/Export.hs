@@ -20,11 +20,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Export ( exportFormats ) where
-import Text.Pandoc
+import Text.Pandoc hiding (HTMLMathMethod(..))
+import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.S5 (s5HeaderIncludes)
-import Text.Pandoc.Shared (escapeStringUsing)
+import Text.Pandoc.Shared (escapeStringUsing, readDataFile)
 import Network.Gitit.Server
-import Network.Gitit.Framework (pathForPage)
+import Network.Gitit.Framework (pathForPage, getWikiBase)
 import Network.Gitit.Util (withTempDir, readFileUTF8)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
@@ -112,20 +113,50 @@ respondMan = respondS "man" "text/plain; charset=utf-8" ""
 respondS5 :: String -> Pandoc -> Handler
 respondS5 pg doc = do
   cfg <- getConfig
+  base' <- getWikiBase
   inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
+  let math = case mathMethod cfg of
+                 MathML       -> Pandoc.MathML Nothing
+                 WebTeX u     -> Pandoc.WebTeX u
+                 JsMathScript -> Pandoc.JsMath
+                                  (Just $ base' ++ "/js/jsMath/easy/load.js")
+                 _            -> Pandoc.PlainMath
+  variables' <- if mathMethod cfg == MathML
+                   then do
+                      s <- liftIO $ readDataFile (pandocUserData cfg) $
+                                "data"</>"MathMLinHTML.js"
+                      return [("mathml-script", s),("s5includes",inc)]
+                   else return [("s5includes",inc)]
   respondS "s5" "text/html; charset=utf-8" ""
     writeHtmlString
     defaultRespOptions{writerSlideVariant = S5Slides
-                      ,writerIncremental = True,
-                       writerVariables = [("s5includes",inc)]}
+                      ,writerIncremental = True
+                      ,writerVariables = variables'
+                      ,writerHTMLMathMethod = math}
     pg doc
 
 respondSlidy :: String -> Pandoc -> Handler
 respondSlidy pg doc = do
+  cfg <- getConfig
+  base' <- getWikiBase
+  let math = case mathMethod cfg of
+                 MathML       -> Pandoc.MathML Nothing
+                 WebTeX u     -> Pandoc.WebTeX u
+                 JsMathScript -> Pandoc.JsMath
+                                  (Just $ base' ++ "/js/jsMath/easy/load.js")
+                 _            -> Pandoc.PlainMath
+  variables' <- if mathMethod cfg == MathML
+                   then do
+                      s <- liftIO $ readDataFile (pandocUserData cfg) $
+                                "data"</>"MathMLinHTML.js"
+                      return [("mathml-script", s)]
+                   else return []
   respondS "slidy" "text/html; charset=utf-8" ""
     writeHtmlString
     defaultRespOptions{writerSlideVariant = SlidySlides
-                      ,writerIncremental = True}
+                      ,writerIncremental = True
+                      ,writerHTMLMathMethod = math
+                      ,writerVariables = variables'}
     pg doc
 
 respondTexinfo :: String -> Pandoc -> Handler
