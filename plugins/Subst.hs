@@ -6,7 +6,8 @@
 
 module Subst (plugin) where
 
-import Data.FileStore (retrieve)
+import Control.Monad.CatchIO (try)
+import Data.FileStore (FileStoreError, retrieve)
 import Text.Pandoc (defaultParserState, readMarkdown)
 import Network.Gitit.ContentTransformer (inlinesToString)
 import Network.Gitit.Interface
@@ -16,12 +17,17 @@ plugin :: Plugin
 plugin = mkPageTransformM substituteIntoBlock
 
 substituteIntoBlock :: [Block] -> PluginM [Block]
-substituteIntoBlock (Para (Link ref ("!subst", _):_ ):xs) = 
-     do let target = inlinesToString ref ++ ".page"
+substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) = 
+     do let target = inlinesToString ref 
         cfg <- askConfig
         let fs = filestoreFromConfig cfg
-        article <- liftIO (retrieve fs target Nothing)
-        let (Pandoc _ content) = readMarkdown defaultParserState article
-        (content ++) `fmap` substituteIntoBlock xs
+        article <- try $ liftIO (retrieve fs (target ++ ".page") Nothing) 
+        case article :: Either FileStoreError String of
+          Left  _    -> let txt = Str ("[" ++ target ++ "](!subst)")
+                            alt = "'" ++ target ++ "' doesn't exist. Click here to create it."
+                            lnk = Para [Link [txt] (target,alt)]
+                        in  (lnk :) `fmap` substituteIntoBlock xs
+          Right a    -> let (Pandoc _ content) = readMarkdown defaultParserState a
+                        in  (content ++) `fmap` substituteIntoBlock xs
 substituteIntoBlock (x:xs) = (x:) `fmap` substituteIntoBlock xs
 substituteIntoBlock [] = return []
