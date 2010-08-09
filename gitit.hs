@@ -32,6 +32,8 @@ import System.Environment
 import System.Exit
 import System.IO (stderr)
 import System.Console.GetOpt
+import Network.Socket hiding (Debug)
+import Network.URI
 import Data.Version (showVersion)
 import qualified Data.ByteString as B
 import Data.ByteString.UTF8 (fromString)
@@ -76,8 +78,15 @@ main = do
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf' }
 
+  -- open the requested interface
+  sock <- socket AF_INET Stream defaultProtocol
+  setSocketOption sock ReuseAddr 1
+  device <- inet_addr (getListenOrDefault opts)
+  bindSocket sock (SockAddrInet (toEnum (portNumber conf')) device)
+  listen sock 10
+
   -- start the server
-  simpleHTTP serverConf $ msum [ wiki conf'
+  simpleHTTPWithSocket sock serverConf $ msum [ wiki conf'
                                , dir "_reloadTemplates" reloadTemplates
                                ]
 
@@ -85,6 +94,7 @@ data Opt
     = Help
     | ConfigFile FilePath
     | Port Int
+	| Listen String
     | Debug
     | Version
     | PrintDefaultConfig
@@ -98,6 +108,8 @@ flags =
         "Print version information"
    , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
         "Specify port"
+   , Option ['l'] ["listen"] (ReqArg (Listen . checkListen) "INTERFACE")
+        "Specify interface to listen on"
    , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
         "Print default configuration"
    , Option [] ["debug"] (NoArg Debug)
@@ -105,6 +117,16 @@ flags =
    , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
         "Specify configuration file"
    ]
+
+checkListen :: String -> String
+checkListen l | isIPv6address l = l
+              | isIPv4address l = l
+			  | otherwise         = error "Gitit.checkListen: Not a valid interface name"
+
+getListenOrDefault :: [Opt] -> String
+getListenOrDefault [] = "127.0.0.1"
+getListenOrDefault ((Listen l):_) = l
+getListenOrDefault (_:os) = getListenOrDefault os
 
 parseArgs :: [String] -> IO [Opt]
 parseArgs argv = do
@@ -139,6 +161,7 @@ handleFlag conf opt = do
     Debug              -> return conf{ debugMode = True }
     Port p             -> return conf{ portNumber = p }
     ConfigFile fname   -> getConfigFromFile fname
+    Listen _           -> return conf
 
 putErr :: ExitCode -> String -> IO a
 putErr c s = B.hPutStrLn stderr (fromString s) >> exitWith c
