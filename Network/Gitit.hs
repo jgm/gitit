@@ -100,6 +100,7 @@ module Network.Gitit (
                      , module Network.Gitit.Framework
                      , module Network.Gitit.Layout
                      , module Network.Gitit.ContentTransformer
+                     , module Network.Gitit.Page
                      , getFileStore
                      , getUser
                      , getConfig
@@ -117,6 +118,7 @@ import Network.Gitit.Layout
 import Network.Gitit.State
         (getFileStore, getUser, getConfig, queryGititState, updateGititState)
 import Network.Gitit.ContentTransformer
+import Network.Gitit.Page
 import Network.Gitit.Authentication (loginUserForm)
 import Paths_gitit (getDataFileName)
 import Control.Monad.Reader
