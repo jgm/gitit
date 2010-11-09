@@ -14,11 +14,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     history.cpp \
     commit.cpp \
-    currentuserinfo.cpp
+    currentuserinfo.cpp \
+    gitstatusmodel.cpp
 
 HEADERS  += mainwindow.h \
     history.h \
     commit.h \
-    currentuserinfo.h
+    currentuserinfo.h \
+    gitstatusmodel.h
 
 FORMS    += mainwindow.ui
