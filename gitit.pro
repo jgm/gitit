@@ -11,8 +11,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    history.cpp \
+    commit.cpp \
+    currentuserinfo.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    history.h \
+    commit.h \
+    currentuserinfo.h
 
 FORMS    += mainwindow.ui
