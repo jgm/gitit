@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+class GitStatusModel;
 namespace Ui {
     class MainWindow;
 }
@@ -17,6 +17,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    GitStatusModel* gitStatusModel;
+
 };
 
 #endif // MAINWINDOW_H

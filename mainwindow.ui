@@ -20,13 +20,13 @@
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
           <string>Local Workspace</string>
          </attribute>
-         <widget class="QListView" name="listView">
+         <widget class="QListView" name="changedFileslistView">
           <property name="geometry">
            <rect>
             <x>50</x>
@@ -202,8 +202,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -295,8 +295,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>379</height>
+             <width>267</width>
+             <height>377</height>
             </rect>
            </property>
           </widget>
@@ -340,7 +340,7 @@
      <x>0</x>
      <y>0</y>
      <width>735</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
