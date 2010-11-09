@@ -11,16 +11,19 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+    mainwindow.cpp \
     history.cpp \
     commit.cpp \
     currentuserinfo.cpp \
-    gitstatusmodel.cpp
+    gitstatusmodel.cpp \
+    configure.cpp
 
 HEADERS  += mainwindow.h \
     history.h \
     commit.h \
     currentuserinfo.h \
-    gitstatusmodel.h
+    gitstatusmodel.h \
+    configure.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+            configure.ui

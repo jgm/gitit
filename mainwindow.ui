@@ -20,7 +20,7 @@
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="currentIndex">
-         <number>2</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
@@ -33,16 +33,6 @@
             <y>130</y>
             <width>71</width>
             <height>71</height>
-           </rect>
-          </property>
-         </widget>
-         <widget class="QListWidget" name="listWidget">
-          <property name="geometry">
-           <rect>
-            <x>260</x>
-            <y>40</y>
-            <width>121</width>
-            <height>111</height>
            </rect>
           </property>
          </widget>
@@ -180,17 +170,14 @@
            </rect>
           </property>
          </widget>
-         <widget class="QLabel" name="label_8">
+         <widget class="QListView" name="listView_3">
           <property name="geometry">
            <rect>
-            <x>130</x>
-            <y>120</y>
-            <width>62</width>
-            <height>16</height>
+            <x>230</x>
+            <y>20</y>
+            <width>161</width>
+            <height>131</height>
            </rect>
-          </property>
-          <property name="text">
-           <string/>
           </property>
          </widget>
         </widget>
