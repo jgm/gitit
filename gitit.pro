@@ -27,3 +27,5 @@ HEADERS  += mainwindow.h \
 
 FORMS    += mainwindow.ui \
             configure.ui
+
+ICON = gitit.icns
