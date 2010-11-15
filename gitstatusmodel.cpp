@@ -1,4 +1,6 @@
 #include "gitstatusmodel.h"
+#include <QDebug>
+
 
 GitStatusModel::GitStatusModel(QObject *parent) :
     QAbstractListModel(parent)
@@ -8,7 +10,8 @@ GitStatusModel::GitStatusModel(QObject *parent) :
 
 int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
 {
-    return fileList.size();
+    //return fileList.size();
+    return git_index_entrycount(gitIndex);
 }
 
 
@@ -20,10 +23,15 @@ if (!index.isValid())
 if (index.row() >= fileList.size() || index.row() < 0)
     return QVariant();
 if (role == Qt::DisplayRole)
-    return fileList.at(index.row());
+{
+    return git_index_get(gitIndex, index.row())->path;
+}
 return QVariant();
 }
-void GitStatusModel::updateFileList()
-{
 
+void GitStatusModel::update(git_repository* gitRepo)
+{
+    qDebug() << "GitStatusModel::update(" << gitRepo << ")";
+    gitIndex = git_repository_index(gitRepo);
+    qDebug() << "gitIndex set";
 }

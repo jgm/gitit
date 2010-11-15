@@ -3,7 +3,7 @@
 
 #include <QAbstractListModel>
 #include <QStringList>
-
+#include "git/repository.h"
 class GitStatusModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -14,11 +14,13 @@ public:
 signals:
 
 public slots:
+    void update(git_repository* repo);
 
 private:
         void updateFileList();
         QStringList fileList;
         int fileCount;
+        git_index* gitIndex;
 };
 
 #endif // GITSTATUSMODEL_H

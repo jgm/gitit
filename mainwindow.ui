@@ -347,7 +347,8 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionMake_New_Project"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
     <addaction name="actionConfigure"/>
     <addaction name="actionExit"/>
    </widget>
@@ -369,9 +370,9 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionMake_New_Project">
+  <action name="actionNew">
    <property name="text">
-    <string>Make New Project</string>
+    <string>New</string>
    </property>
   </action>
   <action name="actionExit">
@@ -387,6 +388,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
    </property>
   </action>
  </widget>
