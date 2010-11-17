@@ -44,7 +44,14 @@ void MainWindow::on_actionOpen_triggered()
     int return_value = git_repository_open(&repo,(fileNames[0] + "/.git/").toLatin1());
     qDebug() << "Repo open return Value" << return_value;
 
-    qDebug() << "about to emit repositoryChanged(" << repo << ")";
-    emit repositoryChanged(repo);
-    qDebug() << "signal emitted";
+    if(repo!=NULL)
+    {
+        qDebug() << "about to emit repositoryChanged(" << repo << ")";
+        emit repositoryChanged(repo);
+        qDebug() << "signal emitted";
+    }
+    else
+    {
+        qDebug() << "New Repo not opened.";
+    }
 }
