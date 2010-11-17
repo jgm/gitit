@@ -16,6 +16,7 @@ signals:
 public slots:
 
 private:
+        void updateFileList();
         QStringList fileList;
         int fileCount;
 };
