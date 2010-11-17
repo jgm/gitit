@@ -1,22 +1,23 @@
+% gitit-Jg.tex
 \begin{hcarentry}[updated]{gitit}
 \label{gitit}
-\report{John MacFarlane}%11/09
-\participants{John MacFarlane, Gwern Branwen, Simon Michael, Henry Laxen, Anton
+\report{John MacFarlane}%11/10
+\participants{Gwern Branwen, Simon Michael, Henry Laxen, Anton
 van Straaten, Robin Green, Thomas Hartman, Justin Bogner, Kohei Ozaki,
 Dmitry Golubovsky, Anton Tayanovskyy, Dan Cook, Jinjing Wang}
 \status{active development}
 \makeheader
 
-Gitit is a wiki built on Happstack and backed by a git, darcs, or mercurial
+Gitit is a wiki built on Happstack~\cref{happstack} and backed by a git, darcs, or mercurial
 filestore. Pages and uploaded files can be modified either directly
 via the VCS's command-line tools or through the wiki's web interface.
 Pandoc~\cref{pandoc} is used for markup processing, so pages may be written in
 (extended) markdown, reStructuredText, LaTeX, HTML, or literate Haskell,
-and exported in eleven different formats, including LaTeX, ConTeXt,
-DocBook, RTF, OpenOffice ODT, MediaWiki markup, and PDF.
+and exported in thirteen different formats, including LaTeX, ConTeXt,
+DocBook, RTF, OpenOffice ODT, MediaWiki markup, EPUB, and PDF.
 
 Notable features of gitit include:
-\begin{itemize}
+\begin{compactitem}
 \item
   Plugins: users can write their own dynamically loaded page transformations,
   which operate directly on the abstract syntax tree.
@@ -33,7 +34,7 @@ Notable features of gitit include:
   easy to include a gitit wiki (or wikis) in any Happstack application.
 \item
   Literate Haskell: Pages can be written directly in literate Haskell.
-\end{itemize}
+\end{compactitem}
 
 \FurtherReading
 \url{http://gitit.net} (itself
