@@ -28,8 +28,7 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
             configure.ui
 INCLUDEPATH += libgit2/src
-LIBS += -L/$$PWD/libgit2/ -lgit2
-
+LIBS += -L$$PWD/libgit2/ -lgit2 -lz
 
 #unix:LIBS += -Llibgit2/ -lgit2
  #win32:LIBS += c:/mylibs/math.lib
