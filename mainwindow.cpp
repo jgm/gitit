@@ -21,6 +21,10 @@ MainWindow::~MainWindow()
     delete ui;
     delete gitStatusModel;
     delete configure;
+    if(repo!=NULL)
+    {
+        git_repository_free(repo);
+    }
 }
 
 void MainWindow::on_actionConfigure_triggered()

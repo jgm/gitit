@@ -18,7 +18,7 @@ public slots:
 
 private:
         void updateFileList();
-        QStringList fileList;
+        //QStringList fileList;
         int fileCount;
         git_index* gitIndex;
 };
