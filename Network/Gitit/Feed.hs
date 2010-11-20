@@ -42,22 +42,27 @@ data FeedConfig = FeedConfig {
     fcTitle    :: String
   , fcBaseUrl  :: String
   , fcFeedDays :: Integer
- } deriving (Show, Read)
+ } deriving (Read, Show)
+
+gititGenerator :: Generator
+gititGenerator = Generator {genURI = Just "http://github.com/jgm/gitit"
+                                   , genVersion = Just (showVersion version)
+                                   , genText = "gitit"}
 
 filestoreToXmlFeed :: FeedConfig -> FileStore -> Maybe FilePath -> IO String
-filestoreToXmlFeed cfg f = fmap xmlFeedToString . generateFeed cfg f
+filestoreToXmlFeed cfg f = fmap xmlFeedToString . generateFeed cfg gititGenerator f
 
 xmlFeedToString :: Feed -> String
 xmlFeedToString = ppTopElement . xmlFeed
 
-generateFeed :: FeedConfig -> FileStore -> Maybe FilePath -> IO Feed
-generateFeed cfg fs mbPath = do
+generateFeed :: FeedConfig -> Generator -> FileStore -> Maybe FilePath -> IO Feed
+generateFeed cfg generator fs mbPath = do
   now <- getCurrentTime
   revs <- changeLog (fcFeedDays cfg) fs mbPath now
   let home = fcBaseUrl cfg ++ "/"
   -- TODO: 'nub . sort' `persons` - but no Eq or Ord instances!
       persons = map authorToPerson $ nub $ sortBy (comparing authorName) $ map revAuthor revs
-      basefeed = generateEmptyfeed (fcTitle cfg) home mbPath persons (formatFeedTime now)
+      basefeed = generateEmptyfeed generator (fcTitle cfg) home mbPath persons (formatFeedTime now)
       revisions = map (revisionToEntry home) revs
   return basefeed {feedEntries = revisions}
 
@@ -69,18 +74,14 @@ changeLog days a mbPath now' = do
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
   return $ sortBy (comparing revDateTime) rs
 
-generateEmptyfeed :: String ->String ->Maybe String -> [Person] -> Date -> Feed
-generateEmptyfeed title home mbPath authors now =
+generateEmptyfeed :: Generator -> String ->String ->Maybe String -> [Person] -> Date -> Feed
+generateEmptyfeed generator title home mbPath authors now =
   baseNull {feedAuthors = authors,
-            feedGenerator = Just gititGenerator,
+            feedGenerator = Just generator,
             feedLinks = [ (nullLink $ home ++ "_feed/" ++ escape (fromMaybe "" mbPath))
                            {linkRel = Just (Left "self")}]
             }
     where baseNull = nullFeed home (TextString title) now
-          gititGenerator :: Generator
-          gititGenerator = Generator {genURI = Just "http://github.com/jgm/gitit"
-                                     , genVersion = Just (showVersion version)
-                                     , genText = "gitit"}
 
 revisionToEntry :: String -> Revision -> Entry
 revisionToEntry home Revision{ revId = rid, revDateTime = rdt,
