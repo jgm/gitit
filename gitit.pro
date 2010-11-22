@@ -8,6 +8,7 @@ QT       += core gui
 
 TARGET = gitit
 TEMPLATE = app
+ICON = gitit.icns
 
 
 SOURCES += main.cpp\
@@ -41,4 +42,3 @@ unix:LIBS += -L$$PWD/libgit2/ -lgit2
 unix:LIBS += -lz #OS X requires a dynamic link to zlib
 
 win32:LIBS += -L$$PWD/external-win32/ -lgit2
-ICON = gitit.icns

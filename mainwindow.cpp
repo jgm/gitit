@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitStatusModel);
     connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
+    git_repository_open(&repo,"/Users/hef/projects/cs440/gitit/.git/");
 }
 
 MainWindow::~MainWindow()
@@ -52,6 +53,7 @@ void MainWindow::on_actionOpen_triggered()
     {
         qDebug() << "about to emit repositoryChanged(" << repo << ")";
         emit repositoryChanged(repo);
+        //ui->changedFileslistView->setModel(gitStatusModel);
         qDebug() << "signal emitted";
     }
     else

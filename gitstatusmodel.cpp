@@ -1,5 +1,6 @@
 #include "gitstatusmodel.h"
 #include <QDebug>
+#include <QDateTime>
 
 
 GitStatusModel::GitStatusModel(QObject *parent) :
@@ -11,35 +12,44 @@ GitStatusModel::GitStatusModel(QObject *parent) :
 
 int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
 {
-    //return fileList.size();
     if(gitIndex==NULL)
-        return 1;
+        return 0;
     else
     {
         git_index_read(gitIndex);
+        qDebug() << "git_index_endtrycount(gitIndex)" << git_index_entrycount(gitIndex);
         return git_index_entrycount(gitIndex);
     }
 }
 
 QVariant GitStatusModel::data(const QModelIndex &index, int role) const
 {
-    qDebug() << "GitStatModel::data() called";
+    qDebug() << QDateTime::currentDateTime() << "GitStatModel::data(" << index << "," << role << ") called";
     if (gitIndex==NULL)
+    {
+        qDebug() << "gitIndex is not set.";
         return QVariant();
+    }
     if (!index.isValid())
         return QVariant();
     if (index.row() >= (int)git_index_entrycount(gitIndex) || index.row() < 0)
         return QVariant();
-    if (role == Qt::DisplayRole)
-    {
-        return git_index_get(gitIndex, index.row())->path;
-    }
+    //if (role == Qt::DisplayRole)
+    //{
+    qDebug() << "index.row()" << index.row() << git_index_get(gitIndex, index.row())->path;
+        return QString(git_index_get(gitIndex, index.row())->path);
+    //}
     return QVariant();
 }
 
+QVariant GitStatusModel::headerData ( int section, Qt::Orientation orientation, int role ) const
+{
+    return QString("status");
+}
 void GitStatusModel::update(git_repository* gitRepo)
 {
     qDebug() << "GitStatusModel::update(" << gitRepo << ")";
     gitIndex = git_repository_index(gitRepo);
+    emit
     qDebug() << "gitIndex set";
 }
