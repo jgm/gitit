@@ -53,7 +53,6 @@ void MainWindow::on_actionOpen_triggered()
     {
         qDebug() << "about to emit repositoryChanged(" << repo << ")";
         emit repositoryChanged(repo);
-        //ui->changedFileslistView->setModel(gitStatusModel);
         qDebug() << "signal emitted";
     }
     else

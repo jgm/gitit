@@ -41,15 +41,12 @@ QVariant GitStatusModel::data(const QModelIndex &index, int role) const
     //}
     return QVariant();
 }
-
-QVariant GitStatusModel::headerData ( int section, Qt::Orientation orientation, int role ) const
-{
-    return QString("status");
-}
 void GitStatusModel::update(git_repository* gitRepo)
 {
     qDebug() << "GitStatusModel::update(" << gitRepo << ")";
     gitIndex = git_repository_index(gitRepo);
-    emit
+    //TODO check for off by 1
+    //TODO check old size versus new size.
+    emit dataChanged( createIndex(0,0), createIndex( git_index_entrycount(gitIndex),0 ) );
     qDebug() << "gitIndex set";
 }
