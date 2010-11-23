@@ -18,7 +18,7 @@ public slots:
     void update(git_repository* repo);
 
 private:
-        void updateFileList();
+        //void updateFileList();
         int fileCount;
         git_index* gitIndex;
 };
