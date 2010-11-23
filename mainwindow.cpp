@@ -43,19 +43,13 @@ void MainWindow::on_actionOpen_triggered()
 
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
-    qDebug() << "Path:" << fileNames[0];
 
     int return_value = git_repository_open(&repo,(fileNames[0] + "/.git/").toLatin1());
     qDebug() << "Repo open return Value" << return_value;
 
     if(repo!=NULL)
     {
-        qDebug() << "about to emit repositoryChanged(" << repo << ")";
         emit repositoryChanged(repo);
-        qDebug() << "signal emitted";
-    }
-    else
-    {
-        qDebug() << "New Repo not opened.";
     }
 }
+
