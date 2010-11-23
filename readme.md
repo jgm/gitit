@@ -5,6 +5,12 @@ How to build:
     git submodule update
     qmake
     make
+
+Contact Us:
+----------
+
+[mumble](mumble://acm.cs.uic.edu/gitit?version=1.2.0&title=UICACM)
+
 Depenedencies:
 --------------
 libgit2, which is a git external.
