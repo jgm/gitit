@@ -28,9 +28,9 @@ signals:
     void repositoryChanged(git_repository* repo);
 
 private slots:
-    void on_graphicsView_customContextMenuRequested(QPoint pos);
     void on_actionOpen_triggered();
     void on_actionConfigure_triggered();
+    void boxClicked();
 };
 
 #endif // MAINWINDOW_H

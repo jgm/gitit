@@ -15,14 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->changedFileslistView->setModel(gitStatusModel);
     connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
     git_repository_open(&repo,"/Users/hef/projects/cs440/gitit/.git/");
-    //QGraphicsScene scene(this);
-/*    scene.addText("Hello, world!");
-    scene.setBackgroundBrush(Qt::blue);
-    qDebug() << "Just added hello world.";
-    ui->topArrow->setScene(&scene);
-    ui->topArrow->show();
-    ui->topArrow->update(); */
 
+    //connecting slots and signals
+    connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()) );
 }
 
 MainWindow::~MainWindow()
@@ -69,7 +64,7 @@ void MainWindow::on_actionOpen_triggered()
     }
 }
 
-void MainWindow::on_graphicsView_customContextMenuRequested(QPoint pos)
+void MainWindow::boxClicked()
 {
-    
+    ui->statusBar->showMessage("box", 15);
 }

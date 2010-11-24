@@ -40,13 +40,6 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
-            <widget class="QPushButton" name="pushButton">
-             <property name="text">
-              <string>Ship</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
               <string>with</string>
@@ -193,10 +186,36 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="resources.qrc">:/images/box.png</pixmap>
+           <pixmap>:/images/box.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton">
+          <property name="geometry">
+           <rect>
+            <x>490</x>
+            <y>40</y>
+            <width>253</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Ship</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_8">
+          <property name="geometry">
+           <rect>
+            <x>100</x>
+            <y>90</y>
+            <width>62</width>
+            <height>17</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>TextLabel</string>
           </property>
          </widget>
         </widget>
@@ -388,7 +407,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>changedFileslistView</tabstop>
   <tabstop>listView_3</tabstop>
   <tabstop>listView_2</tabstop>
-  <tabstop>pushButton</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>textEdit</tabstop>
   <tabstop>scrollArea</tabstop>
@@ -401,8 +419,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButton_7</tabstop>
   <tabstop>pushButton_8</tabstop>
  </tabstops>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
