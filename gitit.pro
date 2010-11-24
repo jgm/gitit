@@ -41,4 +41,7 @@ unix:QMAKE_EXTRA_TARGETS += libgit2
 unix:LIBS += -L$$PWD/libgit2/ -lgit2
 unix:LIBS += -lz #OS X requires a dynamic link to zlib
 
-win32:LIBS += -L$$PWD/external-win32/ -lgit2
+win32:LIBS += -L$$PWD/external-win32/
+win32:LIBS += -lgit2 -lpthread -lz
+#win32:LIBS += -llibgit2.lib
+#win32:LIBS += -lzlibstat.lib
