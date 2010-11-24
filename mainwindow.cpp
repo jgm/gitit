@@ -14,8 +14,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitStatusModel);
     connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
-    git_repository_open(&repo,"/Users/hef/projects/cs440/gitit/.git/");
-
     //connecting slots and signals
     connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()) );
 }
@@ -47,20 +45,13 @@ void MainWindow::on_actionOpen_triggered()
 
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
-    qDebug() << "Path:" << fileNames[0];
 
     int return_value = git_repository_open(&repo,(fileNames[0] + "/.git/").toLatin1());
     qDebug() << "Repo open return Value" << return_value;
 
     if(repo!=NULL)
     {
-        qDebug() << "about to emit repositoryChanged(" << repo << ")";
         emit repositoryChanged(repo);
-        qDebug() << "signal emitted";
-    }
-    else
-    {
-        qDebug() << "New Repo not opened.";
     }
 }
 

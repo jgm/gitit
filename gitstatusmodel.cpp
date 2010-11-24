@@ -7,7 +7,6 @@ GitStatusModel::GitStatusModel(QObject *parent) :
     QAbstractListModel(parent),
     gitIndex(NULL)
 {
-    //fileList << "test.cpp" << "a.out";
 }
 
 int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
@@ -16,37 +15,38 @@ int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
         return 0;
     else
     {
-        git_index_read(gitIndex);
-        qDebug() << "git_index_endtrycount(gitIndex)" << git_index_entrycount(gitIndex);
         return git_index_entrycount(gitIndex);
     }
 }
 
 QVariant GitStatusModel::data(const QModelIndex &index, int role) const
 {
-    qDebug() << QDateTime::currentDateTime() << "GitStatModel::data(" << index << "," << role << ") called";
     if (gitIndex==NULL)
     {
-        qDebug() << "gitIndex is not set.";
         return QVariant();
     }
     if (!index.isValid())
         return QVariant();
     if (index.row() >= (int)git_index_entrycount(gitIndex) || index.row() < 0)
         return QVariant();
-    //if (role == Qt::DisplayRole)
-    //{
-    qDebug() << "index.row()" << index.row() << git_index_get(gitIndex, index.row())->path;
-        return QString(git_index_get(gitIndex, index.row())->path);
-    //}
+    if (role == Qt::DisplayRole)
+    {
+        git_index_entry* entry = git_index_get(gitIndex, index.row());
+        return QString(entry->path);
+    }
     return QVariant();
 }
 void GitStatusModel::update(git_repository* gitRepo)
 {
-    qDebug() << "GitStatusModel::update(" << gitRepo << ")";
     gitIndex = git_repository_index(gitRepo);
+    git_index_read(gitIndex);
     //TODO check for off by 1
-    //TODO check old size versus new size.
+    //TODO check old size versus new size, then use the bigger one.
+    for(unsigned int i=0; i < git_index_entrycount(gitIndex); ++i)
+    {
+        git_index_entry* entry = git_index_get(gitIndex, i);
+        int stage = (entry->flags) & 3;
+        qDebug() << entry->path << QString::number(entry->flags,2) << stage;
+    }
     emit dataChanged( createIndex(0,0), createIndex( git_index_entrycount(gitIndex),0 ) );
-    qDebug() << "gitIndex set";
 }

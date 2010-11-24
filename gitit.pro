@@ -21,6 +21,7 @@ HEADERS += mainwindow.h \
     configure.h
 FORMS += mainwindow.ui \
     configure.ui
+RESOURCES += resources.qrc
 INCLUDEPATH += libgit2/src
 
 # Build libgit2
@@ -29,10 +30,10 @@ unix:libgit2.commands = "make -C ../gitit/libgit2"
 unix:libgit2.depends = FORCE
 unix:PRE_TARGETDEPS += ../gitit/libgit2/libgit2.a
 unix:QMAKE_EXTRA_TARGETS += libgit2
-unix:LIBS += -L$$PWD/libgit2/ \
-    -lgit2
-unix:LIBS += -lz # OS X requires a dynamic link to zlib
-win32:LIBS += -L$$PWD/external-win32/ \
-    -lgit2
-OTHER_FILES += 
-RESOURCES += resources.qrc
+unix:LIBS += -L$$PWD/libgit2/ -lgit2
+unix:LIBS += -lz #OS X requires a dynamic link to zlib
+
+win32:LIBS += -L$$PWD/external-win32/
+win32:LIBS += -lgit2 -lpthread -lz
+#win32:LIBS += -llibgit2.lib
+#win32:LIBS += -lzlibstat.lib
