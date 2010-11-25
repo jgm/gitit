@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "git/repository.h"
+
 class Configure;
 class GitStatusModel;
 
@@ -22,10 +22,10 @@ private:
     Ui::MainWindow *ui;
     Configure* configure;
     GitStatusModel* gitStatusModel;
-    git_repository* repo;
+    QString repo;
 
 signals:
-    void repositoryChanged(git_repository* repo);
+    void repositoryChanged(QString repo);
 
 private slots:
     void on_actionOpen_triggered();

@@ -1,52 +1,49 @@
 #include "gitstatusmodel.h"
 #include <QDebug>
 #include <QDateTime>
-
+#include <QSettings>
 
 GitStatusModel::GitStatusModel(QObject *parent) :
     QAbstractListModel(parent),
-    gitIndex(NULL)
+    process(new QProcess(this)),
+    fileList(new QStringList)
 {
+    connect(process, SIGNAL(finished()), this, SLOT(readOutput()) );
+}
+GitStatusModel::~GitStatusModel()
+{
+    delete process;
+    delete fileList;
 }
 
 int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
 {
-    if(gitIndex==NULL)
-        return 0;
-    else
-    {
-        return git_index_entrycount(gitIndex);
-    }
+    return fileList->count();
+
 }
 
 QVariant GitStatusModel::data(const QModelIndex &index, int role) const
 {
-    if (gitIndex==NULL)
-    {
-        return QVariant();
-    }
     if (!index.isValid())
         return QVariant();
-    if (index.row() >= (int)git_index_entrycount(gitIndex) || index.row() < 0)
+    if (index.row() >= fileList->count() || index.row() < 0)
         return QVariant();
     if (role == Qt::DisplayRole)
     {
-        git_index_entry* entry = git_index_get(gitIndex, index.row());
-        return QString(entry->path);
+        return fileList[index.row()];
     }
     return QVariant();
 }
-void GitStatusModel::update(git_repository* gitRepo)
+void GitStatusModel::update(QString repo)
 {
-    gitIndex = git_repository_index(gitRepo);
-    git_index_read(gitIndex);
-    //TODO check for off by 1
-    //TODO check old size versus new size, then use the bigger one.
-    for(unsigned int i=0; i < git_index_entrycount(gitIndex); ++i)
-    {
-        git_index_entry* entry = git_index_get(gitIndex, i);
-        int stage = (entry->flags) & 3;
-        qDebug() << entry->path << QString::number(entry->flags,2) << stage;
-    }
-    emit dataChanged( createIndex(0,0), createIndex( git_index_entrycount(gitIndex),0 ) );
+    QSettings settings;
+    QString proc = settings.value("gitPath").toString();
+    QStringList args;
+    args << "--porcelain" << "--git-dir" << repo + "/.git" << "--work-tree" << repo;
+    process->start(proc, args);
+}
+void GitStatusModel::readOutput()
+{
+      QByteArray result = process->readAll();
+      emit dataChanged( createIndex(0,0), createIndex( fileList->count() ,0 ) );
 }
