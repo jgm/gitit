@@ -31,6 +31,10 @@ private slots:
     void on_actionOpen_triggered();
     void on_actionConfigure_triggered();
     void boxClicked();
+    void about();
+    void exit();
+    void menuNew();
+    void userManual();
 };
 
 #endif // MAINWINDOW_H
