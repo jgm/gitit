@@ -8,12 +8,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
-    gitStatusModel(new GitStatusModel),
-    repo(NULL)
+    gitStatusModel(new GitStatusModel)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitStatusModel);
-
     //connecting slots and signals
     connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
     connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()) );
@@ -21,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
-
 }
 
 MainWindow::~MainWindow()
@@ -29,10 +26,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete gitStatusModel;
     delete configure;
-    if(repo!=NULL)
-    {
-        git_repository_free(repo);
-    }
+
 }
 
 void MainWindow::on_actionConfigure_triggered()
@@ -52,13 +46,7 @@ void MainWindow::on_actionOpen_triggered()
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
 
-    int return_value = git_repository_open(&repo,(fileNames[0] + "/.git/").toLatin1());
-    qDebug() << "Repo open return Value" << return_value;
-
-    if(repo!=NULL)
-    {
-        emit repositoryChanged(repo);
-    }
+    repo = fileNames[0];
 }
 
 void MainWindow::boxClicked()

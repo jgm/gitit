@@ -234,8 +234,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -300,8 +300,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -341,8 +341,13 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
+<<<<<<< HEAD
      <width>850</width>
      <height>25</height>
+=======
+     <width>817</width>
+     <height>21</height>
+>>>>>>> hef/master
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
