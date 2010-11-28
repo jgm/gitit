@@ -4,21 +4,27 @@
 #include "configure.h"
 #include <QFileDialog>
 #include <QDebug>
+#include <QMessageBox>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
-    gitStatusModel(new GitStatusModel)
+    gitStatusModel(new GitStatusModel),
+    newProjectWizard( new NewProjectWizard)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitStatusModel);
     //connecting slots and signals
-    connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
+//    connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
     connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()) );
     connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
+    connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
+    connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
+
 }
 
 MainWindow::~MainWindow()
@@ -26,7 +32,6 @@ MainWindow::~MainWindow()
     delete ui;
     delete gitStatusModel;
     delete configure;
-
 }
 
 void MainWindow::on_actionConfigure_triggered()
@@ -66,7 +71,7 @@ void MainWindow::about()
 
 void MainWindow::exit()
 {
-
+    this->close();
 }
 
 void MainWindow::menuNew()
@@ -75,6 +80,16 @@ void MainWindow::menuNew()
 }
 
 void MainWindow::userManual()
+{
+
+}
+
+void MainWindow::activateNewProjectWizard()
+{
+    newProjectWizard->show();
+}
+
+void MainWindow::activateShareProjectWizard()
 {
 
 }

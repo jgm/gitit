@@ -193,23 +193,10 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap resource="resources.qrc">:/images/box.png</pixmap>
+           <pixmap>:/images/box.png</pixmap>
           </property>
           <property name="scaledContents">
            <bool>true</bool>
-          </property>
-         </widget>
-         <widget class="QLabel" name="label_8">
-          <property name="geometry">
-           <rect>
-            <x>100</x>
-            <y>90</y>
-            <width>62</width>
-            <height>17</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>TextLabel</string>
           </property>
          </widget>
         </widget>
@@ -234,8 +221,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>267</width>
-             <height>357</height>
+             <width>269</width>
+             <height>359</height>
             </rect>
            </property>
           </widget>
@@ -300,8 +287,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>267</width>
-             <height>357</height>
+             <width>269</width>
+             <height>359</height>
             </rect>
            </property>
           </widget>
@@ -361,8 +348,16 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionAbout"/>
     <addaction name="actionUser_s_Manual"/>
    </widget>
+   <widget class="QMenu" name="menuWizards">
+    <property name="title">
+     <string>Wizards</string>
+    </property>
+    <addaction name="actionNew_2"/>
+    <addaction name="actionRemote_Repository"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuWizards"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionNew">
@@ -395,6 +390,16 @@ p, li { white-space: pre-wrap; }
     <string>User's Manual</string>
    </property>
   </action>
+  <action name="actionNew_2">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionRemote_Repository">
+   <property name="text">
+    <string>Share Project</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
@@ -413,8 +418,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButton_7</tabstop>
   <tabstop>pushButton_8</tabstop>
  </tabstops>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

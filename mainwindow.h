@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "newProjectWizard.h"
+//#include "shareProjectWizard.h"
 
 class Configure;
 class GitStatusModel;
@@ -23,6 +25,8 @@ private:
     Configure* configure;
     GitStatusModel* gitStatusModel;
     QString repo;
+    NewProjectWizard* newProjectWizard;
+//    ShareProjectWizard shareProjectWizard;
 
 signals:
     void repositoryChanged(QString repo);
@@ -35,6 +39,8 @@ private slots:
     void exit();
     void menuNew();
     void userManual();
+    void activateNewProjectWizard();
+    void activateShareProjectWizard();
 };
 
 #endif // MAINWINDOW_H

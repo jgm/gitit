@@ -8,7 +8,7 @@ GitStatusModel::GitStatusModel(QObject *parent) :
     process(new QProcess(this)),
     fileList(new QStringList)
 {
-    connect(process, SIGNAL(finished()), this, SLOT(readOutput()) );
+//    connect(process, SIGNAL(finished()), this, SLOT(readOutput()) );
 }
 GitStatusModel::~GitStatusModel()
 {
