@@ -24,4 +24,3 @@ HEADERS += mainwindow.h \
 FORMS += mainwindow.ui \
     configure.ui
 RESOURCES += resources.qrc
-INCLUDEPATH += libgit2/src
