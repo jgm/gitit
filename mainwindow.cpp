@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->changedFileslistView->setModel(gitStatusModel);
     //connecting slots and signals
 //    connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
-    connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()) );
     connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
