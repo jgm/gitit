@@ -4,6 +4,7 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QProcess>
+#include <QMutex>
 
 class GitStatusModel : public QAbstractListModel
 {
@@ -18,13 +19,13 @@ signals:
 public slots:
     void update(QString repo);
 private slots:
-    void readOutput();
+    void readOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 private:
         //void updateFileList();
-        int fileCount;
         QProcess *process;
         QStringList *fileList;
+        mutable QMutex fileListMutex;
 };
 
 #endif // GITSTATUSMODEL_H

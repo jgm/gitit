@@ -52,6 +52,7 @@ void MainWindow::on_actionOpen_triggered()
         fileNames = dialog.selectedFiles();
 
     repo = fileNames[0];
+    this->gitStatusModel->update(repo);
 }
 
 void MainWindow::boxClicked()
