@@ -4,7 +4,6 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QProcess>
-#include <QMutex>
 
 class GitStatusModel : public QAbstractListModel
 {
@@ -25,7 +24,6 @@ private:
         //void updateFileList();
         QProcess *process;
         QStringList *fileList;
-        mutable QMutex fileListMutex;
 };
 
 #endif // GITSTATUSMODEL_H

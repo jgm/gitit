@@ -21,7 +21,6 @@ int GitStatusModel::rowCount(const QModelIndex & /* parent */) const
 }
 QVariant GitStatusModel::data(const QModelIndex &index, int role) const
 {
-    //QMutexLocker locker(&fileListMutex);
     if (!index.isValid())
         return QVariant();
     if (index.row() >= fileList->count() || index.row() < 0)
@@ -42,11 +41,10 @@ void GitStatusModel::update(QString repo)
 }
 void GitStatusModel::readOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
-    QMutexLocker locker(&fileListMutex);
       QByteArray result = process->readAll();
       QString resultString(result);
       *fileList = resultString.split('\n',QString::SkipEmptyParts);
-      QRegExp rx("^(.\\S).*$");
+      QRegExp rx("^(.\\S).*$"); // " M filname"  "MM filename" "AM filename"
       rx.setPatternSyntax(QRegExp::RegExp2);
       (*fileList) = fileList->filter(rx);
       emit dataChanged( createIndex(0,0), createIndex( fileList->count() ,0 ) );
