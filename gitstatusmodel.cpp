@@ -41,11 +41,5 @@ void GitStatusModel::update(QString repo)
 }
 void GitStatusModel::readOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
-      QByteArray result = process->readAll();
-      QString resultString(result);
-      *fileList = resultString.split('\n',QString::SkipEmptyParts);
-      QRegExp rx("^(.\\S).*$"); // " M filname"  "MM filename" "AM filename"
-      rx.setPatternSyntax(QRegExp::RegExp2);
-      (*fileList) = fileList->filter(rx);
-      emit dataChanged( createIndex(0,0), createIndex( fileList->count() ,0 ) );
+
 }

@@ -5,13 +5,15 @@
 #include <QFileDialog>
 #include <QDebug>
 #include <QMessageBox>
+#include "gitcommand.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
     gitStatusModel(new GitStatusModel),
-    newProjectWizard( new NewProjectWizard)
+    newProjectWizard( new NewProjectWizard),
+    gitCommand(new GitCommand)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitStatusModel);
@@ -51,7 +53,7 @@ void MainWindow::on_actionOpen_triggered()
         fileNames = dialog.selectedFiles();
 
     repo = fileNames[0];
-    this->gitStatusModel->update(repo);
+    this->gitCommand->setRepo(repo);
 }
 
 void MainWindow::boxClicked()

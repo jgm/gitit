@@ -7,6 +7,7 @@
 
 class Configure;
 class GitStatusModel;
+class GitCommand;
 
 namespace Ui {
     class MainWindow;
@@ -27,6 +28,7 @@ private:
     QString repo;
     NewProjectWizard* newProjectWizard;
 //    ShareProjectWizard shareProjectWizard;
+    GitCommand* gitCommand;
 
 signals:
     void repositoryChanged(QString repo);
