@@ -2,9 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "git/repository.h"
+#include <QStringListModel>
+#include "newProjectWizard.h"
+//#include "shareProjectWizard.h"
+
 class Configure;
-class GitStatusModel;
+class GitChangedStatusModel;
+class GitCommand;
+class GitStagedStatusModel;
 
 namespace Ui {
     class MainWindow;
@@ -21,16 +26,28 @@ public:
 private:
     Ui::MainWindow *ui;
     Configure* configure;
-    GitStatusModel* gitStatusModel;
-    git_repository* repo;
+    GitChangedStatusModel* gitChangedStatusModel;
+    GitStagedStatusModel* gitStagedStatusModel;
+    QStringListModel* gitIgnoredFilesModel;
+    QString repo;
+    NewProjectWizard* newProjectWizard;
+//    ShareProjectWizard shareProjectWizard;
+    GitCommand* gitCommand;
 
 signals:
-    void repositoryChanged(git_repository* repo);
+    void repositoryChanged(QString repo);
 
 private slots:
-    void on_graphicsView_customContextMenuRequested(QPoint pos);
     void on_actionOpen_triggered();
     void on_actionConfigure_triggered();
+    void boxClicked();
+    void about();
+    void exit();
+    void menuNew();
+    void userManual();
+    void activateNewProjectWizard();
+    void activateShareProjectWizard();
+    void updateIgnoredModel(QStringList);
 };
 
 #endif // MAINWINDOW_H

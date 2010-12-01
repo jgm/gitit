@@ -3,24 +3,23 @@
 
 #include <QAbstractListModel>
 #include <QStringList>
-#include "git/repository.h"
-#include "git/index.h"
-class GitStatusModel : public QAbstractListModel
+
+class GitChangedStatusModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    explicit GitStatusModel(QObject *parent = 0);
+    explicit GitChangedStatusModel(QObject *parent = 0);
+    ~GitChangedStatusModel();
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 signals:
 
 public slots:
-    void update(git_repository* repo);
+    void update(QStringList files);
 
 private:
         //void updateFileList();
-        int fileCount;
-        git_index* gitIndex;
+        QStringList *fileList;
 };
 
 #endif // GITSTATUSMODEL_H

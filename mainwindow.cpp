@@ -1,39 +1,48 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "gitstatusmodel.h"
+#include "gitchangedstatusmodel.h"
 #include "configure.h"
 #include <QFileDialog>
 #include <QDebug>
+#include <QMessageBox>
+#include "gitcommand.h"
+#include "gitstagedstatusmodel.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
-    gitStatusModel(new GitStatusModel),
-    repo(NULL)
+    gitChangedStatusModel(new GitChangedStatusModel),
+    gitStagedStatusModel(new GitStagedStatusModel),
+    gitIgnoredFilesModel(new QStringListModel),
+    newProjectWizard( new NewProjectWizard),
+    gitCommand(new GitCommand)
 {
     ui->setupUi(this);
-    ui->changedFileslistView->setModel(gitStatusModel);
-    connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
-    git_repository_open(&repo,"/Users/hef/projects/cs440/gitit/.git/");
-    //QGraphicsScene scene(this);
-/*    scene.addText("Hello, world!");
-    scene.setBackgroundBrush(Qt::blue);
-    qDebug() << "Just added hello world.";
-    ui->topArrow->setScene(&scene);
-    ui->topArrow->show();
-    ui->topArrow->update(); */
+    ui->changedFileslistView->setModel(gitChangedStatusModel);
+    ui->stagedFilesListView->setModel(gitStagedStatusModel);
+    ui->ignoredFilesListView->setModel(gitIgnoredFilesModel);
+    //connecting slots and signals
+    connect(gitCommand,SIGNAL(status(QStringList)),gitChangedStatusModel,SLOT(update(QStringList)));
+    connect(gitCommand,SIGNAL(status(QStringList)),gitStagedStatusModel,SLOT(update(QStringList)));
+    connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
+    connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
+    connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
+    connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
+    connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
+    connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
+
+    //useing a builtin model here:
+    connect(gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
 
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete gitStatusModel;
+    delete gitChangedStatusModel;
     delete configure;
-    if(repo!=NULL)
-    {
-        git_repository_free(repo);
-    }
+    delete gitStagedStatusModel;
 }
 
 void MainWindow::on_actionConfigure_triggered()
@@ -53,16 +62,50 @@ void MainWindow::on_actionOpen_triggered()
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
 
-    int return_value = git_repository_open(&repo,(fileNames[0] + "/.git/").toLatin1());
-    qDebug() << "Repo open return Value" << return_value;
-
-    if(repo!=NULL)
-    {
-        emit repositoryChanged(repo);
-    }
+    repo = fileNames[0];
+    this->gitCommand->setRepo(repo);
 }
 
-void MainWindow::on_graphicsView_customContextMenuRequested(QPoint pos)
+void MainWindow::boxClicked()
 {
-    
+    ui->statusBar->showMessage("box", 15);
+}
+
+void MainWindow::about()
+{
+    QMessageBox::about(this, tr("About Gitit"),
+                       tr("Gitit, Created for CS440 Fall 2010<br>"
+                          "For access to source code, goto http://github.com/bdenne2/gitit<br>"
+                          "Bryanna Denney &lt;bryanna.denney@gmail.com&gt;<br>"
+                          "Mike Salata &lt;mbaker22@uic.edu&gt;<br>"
+                          "Steven Sennebogen &lt;ssennebo@cs.uic.edu&gt;"));
+}
+
+void MainWindow::exit()
+{
+    this->close();
+}
+
+void MainWindow::menuNew()
+{
+
+}
+
+void MainWindow::userManual()
+{
+
+}
+
+void MainWindow::activateNewProjectWizard()
+{
+    newProjectWizard->show();
+}
+
+void MainWindow::activateShareProjectWizard()
+{
+
+}
+void MainWindow::updateIgnoredModel(QStringList files)
+{
+    gitIgnoredFilesModel->setStringList(files);
 }

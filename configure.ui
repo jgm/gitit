@@ -52,7 +52,7 @@
         <string>Git path:</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="gitPathLineEdit"/>
      </widget>
     </item>
     <item>

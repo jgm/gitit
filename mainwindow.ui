@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>817</width>
-    <height>598</height>
+    <width>804</width>
+    <height>548</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,10 +32,10 @@
          <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
-            <x>490</x>
-            <y>100</y>
-            <width>255</width>
-            <height>274</height>
+            <x>520</x>
+            <y>80</y>
+            <width>211</width>
+            <height>301</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -92,7 +92,7 @@
           <property name="geometry">
            <rect>
             <x>10</x>
-            <y>210</y>
+            <y>140</y>
             <width>161</width>
             <height>141</height>
            </rect>
@@ -121,7 +121,7 @@ p, li { white-space: pre-wrap; }
           <property name="geometry">
            <rect>
             <x>260</x>
-            <y>120</y>
+            <y>20</y>
             <width>161</width>
             <height>151</height>
            </rect>
@@ -129,10 +129,9 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_3">
+          <widget class="QListView" name="stagedFilesListView">
            <property name="styleSheet">
-            <string notr="true">background: transparent;
-border: transparent;</string>
+            <string notr="true"/>
            </property>
           </widget>
           <widget class="QLabel" name="label_2">
@@ -149,7 +148,7 @@ p, li { white-space: pre-wrap; }
           <property name="geometry">
            <rect>
             <x>260</x>
-            <y>310</y>
+            <y>230</y>
             <width>161</width>
             <height>141</height>
            </rect>
@@ -157,7 +156,7 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_2"/>
+          <widget class="QListView" name="ignoredFilesListView"/>
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -168,41 +167,75 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QLabel" name="box">
+         <widget class="QPushButton" name="pushButton_2">
           <property name="geometry">
            <rect>
-            <x>210</x>
-            <y>30</y>
-            <width>261</width>
-            <height>231</height>
+            <x>150</x>
+            <y>90</y>
+            <width>93</width>
+            <height>27</height>
            </rect>
           </property>
-          <property name="contextMenuPolicy">
-           <enum>Qt::NoContextMenu</enum>
+          <property name="text">
+           <string>-----&gt;</string>
           </property>
-          <property name="autoFillBackground">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background: transparent;</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+         </widget>
+         <widget class="QPushButton" name="pushButton_3">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>290</y>
+            <width>93</width>
+            <height>27</height>
+           </rect>
           </property>
           <property name="text">
-           <string/>
+           <string>----&gt;</string>
           </property>
-          <property name="pixmap">
-           <pixmap resource="resources.qrc">:/images/box.png</pixmap>
+         </widget>
+         <widget class="QPushButton" name="pushButton_4">
+          <property name="geometry">
+           <rect>
+            <x>250</x>
+            <y>180</y>
+            <width>93</width>
+            <height>27</height>
+           </rect>
           </property>
-          <property name="scaledContents">
-           <bool>true</bool>
+          <property name="text">
+           <string>UP ^</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_5">
+          <property name="geometry">
+           <rect>
+            <x>350</x>
+            <y>180</y>
+            <width>93</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Down v</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_6">
+          <property name="geometry">
+           <rect>
+            <x>420</x>
+            <y>90</y>
+            <width>93</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>----&gt;</string>
           </property>
          </widget>
         </widget>
-        <widget class="QWidget" name="localPackageTree">
+        <widget class="QWidget" name="packageTree">
          <attribute name="title">
-          <string>Local Package Tree</string>
+          <string>Package Tree</string>
          </attribute>
          <widget class="QScrollArea" name="scrollArea">
           <property name="geometry">
@@ -221,99 +254,97 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter">
+         <widget class="QGroupBox" name="groupBox">
           <property name="geometry">
            <rect>
-            <x>440</x>
-            <y>120</y>
-            <width>169</width>
-            <height>159</height>
-           </rect>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <widget class="QPushButton" name="mergeBranch">
-           <property name="text">
-            <string>Merge Branches</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="createNewBranch">
-           <property name="text">
-            <string>Create New Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="deleteBranch">
-           <property name="text">
-            <string>Delete Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="renameBranch">
-           <property name="text">
-            <string>Rename Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="changeCurrentBranch">
-           <property name="text">
-            <string>Change Current Branch</string>
-           </property>
-          </widget>
-         </widget>
-        </widget>
-        <widget class="QWidget" name="remotePackageTree">
-         <attribute name="title">
-          <string>Remote Package Tree</string>
-         </attribute>
-         <widget class="QScrollArea" name="scrollArea_2">
-          <property name="geometry">
-           <rect>
-            <x>30</x>
+            <x>430</x>
             <y>40</y>
-            <width>271</width>
-            <height>361</height>
+            <width>211</width>
+            <height>191</height>
            </rect>
           </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
+          <property name="title">
+           <string>Branches</string>
           </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <widget class="QSplitter" name="splitter">
            <property name="geometry">
             <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <x>10</x>
+             <y>30</y>
+             <width>191</width>
+             <height>159</height>
             </rect>
            </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QPushButton" name="mergeBranch">
+            <property name="text">
+             <string>Merge Branches</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="createNewBranch">
+            <property name="text">
+             <string>Create New Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="deleteBranch">
+            <property name="text">
+             <string>Delete Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="renameBranch">
+            <property name="text">
+             <string>Rename Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="changeCurrentBranch">
+            <property name="text">
+             <string>Change Current Branch</string>
+            </property>
+           </widget>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter_7">
+         <widget class="QGroupBox" name="groupBox_2">
           <property name="geometry">
            <rect>
-            <x>431</x>
-            <y>151</y>
-            <width>191</width>
-            <height>60</height>
+            <x>430</x>
+            <y>260</y>
+            <width>211</width>
+            <height>101</height>
            </rect>
           </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+          <property name="title">
+           <string>Remote Repository</string>
           </property>
-          <widget class="QPushButton" name="pushButton_7">
-           <property name="text">
-            <string>Sync to Remote Branch</string>
+          <widget class="QSplitter" name="splitter_7">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>30</y>
+             <width>191</width>
+             <height>60</height>
+            </rect>
            </property>
-          </widget>
-          <widget class="QPushButton" name="pushButton_8">
-           <property name="text">
-            <string>Sync From Remote Branch</string>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
+           <widget class="QPushButton" name="pushButton_7">
+            <property name="text">
+             <string>Sync to Remote Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_8">
+            <property name="text">
+             <string>Sync From Remote Branch</string>
+            </property>
+           </widget>
           </widget>
          </widget>
         </widget>
@@ -328,8 +359,8 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>817</width>
-     <height>25</height>
+     <width>804</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -348,8 +379,16 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionAbout"/>
     <addaction name="actionUser_s_Manual"/>
    </widget>
+   <widget class="QMenu" name="menuWizards">
+    <property name="title">
+     <string>Wizards</string>
+    </property>
+    <addaction name="actionNew_2"/>
+    <addaction name="actionRemote_Repository"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuWizards"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionNew">
@@ -382,13 +421,22 @@ p, li { white-space: pre-wrap; }
     <string>User's Manual</string>
    </property>
   </action>
+  <action name="actionNew_2">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionRemote_Repository">
+   <property name="text">
+    <string>Share Project</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>changedFileslistView</tabstop>
-  <tabstop>listView_3</tabstop>
-  <tabstop>listView_2</tabstop>
-  <tabstop>pushButton</tabstop>
+  <tabstop>stagedFilesListView</tabstop>
+  <tabstop>ignoredFilesListView</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>textEdit</tabstop>
   <tabstop>scrollArea</tabstop>
@@ -397,12 +445,7 @@ p, li { white-space: pre-wrap; }
   <tabstop>deleteBranch</tabstop>
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
-  <tabstop>scrollArea_2</tabstop>
-  <tabstop>pushButton_7</tabstop>
-  <tabstop>pushButton_8</tabstop>
  </tabstops>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
