@@ -13,14 +13,18 @@ public:
     explicit GitCommand(QObject *parent = 0);
     ~GitCommand();
     void status();
+    void lsIgnored();
 
 private:
-    QStringList* fileList;
+    QStringList* defaultArgs;
+    //QStringList* fileList;
     QString repo;
     QProcess* gitStatusProcess;
+    QProcess* gitLSProcess;
 
 signals:
     void status(QStringList files);
+    void lsIgnored(QStringList files);
 
 public slots:
     void setRepo(QString repo);

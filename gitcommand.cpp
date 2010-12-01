@@ -5,25 +5,25 @@
 
 GitCommand::GitCommand(QObject *parent) :
     QObject(parent),
-    fileList(new QStringList),
+    defaultArgs(new QStringList),
     repo(),
-    gitStatusProcess(new QProcess)
+    gitStatusProcess(new QProcess),
+    gitLSProcess(new QProcess)
 {
     connect(gitStatusProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(statusOutput(int, QProcess::ExitStatus)));
 
 }
 GitCommand::~GitCommand()
 {
-    delete fileList;
+    delete defaultArgs;
     delete gitStatusProcess;
+    delete gitLSProcess;
 }
 void GitCommand::status()
 {
     QSettings settings;
     QString proc = settings.value("gitPath").toString();
-    QStringList args;
-    args << "--git-dir" << repo + "/.git" << "--work-tree" << repo << "status" << "--porcelain";
-
+    QStringList args = *defaultArgs << "status" << "--porcelain";
     gitStatusProcess->start(proc, args);
 
 }
@@ -33,15 +33,11 @@ void GitCommand::statusOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QString resultString(result);
 
     QStringList fileList = resultString.split('\n',QString::SkipEmptyParts);
-    /*QRegExp rx("^(.\\S).*$"); // " M filname"  "MM filename" "AM filename"
-    rx.setPatternSyntax(QRegExp::RegExp2);
-    fileList = fileList.filter(rx);*/
-
     emit status(fileList);
 
 }
 void GitCommand::setRepo(QString repo)
 {
-    this->repo=repo;
+    *defaultArgs = QStringList() << "--git-dir" << repo + "/.git" << "--work-tree" << repo;
     status();
 }
