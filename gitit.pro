@@ -5,7 +5,7 @@ QT += core \
     gui
 TARGET = gitit
 TEMPLATE = app
-ICON = gitit.icns
+ICON = images/gitit.icns
 SOURCES += main.cpp \
     mainwindow.cpp \
     history.cpp \
