@@ -156,7 +156,7 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_2"/>
+          <widget class="QListView" name="ignoredFilesListView"/>
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -436,7 +436,7 @@ p, li { white-space: pre-wrap; }
  <tabstops>
   <tabstop>changedFileslistView</tabstop>
   <tabstop>stagedFilesListView</tabstop>
-  <tabstop>listView_2</tabstop>
+  <tabstop>ignoredFilesListView</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>textEdit</tabstop>
   <tabstop>scrollArea</tabstop>

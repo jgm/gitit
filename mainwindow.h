@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QStringListModel>
 #include "newProjectWizard.h"
 //#include "shareProjectWizard.h"
 
@@ -27,6 +28,7 @@ private:
     Configure* configure;
     GitChangedStatusModel* gitChangedStatusModel;
     GitStagedStatusModel* gitStagedStatusModel;
+    QStringListModel* gitIgnoredFilesModel;
     QString repo;
     NewProjectWizard* newProjectWizard;
 //    ShareProjectWizard shareProjectWizard;
@@ -45,6 +47,7 @@ private slots:
     void userManual();
     void activateNewProjectWizard();
     void activateShareProjectWizard();
+    void updateIgnoredModel(QStringList);
 };
 
 #endif // MAINWINDOW_H

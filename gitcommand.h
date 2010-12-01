@@ -17,10 +17,9 @@ public:
 
 private:
     QStringList* defaultArgs;
-    //QStringList* fileList;
     QString repo;
     QProcess* gitStatusProcess;
-    QProcess* gitLSProcess;
+    QProcess* gitLSIgnoredProcess;
 
 signals:
     void status(QStringList files);
@@ -31,6 +30,7 @@ public slots:
 
 private slots:
     void statusOutput(int exitCode, QProcess::ExitStatus exitStatus);
+    void lsIgnoredOutput(int exitCode, QProcess::ExitStatus exitStatus);
 };
 
 #endif // GITCOMMAND_H

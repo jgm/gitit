@@ -14,12 +14,14 @@ MainWindow::MainWindow(QWidget *parent) :
     configure(new Configure(this)),
     gitChangedStatusModel(new GitChangedStatusModel),
     gitStagedStatusModel(new GitStagedStatusModel),
+    gitIgnoredFilesModel(new QStringListModel),
     newProjectWizard( new NewProjectWizard),
     gitCommand(new GitCommand)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
     ui->stagedFilesListView->setModel(gitStagedStatusModel);
+    ui->ignoredFilesListView->setModel(gitIgnoredFilesModel);
     //connecting slots and signals
     connect(gitCommand,SIGNAL(status(QStringList)),gitChangedStatusModel,SLOT(update(QStringList)));
     connect(gitCommand,SIGNAL(status(QStringList)),gitStagedStatusModel,SLOT(update(QStringList)));
@@ -29,6 +31,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
     connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
     connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
+
+    //useing a builtin model here:
+    connect(gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
 
 }
 
@@ -99,4 +104,8 @@ void MainWindow::activateNewProjectWizard()
 void MainWindow::activateShareProjectWizard()
 {
 
+}
+void MainWindow::updateIgnoredModel(QStringList files)
+{
+    gitIgnoredFilesModel->setStringList(files);
 }

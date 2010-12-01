@@ -8,16 +8,16 @@ GitCommand::GitCommand(QObject *parent) :
     defaultArgs(new QStringList),
     repo(),
     gitStatusProcess(new QProcess),
-    gitLSProcess(new QProcess)
+    gitLSIgnoredProcess(new QProcess)
 {
     connect(gitStatusProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(statusOutput(int, QProcess::ExitStatus)));
-
+    connect(gitLSIgnoredProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(lsIgnoredOutput(int, QProcess::ExitStatus)));
 }
 GitCommand::~GitCommand()
 {
     delete defaultArgs;
     delete gitStatusProcess;
-    delete gitLSProcess;
+    delete gitLSIgnoredProcess;
 }
 void GitCommand::status()
 {
@@ -35,6 +35,21 @@ void GitCommand::statusOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QStringList fileList = resultString.split('\n',QString::SkipEmptyParts);
     emit status(fileList);
 
+}
+void GitCommand::lsIgnored()
+{
+    QSettings settings;
+    QString proc = settings.value("gitPath").toString();
+    QStringList args = *defaultArgs << "ls-files" << "--others" << "--ignored" << "--exclude-standard";
+    gitLSIgnoredProcess->start(proc, args);
+}
+void GitCommand::lsIgnoredOutput(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    QByteArray result = gitStatusProcess->readAll();
+    QString resultString(result);
+
+    QStringList fileList = resultString.split('\n',QString::SkipEmptyParts);
+    emit lsIgnored(fileList);
 }
 void GitCommand::setRepo(QString repo)
 {
