@@ -17,7 +17,7 @@ public:
 private:
     QStringList* fileList;
     QString repo;
-    QProcess* gitProcess;
+    QProcess* gitStatusProcess;
 
 signals:
     void status(QStringList files);

@@ -19,8 +19,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
+    ui->stagedFilesListView->setModel(gitStagedStatusModel);
     //connecting slots and signals
     connect(gitCommand,SIGNAL(status(QStringList)),gitChangedStatusModel,SLOT(update(QStringList)));
+    connect(gitCommand,SIGNAL(status(QStringList)),gitStagedStatusModel,SLOT(update(QStringList)));
     connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );

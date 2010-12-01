@@ -23,7 +23,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
@@ -129,7 +129,7 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_3">
+          <widget class="QListView" name="stagedFilesListView">
            <property name="styleSheet">
             <string notr="true"/>
            </property>
@@ -189,8 +189,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -295,7 +295,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -370,7 +370,7 @@ p, li { white-space: pre-wrap; }
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>changedFileslistView</tabstop>
-  <tabstop>listView_3</tabstop>
+  <tabstop>stagedFilesListView</tabstop>
   <tabstop>listView_2</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>textEdit</tabstop>
