@@ -23,7 +23,8 @@ void GitCommand::status()
 {
     QSettings settings;
     QString proc = settings.value("gitPath").toString();
-    QStringList args = *defaultArgs << "status" << "--porcelain";
+    QStringList args = *defaultArgs;
+    args << "status" << "--porcelain";
     gitStatusProcess->start(proc, args);
 
 }
@@ -40,12 +41,13 @@ void GitCommand::lsIgnored()
 {
     QSettings settings;
     QString proc = settings.value("gitPath").toString();
-    QStringList args = *defaultArgs << "ls-files" << "--others" << "--ignored" << "--exclude-standard";
+    QStringList args = *defaultArgs;
+    args << "ls-files" << "--others" << "--ignored" << "--exclude-standard";
     gitLSIgnoredProcess->start(proc, args);
 }
 void GitCommand::lsIgnoredOutput(int exitCode, QProcess::ExitStatus exitStatus)
 {
-    QByteArray result = gitStatusProcess->readAll();
+    QByteArray result = gitLSIgnoredProcess->readAll();
     QString resultString(result);
 
     QStringList fileList = resultString.split('\n',QString::SkipEmptyParts);
@@ -55,4 +57,5 @@ void GitCommand::setRepo(QString repo)
 {
     *defaultArgs = QStringList() << "--git-dir" << repo + "/.git" << "--work-tree" << repo;
     status();
+    lsIgnored();
 }
