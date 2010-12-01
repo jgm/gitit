@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "gitstatusmodel.h"
+#include "gitchangedstatusmodel.h"
 #include "configure.h"
 #include <QFileDialog>
 #include <QDebug>
@@ -11,14 +11,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
-    gitStatusModel(new GitStatusModel),
+    gitChangedStatusModel(new GitChangedStatusModel),
     newProjectWizard( new NewProjectWizard),
     gitCommand(new GitCommand)
 {
     ui->setupUi(this);
-    ui->changedFileslistView->setModel(gitStatusModel);
+    ui->changedFileslistView->setModel(gitChangedStatusModel);
     //connecting slots and signals
-//    connect(this,SIGNAL(repositoryChanged(git_repository*)),gitStatusModel,SLOT(update(git_repository*)));
+    connect(gitCommand,SIGNAL(status(QStringList)),gitChangedStatusModel,SLOT(update(QStringList)));
     connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete gitStatusModel;
+    delete gitChangedStatusModel;
     delete configure;
 }
 

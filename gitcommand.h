@@ -18,9 +18,6 @@ private:
     QStringList* fileList;
     QString repo;
     QProcess* gitProcess;
-private slots:
-
-    void statusOutput(int exitCode, QProcess::ExitStatus exitStatus);
 
 signals:
     void status(QStringList files);
@@ -28,6 +25,8 @@ signals:
 public slots:
     void setRepo(QString repo);
 
+private slots:
+    void statusOutput(int exitCode, QProcess::ExitStatus exitStatus);
 };
 
 #endif // GITCOMMAND_H

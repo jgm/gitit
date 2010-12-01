@@ -6,7 +6,7 @@
 //#include "shareProjectWizard.h"
 
 class Configure;
-class GitStatusModel;
+class GitChangedStatusModel;
 class GitCommand;
 
 namespace Ui {
@@ -24,7 +24,7 @@ public:
 private:
     Ui::MainWindow *ui;
     Configure* configure;
-    GitStatusModel* gitStatusModel;
+    GitChangedStatusModel* gitChangedStatusModel;
     QString repo;
     NewProjectWizard* newProjectWizard;
 //    ShareProjectWizard shareProjectWizard;

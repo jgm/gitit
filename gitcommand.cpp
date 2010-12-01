@@ -41,4 +41,5 @@ void GitCommand::statusOutput(int exitCode, QProcess::ExitStatus exitStatus)
 void GitCommand::setRepo(QString repo)
 {
     this->repo=repo;
+    status();
 }
