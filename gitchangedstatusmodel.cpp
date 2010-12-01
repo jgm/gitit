@@ -1,6 +1,4 @@
 #include "gitchangedstatusmodel.h"
-#include <QDebug>
-#include <QDateTime>
 #include <QSettings>
 
 GitChangedStatusModel::GitChangedStatusModel(QObject *parent) :
