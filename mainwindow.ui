@@ -254,8 +254,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>267</width>
-             <height>357</height>
+             <width>269</width>
+             <height>359</height>
             </rect>
            </property>
           </widget>
@@ -360,7 +360,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -387,8 +387,8 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionRemote_Repository"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuHelp"/>
    <addaction name="menuWizards"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionNew">
