@@ -23,7 +23,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
@@ -168,9 +168,9 @@ p, li { white-space: pre-wrap; }
           </widget>
          </widget>
         </widget>
-        <widget class="QWidget" name="localPackageTree">
+        <widget class="QWidget" name="packageTree">
          <attribute name="title">
-          <string>Local Package Tree</string>
+          <string>Package Tree</string>
          </attribute>
          <widget class="QScrollArea" name="scrollArea">
           <property name="geometry">
@@ -195,93 +195,91 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter">
+         <widget class="QGroupBox" name="groupBox">
           <property name="geometry">
            <rect>
-            <x>440</x>
-            <y>120</y>
-            <width>169</width>
-            <height>159</height>
-           </rect>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <widget class="QPushButton" name="mergeBranch">
-           <property name="text">
-            <string>Merge Branches</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="createNewBranch">
-           <property name="text">
-            <string>Create New Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="deleteBranch">
-           <property name="text">
-            <string>Delete Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="renameBranch">
-           <property name="text">
-            <string>Rename Branch</string>
-           </property>
-          </widget>
-          <widget class="QPushButton" name="changeCurrentBranch">
-           <property name="text">
-            <string>Change Current Branch</string>
-           </property>
-          </widget>
-         </widget>
-        </widget>
-        <widget class="QWidget" name="remotePackageTree">
-         <attribute name="title">
-          <string>Remote Package Tree</string>
-         </attribute>
-         <widget class="QScrollArea" name="scrollArea_2">
-          <property name="geometry">
-           <rect>
-            <x>30</x>
+            <x>430</x>
             <y>40</y>
-            <width>271</width>
-            <height>361</height>
+            <width>211</width>
+            <height>191</height>
            </rect>
           </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
+          <property name="title">
+           <string>Branches</string>
           </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <widget class="QSplitter" name="splitter">
            <property name="geometry">
             <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <x>10</x>
+             <y>30</y>
+             <width>191</width>
+             <height>159</height>
             </rect>
            </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QPushButton" name="mergeBranch">
+            <property name="text">
+             <string>Merge Branches</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="createNewBranch">
+            <property name="text">
+             <string>Create New Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="deleteBranch">
+            <property name="text">
+             <string>Delete Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="renameBranch">
+            <property name="text">
+             <string>Rename Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="changeCurrentBranch">
+            <property name="text">
+             <string>Change Current Branch</string>
+            </property>
+           </widget>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter_7">
+         <widget class="QGroupBox" name="groupBox_2">
           <property name="geometry">
            <rect>
-            <x>431</x>
-            <y>151</y>
-            <width>191</width>
-            <height>60</height>
+            <x>430</x>
+            <y>260</y>
+            <width>211</width>
+            <height>101</height>
            </rect>
           </property>
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+          <property name="title">
+           <string>Remote Repository</string>
           </property>
-          <widget class="QPushButton" name="pushButton_7">
-           <property name="text">
-            <string>Sync to Remote Branch</string>
+          <widget class="QSplitter" name="splitter_7">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>30</y>
+             <width>191</width>
+             <height>60</height>
+            </rect>
            </property>
-          </widget>
-          <widget class="QPushButton" name="pushButton_8">
-           <property name="text">
-            <string>Sync From Remote Branch</string>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
+           <widget class="QPushButton" name="pushButton_7">
+            <property name="text">
+             <string>Sync to Remote Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton_8">
+            <property name="text">
+             <string>Sync From Remote Branch</string>
+            </property>
+           </widget>
           </widget>
          </widget>
         </widget>
@@ -382,9 +380,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>deleteBranch</tabstop>
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
-  <tabstop>scrollArea_2</tabstop>
-  <tabstop>pushButton_7</tabstop>
-  <tabstop>pushButton_8</tabstop>
  </tabstops>
  <resources/>
  <connections/>
