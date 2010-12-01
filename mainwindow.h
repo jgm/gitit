@@ -8,6 +8,7 @@
 class Configure;
 class GitChangedStatusModel;
 class GitCommand;
+class GitStagedStatusModel;
 
 namespace Ui {
     class MainWindow;
@@ -25,6 +26,7 @@ private:
     Ui::MainWindow *ui;
     Configure* configure;
     GitChangedStatusModel* gitChangedStatusModel;
+    GitStagedStatusModel* gitStagedStatusModel;
     QString repo;
     NewProjectWizard* newProjectWizard;
 //    ShareProjectWizard shareProjectWizard;

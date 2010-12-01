@@ -6,12 +6,14 @@
 #include <QDebug>
 #include <QMessageBox>
 #include "gitcommand.h"
+#include "gitstagedstatusmodel.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     configure(new Configure(this)),
     gitChangedStatusModel(new GitChangedStatusModel),
+    gitStagedStatusModel(new GitStagedStatusModel),
     newProjectWizard( new NewProjectWizard),
     gitCommand(new GitCommand)
 {
@@ -33,6 +35,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete gitChangedStatusModel;
     delete configure;
+    delete gitStagedStatusModel;
 }
 
 void MainWindow::on_actionConfigure_triggered()
