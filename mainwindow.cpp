@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include "gitcommand.h"
 #include "gitstagedstatusmodel.h"
+#include <QStringList>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -63,6 +64,7 @@ void MainWindow::on_actionOpen_triggered()
 
     repo = fileNames[0];
     this->gitCommand->setRepo(repo);
+    reload();
 }
 
 void MainWindow::boxClicked()
@@ -126,4 +128,13 @@ void MainWindow::on_gitAddButton_clicked()
 void MainWindow::reload()
 {
     gitCommand->status();
+    gitCommand->lsIgnored();
+}
+
+void MainWindow::on_shipButton_clicked()
+{
+    QStringList args;
+    args << "commit" << "-m" << "test commit";
+    gitCommand->run(args);
+    reload();
 }

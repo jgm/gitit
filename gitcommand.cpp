@@ -7,6 +7,7 @@ GitCommand::GitCommand(QObject *parent) :
     QObject(parent),
     defaultArgs(new QStringList),
     repo(),
+    gitRunProcess(new QProcess),
     gitStatusProcess(new QProcess),
     gitLSIgnoredProcess(new QProcess),
     gitAddProcess(new QProcess)
@@ -17,9 +18,19 @@ GitCommand::GitCommand(QObject *parent) :
 GitCommand::~GitCommand()
 {
     delete defaultArgs;
+    delete gitRunProcess;
     delete gitStatusProcess;
     delete gitLSIgnoredProcess;
     delete gitAddProcess;
+}
+void GitCommand::run(QStringList arguments)
+{
+    QSettings settings;
+    QString proc = settings.value("gitPath").toString();
+    QStringList args = *defaultArgs;
+    args << arguments;
+    gitRunProcess->start(proc, args);
+    gitRunProcess->waitForFinished(3000);
 }
 void GitCommand::status()
 {
@@ -63,12 +74,9 @@ void GitCommand::add(QString filename)
     args << "add" << filename;
     gitAddProcess->start(proc, args);
     gitAddProcess->waitForFinished(5000);
-
 }
 
 void GitCommand::setRepo(QString repo)
 {
     *defaultArgs = QStringList() << "--git-dir" << repo + "/.git" << "--work-tree" << repo;
-    status();
-    lsIgnored();
 }
