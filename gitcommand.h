@@ -6,6 +6,9 @@
 #include <QStringList>
 #include <QString>
 #include <QProcess>
+/**
+* This class is responsible for all interactions with the git command, and therefor the git databases.
+*/
 class GitCommand : public QObject
 {
     Q_OBJECT
