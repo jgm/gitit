@@ -219,6 +219,32 @@ p, li { white-space: pre-wrap; }
            <string>----&gt;</string>
           </property>
          </widget>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="geometry">
+           <rect>
+            <x>170</x>
+            <y>20</y>
+            <width>91</width>
+            <height>201</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/images/topArrow15.png</normaloff>:/images/topArrow15.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
+          </property>
+         </widget>
         </widget>
         <widget class="QWidget" name="packageTree">
          <attribute name="title">
@@ -241,8 +267,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>267</width>
-             <height>357</height>
+             <width>269</width>
+             <height>359</height>
             </rect>
            </property>
           </widget>
@@ -347,7 +373,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -433,6 +459,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
