@@ -22,6 +22,8 @@ ExistingProjectWizard::ExistingProjectWizard() :
     hiddenComment = new QLabel("");
     userRemotePath = new QLineEdit;
     userLocalDirectory = new QLineEdit("", this);
+    localButton = new QRadioButton( "Local" );
+    remoteButton = new QRadioButton("Remote");
 
     createIntroPage();
     createGetLocalPath();
@@ -44,10 +46,32 @@ ExistingProjectWizard::~ExistingProjectWizard()
     delete introPage;
     delete localPath;
     delete remotePath;
+    delete localDirectory;
     delete conclusion;
 }
 
-
+int ExistingProjectWizard::nextId() const
+{
+    switch ( currentId() )
+    {
+    case 0: //introPage
+        if ( localButton->isChecked() )
+            return 1;
+        else if( remoteButton->isChecked() )
+            return 2;
+        else
+            return 0;
+    case 1: //localPath
+        return 4;
+    case 2: //remotePath
+        return 3;
+    case 3: //localDirectory
+        return 4;
+    case 4: //conclusion
+    default:
+        return -1;
+    }
+}
 
 void ExistingProjectWizard::createIntroPage()
 {
@@ -60,8 +84,8 @@ void ExistingProjectWizard::createIntroPage()
     label->setWordWrap(true);
 
     QButtonGroup* projectLocationGroup = new QButtonGroup(introPage);
-    QRadioButton* localButton = new QRadioButton( "Local" );
-    QRadioButton* remoteButton = new QRadioButton("Remote");
+//  QRadioButton* localButton = new QRadioButton( "Local" );
+//  QRadioButton* remoteButton = new QRadioButton("Remote");
     projectLocationGroup->addButton(localButton, 1);
     projectLocationGroup->addButton(remoteButton, 2);
 

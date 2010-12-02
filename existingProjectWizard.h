@@ -28,12 +28,16 @@ private:
     QWizardPage* localDirectory;
     QWizardPage* conclusion;
     QStringList path;
+    int nextId() const;
+
     //the following are fields that I cannot figure out how to access from other methods
     QLineEdit* pathDisplay;
     QLabel* hiddenComment;
     QLineEdit* userRemotePath;
     QLineEdit* userLocalDirectory;
-    int nextID() const;
+    QRadioButton* localButton;
+    QRadioButton* remoteButton;
+
 
 signals:
     void setPath();
