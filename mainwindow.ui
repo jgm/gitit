@@ -129,7 +129,7 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_3">
+          <widget class="QListView" name="stagedFilesListView">
            <property name="styleSheet">
             <string notr="true"/>
            </property>
@@ -156,7 +156,7 @@ p, li { white-space: pre-wrap; }
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
-          <widget class="QListView" name="listView_2"/>
+          <widget class="QListView" name="ignoredFilesListView"/>
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -241,8 +241,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -347,7 +347,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -422,8 +422,8 @@ p, li { white-space: pre-wrap; }
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>changedFileslistView</tabstop>
-  <tabstop>listView_3</tabstop>
-  <tabstop>listView_2</tabstop>
+  <tabstop>stagedFilesListView</tabstop>
+  <tabstop>ignoredFilesListView</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>textEdit</tabstop>
   <tabstop>scrollArea</tabstop>

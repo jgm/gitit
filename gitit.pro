@@ -5,7 +5,7 @@ QT += core \
     gui
 TARGET = gitit
 TEMPLATE = app
-ICON = gitit.icns
+ICON = images/gitit.icns
 SOURCES += main.cpp \
     mainwindow.cpp \
     history.cpp \
@@ -14,7 +14,8 @@ SOURCES += main.cpp \
     gitchangedstatusmodel.cpp \
     configure.cpp \
     newProjectWizard.cpp \
-    gitcommand.cpp
+    gitcommand.cpp \
+    gitstagedstatusmodel.cpp
 HEADERS += mainwindow.h \
     history.h \
     commit.h \
@@ -22,7 +23,8 @@ HEADERS += mainwindow.h \
     gitchangedstatusmodel.h \
     configure.h \
     newProjectWizard.h \
-    gitcommand.h
+    gitcommand.h \
+    gitstagedstatusmodel.h
 FORMS += mainwindow.ui \
     configure.ui
 RESOURCES += resources.qrc
