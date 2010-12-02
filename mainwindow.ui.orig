@@ -167,7 +167,24 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
+<<<<<<< HEAD
          <widget class="QPushButton" name="gitIgnoreButton">
+          <property name="geometry">
+           <rect>
+            <x>150</x>
+            <y>90</y>
+            <width>93</width>
+            <height>27</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>-----&gt;</string>
+          </property>
+         </widget>
+         <widget class="QPushButton" name="pushButton_3">
+=======
+         <widget class="QPushButton" name="bottomArrow">
+>>>>>>> hef/master
           <property name="geometry">
            <rect>
             <x>170</x>
@@ -254,8 +271,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -360,7 +377,11 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
+<<<<<<< HEAD
      <height>25</height>
+=======
+     <height>21</height>
+>>>>>>> hef/master
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
