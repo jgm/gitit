@@ -177,7 +177,7 @@ p, li { white-space: pre-wrap; }
            </rect>
           </property>
           <property name="text">
-           <string>----&gt;</string>
+           <string/>
           </property>
          </widget>
          <widget class="QPushButton" name="pushButton_4">
