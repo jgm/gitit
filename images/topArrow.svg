@@ -15,7 +15,7 @@
    version="1.1"
    inkscape:version="0.47 r22583"
    sodipodi:docname="topArrow.svg"
-   inkscape:export-filename="/home/bry/code/cs440/gitit/images/topArrow.png"
+   inkscape:export-filename="/home/bry/code/cs440/gitit/images/topArrow15.png"
    inkscape:export-xdpi="50"
    inkscape:export-ydpi="50">
   <defs
@@ -35,9 +35,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="264.29689"
-     inkscape:cy="352.93911"
+     inkscape:zoom="0.24748737"
+     inkscape:cx="1017.5699"
+     inkscape:cy="-11.487163"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -63,11 +63,12 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:#000000;stroke:#000000;stroke-width:10.8928051px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M 710.05524,154.38435 581.67577,18.2243 l 0,97.25717 -412.37046,0 0,556.31107 -159.5017647,0 0,77.80575 241.1978047,0 -7.78056,-567.98193 330.67439,3.89029 3.89032,108.92806 132.26974,-140.05036 z"
+       style="fill:#000000;stroke:#000000;stroke-width:9.39562225px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 710.80383,613.9081 -95.31892,136.43878 0,-97.45626 -306.17596,0 0,-557.449891 -118.42654,0 0,-77.96502 179.08405,0 -5.7769,569.144631 245.51843,-3.89825 2.88848,-109.15104 98.20736,140.33705 z"
        id="path2818"
        sodipodi:nodetypes="cccccccccccc"
        inkscape:export-xdpi="50"
-       inkscape:export-ydpi="50" />
+       inkscape:export-ydpi="50"
+       inkscape:export-filename="/home/bry/code/cs440/gitit/images/downArrow.png" />
   </g>
 </svg>

@@ -170,53 +170,27 @@ p, li { white-space: pre-wrap; }
          <widget class="QPushButton" name="pushButton_3">
           <property name="geometry">
            <rect>
-            <x>150</x>
-            <y>290</y>
-            <width>93</width>
-            <height>27</height>
+            <x>170</x>
+            <y>160</y>
+            <width>91</width>
+            <height>201</height>
            </rect>
           </property>
           <property name="text">
            <string/>
           </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_4">
-          <property name="geometry">
-           <rect>
-            <x>250</x>
-            <y>180</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
+          <property name="icon">
+           <iconset>
+            <normaloff>:/images/downArrow.png</normaloff>:/images/downArrow.png</iconset>
           </property>
-          <property name="text">
-           <string>UP ^</string>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
           </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_5">
-          <property name="geometry">
-           <rect>
-            <x>350</x>
-            <y>180</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Down v</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_6">
-          <property name="geometry">
-           <rect>
-            <x>420</x>
-            <y>90</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>----&gt;</string>
+          <property name="flat">
+           <bool>true</bool>
           </property>
          </widget>
          <widget class="QPushButton" name="pushButton_2">
@@ -232,7 +206,7 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="resources.qrc">
+           <iconset>
             <normaloff>:/images/topArrow15.png</normaloff>:/images/topArrow15.png</iconset>
           </property>
           <property name="iconSize">
@@ -459,8 +433,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
  </tabstops>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
