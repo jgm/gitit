@@ -38,57 +38,57 @@
             <height>301</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <layout class="QVBoxLayout" name="commitLayout">
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="shipButton">
              <property name="text">
               <string>Ship</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_4">
+            <widget class="QLabel" name="withLabel">
              <property name="text">
               <string>with</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QSplitter" name="splitter_2">
+            <widget class="QSplitter" name="nameSplitter">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
-             <widget class="QLabel" name="label_5">
+             <widget class="QLabel" name="nameLabel">
               <property name="text">
                <string>name</string>
               </property>
              </widget>
-             <widget class="QLineEdit" name="lineEdit"/>
+             <widget class="QLineEdit" name="commitName"/>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_6">
+            <widget class="QLabel" name="andLabel">
              <property name="text">
               <string>and</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QSplitter" name="splitter_3">
+            <widget class="QSplitter" name="descriptionSplitter">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
-             <widget class="QLabel" name="label_7">
+             <widget class="QLabel" name="descriptionLabel">
               <property name="text">
                <string>description</string>
               </property>
              </widget>
-             <widget class="QTextEdit" name="textEdit"/>
+             <widget class="QTextEdit" name="commitDescription"/>
             </widget>
            </item>
           </layout>
          </widget>
-         <widget class="QSplitter" name="splitter_4">
+         <widget class="QSplitter" name="changedFilesSplitter">
           <property name="geometry">
            <rect>
             <x>10</x>
@@ -107,7 +107,7 @@
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="QListView" name="changedFileslistView"/>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="changedFilesLabel">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -117,7 +117,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter_5">
+         <widget class="QSplitter" name="savedFilesSplitter">
           <property name="geometry">
            <rect>
             <x>260</x>
@@ -134,7 +134,7 @@ p, li { white-space: pre-wrap; }
             <string notr="true"/>
            </property>
           </widget>
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="filesToSaveLabel">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -144,7 +144,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QSplitter" name="splitter_6">
+         <widget class="QSplitter" name="ignoredFilesSplitter">
           <property name="geometry">
            <rect>
             <x>260</x>
@@ -157,7 +157,7 @@ p, li { white-space: pre-wrap; }
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="QListView" name="ignoredFilesListView"/>
-          <widget class="QLabel" name="label_3">
+          <widget class="QLabel" name="filesToIgnoreButton">
            <property name="text">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -168,7 +168,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </widget>
 <<<<<<< HEAD
-         <widget class="QPushButton" name="gitAddButton">
+         <widget class="QPushButton" name="gitIgnoreButton">
           <property name="geometry">
            <rect>
             <x>150</x>
@@ -181,58 +181,72 @@ p, li { white-space: pre-wrap; }
            <string>-----&gt;</string>
           </property>
          </widget>
-=======
->>>>>>> bdenne2/master
          <widget class="QPushButton" name="pushButton_3">
+=======
+         <widget class="QPushButton" name="bottomArrow">
+>>>>>>> hef/master
           <property name="geometry">
            <rect>
-            <x>150</x>
-            <y>290</y>
-            <width>93</width>
-            <height>27</height>
+            <x>170</x>
+            <y>160</y>
+            <width>91</width>
+            <height>201</height>
            </rect>
           </property>
           <property name="text">
-           <string>----&gt;</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/images/downArrow.png</normaloff>:/images/downArrow.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="gitAddButton">
           <property name="geometry">
            <rect>
-            <x>250</x>
-            <y>180</y>
-            <width>93</width>
-            <height>27</height>
+            <x>170</x>
+            <y>20</y>
+            <width>91</width>
+            <height>201</height>
            </rect>
           </property>
           <property name="text">
-           <string>UP ^</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resources.qrc">
+            <normaloff>:/images/topArrow15.png</normaloff>:/images/topArrow15.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushButton_5">
+         <widget class="QPushButton" name="reload">
           <property name="geometry">
            <rect>
-            <x>350</x>
-            <y>180</y>
-            <width>93</width>
+            <x>690</x>
+            <y>420</y>
+            <width>85</width>
             <height>27</height>
            </rect>
           </property>
           <property name="text">
-           <string>Down v</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_6">
-          <property name="geometry">
-           <rect>
-            <x>420</x>
-            <y>90</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>----&gt;</string>
+           <string>Reload</string>
           </property>
          </widget>
         </widget>
@@ -257,8 +271,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -363,7 +377,11 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>22</height>
+<<<<<<< HEAD
+     <height>25</height>
+=======
+     <height>21</height>
+>>>>>>> hef/master
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -386,6 +404,7 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>Wizards</string>
     </property>
+    <addaction name="actionExisting_Project"/>
     <addaction name="actionNew_2"/>
     <addaction name="actionRemote_Repository"/>
    </widget>
@@ -426,12 +445,17 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionNew_2">
    <property name="text">
-    <string>New Project</string>
+    <string>Existing Project</string>
    </property>
   </action>
   <action name="actionRemote_Repository">
    <property name="text">
     <string>Share Project</string>
+   </property>
+  </action>
+  <action name="actionExisting_Project">
+   <property name="text">
+    <string>New Project</string>
    </property>
   </action>
  </widget>
@@ -440,8 +464,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>changedFileslistView</tabstop>
   <tabstop>stagedFilesListView</tabstop>
   <tabstop>ignoredFilesListView</tabstop>
-  <tabstop>lineEdit</tabstop>
-  <tabstop>textEdit</tabstop>
+  <tabstop>commitName</tabstop>
+  <tabstop>commitDescription</tabstop>
   <tabstop>scrollArea</tabstop>
   <tabstop>mergeBranch</tabstop>
   <tabstop>createNewBranch</tabstop>
@@ -449,6 +473,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
