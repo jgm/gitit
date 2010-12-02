@@ -38,6 +38,7 @@ signals:
     void repositoryChanged(QString repo);
 
 private slots:
+    void on_reload_clicked();
     void on_shipButton_clicked();
     void on_gitAddButton_clicked();
     void on_actionOpen_triggered();
@@ -50,6 +51,7 @@ private slots:
     void activateExistingProjectWizard();
     void activateShareProjectWizard();
     void updateIgnoredModel(QStringList);
+public slots:
     void reload();
 };
 

@@ -136,8 +136,13 @@ void MainWindow::on_shipButton_clicked()
     QStringList args;
     QString description;
     description = ui->commitName->text();
-    description += ui->commitDescription->toPlainText();
+    description += "\n\n" + ui->commitDescription->toPlainText();
     args << "commit" << "-m" << description;
     gitCommand->run(args);
+    reload();
+}
+
+void MainWindow::on_reload_clicked()
+{
     reload();
 }
