@@ -112,9 +112,9 @@ void MainWindow::updateIgnoredModel(QStringList files)
 void MainWindow::on_gitAddButton_clicked()
 {
     //ui->git
-    /QModelIndexList *indexList = ui->changedFileslistView->selectedIndexes();
-    /*or(int i=0; i < indexList->count(); ++i)
+    //QModelIndexList *indexList = ui->changedFileslistView->selectedIndexes();
+    /* (int i=0; i < indexList->count(); ++i)
     {
         indexList->at(i);
-    }*/
+    } */
 }
