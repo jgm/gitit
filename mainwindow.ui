@@ -167,19 +167,6 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QPushButton" name="gitAddButton">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>90</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>-----&gt;</string>
-          </property>
-         </widget>
          <widget class="QPushButton" name="pushButton_3">
           <property name="geometry">
            <rect>
@@ -193,7 +180,7 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/images/downArrow.png</normaloff>:/images/downArrow.png</iconset>
           </property>
           <property name="iconSize">
@@ -206,7 +193,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="gitAddButton">
           <property name="geometry">
            <rect>
             <x>170</x>
@@ -219,7 +206,7 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="resources.qrc">
             <normaloff>:/images/topArrow15.png</normaloff>:/images/topArrow15.png</iconset>
           </property>
           <property name="iconSize">
@@ -254,8 +241,8 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>269</width>
-             <height>359</height>
+             <width>267</width>
+             <height>357</height>
             </rect>
            </property>
           </widget>
@@ -360,7 +347,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -446,6 +433,8 @@ p, li { white-space: pre-wrap; }
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

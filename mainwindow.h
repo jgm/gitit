@@ -49,6 +49,7 @@ private slots:
     void activateNewProjectWizard();
     void activateShareProjectWizard();
     void updateIgnoredModel(QStringList);
+    void reload();
 };
 
 #endif // MAINWINDOW_H

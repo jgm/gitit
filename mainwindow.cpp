@@ -116,7 +116,13 @@ void MainWindow::on_gitAddButton_clicked()
     QModelIndexList indexList = itemSelection.indexes();
     for(int i=0; i < indexList.count(); ++i)
     {
-        ui->statusBar->showMessage(QString(indexList.at(i).data().toString()),5000);
+        QString filename = QString(indexList.at(i).data().toString());
+        gitCommand->add( filename );
+        ui->statusBar->showMessage(filename,5000);
     }
-    update();
+    reload();
+}
+void MainWindow::reload()
+{
+    gitCommand->status();
 }

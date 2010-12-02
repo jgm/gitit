@@ -60,8 +60,10 @@ void GitCommand::add(QString filename)
     QSettings settings;
     QString proc = settings.value("gitPath").toString();
     QStringList args = *defaultArgs;
-    args << filename;
+    args << "add" << filename;
     gitAddProcess->start(proc, args);
+    gitAddProcess->waitForFinished(5000);
+
 }
 
 void GitCommand::setRepo(QString repo)
