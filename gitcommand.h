@@ -17,12 +17,14 @@ public:
     ~GitCommand();
     void status();
     void lsIgnored();
+    void add(QString filename);
 
 private:
     QStringList* defaultArgs;
     QString repo;
     QProcess* gitStatusProcess;
     QProcess* gitLSIgnoredProcess;
+    QProcess* gitAddProcess;
 
 signals:
     void status(QStringList files);
