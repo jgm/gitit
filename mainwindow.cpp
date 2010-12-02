@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     gitChangedStatusModel(new GitChangedStatusModel),
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
-    newProjectWizard( new NewProjectWizard),
+    existingProjectWizard( new ExistingProjectWizard),
     gitCommand(new GitCommand)
 {
     ui->setupUi(this);
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
-    connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
+    connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateExistingProjectWizard()) );
     connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
     //using a builtin model here:
     connect(gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
@@ -95,9 +95,9 @@ void MainWindow::userManual()
 
 }
 
-void MainWindow::activateNewProjectWizard()
+void MainWindow::activateExistingProjectWizard()
 {
-    newProjectWizard->show();
+    existingProjectWizard->show();
 }
 
 void MainWindow::activateShareProjectWizard()

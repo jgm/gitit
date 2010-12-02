@@ -13,18 +13,18 @@ SOURCES += main.cpp \
     currentuserinfo.cpp \
     gitchangedstatusmodel.cpp \
     configure.cpp \
-    newProjectWizard.cpp \
     gitcommand.cpp \
-    gitstagedstatusmodel.cpp
+    gitstagedstatusmodel.cpp \
+    existingProjectWizard.cpp
 HEADERS += mainwindow.h \
     history.h \
     commit.h \
     currentuserinfo.h \
     gitchangedstatusmodel.h \
     configure.h \
-    newProjectWizard.h \
     gitcommand.h \
-    gitstagedstatusmodel.h
+    gitstagedstatusmodel.h \
+    existingProjectWizard.h
 FORMS += mainwindow.ui \
     configure.ui
 RESOURCES += resources.qrc
