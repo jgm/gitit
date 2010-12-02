@@ -109,3 +109,13 @@ void MainWindow::updateIgnoredModel(QStringList files)
 {
     gitIgnoredFilesModel->setStringList(files);
 }
+
+void MainWindow::on_gitAddButton_clicked()
+{
+    //ui->git
+    QModelIndexList *indexList = ui->changedFileslistView->selectedIndexes();
+    for(int i=0; i < indexList->count(); ++i)
+    {
+        indexList->at(i);
+    }
+}
