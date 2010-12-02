@@ -47,6 +47,8 @@ ExistingProjectWizard::~ExistingProjectWizard()
     delete conclusion;
 }
 
+
+
 void ExistingProjectWizard::createIntroPage()
 {
     introPage = new QWizardPage;
