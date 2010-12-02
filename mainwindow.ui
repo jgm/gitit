@@ -167,19 +167,6 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </widget>
-         <widget class="QPushButton" name="pushButton_2">
-          <property name="geometry">
-           <rect>
-            <x>150</x>
-            <y>90</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>-----&gt;</string>
-          </property>
-         </widget>
          <widget class="QPushButton" name="pushButton_3">
           <property name="geometry">
            <rect>

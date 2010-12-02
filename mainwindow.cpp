@@ -25,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
     connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
     connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
-
+    connect(ui->box, SIGNAL(linkActivated(QString)), this, SLOT(boxClicked()));
 }
 
 MainWindow::~MainWindow()
@@ -58,7 +58,7 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::boxClicked()
 {
-    ui->statusBar->showMessage("box", 15);
+    ui->statusBar->showMessage("box", 15000);
 }
 
 void MainWindow::about()
