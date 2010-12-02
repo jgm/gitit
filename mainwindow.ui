@@ -183,53 +183,53 @@ p, li { white-space: pre-wrap; }
          <widget class="QPushButton" name="pushButton_3">
           <property name="geometry">
            <rect>
-            <x>150</x>
-            <y>290</y>
-            <width>93</width>
-            <height>27</height>
+            <x>170</x>
+            <y>160</y>
+            <width>91</width>
+            <height>201</height>
            </rect>
           </property>
           <property name="text">
-           <string>----&gt;</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>:/images/downArrow.png</normaloff>:/images/downArrow.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="flat">
+           <bool>true</bool>
           </property>
          </widget>
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="pushButton_2">
           <property name="geometry">
            <rect>
-            <x>250</x>
-            <y>180</y>
-            <width>93</width>
-            <height>27</height>
+            <x>170</x>
+            <y>20</y>
+            <width>91</width>
+            <height>201</height>
            </rect>
           </property>
           <property name="text">
-           <string>UP ^</string>
+           <string/>
           </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_5">
-          <property name="geometry">
-           <rect>
-            <x>350</x>
-            <y>180</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
+          <property name="icon">
+           <iconset>
+            <normaloff>:/images/topArrow15.png</normaloff>:/images/topArrow15.png</iconset>
           </property>
-          <property name="text">
-           <string>Down v</string>
+          <property name="iconSize">
+           <size>
+            <width>90</width>
+            <height>200</height>
+           </size>
           </property>
-         </widget>
-         <widget class="QPushButton" name="pushButton_6">
-          <property name="geometry">
-           <rect>
-            <x>420</x>
-            <y>90</y>
-            <width>93</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>----&gt;</string>
+          <property name="flat">
+           <bool>true</bool>
           </property>
          </widget>
         </widget>
@@ -360,7 +360,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

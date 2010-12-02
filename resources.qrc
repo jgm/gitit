@@ -5,5 +5,7 @@
         <file>images/drawing.png</file>
         <file>images/drawing2.png</file>
         <file>images/closedBox27.png</file>
+        <file>images/topArrow15.png</file>
+        <file>images/downArrow.png</file>
     </qresource>
 </RCC>

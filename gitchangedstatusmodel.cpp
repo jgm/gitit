@@ -32,5 +32,8 @@ void GitChangedStatusModel::update(QStringList files)
     QRegExp rx("^(.\\S).*$"); // " M filname"  "MM filename" "AM filename"
     rx.setPatternSyntax(QRegExp::RegExp2);
     *fileList = files.filter(rx);
+    QRegExp awesome("^...");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    fileList->replaceInStrings( awesome, "" );
     emit dataChanged( createIndex(0,0), createIndex( fileList->count() ,0 ) );
 }
