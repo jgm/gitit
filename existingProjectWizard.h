@@ -33,6 +33,7 @@ private:
     QLabel* hiddenComment;
     QLineEdit* userRemotePath;
     QLineEdit* userLocalDirectory;
+    int nextID() const;
 
 signals:
     void setPath();
