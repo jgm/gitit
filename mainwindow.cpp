@@ -31,8 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
     connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
     connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
-
-    //useing a builtin model here:
+    //using a builtin model here:
     connect(gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
 
 }
@@ -68,7 +67,7 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::boxClicked()
 {
-    ui->statusBar->showMessage("box", 15);
+    ui->statusBar->showMessage("box", 15000);
 }
 
 void MainWindow::about()
@@ -113,9 +112,9 @@ void MainWindow::updateIgnoredModel(QStringList files)
 void MainWindow::on_gitAddButton_clicked()
 {
     //ui->git
-    QModelIndexList *indexList = ui->changedFileslistView->selectedIndexes();
-    for(int i=0; i < indexList->count(); ++i)
+    /QModelIndexList *indexList = ui->changedFileslistView->selectedIndexes();
+    /*or(int i=0; i < indexList->count(); ++i)
     {
         indexList->at(i);
-    }
+    }*/
 }
