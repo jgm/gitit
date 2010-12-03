@@ -4,17 +4,19 @@
 #include <QWizard>
 #include <QLineEdit>
 #include <QPushButton>
-
+class GitCommand;
 class RemoteWizard : public QWizard
 {
+    Q_OBJECT
 public:
-    RemoteWizard();
+    RemoteWizard(GitCommand* gitCommand);
     ~RemoteWizard();
     void clear();
     QString getPath();
     QString getName();
 
 private:
+    GitCommand* gitCommand;
     QWizardPage* introPage;
     QWizardPage* getInfo;
     QWizardPage* conclusion;
@@ -26,6 +28,8 @@ private:
     QLineEdit* path;
     QPushButton* browsePath;
     QLineEdit* remoteName;
+public slots:
+    void addRemoteRepo();
 };
 
 #endif // REMOTEWIZARD_H

@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
     newProjectWizard( new NewProjectWizard),
-    remoteWizard( new RemoteWizard)
+    remoteWizard( new RemoteWizard(gitCommand))
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);

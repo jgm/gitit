@@ -1,8 +1,9 @@
 #include "remoteWizard.h"
 #include <QLabel>
 #include <QLayout>
-
-RemoteWizard::RemoteWizard()
+#include "gitcommand.h"
+RemoteWizard::RemoteWizard(GitCommand* gitCommand) :
+        gitCommand(gitCommand)
 {
     remoteName = new QLineEdit;
     path = new QLineEdit;
@@ -14,6 +15,7 @@ RemoteWizard::RemoteWizard()
     this->addPage(introPage);
     this->addPage(getInfo);
     this->addPage(conclusion);
+    connect(this,SIGNAL(accepted()),this,SLOT(addRemoteRepo()));
 }
 
 RemoteWizard::~RemoteWizard()
@@ -80,4 +82,10 @@ void RemoteWizard::clear()
 {
     remoteName->clear();
     path->clear();
+}
+void RemoteWizard::addRemoteRepo()
+{
+    QStringList args;
+    args << "remote" << "add" << getName() << getPath();
+    gitCommand->run(args);
 }
