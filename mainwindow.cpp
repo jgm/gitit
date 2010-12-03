@@ -310,3 +310,24 @@ void MainWindow::on_syncFromButton_clicked()
         gitCommand->run(args);
     }
 }
+
+void MainWindow::on_gitIgnoreButton_clicked()
+{
+    QFile gitignore(repo + "/.gitignore");
+    gitignore.open(QIODevice::Append);
+    QTextStream out(&gitignore);
+
+
+    QItemSelectionModel* selectionModel = ui->changedFileslistView->selectionModel();
+    QItemSelection itemSelection = selectionModel->selection();
+    QModelIndexList indexList = itemSelection.indexes();
+    for(int i=0; i < indexList.count(); ++i)
+    {
+        QString filename = QString(indexList.at(i).data().toString());
+        out << filename <<"\n";
+
+        ui->statusBar->showMessage(filename,5000);
+    }
+    reload();
+
+}
