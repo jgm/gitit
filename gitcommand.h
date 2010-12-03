@@ -20,6 +20,7 @@ public:
     void lsIgnored();
     void add(QString filename);
     void log();
+    QStringList branchList();
 
 private:
     QStringList* defaultArgs;
@@ -29,6 +30,7 @@ private:
     QProcess* gitLSIgnoredProcess;
     QProcess* gitLogProcess;
     QProcess* gitAddProcess;
+    QProcess* gitBranchListProcess;
 
 signals:
     void status(QStringList files);

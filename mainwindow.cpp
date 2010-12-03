@@ -8,6 +8,7 @@
 #include "gitcommand.h"
 #include "gitstagedstatusmodel.h"
 #include <QStringList>
+#include <QInputDialog>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -175,3 +176,94 @@ void MainWindow::on_syncToButton_clicked()
 {
     //TODO: fixme
 }
+
+void MainWindow::on_createNewBranch_clicked()
+{
+    bool ok;
+    QStringList args;
+    QString newBranch = QInputDialog::getText(this,"Create Branch","Enter then name of the new Branch",QLineEdit::Normal,"",&ok);
+    if(ok)
+    {
+        args << "checkout" << "-b" << "newBranch";
+        gitCommand->run(args);
+    }
+}
+
+void MainWindow::on_renameBranch_clicked()
+{
+    bool ok;
+    QStringList args;
+    QString newName = QInputDialog::getText(this,"Rename Branch","Enter then new name of the current Branch",QLineEdit::Normal,"",&ok);
+    if(ok)
+    {
+        args << "branch" << "-M" << "newName";
+        gitCommand->run(args);
+    }
+}
+
+void MainWindow::on_mergeBranch_clicked()
+{
+    bool ok;
+    QStringList args;
+    QStringList branches = gitCommand->branchList();
+    QString branch = QInputDialog::getItem(this,
+                          "Merge Branch",
+                          "Select Branch to merge into current",
+                          branches,
+                          0,
+                          false,
+                          &ok);
+    QRegExp awesome("^..");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(awesome,"");
+    if(ok)
+    {
+        args << "merge" << branch;
+        gitCommand->run(args);
+    }
+}
+
+void MainWindow::on_deleteBranch_clicked()
+{
+    bool ok;
+    QStringList args;
+    QStringList branches = gitCommand->branchList();
+    QString branch = QInputDialog::getItem(this,
+                          "Delete Branch",
+                          "Select Branch to Delete",
+                          branches,
+                          0,
+                          false,
+                          &ok);
+    QRegExp awesome("^..");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(awesome,"");
+    if(ok)
+    {
+        args << "branch" << "-D" << branch;
+        gitCommand->run(args);
+    }
+}
+
+void MainWindow::on_changeCurrentBranch_clicked()
+{
+    bool ok;
+    QStringList args;
+    QStringList branches = gitCommand->branchList();
+    QString branch = QInputDialog::getItem(this,
+                          "Change Branch",
+                          "Select Branch to Change to",
+                          branches,
+                          0,
+                          false,
+                          &ok);
+    QRegExp awesome("^..");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(awesome,"");
+    if(ok)
+    {
+        args << "checkout" << branch;
+        gitCommand->run(args);
+    }
+}
+

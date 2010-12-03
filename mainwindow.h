@@ -39,6 +39,11 @@ signals:
     void repositoryChanged(QString repo);
 
 private slots:
+    void on_changeCurrentBranch_clicked();
+    void on_deleteBranch_clicked();
+    void on_mergeBranch_clicked();
+    void on_renameBranch_clicked();
+    void on_createNewBranch_clicked();
     void on_syncToButton_clicked();
     void on_reload_clicked();
     void on_shipButton_clicked();
