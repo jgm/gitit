@@ -16,8 +16,7 @@ SOURCES += main.cpp \
     gitcommand.cpp \
     gitstagedstatusmodel.cpp \
     existingProjectWizard.cpp \
-    newProjectWizard.cpp \
-    branchBranchDialog.cpp
+    newProjectWizard.cpp
 HEADERS += mainwindow.h \
     history.h \
     commit.h \
@@ -27,8 +26,7 @@ HEADERS += mainwindow.h \
     gitcommand.h \
     gitstagedstatusmodel.h \
     existingProjectWizard.h \
-    newProjectWizard.h \
-    branchBranchDialog.h
+    newProjectWizard.h
 FORMS += mainwindow.ui \
     configure.ui
 RESOURCES += resources.qrc

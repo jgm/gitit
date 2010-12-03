@@ -5,7 +5,6 @@
 #include <QStringListModel>
 #include "existingProjectWizard.h"
 #include "newProjectWizard.h"
-#include "branchBranchDialog.h"
 
 class Configure;
 class GitChangedStatusModel;
@@ -33,7 +32,6 @@ private:
     QString repo;
     ExistingProjectWizard* existingProjectWizard;
     NewProjectWizard* newProjectWizard;
-    BranchBranchDialog* branchBranchDialog;
 
     GitCommand* gitCommand;
 
