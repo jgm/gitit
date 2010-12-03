@@ -164,6 +164,8 @@ void MainWindow::on_shipButton_clicked()
     description += "\n\n" + ui->commitDescription->toPlainText();
     args << "commit" << "-m" << description;
     gitCommand->run(args);
+    ui->commitDescription->setText("");
+    ui->commitName->setText("");
     reload();
 }
 
@@ -171,8 +173,6 @@ void MainWindow::on_reload_clicked()
 {
     reload();
 }
-
-
 
 void MainWindow::on_createNewBranch_clicked()
 {
