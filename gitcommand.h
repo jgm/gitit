@@ -21,6 +21,7 @@ public:
     void add(QString filename);
     void log();
     QStringList branchList();
+    QStringList remoteBranchList();
 
 private:
     QStringList* defaultArgs;

@@ -103,6 +103,19 @@ QStringList GitCommand::branchList()
     return branchStringList;
 
 }
+QStringList GitCommand::remoteBranchList()
+{
+    QSettings settings;
+    QString proc = settings.value("gitPath").toString();
+    QStringList args = *defaultArgs;
+    args << "branch" << "-r" << "--color=never";
+    gitBranchListProcess->start(proc,args);
+    gitBranchListProcess->waitForFinished(5000);
+    QByteArray result = gitBranchListProcess->readAll();
+    QString resultString(result);
+    QStringList branchStringList = resultString.split('\n',QString::SkipEmptyParts);
+    return branchStringList;
+}
 void GitCommand::add(QString filename)
 {
     QSettings settings;
