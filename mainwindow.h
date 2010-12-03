@@ -61,6 +61,7 @@ private slots:
     void activateExistingProjectWizard();
     void activateNewProjectWizard();
     void existingProjectWizardAccepted();
+    void newProjectWizardAccepted();
     void updateIgnoredModel(QStringList);
     void updateLog(QString);
 public slots:
