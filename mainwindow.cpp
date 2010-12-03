@@ -118,6 +118,8 @@ void MainWindow::activateNewProjectWizard()
     newProjectWizard->restart();
     newProjectWizard->clear();
     newProjectWizard->show();
+    gitCommand->setRepo(newProjectWizard->getGitPath());
+    reload();
 }
 
 void MainWindow::updateIgnoredModel(QStringList files)

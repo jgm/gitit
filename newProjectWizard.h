@@ -10,7 +10,7 @@
 #include<QLineEdit>
 #include<QFileDialog>
 #include<QPushButton>
-
+class GitCommand;
 class NewProjectWizard : public QWizard
 {
     Q_OBJECT
@@ -19,8 +19,10 @@ public:
     NewProjectWizard();
     ~NewProjectWizard();
     void clear();
+    QString getGitPath();
 
 private:
+    GitCommand* gitCommand;
     QWizardPage* introPage;
     QWizardPage* localPath;
     QWizardPage* conclusion;
@@ -35,6 +37,7 @@ private:
 
 private slots:
     void getPath();
+    void createRepo();
 
 };
 
