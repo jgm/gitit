@@ -146,9 +146,20 @@ void ExistingProjectWizard::createGetLocalPath()
 void ExistingProjectWizard::createRepo()
 {
     QStringList args;
-    args << "init" << pathDisplay->text();
-    gitCommand->run(args);
+    if( userRemotePath->text().size() == 0 )
+    {
+        //simple init
+        args << "init" << pathDisplay->text();
+        path[0] = pathDisplay->text();
+    }
+    else
+    {
+        //clone
+        args << "clone" << userRemotePath->text() << userLocalDirectory->text();
+        path[0] = userLocalDirectory->text();
 
+    }
+    gitCommand->run(args);
 }
 
 void ExistingProjectWizard::createGetRemotePath()
@@ -258,7 +269,7 @@ void ExistingProjectWizard::displayHiddenComment(int index)
 {
     if(index == 0)
     {
-        userRemotePath->setText("username/projectName");
+        userRemotePath->setText("http://github.com/username/projectname.git");
         hiddenComment->setText( "This only works if you have write access to the Github project. This has to be explicitly set unless the project is your own."
                                 "See github.com for questions and problems.");
     }

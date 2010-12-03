@@ -110,6 +110,7 @@ void MainWindow::activateExistingProjectWizard()
     existingProjectWizard->clear();
     existingProjectWizard->show();
     gitCommand->setRepo(existingProjectWizard->getGitPath());
+    reload();
 }
 
 void MainWindow::activateNewProjectWizard()
