@@ -102,6 +102,7 @@ void MainWindow::userManual()
 void MainWindow::activateExistingProjectWizard()
 {
     existingProjectWizard->restart();
+    existingProjectWizard->clear();
     existingProjectWizard->show();
 }
 

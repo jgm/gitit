@@ -24,6 +24,7 @@ ExistingProjectWizard::ExistingProjectWizard() :
     userLocalDirectory = new QLineEdit("", this);
     localButton = new QRadioButton( "Local" );
     remoteButton = new QRadioButton("Remote");
+    remoteOption = new QComboBox;
 
     createIntroPage();
     createGetLocalPath();
@@ -48,6 +49,19 @@ ExistingProjectWizard::~ExistingProjectWizard()
     delete remotePath;
     delete localDirectory;
     delete conclusion;
+    delete remoteOption;
+}
+
+void ExistingProjectWizard::clear()
+{
+    pathDisplay->clear();
+    hiddenComment->clear();
+    userRemotePath->clear();
+    remoteOption->setCurrentIndex(0);
+    this->displayHiddenComment(0);
+    userLocalDirectory->clear();
+    localButton->clearFocus();
+    remoteButton->clearFocus();
 }
 
 int ExistingProjectWizard::nextId() const
@@ -134,7 +148,7 @@ void ExistingProjectWizard::createGetRemotePath()
 
     QLabel* label2 = new QLabel("Where is the remote directory (that uses git) you would like to copy?");
     label2->setWordWrap(true);
-    QComboBox* remoteOption = new QComboBox;
+//  QComboBox* remoteOption = new QComboBox;
 //  QLineEdit* userRemotePath = new QLineEdit;
     remoteOption->insertItem(0, "github");
     remoteOption->insertItem(1, "ssh");

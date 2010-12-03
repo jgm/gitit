@@ -8,6 +8,7 @@
 #include<QButtonGroup>
 #include<QRadioButton>
 #include<QLineEdit>
+#include<QComboBox>
 
 class ExistingProjectWizard: public QWizard
 {
@@ -16,6 +17,7 @@ class ExistingProjectWizard: public QWizard
 public:
    ExistingProjectWizard();
    ~ExistingProjectWizard();
+   void clear();
 private:
     void createIntroPage();
     void createGetLocalPath();
@@ -37,6 +39,7 @@ private:
     QLineEdit* userLocalDirectory;
     QRadioButton* localButton;
     QRadioButton* remoteButton;
+    QComboBox* remoteOption;
 
 
 signals:
