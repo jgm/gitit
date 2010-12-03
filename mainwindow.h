@@ -38,6 +38,8 @@ signals:
     void repositoryChanged(QString repo);
 
 private slots:
+    void on_pushButton_clicked();
+    void on_actionUser_s_Manual_triggered();
     void on_gitIgnoreButton_clicked();
     void on_syncFromButton_clicked();
     void on_changeCurrentBranch_clicked();

@@ -300,7 +300,7 @@ p, li { white-space: pre-wrap; }
             <x>540</x>
             <y>260</y>
             <width>211</width>
-            <height>101</height>
+            <height>131</height>
            </rect>
           </property>
           <property name="title">
@@ -310,9 +310,9 @@ p, li { white-space: pre-wrap; }
            <property name="geometry">
             <rect>
              <x>10</x>
-             <y>30</y>
+             <y>19</y>
              <width>191</width>
-             <height>60</height>
+             <height>101</height>
             </rect>
            </property>
            <property name="orientation">
@@ -326,6 +326,11 @@ p, li { white-space: pre-wrap; }
            <widget class="QPushButton" name="syncFromButton">
             <property name="text">
              <string>Sync From Remote Branch</string>
+            </property>
+           </widget>
+           <widget class="QPushButton" name="pushButton">
+            <property name="text">
+             <string>Refresh Remote Branches</string>
             </property>
            </widget>
           </widget>

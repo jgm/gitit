@@ -9,19 +9,19 @@
 #include "gitstagedstatusmodel.h"
 #include <QStringList>
 #include <QInputDialog>
+#include <QDesktopServices>
+#include <QUrl>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    gitCommand(new GitCommand),
     ui(new Ui::MainWindow),
+    gitCommand(new GitCommand),
     configure(new Configure(this,gitCommand)),
     gitChangedStatusModel(new GitChangedStatusModel),
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
     newProjectWizard( new NewProjectWizard)
-
-
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
@@ -270,10 +270,10 @@ void MainWindow::on_syncToButton_clicked()
     bool ok;
     QStringList args;
     ///TODO: This needs to change to show a list of remote repos, not remote branches.
-    QStringList branches = gitCommand->remoteBranchList();
+    QStringList branches = gitCommand->run(QStringList() << "remote" << "show");
     QString branch = QInputDialog::getItem(this,
-                          "Push to remote branch",
-                          "Select the remote branch to push too",
+                          "Push to remote repo",
+                          "Select the remote repo to push too",
                           branches,
                           0,
                           false,
@@ -305,6 +305,11 @@ void MainWindow::on_syncFromButton_clicked()
     QRegExp awesome("^..");
     awesome.setPatternSyntax(QRegExp::RegExp2);
     branch.replace(awesome,"");
+
+    QRegExp cleanup(" -> .*");
+    cleanup.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(cleanup,"");
+    ui->statusBar->showMessage(branch, 3000);
     if(ok)
     {
         args << "merge" << branch;
@@ -331,4 +336,15 @@ void MainWindow::on_gitIgnoreButton_clicked()
     }
     reload();
 
+}
+
+void MainWindow::on_actionUser_s_Manual_triggered()
+{
+    QDesktopServices::openUrl(QUrl("https://github.com/bdenne2/gitit/raw/master/userManual.pdf"));
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    gitCommand->run(QStringList() << "remote" << "update");
+    ui->statusBar->showMessage("updated",1500);
 }
