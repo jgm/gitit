@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
     newProjectWizard( new NewProjectWizard),
-    gitCommand(new GitCommand)
-
+    gitCommand(new GitCommand),
+    branchBranchDialog( new BranchBranchDialog)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
