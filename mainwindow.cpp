@@ -66,9 +66,11 @@ void MainWindow::on_actionOpen_triggered()
 
     if (dialog.exec())
         fileNames = dialog.selectedFiles();
-
-    repo = fileNames[0];
-    this->gitCommand->setRepo(repo);
+    if(fileNames.count()>0)
+    {
+        repo = fileNames[0];
+        this->gitCommand->setRepo(repo);
+    }
     reload();
 }
 
@@ -147,6 +149,7 @@ void MainWindow::reload()
     gitCommand->status();
     gitCommand->lsIgnored();
     gitCommand->log();
+    ui->statusBar->showMessage(repo,30000);
 }
 
 void MainWindow::on_shipButton_clicked()
