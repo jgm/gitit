@@ -23,7 +23,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
@@ -323,7 +323,7 @@ p, li { white-space: pre-wrap; }
              <string>Sync to Remote Branch</string>
             </property>
            </widget>
-           <widget class="QPushButton" name="pushButton_8">
+           <widget class="QPushButton" name="syncFromButton">
             <property name="text">
              <string>Sync From Remote Branch</string>
             </property>

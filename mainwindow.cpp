@@ -172,10 +172,7 @@ void MainWindow::on_reload_clicked()
     reload();
 }
 
-void MainWindow::on_syncToButton_clicked()
-{
-    //TODO: fixme
-}
+
 
 void MainWindow::on_createNewBranch_clicked()
 {
@@ -267,3 +264,49 @@ void MainWindow::on_changeCurrentBranch_clicked()
     }
 }
 
+void MainWindow::on_syncToButton_clicked()
+{
+    bool ok;
+    QStringList args;
+    ///TODO: This needs to change to show a list of remote repos, not remote branches.
+    QStringList branches = gitCommand->remoteBranchList();
+    QString branch = QInputDialog::getItem(this,
+                          "Push to remote branch",
+                          "Select the remote branch to push too",
+                          branches,
+                          0,
+                          false,
+                          &ok);
+    QRegExp awesome("^..");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(awesome,"");
+    if(ok)
+    {
+        args << "push" << branch;
+        gitCommand->run(args);
+    }
+}
+
+void MainWindow::on_syncFromButton_clicked()
+{
+    bool ok;
+    QStringList args;
+    ///TODO: This needs to change to show a list of remote repos, not remote branches.
+    QStringList branches = gitCommand->remoteBranchList();
+    QString branch = QInputDialog::getItem(this,
+                          "Push to remote branch",
+                          "Select the remote branch to push too",
+                          branches,
+                          0,
+                          false,
+                          &ok);
+    //TODO: filter tracjking branch output better
+    QRegExp awesome("^..");
+    awesome.setPatternSyntax(QRegExp::RegExp2);
+    branch.replace(awesome,"");
+    if(ok)
+    {
+        args << "merge" << branch;
+        gitCommand->run(args);
+    }
+}
