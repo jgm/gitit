@@ -11,6 +11,8 @@ public:
     RemoteWizard();
     ~RemoteWizard();
     void clear();
+    QString getPath();
+    QString getName();
 
 private:
     QWizardPage* introPage;

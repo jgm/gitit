@@ -23,6 +23,17 @@ RemoteWizard::~RemoteWizard()
     delete conclusion;
 }
 
+QString RemoteWizard::getName()
+{
+
+    return remoteName->text();
+}
+
+QString RemoteWizard::getPath()
+{
+    return path->text();
+}
+
 void RemoteWizard::createIntroPage()
 {
     introPage = new QWizardPage;
