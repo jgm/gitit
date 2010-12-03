@@ -10,10 +10,12 @@ GitCommand::GitCommand(QObject *parent) :
     gitRunProcess(new QProcess),
     gitStatusProcess(new QProcess),
     gitLSIgnoredProcess(new QProcess),
+    gitLogProcess(new QProcess),
     gitAddProcess(new QProcess)
 {
     connect(gitStatusProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(statusOutput(int, QProcess::ExitStatus)));
     connect(gitLSIgnoredProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(lsIgnoredOutput(int, QProcess::ExitStatus)));
+    connect(gitLogProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(logOutput(int, QProcess::ExitStatus)));
 }
 GitCommand::~GitCommand()
 {
@@ -22,6 +24,7 @@ GitCommand::~GitCommand()
     delete gitStatusProcess;
     delete gitLSIgnoredProcess;
     delete gitAddProcess;
+    delete gitLogProcess;
 }
 void GitCommand::run(QStringList arguments)
 {
@@ -66,6 +69,22 @@ void GitCommand::lsIgnoredOutput(int exitCode, QProcess::ExitStatus exitStatus)
     QStringList fileList = resultString.split('\n',QString::SkipEmptyParts);
     emit lsIgnored(fileList);
 }
+void GitCommand::log()
+{
+    QSettings settings;
+    QString proc = settings.value("gitPath").toString();
+    QStringList args = *defaultArgs;
+    args << "log";
+    gitLogProcess->start(proc,args);
+}
+void GitCommand::logOutput(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    QByteArray result = gitLogProcess->readAll();
+    QString resultString(result);
+    emit log(result);
+
+}
+
 void GitCommand::add(QString filename)
 {
     QSettings settings;

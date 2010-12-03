@@ -23,7 +23,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="localWorkspace">
          <attribute name="title">
@@ -244,33 +244,10 @@ p, li { white-space: pre-wrap; }
          <attribute name="title">
           <string>Package Tree</string>
          </attribute>
-         <widget class="QScrollArea" name="scrollArea">
-          <property name="geometry">
-           <rect>
-            <x>30</x>
-            <y>40</y>
-            <width>271</width>
-            <height>361</height>
-           </rect>
-          </property>
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>269</width>
-             <height>359</height>
-            </rect>
-           </property>
-          </widget>
-         </widget>
          <widget class="QGroupBox" name="groupBox">
           <property name="geometry">
            <rect>
-            <x>430</x>
+            <x>540</x>
             <y>40</y>
             <width>211</width>
             <height>191</height>
@@ -321,7 +298,7 @@ p, li { white-space: pre-wrap; }
          <widget class="QGroupBox" name="groupBox_2">
           <property name="geometry">
            <rect>
-            <x>430</x>
+            <x>540</x>
             <y>260</y>
             <width>211</width>
             <height>101</height>
@@ -342,7 +319,7 @@ p, li { white-space: pre-wrap; }
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
-           <widget class="QPushButton" name="pushButton_7">
+           <widget class="QPushButton" name="syncToButton">
             <property name="text">
              <string>Sync to Remote Branch</string>
             </property>
@@ -353,6 +330,16 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </widget>
+         </widget>
+         <widget class="QPlainTextEdit" name="gitLogTextEdit">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>30</y>
+            <width>481</width>
+            <height>391</height>
+           </rect>
+          </property>
          </widget>
         </widget>
        </widget>
@@ -367,7 +354,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>804</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -452,7 +439,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>ignoredFilesListView</tabstop>
   <tabstop>commitName</tabstop>
   <tabstop>commitDescription</tabstop>
-  <tabstop>scrollArea</tabstop>
   <tabstop>mergeBranch</tabstop>
   <tabstop>createNewBranch</tabstop>
   <tabstop>deleteBranch</tabstop>

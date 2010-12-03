@@ -24,8 +24,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stagedFilesListView->setModel(gitStagedStatusModel);
     ui->ignoredFilesListView->setModel(gitIgnoredFilesModel);
     //connecting slots and signals
-    connect(gitCommand,SIGNAL(status(QStringList)),gitChangedStatusModel,SLOT(update(QStringList)));
-    connect(gitCommand,SIGNAL(status(QStringList)),gitStagedStatusModel,SLOT(update(QStringList)));
+    connect( gitCommand, SIGNAL(status(QStringList)), gitChangedStatusModel, SLOT(update(QStringList)));
+    connect( gitCommand, SIGNAL(status(QStringList)), gitStagedStatusModel,  SLOT(update(QStringList)));
+
     connect( ui->actionAbout, SIGNAL( triggered() ), this, SLOT(about()) );
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
@@ -33,7 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateExistingProjectWizard()) );
     connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
     //using a builtin model here:
-    connect(gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
+    connect( gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
+    connect( gitCommand, SIGNAL(log(QString))          , this, SLOT(updateLog(QString) ));
 
 }
 
@@ -111,6 +113,10 @@ void MainWindow::updateIgnoredModel(QStringList files)
 {
     gitIgnoredFilesModel->setStringList(files);
 }
+void MainWindow::updateLog(QString log)
+{
+    ui->gitLogTextEdit->setPlainText(log);
+}
 
 void MainWindow::on_gitAddButton_clicked()
 {
@@ -121,6 +127,7 @@ void MainWindow::on_gitAddButton_clicked()
     {
         QString filename = QString(indexList.at(i).data().toString());
         gitCommand->add( filename );
+
         ui->statusBar->showMessage(filename,5000);
     }
     reload();
@@ -129,6 +136,7 @@ void MainWindow::reload()
 {
     gitCommand->status();
     gitCommand->lsIgnored();
+    gitCommand->log();
 }
 
 void MainWindow::on_shipButton_clicked()
@@ -145,4 +153,9 @@ void MainWindow::on_shipButton_clicked()
 void MainWindow::on_reload_clicked()
 {
     reload();
+}
+
+void MainWindow::on_syncToButton_clicked()
+{
+    //TODO: fixme
 }
