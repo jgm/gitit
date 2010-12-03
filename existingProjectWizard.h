@@ -41,7 +41,6 @@ private:
     QRadioButton* remoteButton;
     QComboBox* remoteOption;
 
-
 signals:
     void setPath();
 

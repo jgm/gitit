@@ -17,7 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
+    newProjectWizard( new NewProjectWizard),
     gitCommand(new GitCommand)
+
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
@@ -31,8 +33,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect( ui->actionExit, SIGNAL( triggered() ), this, SLOT(exit()) );
     connect( ui->actionNew, SIGNAL( triggered() ), this, SLOT(menuNew()) );
     connect( ui->actionUser_s_Manual, SIGNAL( triggered() ), this, SLOT(userManual()) );
-    connect( ui->actionNew_2, SIGNAL(triggered()), this, SLOT(activateExistingProjectWizard()) );
-    connect( ui->actionRemote_Repository, SIGNAL(triggered()), this, SLOT(activateShareProjectWizard()) );
+    connect( ui->actionExisting_Project, SIGNAL(triggered()), this, SLOT(activateExistingProjectWizard()) );
+    connect( ui->actionNew, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()) );
+    connect( ui->actionNew_Project, SIGNAL(triggered()), this, SLOT(activateNewProjectWizard()));
     //using a builtin model here:
     connect( gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
     connect( gitCommand, SIGNAL(log(QString))          , this, SLOT(updateLog(QString) ));
@@ -106,14 +109,18 @@ void MainWindow::activateExistingProjectWizard()
     existingProjectWizard->show();
 }
 
-void MainWindow::activateShareProjectWizard()
+void MainWindow::activateNewProjectWizard()
 {
-
+    newProjectWizard->restart();
+    newProjectWizard->clear();
+    newProjectWizard->show();
 }
+
 void MainWindow::updateIgnoredModel(QStringList files)
 {
     gitIgnoredFilesModel->setStringList(files);
 }
+
 void MainWindow::updateLog(QString log)
 {
     ui->gitLogTextEdit->setPlainText(log);
@@ -133,6 +140,7 @@ void MainWindow::on_gitAddButton_clicked()
     }
     reload();
 }
+
 void MainWindow::reload()
 {
     gitCommand->status();
