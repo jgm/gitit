@@ -103,6 +103,7 @@ void MainWindow::activateExistingProjectWizard()
 {
     existingProjectWizard->restart();
     existingProjectWizard->show();
+    gitCommand->setRepo(existingProjectWizard->getGitPath());
 }
 
 void MainWindow::activateShareProjectWizard()

@@ -9,6 +9,7 @@
 #include<QRadioButton>
 #include<QLineEdit>
 
+class GitCommand;
 class ExistingProjectWizard: public QWizard
 {
     Q_OBJECT
@@ -16,7 +17,9 @@ class ExistingProjectWizard: public QWizard
 public:
    ExistingProjectWizard();
    ~ExistingProjectWizard();
+   QString getGitPath();
 private:
+    GitCommand* gitCommand;
     void createIntroPage();
     void createGetLocalPath();
     void createGetRemotePath();
@@ -46,6 +49,7 @@ private slots:
     void getPath();
     void displayHiddenComment(int index);
     void getPathToLocalDirectory();
+    void createRepo();
 };
 
 #endif // EXISTINGPROJECTWIZARD_H
