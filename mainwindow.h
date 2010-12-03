@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QStringListModel>
 #include "existingProjectWizard.h"
-//#include "shareProjectWizard.h"
+#include "newProjectWizard.h"
 
 class Configure;
 class GitChangedStatusModel;
@@ -31,7 +31,8 @@ private:
     QStringListModel* gitIgnoredFilesModel;
     QString repo;
     ExistingProjectWizard* existingProjectWizard;
-//    ShareProjectWizard shareProjectWizard;
+    NewProjectWizard* newProjectWizard;
+
     GitCommand* gitCommand;
 
 signals:
@@ -50,7 +51,7 @@ private slots:
     void menuNew();
     void userManual();
     void activateExistingProjectWizard();
-    void activateShareProjectWizard();
+    void activateNewProjectWizard();
     void updateIgnoredModel(QStringList);
     void updateLog(QString);
 public slots:

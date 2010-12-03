@@ -8,6 +8,7 @@
 #include<QButtonGroup>
 #include<QRadioButton>
 #include<QLineEdit>
+#include<QComboBox>
 
 class GitCommand;
 class ExistingProjectWizard: public QWizard
@@ -18,6 +19,7 @@ public:
    ExistingProjectWizard();
    ~ExistingProjectWizard();
    QString getGitPath();
+   void clear();
 private:
     GitCommand* gitCommand;
     void createIntroPage();
@@ -40,7 +42,7 @@ private:
     QLineEdit* userLocalDirectory;
     QRadioButton* localButton;
     QRadioButton* remoteButton;
-
+    QComboBox* remoteOption;
 
 signals:
     void setPath();
