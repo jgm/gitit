@@ -249,7 +249,10 @@ void ExistingProjectWizard::getPath()
 }
 QString ExistingProjectWizard::getGitPath()
 {
-    return path[0];
+    if(path.size()>0)
+        return path[0];
+    else
+        return "";
 }
 
 void ExistingProjectWizard::getPathToLocalDirectory()

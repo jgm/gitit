@@ -41,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //using a builtin model here:
     connect( gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
     connect( gitCommand, SIGNAL(log(QString))          , this, SLOT(updateLog(QString) ));
+    connect( existingProjectWizard, SIGNAL(accepted()), this, SLOT(existingProjectWizardAccepted()));
 
 }
 
@@ -111,7 +112,11 @@ void MainWindow::activateExistingProjectWizard()
     existingProjectWizard->restart();
     existingProjectWizard->clear();
     existingProjectWizard->show();
-    gitCommand->setRepo(existingProjectWizard->getGitPath());
+}
+void MainWindow::existingProjectWizardAccepted()
+{
+    QString path = existingProjectWizard->getGitPath();
+    gitCommand->setRepo(path);
     reload();
 }
 
