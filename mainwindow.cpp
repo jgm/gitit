@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
-    newProjectWizard( new NewProjectWizard)
+    newProjectWizard( new NewProjectWizard),
+    remoteWizard( new RemoteWizard)
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
@@ -357,4 +358,13 @@ void MainWindow::on_pushButton_clicked()
 {
     gitCommand->run(QStringList() << "remote" << "update");
     ui->statusBar->showMessage("updated",1500);
+}
+
+void MainWindow::on_actionRemote_Repository_2_triggered()
+{
+    remoteWizard->restart();
+    remoteWizard->clear();
+    remoteWizard->show();
+    //gitCommand->setRepo(existingProjectWizard->getGitPath());
+    reload();
 }
