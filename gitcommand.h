@@ -15,7 +15,7 @@ class GitCommand : public QObject
 public:
     explicit GitCommand(QObject *parent = 0);
     ~GitCommand();
-    void run(QStringList arguments);
+    QStringList run(QStringList arguments);
     void status();
     void lsIgnored();
     void add(QString filename);

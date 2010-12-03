@@ -25,6 +25,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    GitCommand* gitCommand;
     Configure* configure;
     GitChangedStatusModel* gitChangedStatusModel;
     GitStagedStatusModel* gitStagedStatusModel;
@@ -32,8 +33,6 @@ private:
     QString repo;
     ExistingProjectWizard* existingProjectWizard;
     NewProjectWizard* newProjectWizard;
-
-    GitCommand* gitCommand;
 
 signals:
     void repositoryChanged(QString repo);

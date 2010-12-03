@@ -12,14 +12,15 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
+    gitCommand(new GitCommand),
     ui(new Ui::MainWindow),
-    configure(new Configure(this)),
+    configure(new Configure(this,gitCommand)),
     gitChangedStatusModel(new GitChangedStatusModel),
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
-    newProjectWizard( new NewProjectWizard),
-    gitCommand(new GitCommand)
+    newProjectWizard( new NewProjectWizard)
+
 
 {
     ui->setupUi(this);

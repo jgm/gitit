@@ -28,7 +28,7 @@ GitCommand::~GitCommand()
     delete gitLogProcess;
     delete gitBranchListProcess;
 }
-void GitCommand::run(QStringList arguments)
+QStringList GitCommand::run(QStringList arguments)
 {
     QSettings settings;
     QString proc = settings.value("gitPath").toString();
@@ -36,6 +36,10 @@ void GitCommand::run(QStringList arguments)
     args << arguments;
     gitRunProcess->start(proc, args);
     gitRunProcess->waitForFinished(3000);
+    QByteArray result = gitRunProcess->readAll();
+    QString resultString(result);
+    QStringList resultList = resultString.split('\n',QString::SkipEmptyParts);
+    return resultList;
 }
 void GitCommand::status()
 {
