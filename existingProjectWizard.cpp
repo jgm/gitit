@@ -146,7 +146,7 @@ void ExistingProjectWizard::createGetLocalPath()
 void ExistingProjectWizard::createRepo()
 {
     QStringList args;
-    if( userRemotePath->text().size() == 0 )
+    if( localButton->isChecked() )
     {
         //simple init
         args << "init" << pathDisplay->text();
@@ -203,7 +203,7 @@ void ExistingProjectWizard::createGetLocalDirectory()
 {
     localDirectory = new QWizardPage;
 
-    QLabel* label1 = new QLabel("Where would you like to store this directory that you are cloning?");
+    QLabel* label1 = new QLabel("Select an EMPTY directory to store the repository);
 
 //  QLineEdit* userLocalDirectory = new QLineEdit("", localDirectory);
     QPushButton* browse = new QPushButton("Browse", localDirectory);
