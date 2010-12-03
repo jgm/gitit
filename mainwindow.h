@@ -53,6 +53,7 @@ private slots:
     void activateShareProjectWizard();
     void updateIgnoredModel(QStringList);
     void updateLog(QString);
+
 public slots:
     void reload();
 };
