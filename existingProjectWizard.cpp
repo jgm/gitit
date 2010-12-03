@@ -203,7 +203,7 @@ void ExistingProjectWizard::createGetLocalDirectory()
 {
     localDirectory = new QWizardPage;
 
-    QLabel* label1 = new QLabel("Select an EMPTY directory to store the repository);
+    QLabel* label1 = new QLabel("Select an EMPTY directory to store the repository");
 
 //  QLineEdit* userLocalDirectory = new QLineEdit("", localDirectory);
     QPushButton* browse = new QPushButton("Browse", localDirectory);

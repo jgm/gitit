@@ -5,6 +5,7 @@
 #include <QStringListModel>
 #include "existingProjectWizard.h"
 #include "newProjectWizard.h"
+#include "remoteWizard.h"
 
 class Configure;
 class GitChangedStatusModel;
@@ -33,11 +34,13 @@ private:
     QString repo;
     ExistingProjectWizard* existingProjectWizard;
     NewProjectWizard* newProjectWizard;
+    RemoteWizard* remoteWizard;
 
 signals:
     void repositoryChanged(QString repo);
 
 private slots:
+    void on_actionRemote_Repository_2_triggered();
     void on_pushButton_clicked();
     void on_actionUser_s_Manual_triggered();
     void on_gitIgnoreButton_clicked();
