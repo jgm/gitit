@@ -39,7 +39,6 @@ signals:
     void repositoryChanged(QString repo);
 
 private slots:
-    void on_actionNew_Project_triggered();
     void on_syncToButton_clicked();
     void on_reload_clicked();
     void on_shipButton_clicked();
