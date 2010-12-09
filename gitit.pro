@@ -8,9 +8,6 @@ TEMPLATE = app
 ICON = images/gitit.icns
 SOURCES += main.cpp \
     mainwindow.cpp \
-    history.cpp \
-    commit.cpp \
-    currentuserinfo.cpp \
     gitchangedstatusmodel.cpp \
     configure.cpp \
     gitcommand.cpp \
@@ -18,9 +15,6 @@ SOURCES += main.cpp \
     existingProjectWizard.cpp \
     newProjectWizard.cpp
 HEADERS += mainwindow.h \
-    history.h \
-    commit.h \
-    currentuserinfo.h \
     gitchangedstatusmodel.h \
     configure.h \
     gitcommand.h \
