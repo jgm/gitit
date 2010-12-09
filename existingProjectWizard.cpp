@@ -5,14 +5,6 @@
 #include <QComboBox>
 #include "gitcommand.h"
 
-/*
- TODO list
-- implement ExistingProjectWizard::nextID() const
-  - intro nextid is getLocalPath if local is picked
-  - intro nextid is getRemotePath if remote is picked
-- set required fields
- */
-
 ExistingProjectWizard::ExistingProjectWizard() :
         gitCommand(new GitCommand),
         path()
@@ -249,7 +241,10 @@ void ExistingProjectWizard::getPath()
 }
 QString ExistingProjectWizard::getGitPath()
 {
-    return path[0];
+    if(path.size()>0)
+        return path[0];
+    else
+        return "";
 }
 
 void ExistingProjectWizard::getPathToLocalDirectory()

@@ -121,7 +121,7 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="resources.qrc">
+           <iconset>
             <normaloff>:/images/downArrow.png</normaloff>:/images/downArrow.png</iconset>
           </property>
           <property name="iconSize">
@@ -147,7 +147,7 @@ p, li { white-space: pre-wrap; }
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="resources.qrc">
+           <iconset>
             <normaloff>:/images/topArrow15.png</normaloff>
             <normalon>:/images/topArrow15.png</normalon>
             <disabledoff>:/images/topArrow15.png</disabledoff>
@@ -358,7 +358,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>811</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -383,8 +383,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionNew_Project"/>
     <addaction name="actionExisting_Project"/>
-    <addaction name="actionShare_Project"/>
-    <addaction name="actionRemote_Repository"/>
+    <addaction name="actionRemote_Repository_2"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuWizards"/>
@@ -441,6 +440,11 @@ p, li { white-space: pre-wrap; }
     <string>Remote Repository</string>
    </property>
   </action>
+  <action name="actionRemote_Repository_2">
+   <property name="text">
+    <string>Remote Repository</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
@@ -455,8 +459,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>renameBranch</tabstop>
   <tabstop>changeCurrentBranch</tabstop>
  </tabstops>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

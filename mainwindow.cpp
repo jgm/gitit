@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
     gitStagedStatusModel(new GitStagedStatusModel),
     gitIgnoredFilesModel(new QStringListModel),
     existingProjectWizard( new ExistingProjectWizard),
-    newProjectWizard( new NewProjectWizard)
+    newProjectWizard( new NewProjectWizard),
+    remoteWizard( new RemoteWizard(gitCommand))
 {
     ui->setupUi(this);
     ui->changedFileslistView->setModel(gitChangedStatusModel);
@@ -41,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //using a builtin model here:
     connect( gitCommand, SIGNAL(lsIgnored(QStringList)), this, SLOT(updateIgnoredModel(QStringList)));
     connect( gitCommand, SIGNAL(log(QString))          , this, SLOT(updateLog(QString) ));
+    connect( existingProjectWizard, SIGNAL(accepted()), this, SLOT(existingProjectWizardAccepted()));
+    connect( newProjectWizard, SIGNAL(accepted()), this, SLOT(newProjectWizardAccepted()));
 
 }
 
@@ -111,7 +114,11 @@ void MainWindow::activateExistingProjectWizard()
     existingProjectWizard->restart();
     existingProjectWizard->clear();
     existingProjectWizard->show();
-    gitCommand->setRepo(existingProjectWizard->getGitPath());
+}
+void MainWindow::existingProjectWizardAccepted()
+{
+    QString path = existingProjectWizard->getGitPath();
+    gitCommand->setRepo(path);
     reload();
 }
 
@@ -120,7 +127,11 @@ void MainWindow::activateNewProjectWizard()
     newProjectWizard->restart();
     newProjectWizard->clear();
     newProjectWizard->show();
-    gitCommand->setRepo(newProjectWizard->getGitPath());
+}
+void MainWindow::newProjectWizardAccepted()
+{
+    QString path = newProjectWizard->getGitPath();
+    gitCommand->setRepo(path);
     reload();
 }
 
@@ -347,4 +358,13 @@ void MainWindow::on_pushButton_clicked()
 {
     gitCommand->run(QStringList() << "remote" << "update");
     ui->statusBar->showMessage("updated",1500);
+}
+
+void MainWindow::on_actionRemote_Repository_2_triggered()
+{
+    remoteWizard->restart();
+    remoteWizard->clear();
+    remoteWizard->show();
+    //gitCommand->setRepo(existingProjectWizard->getGitPath());
+    reload();
 }
