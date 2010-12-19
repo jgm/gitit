@@ -92,7 +92,7 @@ import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import Network.URL (encString)
 import Network.URI (isUnescapedInURI)
-
+import Text.HTML.SanitizeXSS (sanitizeBalance)
 --
 -- ContentTransformer runners
 --
@@ -337,7 +337,8 @@ pandocToHtml pandocContents = do
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
-  return $ writeHtml defaultWriterOptions{
+  return $ primHtml $ sanitizeBalance $
+           writeHtmlString defaultWriterOptions{
                         writerStandalone = True
                       , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
                       , writerHTMLMathMethod =
@@ -489,8 +490,7 @@ updateLayout f = do
 
 readerFor :: PageType -> Bool -> (String -> Pandoc)
 readerFor pt lhs =
-  let defPS = defaultParserState{ stateSanitizeHTML = True
-                                , stateSmart = True
+  let defPS = defaultParserState{ stateSmart = True
                                 , stateLiterateHaskell = lhs }
   in case pt of
        RST      -> readRST defPS
