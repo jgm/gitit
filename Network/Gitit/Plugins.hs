@@ -56,7 +56,12 @@ loadPlugin pluginName = do
       pr <- findModule (mkModuleName "Prelude") Nothing
       i <- findModule (mkModuleName "Network.Gitit.Interface") Nothing
       m <- findModule (mkModuleName modName) Nothing
-      setContext [] [m, i, pr]
+      setContext []
+#if MIN_VERSION_ghc(7,0,0)
+        [(m, Nothing), (i, Nothing), (pr, Nothing)]
+#else
+        [m, i, pr]
+#endif
       value <- compileExpr (modName ++ ".plugin :: Plugin")
       let value' = (unsafeCoerce value) :: Plugin
       return value'
