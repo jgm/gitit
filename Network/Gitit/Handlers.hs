@@ -533,6 +533,11 @@ editPage = withData $ \(params :: Params) -> do
                               value "Preview" ]
                    , thediv ! [ identifier "previewpane" ] << noHtml
                    ]
+  let pgScripts' = ["preview.js"]
+  let pgScripts = case mathMethod cfg of
+       JsMathScript -> "jsMath/easy/load.js" : pgScripts'
+       MathML       -> "MathMLinHTML.js" : pgScripts'
+       _            -> pgScripts'
   formattedPage defaultPageLayout{
                   pgPageName = page,
                   pgMessages = messages,
@@ -541,7 +546,7 @@ editPage = withData $ \(params :: Params) -> do
                   pgShowSiteNav = False,
                   pgMarkupHelp = Just $ markupHelp cfg,
                   pgSelectedTab = EditTab,
-                  pgScripts = ["preview.js"],
+                  pgScripts = pgScripts,
                   pgTitle = ("Editing " ++ page)
                   } editForm
 
