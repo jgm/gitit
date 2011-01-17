@@ -33,7 +33,8 @@ import qualified Data.ByteString.Lazy.UTF8 as L (ByteString)
 import qualified Data.ByteString.Lazy as L (empty)
 import qualified Data.Map as M
 import Data.List (intersect)
-import Data.DateTime
+import Data.Time (parseTime)
+import System.Locale (defaultTimeLocale)
 import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
@@ -252,7 +253,7 @@ data Params = Params { pUsername     :: String
                      , pRevision     :: Maybe String
                      , pDestination  :: String
                      , pForUser      :: Maybe String
-                     , pSince        :: Maybe DateTime
+                     , pSince        :: Maybe UTCTime
                      , pRaw          :: String
                      , pLimit        :: Int
                      , pPatterns     :: [String]
@@ -289,7 +290,7 @@ instance FromData Params where
                  return (if null s then Nothing else Just s))
                  `mplus` return Nothing
          fu <- liftM Just (look' "forUser") `mplus` return Nothing
-         si <- liftM (parseDateTime "%Y-%m-%d") (look' "since")
+         si <- liftM (parseTime defaultTimeLocale "%Y-%m-%d") (look' "since")
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- look' "destination" `mplus` return ""
          ra <- look' "raw"            `mplus` return ""
