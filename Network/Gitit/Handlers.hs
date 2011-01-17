@@ -776,6 +776,6 @@ feedHandler = do
             ok $ emptyResponse{rsBody = B.fromChunks [contents]}
        _ -> do
             fs <- getFileStore
-            resp <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
-            cacheContents file $ S.concat $ B.toChunks $ rsBody resp
-            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp
+            resp' <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
+            cacheContents file $ S.concat $ B.toChunks $ rsBody resp'
+            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp'

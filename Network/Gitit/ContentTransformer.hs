@@ -225,14 +225,14 @@ highlightRawSource =
 -- | Caches a response (actually just the response body) on disk,
 -- unless the context indicates that the page is not cacheable. 
 cacheHtml :: Response -> ContentTransformer Response 
-cacheHtml resp = do
+cacheHtml resp' = do
   params <- getParams
   file <- getFileName
   cacheable <- getCacheable
   cfg <- lift getConfig
   when (useCache cfg && cacheable && isNothing (pRevision params) && not (pPrintable params)) $
-    lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp 
-  return resp 
+    lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp'
+  return resp'
 
 -- | Returns cached page if available, otherwise mzero.
 cachedHtml :: ContentTransformer Response
