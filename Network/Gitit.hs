@@ -149,14 +149,14 @@ wiki conf = do
 fileServeStrict' :: [FilePath] -> FilePath -> ServerPart Response
 fileServeStrict' ps p = do
   rq <- askRq
-  resp <- fileServeStrict ps p
-  if rsCode resp == 404 || last (rqUri rq) == '/'
+  resp' <- fileServeStrict ps p
+  if rsCode resp' == 404 || lastNote "fileServeStrict'" (rqUri rq) == '/'
      then mzero  -- pass through if not found or directory index
      else do
        -- turn off compresion filter unless it's text
-       case getHeader "Content-Type" resp of
-            Just ct | B.pack "text/" `B.isPrefixOf` ct -> return resp
-            _ -> ignoreFilters >> return resp
+       case getHeader "Content-Type" resp' of
+            Just ct | B.pack "text/" `B.isPrefixOf` ct -> return resp'
+            _ -> ignoreFilters >> return resp'
 
 wikiHandlers :: [Handler]
 wikiHandlers =
