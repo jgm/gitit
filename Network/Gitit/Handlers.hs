@@ -81,7 +81,7 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as S
 import Network.HTTP (urlEncodeVars)
-import Data.DateTime (getCurrentTime, addMinutes)
+import Data.Time (getCurrentTime, addUTCTime)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
 
@@ -326,7 +326,7 @@ showFileHistory = withData $ \(params :: Params) -> do
 showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
   currTime <- liftIO getCurrentTime
-  let oneYearAgo = addMinutes (-1 * 60 * 24 * 365) currTime
+  let oneYearAgo = addUTCTime (-60 * 60 * 24 * 365) currTime
   let since = case pSince params of
                    Nothing -> Just oneYearAgo
                    Just t  -> Just t
@@ -379,7 +379,7 @@ showHistory file page params =  do
 showActivity :: Handler
 showActivity = withData $ \(params :: Params) -> do
   currTime <- liftIO getCurrentTime
-  let oneMonthAgo = addMinutes (-1 * 60 * 24 * 30) currTime
+  let oneMonthAgo = addUTCTime (-60 * 60 * 24 * 30) currTime
   let since = case pSince params of
                    Nothing -> Just oneMonthAgo
                    Just t  -> Just t
@@ -776,6 +776,6 @@ feedHandler = do
             ok $ emptyResponse{rsBody = B.fromChunks [contents]}
        _ -> do
             fs <- getFileStore
-            resp <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
-            cacheContents file $ S.concat $ B.toChunks $ rsBody resp
-            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp
+            resp' <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
+            cacheContents file $ S.concat $ B.toChunks $ rsBody resp'
+            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp'

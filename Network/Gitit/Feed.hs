@@ -21,7 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
-import Data.DateTime (addMinutes, formatDateTime, getCurrentTime)
+import Data.Time (UTCTime, formatTime, getCurrentTime, addUTCTime)
+import System.Locale (defaultTimeLocale)
 import Data.Foldable as F (concatMap)
 import Data.List (intercalate, sortBy, nub)
 import Data.Maybe (fromMaybe)
@@ -29,7 +30,7 @@ import Data.Ord (comparing)
 import Network.URI (isUnescapedInURI, escapeURIString)
 import System.FilePath (dropExtension, takeExtension, (<.>))
 import Data.FileStore.Types (history, Author(authorName), Change(..),
-         DateTime, FileStore, Revision(..), TimeRange(..))
+         FileStore, Revision(..), TimeRange(..))
 import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
          Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
          Person(personName), TextContent(TextString))
@@ -67,10 +68,10 @@ generateFeed cfg generator fs mbPath = do
   return basefeed {feedEntries = revisions}
 
 -- | Get the last N days history.
-changeLog :: Integer -> FileStore -> Maybe FilePath ->DateTime -> IO [Revision]
+changeLog :: Integer -> FileStore -> Maybe FilePath -> UTCTime -> IO [Revision]
 changeLog days a mbPath now' = do
   let files = F.concatMap (\f -> [f, f <.> "page"]) mbPath
-  let startTime = addMinutes (-60 * 24 * days) now'
+  let startTime = addUTCTime (fromIntegral $ -60 * 60 * 24 * days) now'
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
   return $ sortBy (comparing revDateTime) rs
 
@@ -102,8 +103,8 @@ authorToPerson ra = nullPerson {personName = authorName ra}
 escape :: String -> String
 escape = escapeURIString isUnescapedInURI
 
-formatFeedTime :: DateTime -> String
-formatFeedTime = formatDateTime "%FT%TZ"
+formatFeedTime :: UTCTime -> String
+formatFeedTime = formatTime defaultTimeLocale "%FT%TZ"
 
 -- TODO: this boilerplate can be removed by changing Data.FileStore.Types to say
 -- data Change = Modified {extract :: FilePath} | Deleted {extract :: FilePath} | Added
