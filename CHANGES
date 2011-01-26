@@ -1,3 +1,49 @@
+Version 0.7.3.10 released 26 Jan 2011
+
+* Updated for filestore-0.4.0.2.  Gitit should now compile with ghc 7.
+  Note:  It may be necessary to supply the --disable-library-for-ghci
+  flag to 'cabal install highlighting-kate'.
+
+Version 0.7.3.9 released 25 Jan 2011
+
+* Removed dependency on cautious-file.
+  It no longer seems to be actively maintained, and the current
+  configuration does not compile on windows.
+
+* Removed dependency on datetime package.
+  It is no longer maintained.
+  Everything can be done just as well with the time package.
+
+* Depend on filestore >= 0.4 (without datetime dependency).
+
+* Bump version bounds on hslogger, network and HTTP.
+
+* Support for GHC 7.0 in Plugins (thanks to Max Bollingbroke).
+
+* Use xss-sanitize for sanitizing HTML.
+  Previously pandoc's sanitization was used, but this will be
+  removed in the next pandoc release. xss-sanitize is a more complete
+  solution, and also prevents people from messing up layout by inserting
+  unbalanced </div>.
+
+* Updated Feed module to make it decouplable from gitit.
+
+* jQuery.load wasn't working on Safari. Use jQuery.post instead.
+  Also, the convert function was not always in scope. (It is only in
+  scope when MathML is enabled?) We check if it is defined before
+  calling it.  (Thanks to Sean Seefried.)
+
+* Export Page module.
+
+* Templates are in data directory
+
+* Fixed bug in Subst plugin (Lars Petersen).
+  Subst plugin could not deal with non-existing pages, resulting
+  in an server error when trying to substitute with an absent file.
+  This patch now creates a link to the page in order to create it.
+
+* Added alt attribute to logo.
+
 Version 0.7.3.8 released 24 July 2010
 
 * Fixed MathML in Slidy and S5 exports.
