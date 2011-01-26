@@ -54,7 +54,6 @@ module Network.Gitit.Handlers (
                       )
 where
 import Safe
-import Data.FileStore.Utils (isInsideDir)
 import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.Layout
@@ -84,6 +83,11 @@ import Network.HTTP (urlEncodeVars)
 import Data.Time (getCurrentTime, addUTCTime)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
+import System.Directory (canonicalizePath)
+
+-- Returns True if f is inside d.
+isInsideDir :: FilePath -> FilePath -> IO Bool
+isInsideDir f d = liftM2 isPrefixOf (canonicalizePath d) (canonicalizePath f)
 
 handleAny :: Handler
 handleAny = uriRest $ \uri ->
