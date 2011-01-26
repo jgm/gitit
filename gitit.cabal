@@ -134,7 +134,7 @@ Executable           gitit
                      old-locale >= 1,
                      time >= 1.1 && < 1.2,
                      recaptcha >= 0.1,
-                     filestore >= 0.4 && < 0.5,
+                     filestore >= 0.4.0.2 && < 0.5,
                      zlib >= 0.5 && < 0.6,
                      url >= 2.1 && < 2.2,
                      happstack-server >= 0.5 && < 0.6,
