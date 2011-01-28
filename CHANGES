@@ -1,3 +1,7 @@
+Version 0.7.3.11 released 28 Jan 2011
+
+* Allow time 1.2.
+
 Version 0.7.3.10 released 26 Jan 2011
 
 * Updated for filestore-0.4.0.2.  Gitit should now compile with ghc 7.
