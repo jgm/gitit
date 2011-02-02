@@ -1,3 +1,11 @@
+Version 0.7.3.12 released 01 Feb 2011
+
+* Use pandoc 1.8.
+
+* New export formats: textile, org.
+
+* New page form: textile.
+
 Version 0.7.3.11 released 28 Jan 2011
 
 * Allow time 1.2.
