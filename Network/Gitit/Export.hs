@@ -167,6 +167,14 @@ respondDocbook :: String -> Pandoc -> Handler
 respondDocbook = respondS "docbook" "application/docbook+xml" "xml"
   writeDocbook defaultRespOptions
 
+respondOrg :: String -> Pandoc -> Handler
+respondOrg = respondS "org" "text/plain; charset=utf-8" ""
+  writeOrg defaultRespOptions
+
+respondTextile :: String -> Pandoc -> Handler
+respondTextile = respondS "textile" "text/plain; charset=utf-8" ""
+  writeTextile defaultRespOptions
+
 respondMediaWiki :: String -> Pandoc -> Handler
 respondMediaWiki = respondS "mediawiki" "text/plain; charset=utf-8" ""
   writeMediaWiki defaultRespOptions
@@ -275,4 +283,6 @@ exportFormats cfg = if pdfExport cfg
                 , ("S5",        respondS5)
                 , ("ODT",       respondODT)
                 , ("EPUB",      respondEPUB)
+                , ("Org",       respondOrg)
+                , ("Textile",   respondTextile)
                 , ("RTF",       respondRTF) ]

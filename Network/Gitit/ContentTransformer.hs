@@ -497,6 +497,7 @@ readerFor pt lhs =
        Markdown -> readMarkdown defPS
        LaTeX    -> readLaTeX defPS
        HTML     -> readHtml defPS
+       Textile  -> readTextile defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform = return . bottomUp convertWikiLinks
