@@ -538,7 +538,7 @@ editPage = withData $ \(params :: Params) -> do
                    , thediv ! [ identifier "previewpane" ] << noHtml
                    ]
   let pgScripts' = ["preview.js"]
-  let pgScripts = case mathMethod cfg of
+  let pgScripts'' = case mathMethod cfg of
        JsMathScript -> "jsMath/easy/load.js" : pgScripts'
        MathML       -> "MathMLinHTML.js" : pgScripts'
        _            -> pgScripts'
@@ -550,7 +550,7 @@ editPage = withData $ \(params :: Params) -> do
                   pgShowSiteNav = False,
                   pgMarkupHelp = Just $ markupHelp cfg,
                   pgSelectedTab = EditTab,
-                  pgScripts = pgScripts,
+                  pgScripts = pgScripts'',
                   pgTitle = ("Editing " ++ page)
                   } editForm
 
