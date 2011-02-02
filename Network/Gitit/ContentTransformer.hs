@@ -499,7 +499,7 @@ readerFor pt lhs =
        HTML     -> readHtml defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
-wikiLinksTransform = return . processWith convertWikiLinks
+wikiLinksTransform = return . bottomUp convertWikiLinks
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Inline -> Inline
@@ -525,7 +525,7 @@ inlinesToString = concatMap go
                Quoted DoubleQuote xs   -> '"' : (concatMap go xs ++ "\"")
                Quoted SingleQuote xs   -> '\'' : (concatMap go xs ++ "'")
                Cite _ xs               -> concatMap go xs
-               Code s                  -> s
+               Code _ s                -> s
                Space                   -> " "
                EmDash                  -> "---"
                EnDash                  -> "--"
@@ -534,8 +534,8 @@ inlinesToString = concatMap go
                LineBreak               -> " "
                Math DisplayMath s      -> "$$" ++ s ++ "$$"
                Math InlineMath s       -> "$" ++ s ++ "$"
-               TeX s                   -> s
-               HtmlInline _            -> ""
+               RawInline "tex" s       -> s
+               RawInline _ _           -> ""
                Link xs _               -> concatMap go xs
                Image xs _              -> concatMap go xs
                Note _                  -> ""
