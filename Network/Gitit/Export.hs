@@ -256,7 +256,7 @@ fixURLs pndc = do
         fixURL ('/':url) = curdir </> staticDir cfg </> url
         fixURL url       = url
     
-    return $ processWith go pndc
+    return $ bottomUp go pndc
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg
