@@ -124,9 +124,11 @@ module Network.Gitit.Interface ( Plugin(..)
                                , liftIO
                                , withTempDir
                                , module Text.Pandoc.Definition
+                               , module Text.Pandoc.Generic
                                )
 where
 import Text.Pandoc.Definition
+import Text.Pandoc.Generic
 import Data.Data
 import Network.Gitit.Types
 import Network.Gitit.ContentTransformer
@@ -165,10 +167,10 @@ doNotCache = modifyContext (\ctx -> ctx{ ctxCacheable = False })
 -- @Block -> Block@, @[Inline] -> [Inline]@, or @String -> String@)
 -- to a 'PageTransform' plugin.
 mkPageTransform :: Data a => (a -> a) -> Plugin
-mkPageTransform fn = PageTransform $ return . processWith fn
+mkPageTransform fn = PageTransform $ return . bottomUp fn
 
 -- | Monadic version of 'mkPageTransform'.
 -- Lifts a function from @a -> m a@ to a 'PageTransform' plugin.
 mkPageTransformM :: Data a => (a -> PluginM a) -> Plugin
-mkPageTransformM =  PageTransform . processWithM
+mkPageTransformM =  PageTransform . bottomUpM
 

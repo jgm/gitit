@@ -93,6 +93,7 @@ parsePageType s =
        "rst"          -> (RST,False)
        "rst+lhs"      -> (RST,True)
        "html"         -> (HTML,False)
+       "textile"      -> (Textile,False)
        "latex"        -> (LaTeX,False)
        "latex+lhs"    -> (LaTeX,True)
        x              -> error $ "Unknown page type: " ++ x

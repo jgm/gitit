@@ -40,7 +40,7 @@ import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
 
-data PageType = Markdown | RST | LaTeX | HTML
+data PageType = Markdown | RST | LaTeX | HTML | Textile
                 deriving (Read, Show, Eq)
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
