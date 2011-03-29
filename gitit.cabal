@@ -91,11 +91,11 @@ Library
   exposed-modules:   Network.Gitit, Network.Gitit.ContentTransformer,
                      Network.Gitit.Types, Network.Gitit.Framework,
                      Network.Gitit.Initialize, Network.Gitit.Config,
-                     Network.Gitit.Layout
+                     Network.Gitit.Layout, Network.Gitit.Authentication
   other-modules:     Network.Gitit.Cache, Network.Gitit.State,
                      Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
                      Network.Gitit.Util, Network.Gitit.Handlers, Network.Gitit.Plugins,
-                     Network.Gitit.Authentication, Network.Gitit.Page, Network.Gitit.Feed
+                     Network.Gitit.Page, Network.Gitit.Feed
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
@@ -144,7 +144,9 @@ Executable           gitit
                      hslogger >= 1 && < 1.2,
                      ConfigFile >= 1 && < 1.1,
                      feed >= 0.3.6 && < 0.4,
-                     xss-sanitize >= 0.2 && < 0.3
+                     xss-sanitize >= 0.2 && < 0.3,
+                     authenticate > 0.8 && < 0.9,
+                     failure >=0.1.0 && <0.2
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)
