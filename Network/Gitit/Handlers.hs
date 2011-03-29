@@ -192,7 +192,7 @@ uploadFile = withData $ \(params :: Params) -> do
   cfg <- getConfig
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete page."
+                        Nothing -> fail "User must be logged in to upload a file."
                         Just u  -> return (uUsername u, uEmail u)
   let overwrite = pOverwrite params
   fs <- getFileStore
@@ -608,7 +608,7 @@ updatePage = withData $ \(params :: Params) -> do
   cfg <- getConfig
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete page."
+                        Nothing -> fail "User must be logged in to update a page."
                         Just u  -> return (uUsername u, uEmail u)
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
