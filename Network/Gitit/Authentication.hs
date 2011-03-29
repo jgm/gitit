@@ -442,8 +442,11 @@ loginRPXUser params = do
           else do -- Redirect user to RPX login
             let ref = fromJust refer
             let url = ref {U.uriPath="/_login",U.uriQuery="?destination=" ++ (fromMaybe (U.uriPath ref) $ rDestination params)}
-            let rpx = "https://" ++ rpxDomain cfg ++ ".rpxnow.com/openid/v2/signin?token_url=" ++ urlEncode (show url)
-            see rpx
+            if null (rpxDomain cfg)
+               then error "rpx-domain is not set."
+               else do
+                  let rpx = "https://" ++ rpxDomain cfg ++ ".rpxnow.com/openid/v2/signin?token_url=" ++ urlEncode (show url)
+                  see rpx
      else do -- We got an answer from RPX, this might also return an exception.
        uid :: R.Identifier <- liftIO $ R.authenticate (rpxKey cfg) $ fromJust mtoken
        liftIO $ logM "gitit.loginRPXUser" DEBUG $ "uid:" ++ show uid
