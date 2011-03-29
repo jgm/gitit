@@ -117,6 +117,8 @@ extractConfig cp = do
                         "darcs"     -> Darcs
                         "mercurial" -> Mercurial
                         x           -> error $ "Unknown repository type: " ++ x
+      when (authMethod == "rpx" && cfRPXDomain == "") $
+         liftIO $ logM "gitit" WARNING $ "rpx-domain is not set"
 
       return $! Config{
           repositoryPath       = cfRepositoryPath
