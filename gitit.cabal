@@ -144,9 +144,7 @@ Executable           gitit
                      hslogger >= 1 && < 1.2,
                      ConfigFile >= 1 && < 1.1,
                      feed >= 0.3.6 && < 0.4,
-                     xss-sanitize >= 0.2 && < 0.3,
-                     authenticate > 0.8 && < 0.9,
-                     failure >=0.1.0 && <0.2
+                     xss-sanitize >= 0.2 && < 0.3
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)

@@ -27,7 +27,7 @@ where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
-import Network.Gitit.Authentication (formAuthHandlers, rpxAuthHandlers, httpAuthHandlers)
+import Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers)
 import Network.Gitit.Util (parsePageType, readFileUTF8)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
@@ -89,8 +89,6 @@ extractConfig cp = do
       cfUseRecaptcha <- get cp "DEFAULT" "use-recaptcha"
       cfRecaptchaPublicKey <- get cp "DEFAULT" "recaptcha-public-key"
       cfRecaptchaPrivateKey <- get cp "DEFAULT" "recaptcha-private-key"
-      cfRPXDomain <- get cp "DEFAULT" "rpx-domain"
-      cfRPXKey <- get cp "DEFAULT" "rpx-key"
       cfCompressResponses <- get cp "DEFAULT" "compress-responses"
       cfUseCache <- get cp "DEFAULT" "use-cache"
       cfCacheDir <- get cp "DEFAULT" "cache-dir"
@@ -118,8 +116,6 @@ extractConfig cp = do
                         "darcs"     -> Darcs
                         "mercurial" -> Mercurial
                         x           -> error $ "Unknown repository type: " ++ x
-      when (authMethod == "rpx" && cfRPXDomain == "") $
-         liftIO $ logM "gitit" WARNING $ "rpx-domain is not set"
 
       return $! Config{
           repositoryPath       = cfRepositoryPath
@@ -135,7 +131,6 @@ extractConfig cp = do
         , withUser             = case authMethod of
                                       "form"     -> withUserFromSession
                                       "http"     -> withUserFromHTTPAuth
-                                      "rpx"      -> withUserFromSession
                                       _          -> id
         , requireAuthentication = case map toLower cfRequireAuthentication of
                                        "none"    -> Never
@@ -146,7 +141,6 @@ extractConfig cp = do
         , authHandler          = case authMethod of
                                       "form"     -> msum formAuthHandlers
                                       "http"     -> msum httpAuthHandlers
-                                      "rpx"      -> msum rpxAuthHandlers
                                       _          -> mzero
         , userFile             = cfUserFile
         , sessionTimeout       = readNumber "session-timeout" cfSessionTimeout * 60  -- convert minutes -> seconds
@@ -175,8 +169,6 @@ extractConfig cp = do
         , useRecaptcha         = cfUseRecaptcha
         , recaptchaPublicKey   = cfRecaptchaPublicKey
         , recaptchaPrivateKey  = cfRecaptchaPrivateKey
-        , rpxDomain            = cfRPXDomain
-        , rpxKey               = cfRPXKey
         , compressResponses    = cfCompressResponses
         , useCache             = cfUseCache
         , cacheDir             = cfCacheDir
