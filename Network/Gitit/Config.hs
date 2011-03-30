@@ -66,6 +66,7 @@ extractConfig cp = do
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"
       cfMathMethod <- get cp "DEFAULT" "math"
       cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
+      cfRequireAuthentication <- get cp "DEFAULT" "require-authentication"
       cfAuthenticationMethod <- get cp "DEFAULT" "authentication-method"
       cfUserFile <- get cp "DEFAULT" "user-file"
       cfSessionTimeout <- get cp "DEFAULT" "session-timeout"
@@ -136,6 +137,12 @@ extractConfig cp = do
                                       "http"     -> withUserFromHTTPAuth
                                       "rpx"      -> withUserFromSession
                                       _          -> id
+        , requireAuthentication = case map toLower cfRequireAuthentication of
+                                       "none"    -> Never
+                                       "modify"  -> ForModify
+                                       "read"    -> ForRead
+                                       _         -> ForModify
+
         , authHandler          = case authMethod of
                                       "form"     -> msum formAuthHandlers
                                       "http"     -> msum httpAuthHandlers

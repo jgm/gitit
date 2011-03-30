@@ -136,13 +136,15 @@ wiki conf = do
   -- directory, which contains defaults
   let staticHandler = withExpiresHeaders $
         fileServeStrict' [] static `mplus` fileServeStrict' [] defaultStatic
-  let handlers = [debugHandler | debugMode conf] ++ (authHandler conf : wikiHandlers)
+  let debugHandler' = msum [debugHandler | debugMode conf]
+  let handlers = debugHandler' `mplus` authHandler conf `mplus`
+                 authenticate ForRead (msum wikiHandlers)
   let fs = filestoreFromConfig conf
   let ws = WikiState { wikiConfig = conf, wikiFileStore = fs }
   if compressResponses conf
      then compressedResponseFilter
      else return ""
-  staticHandler `mplus` runHandler ws (withUser conf $ msum handlers)
+  staticHandler `mplus` runHandler ws (withUser conf handlers)
 
 -- | Like 'fileServeStrict', but if file is not found, fail instead of
 -- returning a 404 error.
@@ -163,13 +165,12 @@ wikiHandlers =
   [ -- redirect /wiki -> /wiki/ when gitit is being served at /wiki
     -- so that relative wikilinks on the page will work properly:
     guardBareBase >> getWikiBase >>= \b -> movedPermanently (b ++ "/") (toResponse ())
-  , dir "_user"     currentUser
   , dir "_activity" showActivity
   , dir "_go"       goToPage
   , dir "_search"   searchResults
   , dir "_upload"   $  do guard =<< return . uploadsAllowed =<< getConfig
-                          msum [ methodOnly GET  >> requireUser uploadForm 
-                                 , methodOnly POST >> requireUser uploadFile ]
+                          msum [ methodOnly GET  >> authenticate ForModify uploadForm
+                                 , methodOnly POST >> authenticate ForModify uploadFile ]
   , dir "_random"   $ methodOnly GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_feed"     feedHandler
@@ -182,22 +183,22 @@ wikiHandlers =
   , dir "_history"  $ msum
       [ showPageHistory
       , guardPath isSourceCode >> showFileHistory ]
-  , dir "_edit" $ requireUser (unlessNoEdit editPage showPage)
+  , dir "_edit" $ authenticate ForModify (unlessNoEdit editPage showPage)
   , dir "_diff" $ msum
       [ showPageDiff
       , guardPath isSourceCode >> showFileDiff ]
   , dir "_discuss" discussPage
   , dir "_delete" $ msum
       [ methodOnly GET  >>
-          requireUser (unlessNoDelete confirmDelete showPage)
+          authenticate ForModify (unlessNoDelete confirmDelete showPage)
       , methodOnly POST >>
-          requireUser (unlessNoDelete deletePage showPage) ]
+          authenticate ForModify (unlessNoDelete deletePage showPage) ]
   , dir "_preview" preview
   , guardIndex >> indexPage
   , guardCommand "export" >> exportPage
   , methodOnly POST >> guardCommand "cancel" >> showPage
   , methodOnly POST >> guardCommand "update" >>
-      requireUser (unlessNoEdit updatePage showPage)
+      authenticate ForModify (unlessNoEdit updatePage showPage)
   , showPage
   , guardPath isSourceCode >> methodOnly GET >> showHighlightedSource
   , handleAny
