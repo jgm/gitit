@@ -41,6 +41,7 @@ import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha, isAscii)
+import qualified Data.Map as M
 import Text.Pandoc.Shared (substitute)
 import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
 import Network.URL (encString, exportURL, add_param, importURL)
@@ -466,10 +467,10 @@ loginRPXUser params = do
        -- so we use it if present.
        let userId = R.userIdentifier uid
        let email  = prop "verifiedEmail" uid
+       user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
+       updateGititState $ \s -> s { users = M.insert userId user (users s) }
        key <- newSession (SessionData userId)
        addCookie (sessionTimeout cfg) (mkCookie "sid" (show key))
-       user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
-       addUser userId user
        see $ fromJust $ rDestination params
       where
         prop pname info = lookup pname $ R.userData info
