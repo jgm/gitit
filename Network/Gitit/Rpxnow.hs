@@ -12,7 +12,6 @@ import Data.Maybe (isJust, fromJust)
 import System.Process
 import System.Exit
 import System.IO
-import Data.List (intercalate)
 import Network.HTTP (urlEncodeVars)
 
 -- | Make a post request with parameters to the URL and return a response.
@@ -33,9 +32,10 @@ wget url params = do
 
 -- | Information received from Rpxnow after a valid login.
 data Identifier = Identifier
-    { identifier :: String
-    , extraData :: [(String, String)]
+    { userIdentifier  :: String
+    , userData        :: [(String, String)]
     }
+    deriving Show
 
 -- | Attempt to log a user in.
 authenticate :: Monad m

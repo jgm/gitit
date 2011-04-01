@@ -145,7 +145,8 @@ Executable           gitit
                      hslogger >= 1 && < 1.2,
                      ConfigFile >= 1 && < 1.1,
                      feed >= 0.3.6 && < 0.4,
-                     xss-sanitize >= 0.2 && < 0.3
+                     xss-sanitize >= 0.2 && < 0.3,
+                     json >= 0.4 && < 0.5
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)
