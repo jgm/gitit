@@ -21,7 +21,7 @@ wget :: Monad m
      -> IO (m String)      -- ^ Response body
 wget url params = do
     (Nothing, Just hout, Just herr, phandle) <- createProcess $ (proc "wget"
-        (url : "--params-data" : urlEncodeVars params : ["-O", "-"])
+        (url : "--post-data" : urlEncodeVars params : ["-O", "-"])
         ) { std_out = CreatePipe, std_err = CreatePipe }
     exitCode <- waitForProcess phandle
     case exitCode of
