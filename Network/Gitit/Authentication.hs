@@ -48,6 +48,7 @@ import qualified Text.StringTemplate as T
 import Network.HTTP (urlEncodeVars)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
+import Network.Gitit.Rpxnow
 
 data ValidationType = Register
                     | ResetPassword
