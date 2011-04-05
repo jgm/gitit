@@ -15,13 +15,13 @@ import System.IO
 import Network.HTTP (urlEncodeVars)
 
 -- | Make a post request with parameters to the URL and return a response.
-wget :: Monad m
+curl :: Monad m
      => String             -- ^ URL
      -> [(String, String)] -- ^ Post parameters
      -> IO (m String)      -- ^ Response body
-wget url params = do
-    (Nothing, Just hout, Just herr, phandle) <- createProcess $ (proc "wget"
-        (url : "--post-data" : urlEncodeVars params : ["-O", "-"])
+curl url params = do
+    (Nothing, Just hout, Just herr, phandle) <- createProcess $ (proc "curl"
+        [url, "-d", urlEncodeVars params]
         ) { std_out = CreatePipe, std_err = CreatePipe }
     exitCode <- waitForProcess phandle
     case exitCode of
@@ -43,7 +43,7 @@ authenticate :: Monad m
              -> String -- ^ Token passed by client.
              -> IO (m Identifier)
 authenticate apiKey token = do
-    body <- wget
+    body <- curl
                 "https://rpxnow.com/api/v2/auth_info"
                 [ ("apiKey", apiKey)
                 , ("token", token)
