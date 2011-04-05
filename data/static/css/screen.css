@@ -44,6 +44,7 @@ th { font-weight: bold; }
 caption { margin-bottom: .5em; text-align: center; }
 sup { vertical-align: super; }
 sub { vertical-align: sub; }
+sub, sup { line-height: 0.3em; }
 p, fieldset, table, pre { margin-bottom: 1em; }
 button, input[type="checkbox"], input[type="radio"], input[type="reset"], input[type="submit"] { padding: 1px; }
 
