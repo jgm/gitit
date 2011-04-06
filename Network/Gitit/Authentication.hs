@@ -52,7 +52,6 @@ import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
 import Control.Monad.Reader (runReaderT, ask)
-import qualified Network.URI as U
 
 data ValidationType = Register
                     | ResetPassword
@@ -439,21 +438,18 @@ loginRPXUser :: RPars  -- ^ The parameters passed by the RPX callback call (afte
              -> Handler
 loginRPXUser params = do
   cfg <- getConfig
-  refer <- liftM U.parseURI getReferer
-  liftIO $ logM "gitit.loginRPXUser" DEBUG $ "Referer:" ++ show refer ++ " params: " ++ show params
+  ref <- getReferer
   let mtoken = rToken params
   if isNothing mtoken
      then do
-       uri' <- liftM rqUri askRq
-       let ref = fromMaybe (fromMaybe U.nullURI $ U.parseURI uri') refer
-       let url = ref {U.uriPath="/_login",U.uriQuery="?destination=" ++
-                  (fromMaybe (U.uriPath ref) $ rDestination params)}
+       let url = baseUrl cfg ++ "/_login?destination=" ++
+                  (fromMaybe ref $ rDestination params)
        if null (rpxDomain cfg)
           then error "rpx-domain is not set."
           else do
              let rpx = "https://" ++ rpxDomain cfg ++
                        ".rpxnow.com/openid/v2/signin?token_url=" ++
-                       urlEncode (show url)
+                       urlEncode url
              see rpx
      else do -- We got an answer from RPX, this might also return an exception.
        uid' :: Either String R.Identifier <- liftIO $
