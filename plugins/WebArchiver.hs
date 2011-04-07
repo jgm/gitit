@@ -1,11 +1,16 @@
 {-| Scans page of Markdown looking for http links. When it finds them, it submits them
 to webcitation.org / https://secure.wikimedia.org/wikipedia/en/wiki/WebCite
 (It will also submit them to Alexa (the source for the Internet Archive), but Alexa says that
-its bots take weeks to visit and may not ever.)
+its bots take weeks to visit and may not ever.) See also the WebArchiverBot.hs plugin and the
+archiver daemon <http://hackage.haskell.org/package/archiver>.
 
 Limitations:
 * Only parses Markdown, not ReST or any other format; this is because 'readMarkdown'
 is hardwired into it.
+* No rate limitation or choking; will fire off all requests as fast as possible.
+  If pages have more than 20 external links or so, this may result in your IP being temporarily
+  banned by WebCite. To avoid this, you can use WebArchiverBot.hs instead, which will parse & dump
+  URLs into a file processed by the archiver daemon (which *is* rate-limited).
 
 By: Gwern Branwen; placed in the public domain -}
 
