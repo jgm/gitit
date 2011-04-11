@@ -71,11 +71,11 @@ defaultRenderPage templ layout htmlContents = do
 
 -- | Returns a page template with gitit variables filled in.
 filledPageTemplate :: String -> Config -> PageLayout -> Html ->
-                      T.StringTemplate String -> T.StringTemplate String 
-filledPageTemplate base' cfg layout htmlContents templ = 
+                      T.StringTemplate String -> T.StringTemplate String
+filledPageTemplate base' cfg layout htmlContents templ =
   let rev  = pgRevision layout
       page = pgPageName layout
-      scripts  = ["jquery.min.js", "jquery-ui.packed.js"] ++ pgScripts layout
+      scripts  = ["jquery.min.js", "jquery-ui.packed.js", "footnotes.js"] ++ pgScripts layout
       scriptLink x = script ! [src (base' ++ "/js/" ++ x),
         thetype "text/javascript"] << noHtml
       javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
@@ -105,7 +105,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
                    T.setAttribute "messages" (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
-                   T.setAttribute "content" (renderHtmlFragment htmlContents) . 
+                   T.setAttribute "content" (renderHtmlFragment htmlContents) .
                    setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
                    templ
 
@@ -118,7 +118,7 @@ exportBox base' cfg page rev | not (isSourceCode page) =
          value (fromJust rev)] | isJust rev ] ++
      [ select ! [name "format"] <<
          map ((\f -> option ! [value f] << f) . fst) (exportFormats cfg)
-     , primHtmlChar "nbsp" 
+     , primHtmlChar "nbsp"
      , submit "export" "Export" ])
 exportBox _ _ _ _ = noHtml
 

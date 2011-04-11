@@ -1,6 +1,6 @@
 @import url("reset-fonts-grids.css");
 
-html { background: #f9f9f9; color: black; } 
+html { background: #f9f9f9; color: black; }
 body { margin: 10px; }
 
 fieldset { border: 1px solid #ccc; padding: 1em; }
@@ -139,3 +139,17 @@ h2.revision { font-size: 100%; color: #888; font-style: italic; border: none; ma
 div.markupHelp pre { font-size: 77%; overflow: auto; }
 
 .login { display: none; }
+
+/* Style the footnotes; from gwern.net */
+#footnotediv div {
+background-color: white;
+padding: 3px;
+padding: 12px;
+max-width: 800px;
+border: 1px solid #CDBBB5;
+box-shadow: #555 0 0 10px;
+-webkit-box-shadow: #555 0 0 10px;
+-moz-box-shadow: 0 0 10px #555;
+}
+/* Deal with multiple footnotes one after another; Charuru */
+sup + sup { margin-left: 2px; }
