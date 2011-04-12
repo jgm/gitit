@@ -48,6 +48,9 @@ data FileStoreType = Git | Darcs | Mercurial deriving Show
 data MathMethod = MathML | JsMathScript | WebTeX String | RawTeX
                   deriving (Read, Show, Eq)
 
+data AuthenticationLevel = Never | ForModify | ForRead
+                  deriving (Read, Show, Eq, Ord)
+
 -- | Data structure for information read from config file.
 data Config = Config {
   -- | Path of repository containing filestore
@@ -65,6 +68,8 @@ data Config = Config {
   -- | Combinator to set @REMOTE_USER@ request header
   withUser             :: Handler -> Handler,
   -- | Handler for login, logout, register, etc.
+  requireAuthentication :: AuthenticationLevel,
+  -- | Specifies which actions require authentication.
   authHandler          :: Handler,
   -- | Path of users database
   userFile             :: FilePath,
@@ -108,6 +113,9 @@ data Config = Config {
   useRecaptcha         :: Bool,
   recaptchaPublicKey   :: String,
   recaptchaPrivateKey  :: String,
+  -- | RPX domain and key
+  rpxDomain            :: String,
+  rpxKey               :: String,
   -- | Should responses be compressed?
   compressResponses    :: Bool,
   -- | Should responses be cached?

@@ -48,7 +48,6 @@ module Network.Gitit.Handlers (
                       , deletePage
                       , confirmDelete
                       , showHighlightedSource
-                      , currentUser
                       , expireCache
                       , feedHandler
                       )
@@ -65,7 +64,6 @@ import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (extractCategories)
 import Control.Exception (throwIO, catch, try)
-import Data.ByteString.UTF8 (toString)
 import System.Time
 import System.FilePath
 import Prelude hiding (catch)
@@ -192,7 +190,7 @@ uploadFile = withData $ \(params :: Params) -> do
   cfg <- getConfig
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete page."
+                        Nothing -> return ("Anonymous", "")
                         Just u  -> return (uUsername u, uEmail u)
   let overwrite = pOverwrite params
   fs <- getFileStore
@@ -590,7 +588,7 @@ deletePage = withData $ \(params :: Params) -> do
   let file = pFileToDelete params
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete."
+                        Nothing -> return ("Anonymous", "")
                         Just u  -> return (uUsername u, uEmail u)
   let author = Author user email
   let descrip = "Deleted using web interface."
@@ -608,7 +606,7 @@ updatePage = withData $ \(params :: Params) -> do
   cfg <- getConfig
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
-                        Nothing -> fail "User must be logged in to delete page."
+                        Nothing -> return ("Anonymous", "")
                         Just u  -> return (uUsername u, uEmail u)
   editedText <- case pEditedText params of
                      Nothing -> error "No body text in POST request"
@@ -738,12 +736,6 @@ categoryListPage = do
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = "Categories" } htmlMatches
-
--- | Returns username of logged in user or null string if nobody logged in.
-currentUser :: Handler
-currentUser = do
-  req <- askRq
-  ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
 
 expireCache :: Handler
 expireCache = do

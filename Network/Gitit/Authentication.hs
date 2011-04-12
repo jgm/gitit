@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
                    Henry Laxen <nadine.and.henry@pobox.com>
@@ -20,7 +21,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- Handlers for registering and authenticating users.
 -}
 
-module Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers, loginUserForm) where
+module Network.Gitit.Authentication ( loginUserForm
+                                    , formAuthHandlers
+                                    , httpAuthHandlers
+                                    , rpxAuthHandlers) where
 
 import Network.Gitit.State
 import Network.Gitit.Types
@@ -37,13 +41,17 @@ import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha, isAscii)
+import qualified Data.Map as M
 import Text.Pandoc.Shared (substitute)
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
 import Network.URL (encString, exportURL, add_param, importURL)
 import Network.BSD (getHostName)
 import qualified Text.StringTemplate as T
-import Network.HTTP (urlEncodeVars)
-import Codec.Binary.UTF8.String (encodeString) 
+import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
+import Codec.Binary.UTF8.String (encodeString)
+import Data.ByteString.UTF8 (toString)
+import Network.Gitit.Rpxnow as R
+import Control.Monad.Reader (runReaderT, ask)
 
 data ValidationType = Register
                     | ResetPassword
@@ -407,6 +415,7 @@ formAuthHandlers =
   , dir "_resetPassword"   $ methodSP POST $ withData resetPasswordRequest
   , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
   , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
+  , dir "_user" currentUser
   ]
 
 loginUserHTTP :: Params -> Handler
@@ -421,4 +430,70 @@ logoutUserHTTP = unauthorized $ toResponse ()  -- will this work?
 httpAuthHandlers :: [Handler]
 httpAuthHandlers =
   [ dir "_logout" $ logoutUserHTTP
-  , dir "_login"  $ withData loginUserHTTP ]
+  , dir "_login"  $ withData loginUserHTTP
+  , dir "_user" currentUser ]
+
+-- Login using RPX (see RPX development docs at https://rpxnow.com/docs)
+loginRPXUser :: RPars  -- ^ The parameters passed by the RPX callback call (after authentication has taken place
+             -> Handler
+loginRPXUser params = do
+  cfg <- getConfig
+  ref <- getReferer
+  let mtoken = rToken params
+  if isNothing mtoken
+     then do
+       let url = baseUrl cfg ++ "/_login?destination=" ++
+                  (fromMaybe ref $ rDestination params)
+       if null (rpxDomain cfg)
+          then error "rpx-domain is not set."
+          else do
+             let rpx = "https://" ++ rpxDomain cfg ++
+                       ".rpxnow.com/openid/v2/signin?token_url=" ++
+                       urlEncode url
+             see rpx
+     else do -- We got an answer from RPX, this might also return an exception.
+       uid' :: Either String R.Identifier <- liftIO $
+                      R.authenticate (rpxKey cfg) $ fromJust mtoken
+       uid <- case uid' of
+                   Right u -> return u
+                   Left err -> error err
+       liftIO $ logM "gitit.loginRPXUser" DEBUG $ "uid:" ++ show uid
+       -- We need to get an unique identifier for the user
+       -- The 'identifier' is always present but can be rather cryptic
+       -- The 'verifiedEmail' is also unique and is a more readable choice
+       -- so we use it if present.
+       let userId = R.userIdentifier uid
+       let email  = prop "verifiedEmail" uid
+       user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
+       updateGititState $ \s -> s { users = M.insert userId user (users s) }
+       key <- newSession (SessionData userId)
+       addCookie (sessionTimeout cfg) (mkCookie "sid" (show key))
+       see $ fromJust $ rDestination params
+      where
+        prop pname info = lookup pname $ R.userData info
+        see url = seeOther (encUrl url) $ toResponse noHtml
+
+-- The parameters passed by the RPX callback call.
+data RPars = RPars {rToken::Maybe String,rDestination::Maybe String} deriving Show
+
+instance FromData RPars where
+     fromData = do
+         let look' = liftM urlDecode . look
+         env <- ask
+         let vtoken = runReaderT (look "token") env
+         let vDestination = runReaderT (look' "destination") env
+         return RPars {rToken=vtoken,rDestination=vDestination}
+
+rpxAuthHandlers :: [Handler]
+rpxAuthHandlers =
+  [ dir "_logout" $ methodSP GET $ withData logoutUser
+  , dir "_login"  $ withData loginRPXUser
+  , dir "_user" currentUser ]
+
+-- | Returns username of logged in user or null string if nobody logged in.
+currentUser :: Handler
+currentUser = do
+  req <- askRq
+  ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
+
+

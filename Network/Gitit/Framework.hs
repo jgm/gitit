@@ -21,8 +21,8 @@ module Network.Gitit.Framework (
                                -- * Combinators for dealing with users 
                                  withUserFromSession
                                , withUserFromHTTPAuth
-                               , requireUserThat
-                               , requireUser
+                               , authenticateUserThat
+                               , authenticate
                                , getLoggedInUser
                                -- * Combinators to exclude certain actions
                                , unlessNoEdit
@@ -75,24 +75,27 @@ import Network.URI (isUnescapedInURI)
 import Happstack.Crypto.Base64 (decode)
 import Network.HTTP (urlEncodeVars)
 
--- | Run the handler if a user is logged in, otherwise redirect
+-- | Require a logged in user if the authentication level demands it.
+-- Run the handler if a user is logged in, otherwise redirect
 -- to login page.
-requireUser :: Handler -> Handler 
-requireUser = requireUserThat (const True)
+authenticate :: AuthenticationLevel -> Handler -> Handler
+authenticate = authenticateUserThat (const True)
 
--- | Run the handler if a user satisfying the predicate is logged in.
--- Redirect to login if nobody logged in; raise error if someone is
--- logged in but doesn't satisfy the predicate.
-requireUserThat :: (User -> Bool) -> Handler -> Handler
-requireUserThat predicate handler = do
-  mbUser <- getLoggedInUser
-  rq <- askRq
-  let url = rqUri rq ++ rqQuery rq
-  case mbUser of
-       Nothing   -> tempRedirect ("/_login?" ++ urlEncodeVars [("destination", url)]) $ toResponse ()
-       Just u    -> if predicate u
-                       then handler
-                       else error "Not authorized."
+-- | Like 'authenticate', but with a predicate that the user must satisfy.
+authenticateUserThat :: (User -> Bool) -> AuthenticationLevel -> Handler -> Handler
+authenticateUserThat predicate level handler = do
+  cfg <- getConfig
+  if level <= requireAuthentication cfg
+     then do
+       mbUser <- getLoggedInUser
+       rq <- askRq
+       let url = rqUri rq ++ rqQuery rq
+       case mbUser of
+            Nothing   -> tempRedirect ("/_login?" ++ urlEncodeVars [("destination", url)]) $ toResponse ()
+            Just u    -> if predicate u
+                            then handler
+                            else error "Not authorized."
+     else handler
 
 -- | Run the handler after setting @REMOTE_USER@ with the user from
 -- the session.
