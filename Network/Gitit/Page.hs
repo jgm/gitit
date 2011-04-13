@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -  which looks like this (it is valid YAML):
 -
 -  > ---
--  > title: Custom Title 
+-  > title: Custom Title
 -  > format: markdown+lhs
 -  > toc: yes
 -  > categories: foo bar baz
@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -  text as markdown with literate haskell, to include a table of
 -  contents, and to include the page in the categories foo, bar,
 -  and baz.
-- 
+-
 -  The metadata block may be omitted entirely, and any particular line
 -  may be omitted. The categories in the @categories@ field should be
 -  separated by spaces. Commas will be treated as spaces.
@@ -52,7 +52,7 @@ import Network.Gitit.Types
 import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
-import Data.List (intercalate)
+import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe)
 
 parseMetadata :: String -> ([(String, String)], String)
@@ -63,11 +63,11 @@ parseMetadata raw =
 
 pMetadataBlock :: GenParser Char st ([(String, String)], String)
 pMetadataBlock = try $ do
-  string "---"
-  pBlankline
+  _ <- string "---"
+  _ <- pBlankline
   ls <- many pMetadataLine
-  string "..."
-  pBlankline
+  _ <- string "..."
+  _ <- pBlankline
   skipMany pBlankline
   rest <- getInput
   return (ls, rest)
@@ -79,11 +79,11 @@ pMetadataLine :: GenParser Char st (String, String)
 pMetadataLine = try $ do
   ident <- many1 letter
   skipMany (oneOf " \t")
-  char ':'
+  _ <- char ':'
   rawval <- many $ noneOf "\n\r"
                  <|> (try $ newline >> notFollowedBy pBlankline >>
                             skipMany1 (oneOf " \t") >> return ' ')
-  newline
+  _ <- newline
   return (ident, trim rawval)
 
 -- | Read a string (the contents of a page file) and produce a Page
@@ -91,7 +91,7 @@ pMetadataLine = try $ do
 stringToPage :: Config -> String -> String -> Page
 stringToPage conf pagename raw =
   let (ls, rest) = parseMetadata raw
-      page' = Page { pageName        = pagename 
+      page' = Page { pageName        = pagename
                    , pageFormat      = defaultPageType conf
                    , pageLHS         = defaultLHS conf
                    , pageTOC         = tableOfContents conf
@@ -106,7 +106,7 @@ adjustPage ("title", val) page' = page' { pageTitle = val }
 adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
     where (pt, lhs) = parsePageType val
 adjustPage ("toc", val) page' = page' {
-  pageTOC = (map toLower val) `elem` ["yes","true"] }
+  pageTOC = map toLower val `elem` ["yes","true"] }
 adjustPage ("categories", val) page' =
    page' { pageCategories = splitCategories val ++ pageCategories page' }
 adjustPage (_, _) page' = page'
@@ -126,7 +126,7 @@ pageToString conf page' =
                        else "") ++
                    (if pageformat /= defaultPageType conf ||
                           pagelhs /= defaultLHS conf
-                       then "!format: " ++ 
+                       then "!format: " ++
                             map toLower (show pageformat) ++
                             if pagelhs then "+lhs\n" else "\n"
                        else "") ++
@@ -135,12 +135,12 @@ pageToString conf page' =
                             (if pagetoc then "yes" else "no") ++ "\n"
                        else "") ++
                    (if not (null pagecats)
-                       then "!categories: " ++ intercalate " " pagecats ++ "\n"
+                       then "!categories: " ++ unwords pagecats ++ "\n"
                        else "")
   in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
 
 extractCategories :: String -> [String]
-extractCategories s | take 3 s == "---" = 
+extractCategories s | "---" `isPrefixOf` s =
   let (md,_) = parseMetadata s
   in  splitCategories $ fromMaybe "" $ lookup "categories" md
 extractCategories _ = []

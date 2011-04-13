@@ -119,7 +119,7 @@ resetPasswordRequest params = do
                     response
     else registerForm >>=
          formattedPage defaultPageLayout{
-                         pgMessages = errors, 
+                         pgMessages = errors,
                          pgShowPageTools = False,
                          pgTabs = [],
                          pgTitle = "Register for an account"
@@ -163,7 +163,7 @@ validateReset params postValidate = do
   let errors = case (knownUser, resetCodeMatches) of
                      (True, True)   -> []
                      (True, False)  -> ["Your reset code is invalid"]
-                     (False, _)     -> ["User " ++ uname ++ " is not known"] 
+                     (False, _)     -> ["User " ++ uname ++ " is not known"]
   if null errors
      then postValidate (fromJust user)
      else registerForm >>=

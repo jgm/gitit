@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Framework (
-                               -- * Combinators for dealing with users 
+                               -- * Combinators for dealing with users
                                  withUserFromSession
                                , withUserFromHTTPAuth
                                , authenticateUserThat
@@ -61,11 +61,11 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Data.FileStore
 import Data.Char (toLower)
-import Control.Monad (mzero, liftM, MonadPlus)
+import Control.Monad (mzero, liftM, unless, MonadPlus)
 import qualified Data.Map as M
 import Data.ByteString.UTF8 (toString)
 import Data.ByteString.Lazy.UTF8 (fromString)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
 import System.FilePath ((<.>), takeExtension, takeFileName)
 import Text.Highlighting.Kate
@@ -116,7 +116,7 @@ withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
 withUserFromHTTPAuth :: Handler -> Handler
 withUserFromHTTPAuth handler = do
   req <- askRq
-  let user = case (getHeader "authorization" req) of
+  let user = case getHeader "authorization" req of
               Nothing         -> ""
               Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
                                   Left _  -> ""
@@ -140,14 +140,14 @@ pAuthorizationHeader = try pBasicHeader <|> pDigestHeader
 
 pDigestHeader :: GenParser Char st String
 pDigestHeader = do
-  string "Digest username=\""
+  _ <- string "Digest username=\""
   result' <- many (noneOf "\"")
-  char '"'
+  _ <- char '"'
   return result'
 
 pBasicHeader :: GenParser Char st String
 pBasicHeader = do
-  string "Basic "
+  _ <- string "Basic "
   result' <- many (noneOf " \t\n")
   return $ takeWhile (/=':') $ decode result'
 
@@ -240,7 +240,7 @@ splitOn c cs =
   let (next, rest) = break (==c) cs
   in case rest of
          []     -> [next]
-         (_:rs) -> next : splitOn c rs 
+         (_:rs) -> next : splitOn c rs
 
 -- | Returns path portion of URI, without initial @\/@.
 -- Consecutive spaces are collapsed.  We don't want to distinguish
@@ -274,8 +274,7 @@ isSourceCode path' =
 -- | Returns encoded URL path for the page with the given name, relative to
 -- the wiki base.
 urlForPage :: String -> String
-urlForPage page = "/" ++
-  encString False isUnescapedInURI page
+urlForPage page = '/' : encString False isUnescapedInURI page
 
 -- | Returns the filestore path of the file containing the page's source.
 pathForPage :: String -> FilePath
@@ -285,9 +284,8 @@ pathForPage page = page <.> "page"
 getMimeTypeForExtension :: String -> GititServerPart String
 getMimeTypeForExtension ext = do
   mimes <- liftM mimeMap getConfig
-  return $ case M.lookup (dropWhile (=='.') $ map toLower ext) mimes of
-                Nothing -> "application/octet-stream"
-                Just t  -> t
+  return $ fromMaybe "application/octet-stream"
+    (M.lookup (dropWhile (== '.') $ map toLower ext) mimes)
 
 -- | Simple helper for validation of forms.
 validate :: [(Bool, String)]   -- ^ list of conditions and error messages
@@ -310,9 +308,8 @@ guardIndex = do
   base <- getWikiBase
   uri' <- liftM rqUri askRq
   let localpath = drop (length base) uri'
-  if length localpath > 1 && lastNote "guardIndex" uri' == '/'
-     then return ()
-     else mzero
+  unless (length localpath > 1 && lastNote "guardIndex" uri' == '/')
+    mzero
 
 -- Guard against a path like @\/wiki@ when the wiki is being
 -- served at @\/wiki@.
@@ -320,9 +317,8 @@ guardBareBase :: GititServerPart ()
 guardBareBase = do
   base' <- getWikiBase
   uri' <- liftM rqUri askRq
-  if not (null base') && base' == uri'
-     then return ()
-     else mzero
+  unless (not (null base') && base' == uri')
+    mzero
 
 -- | Runs a server monad in a local context after setting
 -- the "messages" request header.

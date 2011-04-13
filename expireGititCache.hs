@@ -43,7 +43,7 @@ main = do
              Nothing -> do
                hPutStrLn stderr ("Could not parse URI " ++ uriString)
                exitWith (ExitFailure 5)
-  forM_ files (expireFile uri)  
+  forM_ files (expireFile uri)
 
 usageMessage :: IO ()
 usageMessage = do
