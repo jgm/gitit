@@ -172,7 +172,7 @@ createStaticIfMissing conf = do
       logM "gitit" WARNING $ "Created " ++ (cssdir </> f)
 
     {-
-    let icondir = staticdir </> "img" </> "icons" 
+    let icondir = staticdir </> "img" </> "icons"
     createDirectoryIfMissing True icondir
     iconDataDir <- getDataFileName $ "data" </> "static" </> "img" </> "icons"
     iconFiles <- liftM (filter (\f -> takeExtension f == ".png")) $ getDirectoryContents iconDataDir

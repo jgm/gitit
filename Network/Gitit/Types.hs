@@ -229,7 +229,7 @@ data PageLayout = PageLayout
   { pgPageName       :: String
   , pgRevision       :: Maybe String
   , pgPrintable      :: Bool
-  , pgMessages       :: [String] 
+  , pgMessages       :: [String]
   , pgTitle          :: String
   , pgScripts        :: [String]
   , pgShowPageTools  :: Bool
@@ -282,7 +282,7 @@ data Params = Params { pUsername     :: String
                      , pOverwrite    :: Bool
                      , pFilename     :: String
                      , pFileContents :: L.ByteString
-                     , pConfirm      :: Bool 
+                     , pConfirm      :: Bool
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
                      , pResetCode    :: String
@@ -306,7 +306,7 @@ instance FromData Params where
          pa <- look' "patterns"       `mplus` return ""
          gt <- look' "gotopage"       `mplus` return ""
          ft <- look' "filetodelete"   `mplus` return ""
-         me <- lookRead "messages"   `mplus` return [] 
+         me <- lookRead "messages"   `mplus` return []
          fm <- liftM Just (look' "from") `mplus` return Nothing
          to <- liftM Just (look' "to")   `mplus` return Nothing
          et <- liftM (Just . filter (/='\r')) (look' "editedText")
@@ -344,13 +344,13 @@ instance FromData Params where
                          , pFrom         = fm
                          , pTo           = to
                          , pEditedText   = et
-                         , pFormat       = fo 
+                         , pFormat       = fo
                          , pSHA1         = sh
                          , pLogMsg       = lm
                          , pEmail        = em
-                         , pFullName     = na 
+                         , pFullName     = na
                          , pWikiname     = wn
-                         , pPrintable    = pr 
+                         , pPrintable    = pr
                          , pOverwrite    = ow
                          , pFilename     = fn
                          , pFileContents = fc
@@ -374,7 +374,7 @@ instance FromData Command where
                where commandList = ["update", "cancel", "export"]
 
 -- | State for a single wiki.
-data WikiState = WikiState { 
+data WikiState = WikiState {
                      wikiConfig    :: Config
                    , wikiFileStore :: FileStore
                    }

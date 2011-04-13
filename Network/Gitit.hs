@@ -22,7 +22,7 @@ The following is a minimal standalone wiki program:
 
 > import Network.Gitit
 > import Happstack.Server.SimpleHTTP
-> 
+>
 > main = do
 >   conf <- getDefaultConfig
 >   createStaticIfMissing conf
@@ -38,12 +38,12 @@ under different paths, and uses a custom authentication scheme:
 > import Control.Monad
 > import Text.XHtml hiding (dir)
 > import Happstack.Server.SimpleHTTP
-> 
+>
 > type WikiSpec = (String, FileStoreType, PageType)
-> 
+>
 > wikis = [ ("markdownWiki", Git, Markdown)
 >         , ("latexWiki", Darcs, LaTeX) ]
-> 
+>
 > -- custom authentication
 > myWithUser :: Handler -> Handler
 > myWithUser handler = do
@@ -66,7 +66,7 @@ under different paths, and uses a custom authentication scheme:
 > indexPage = ok $ toResponse $
 >   (p << "Wiki index") +++
 >   ulist << map (\(path', _, _) -> li << hotlink (path' ++ "/") << path') wikis
-> 
+>
 > main = do
 >   conf <- getDefaultConfig
 >   let conf' = conf{authHandler = myAuthHandler, withUser = myWithUser}
@@ -216,7 +216,7 @@ runHandler :: WikiState -> Handler -> ServerPart Response
 runHandler = mapServerPartT . unpackReaderT
 
 unpackReaderT:: (Monad m)
-    => c 
+    => c
     -> (ReaderT c m) (Maybe ((Either b a), FilterFun b))
     -> m (Maybe ((Either b a), FilterFun b))
 unpackReaderT st handler = runReaderT handler st

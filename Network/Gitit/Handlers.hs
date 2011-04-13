@@ -290,7 +290,7 @@ searchResults = withData $ \(params :: Params) -> do
   let relevance (f, ms) = length ms + if f `elem` pageNameMatches
                                          then 100
                                          else 0
-  let preamble = if null patterns 
+  let preamble = if null patterns
                     then h3 << ["Please enter a search term."]
                     else h3 << [ stringToHtml (show (length matches) ++ " matches found for ")
                                , thespan ! [identifier "pattern"] << unwords patterns]
@@ -446,7 +446,7 @@ showDiff file page params = do
   from' <- case (from, to) of
               (Just _, _)        -> return from
               (Nothing, Nothing) -> return from
-              (Nothing, Just t)  -> do 
+              (Nothing, Just t)  -> do
                 pageHist <- liftIO $ history fs [file]
                                      (TimeRange Nothing Nothing)
                 let (_, upto) = break (\r -> idsMatch fs (revId r) t)
@@ -593,7 +593,7 @@ deletePage = withData $ \(params :: Params) -> do
   let author = Author user email
   let descrip = "Deleted using web interface."
   base' <- getWikiBase
-  if pConfirm params && (file == page || file == page <.> "page") 
+  if pConfirm params && (file == page || file == page <.> "page")
      then do
        fs <- getFileStore
        liftIO $ delete fs file author descrip

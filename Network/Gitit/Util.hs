@@ -49,11 +49,11 @@ inDir d action = do
   setCurrentDirectory d
   result <- action
   setCurrentDirectory w
-  return result 
+  return result
 
 -- | Perform a function in a temporary directory and clean up.
 withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
-withTempDir baseName = bracket (createTempDir 0 baseName) (removeDirectoryRecursive)
+withTempDir baseName = bracket (createTempDir 0 baseName) removeDirectoryRecursive
 
 -- | Create a temporary directory with a unique name.
 createTempDir :: Integer -> FilePath -> IO FilePath

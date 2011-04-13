@@ -57,7 +57,7 @@ respond :: String
 respond mimetype ext fn page doc = liftIO (fn doc) >>=
   ok . setContentType mimetype .
   (if null ext then id else setFilename (page ++ "." ++ ext)) .
-  toResponseBS (B.empty)
+  toResponseBS B.empty
 
 respondX :: String -> String -> String
           -> (WriterOptions -> Pandoc -> IO L.ByteString)
@@ -225,7 +225,7 @@ respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
               -- run pdflatex twice to get the references and toc right
               let cmd = "pdflatex"
               oldEnv <- getEnvironment
-              let env = Just $ ("TEXINPUTS",".:" ++ 
+              let env = Just $ ("TEXINPUTS",".:" ++
                                escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
                                (curdir </> repositoryPath cfg) ++ ":") : oldEnv
               let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
@@ -257,13 +257,13 @@ fixURLs :: Pandoc -> GititServerPart Pandoc
 fixURLs pndc = do
     curdir <- liftIO getCurrentDirectory
     cfg <- getConfig
-    
+
     let go (Image ils (url, title)) = Image ils (fixURL url, title)
         go x                        = x
-        
+
         fixURL ('/':url) = curdir </> staticDir cfg </> url
         fixURL url       = url
-    
+
     return $ bottomUp go pndc
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]

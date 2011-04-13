@@ -38,7 +38,7 @@ import Happstack.Server
 import Happstack.Server.Parts (compressedResponseFilter)
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import Control.Monad.Reader
-import Data.ByteString.UTF8 as U
+import Data.ByteString.UTF8 as U hiding (lines)
 
 withExpiresHeaders :: ServerMonad m => m Response -> m Response
 withExpiresHeaders = liftM (setHeader "Cache-Control" "max-age=21600")
@@ -57,7 +57,7 @@ lookupIPAddr hostname = do
   if null addrs
      then return Nothing
      else return $ Just $ takeWhile (/=':') $ show $ addrAddress $ case addrs of -- head addrs
-                                                                     [] -> error $ "lookupIPAddr, no addrs"
+                                                                     [] -> error "lookupIPAddr, no addrs"
                                                                      (x:_) -> x
 getHost :: ServerMonad m => m (Maybe String)
 getHost = liftM (maybe Nothing (Just . U.toString)) $ getHeaderM "Host"
