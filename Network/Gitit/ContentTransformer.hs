@@ -68,31 +68,30 @@ module Network.Gitit.ContentTransformer
   )
 where
 
-import Prelude hiding (catch)
-import Network.Gitit.Server
+import Control.Exception (throwIO, catch)
+import Control.Monad.State
+import Data.Maybe (isNothing, mapMaybe)
+import Network.Gitit.Cache (lookupCache, cacheContents)
+import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Framework
+import Network.Gitit.Layout
+import Network.Gitit.Page (stringToPage)
+import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Layout
-import Network.Gitit.Export (exportFormats)
-import Network.Gitit.Page (stringToPage)
-import Network.Gitit.Cache (lookupCache, cacheContents)
-import qualified Data.FileStore as FS
-import Data.Maybe (mapMaybe)
+import Network.URI (isUnescapedInURI)
+import Network.URL (encString)
+import Prelude hiding (catch)
+import System.FilePath
+import Text.HTML.SanitizeXSS (sanitizeBalance)
+import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX)
-import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import Text.Highlighting.Kate
-import Data.Maybe (isNothing)
-import System.FilePath
-import Control.Monad.State
-import Control.Exception (throwIO, catch)
-import qualified Data.ByteString as S (concat) 
+import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
-import Network.URL (encString)
-import Network.URI (isUnescapedInURI)
-import Text.HTML.SanitizeXSS (sanitizeBalance)
+import qualified Data.FileStore as FS
+import qualified Text.Pandoc as Pandoc
 --
 -- ContentTransformer runners
 --
@@ -100,7 +99,7 @@ import Text.HTML.SanitizeXSS (sanitizeBalance)
 runTransformer :: ToMessage a
                => (String -> String)
                -> ContentTransformer a
-               -> GititServerPart a 
+               -> GititServerPart a
 runTransformer pathFor xform = withData $ \params -> do
   page <- getPage
   cfg <- getConfig
@@ -122,7 +121,7 @@ runTransformer pathFor xform = withData $ \params -> do
 -- specialized to wiki pages.
 runPageTransformer :: ToMessage a
                    => ContentTransformer a
-                   -> GititServerPart a 
+                   -> GititServerPart a
 runPageTransformer = runTransformer pathForPage
 
 -- | Converts a @ContentTransformer@ into a @GititServerPart@;
@@ -150,7 +149,7 @@ showPage :: Handler
 showPage = runPageTransformer htmlViaPandoc
 
 -- | Responds with page exported into selected format.
-exportPage :: Handler 
+exportPage :: Handler
 exportPage = runPageTransformer exportViaPandoc
 
 -- | Responds with highlighted source code.
@@ -184,7 +183,7 @@ rawTextResponse :: ContentTransformer Response
 rawTextResponse = rawContents >>= textResponse
 
 -- | Responds with a wiki page in the format specified
--- by the @format@ parameter. 
+-- by the @format@ parameter.
 exportViaPandoc :: ContentTransformer Response
 exportViaPandoc = rawContents >>=
                   maybe mzero return >>=
@@ -212,7 +211,7 @@ htmlViaPandoc = cachedHtml `mplus`
 highlightRawSource :: ContentTransformer Response
 highlightRawSource =
   cachedHtml `mplus`
-    (updateLayout (\l -> l { pgTabs = [ViewTab,HistoryTab] }) >> 
+    (updateLayout (\l -> l { pgTabs = [ViewTab,HistoryTab] }) >>
      rawContents >>=
      highlightSource >>=
      applyWikiTemplate >>=
@@ -223,8 +222,8 @@ highlightRawSource =
 --
 
 -- | Caches a response (actually just the response body) on disk,
--- unless the context indicates that the page is not cacheable. 
-cacheHtml :: Response -> ContentTransformer Response 
+-- unless the context indicates that the page is not cacheable.
+cacheHtml :: Response -> ContentTransformer Response
 cacheHtml resp' = do
   params <- getParams
   file <- getFileName
@@ -283,7 +282,7 @@ mimeResponse :: Monad m
 mimeResponse c mimeType =
   return . setContentType mimeType . toResponse $ c
 
--- | Converts Pandoc to response using format specified in parameters. 
+-- | Converts Pandoc to response using format specified in parameters.
 exportPandoc :: Pandoc -> ContentTransformer Response
 exportPandoc doc = do
   params <- getParams
@@ -403,7 +402,7 @@ applyTransform inp transform = do
   return result'
 
 -- | Applies all the page transform plugins to a Pandoc document.
-applyPageTransforms :: Pandoc -> ContentTransformer Pandoc 
+applyPageTransforms :: Pandoc -> ContentTransformer Pandoc
 applyPageTransforms c = do
   xforms <- getPageTransforms
   foldM applyTransform c (wikiLinksTransform : xforms)
@@ -488,7 +487,7 @@ updateLayout f = do
 -- Pandoc and wiki content conversion support
 --
 
-readerFor :: PageType -> Bool -> (String -> Pandoc)
+readerFor :: PageType -> Bool -> String -> Pandoc
 readerFor pt lhs =
   let defPS = defaultParserState{ stateSmart = True
                                 , stateLiterateHaskell = lhs }

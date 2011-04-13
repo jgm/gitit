@@ -17,11 +17,11 @@ plugin :: Plugin
 plugin = mkPageTransformM substituteIntoBlock
 
 substituteIntoBlock :: [Block] -> PluginM [Block]
-substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) = 
-     do let target = inlinesToString ref 
+substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) =
+     do let target = inlinesToString ref
         cfg <- askConfig
         let fs = filestoreFromConfig cfg
-        article <- try $ liftIO (retrieve fs (target ++ ".page") Nothing) 
+        article <- try $ liftIO (retrieve fs (target ++ ".page") Nothing)
         case article :: Either FileStoreError String of
           Left  _    -> let txt = Str ("[" ++ target ++ "](!subst)")
                             alt = "'" ++ target ++ "' doesn't exist. Click here to create it."

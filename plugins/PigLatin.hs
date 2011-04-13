@@ -25,7 +25,7 @@ pigLatinStr (Str x@(c:_)) | isLetter c = Str (x ++ "yay")
 pigLatinStr x       = x
 
 isConsonant :: Char -> Bool
-isConsonant c = c `notElem` "aeiouAEIOU" 
+isConsonant c = c `notElem` "aeiouAEIOU"
 
 capitalize :: String -> String
 capitalize "" = ""
