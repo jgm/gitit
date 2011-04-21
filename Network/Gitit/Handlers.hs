@@ -100,7 +100,7 @@ handleAny = uriRest $ \uri ->
                                   (ok $ setContentType mimetype $
                                     (toResponse noHtml) {rsBody = contents})
                                     -- ugly hack
-                Left NotFound  -> anyRequest mzero
+                Left NotFound  -> mzero
                 Left e         -> error (show e)
 
 debugHandler :: Handler
@@ -184,7 +184,7 @@ uploadForm = withData $ \(params :: Params) -> do
 uploadFile :: Handler
 uploadFile = withData $ \(params :: Params) -> do
   let origPath = pFilename params
-  let fileContents = pFileContents params
+  let filePath = pFilePath params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
@@ -212,17 +212,17 @@ uploadFile = withData $ \(params :: Params) -> do
                  , (not overwrite && exists, "A file named '" ++ wikiname ++
                     "' already exists in the repository: choose a new name " ++
                     "or check the box to overwrite the existing file.")
-                 , (B.length fileContents > fromIntegral (maxUploadSize cfg),
-                    "File exceeds maximum upload size.")
                  , (isPageFile wikiname,
                     "This file extension is reserved for wiki pages.")
                  ]
   if null errors
      then do
        expireCachedFile wikiname `mplus` return ()
+       fileContents <- liftIO $ B.readFile filePath
+       let len = B.length fileContents
        liftIO $ save fs wikiname (Author user email) logMsg fileContents
        let contents = thediv <<
-             [ h2 << ("Uploaded " ++ show (B.length fileContents) ++ " bytes")
+             [ h2 << ("Uploaded " ++ show len ++ " bytes")
              , if takeExtension wikiname `elem` imageExtensions
                   then p << "To add this image to a page, use:" +++
                        pre << ("![alt text](/" ++ wikiname ++ ")")
@@ -257,11 +257,11 @@ goToPage = withData $ \(params :: Params) -> do
                                        Just m  -> seeOther (base' ++ urlForPage m) $
                                                   toResponse $ "Redirecting" ++
                                                     " to partial match"
-                                       Nothing -> withInput "patterns" gotopage searchResults
+                                       Nothing -> searchResults
 
 searchResults :: Handler
 searchResults = withData $ \(params :: Params) -> do
-  let patterns = pPatterns params
+  let patterns = pPatterns params `orIfNull` [pGotoPage params]
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
@@ -482,7 +482,10 @@ getDiff fs file from to = do
            pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
 editPage :: Handler
-editPage = withData $ \(params :: Params) -> do
+editPage = withData editPage'
+
+editPage' :: Params -> Handler
+editPage' params = do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
   page <- getPage
@@ -642,9 +645,10 @@ updatePage = withData $ \(params :: Params) -> do
                       if conflicts
                          then "Please resolve conflicts and Save."
                          else "Please review and Save."
-               withMessages [mergeMsg] $
-                 withInput "editedText" mergedText $
-                   withInput "sha1" (revId mergedWithRev) editPage
+               editPage' $
+                 params{ pEditedText = Just mergedText,
+                         pSHA1       = revId mergedWithRev,
+                         pMessages   = [mergeMsg] }
 
 indexPage :: Handler
 indexPage = do

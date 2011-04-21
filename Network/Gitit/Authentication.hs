@@ -36,7 +36,7 @@ import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
 import System.Process (readProcessWithExitCode)
-import Control.Monad (unless, liftM)
+import Control.Monad (unless, liftM, mplus)
 import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
@@ -51,7 +51,6 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
-import Control.Monad.Reader (runReaderT, ask)
 
 data ValidationType = Register
                     | ResetPassword
@@ -374,7 +373,7 @@ loginUser params = do
   if allowed
     then do
       key <- newSession (SessionData uname)
-      addCookie (sessionTimeout cfg) (mkCookie "sid" (show key))
+      addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
       withMessages ["Invalid username or password."] loginUserForm
@@ -391,8 +390,7 @@ logoutUser params = do
   case key of
        Just k  -> do
          delSession k
-         -- make cookie expire immediately, effectively deleting it
-         addCookie 0 (mkCookie "sid" "-1")
+         expireCookie "sid"
        Nothing -> return ()
   seeOther (encUrl dest) $ toResponse "You have been logged out."
 
@@ -467,22 +465,24 @@ loginRPXUser params = do
        user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
        updateGititState $ \s -> s { users = M.insert userId user (users s) }
        key <- newSession (SessionData userId)
-       addCookie (sessionTimeout cfg) (mkCookie "sid" (show key))
+       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
        see $ fromJust $ rDestination params
       where
         prop pname info = lookup pname $ R.userData info
         see url = seeOther (encUrl url) $ toResponse noHtml
 
 -- The parameters passed by the RPX callback call.
-data RPars = RPars {rToken::Maybe String,rDestination::Maybe String} deriving Show
+data RPars = RPars { rToken       :: Maybe String
+                   , rDestination :: Maybe String }
+                   deriving Show
 
 instance FromData RPars where
      fromData = do
-         let look' = liftM urlDecode . look
-         env <- ask
-         let vtoken = runReaderT (look "token") env
-         let vDestination = runReaderT (look' "destination") env
-         return RPars {rToken=vtoken,rDestination=vDestination}
+         vtoken <- liftM Just (look "token") `mplus` return Nothing
+         vDestination <- liftM (Just . urlDecode) (look "destination") `mplus`
+                           return Nothing
+         return RPars { rToken = vtoken
+                      , rDestination = vDestination }
 
 rpxAuthHandlers :: [Handler]
 rpxAuthHandlers =

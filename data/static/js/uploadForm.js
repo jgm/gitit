@@ -1,3 +1,6 @@
 $(document).ready(function(){
-    $("#file").change(function () { $("#wikiname").val($(this).val()); });
+    $("#file").change(function () {
+      var fn = $(this).val().replace(/.*\\/,"");
+      $("#wikiname").val(fn);
+    });
   });

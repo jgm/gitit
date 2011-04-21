@@ -29,13 +29,10 @@ import Control.Monad (liftM)
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
-import qualified Data.ByteString.Lazy.UTF8 as L (ByteString)
-import qualified Data.ByteString.Lazy as L (empty)
 import qualified Data.Map as M
 import Data.List (intersect)
 import Data.Time (parseTime)
 import System.Locale (defaultTimeLocale)
-import Data.Maybe (fromMaybe)
 import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
@@ -281,7 +278,7 @@ data Params = Params { pUsername     :: String
                      , pPrintable    :: Bool
                      , pOverwrite    :: Bool
                      , pFilename     :: String
-                     , pFileContents :: L.ByteString
+                     , pFilePath     :: FilePath
                      , pConfirm      :: Bool
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
@@ -319,9 +316,10 @@ instance FromData Params where
          wn <- look' "wikiname"       `mplus` return ""
          pr <- (look' "printable" >> return True) `mplus` return False
          ow <- liftM (=="yes") (look' "overwrite") `mplus` return False
-         fn <- liftM (fromMaybe "" . inputFilename) (lookInput "file")
-                 `mplus` return ""
-         fc <- liftM inputValue (lookInput "file") `mplus` return L.empty
+         fileparams <- liftM Just (lookFile "file") `mplus` return Nothing
+         let (fp, fn) = case fileparams of
+                             Just (x,y,_) -> (x,y)
+                             Nothing      -> ("","")
          ac <- look' "accessCode"     `mplus` return ""
          cn <- (look' "confirm" >> return True) `mplus` return False
          sk <- liftM Just (readCookieValue "sid") `mplus` return Nothing
@@ -353,7 +351,7 @@ instance FromData Params where
                          , pPrintable    = pr
                          , pOverwrite    = ow
                          , pFilename     = fn
-                         , pFileContents = fc
+                         , pFilePath     = fp
                          , pAccessCode   = ac
                          , pConfirm      = cn
                          , pSessionKey   = sk

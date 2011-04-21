@@ -35,7 +35,7 @@ module Network.Gitit.Server
           )
 where
 import Happstack.Server
-import Happstack.Server.Parts (compressedResponseFilter)
+import Happstack.Server.Compression (compressedResponseFilter)
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
 import Control.Monad.Reader
 import Data.ByteString.UTF8 as U hiding (lines)
