@@ -125,17 +125,21 @@ import Control.Monad.Reader
 import Prelude hiding (readFile)
 import qualified Data.ByteString.Char8 as B
 import System.FilePath ((</>))
+import System.Directory (getTemporaryDirectory)
 import Safe
 
 -- | Happstack handler for a gitit wiki.
 wiki :: Config -> ServerPart Response
 wiki conf = do
+  tempDir <- liftIO getTemporaryDirectory
+  let maxSize = fromIntegral $ maxUploadSize conf
+  decodeBody $ defaultBodyPolicy tempDir maxSize maxSize maxSize
   let static = staticDir conf
   defaultStatic <- liftIO $ getDataFileName $ "data" </> "static"
   -- if file not found in staticDir, we check also in the data/static
   -- directory, which contains defaults
   let staticHandler = withExpiresHeaders $
-        fileServeStrict' [] static `mplus` fileServeStrict' [] defaultStatic
+        serveDirectory' static `mplus` serveDirectory' defaultStatic
   let debugHandler' = msum [debugHandler | debugMode conf]
   let handlers = debugHandler' `mplus` authHandler conf `mplus`
                  authenticate ForRead (msum wikiHandlers)
@@ -146,12 +150,12 @@ wiki conf = do
      else return ""
   staticHandler `mplus` runHandler ws (withUser conf handlers)
 
--- | Like 'fileServeStrict', but if file is not found, fail instead of
+-- | Like 'serveDirectory', but if file is not found, fail instead of
 -- returning a 404 error.
-fileServeStrict' :: [FilePath] -> FilePath -> ServerPart Response
-fileServeStrict' ps p = do
+serveDirectory' :: FilePath -> ServerPart Response
+serveDirectory' p = do
   rq <- askRq
-  resp' <- fileServeStrict ps p
+  resp' <- serveDirectory EnableBrowsing [] p
   if rsCode resp' == 404 || lastNote "fileServeStrict'" (rqUri rq) == '/'
      then mzero  -- pass through if not found or directory index
      else do
@@ -215,8 +219,6 @@ reloadTemplates = do
 runHandler :: WikiState -> Handler -> ServerPart Response
 runHandler = mapServerPartT . unpackReaderT
 
-unpackReaderT:: (Monad m)
-    => c
-    -> (ReaderT c m) (Maybe ((Either b a), FilterFun b))
-    -> m (Maybe ((Either b a), FilterFun b))
-unpackReaderT st handler = runReaderT handler st
+unpackReaderT :: s -> UnWebT (ReaderT s IO) a -> UnWebT IO a
+unpackReaderT st uw = runReaderT uw st
+

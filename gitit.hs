@@ -76,7 +76,8 @@ main = do
   -- initialize state
   initializeGititState conf'
 
-  let serverConf = Conf { validator = Nothing, port = portNumber conf' }
+  let serverConf = Conf { validator = Nothing, port = portNumber conf',
+                          timeout = 20, logAccess = Nothing }
 
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol

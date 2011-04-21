@@ -46,7 +46,6 @@ module Network.Gitit.Framework (
                                , isSourceCode
                                -- * Combinators that change the request locally
                                , withMessages
-                               , withInput
                                -- * Miscellaneous
                                , urlForPage
                                , pathForPage
@@ -106,7 +105,7 @@ withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
   mbUser <- case mbSd of
             Nothing    -> return Nothing
             Just sd    -> do
-              addCookie (sessionTimeout cfg) (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
+              addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
               getUser $! sessionUser sd
   let user = maybe "" uUsername mbUser
   localRq (setHeader "REMOTE_USER" user) handler
@@ -323,22 +322,18 @@ guardBareBase = do
 -- | Runs a server monad in a local context after setting
 -- the "messages" request header.
 withMessages :: ServerMonad m => [String] -> m a -> m a
-withMessages = withInput "messages" . show
-
--- | Runs a server monad in a local context after setting
--- request header.
-withInput :: ServerMonad m => String -> String -> m a -> m a
-withInput name val handler = do
+withMessages messages handler = do
   req <- askRq
-  let inps = filter (\(n,_) -> n /= name) $ rqInputs req
-  let newInp = (name, Input { inputValue = fromString val
+  let inps = filter (\(n,_) -> n /= "messages") $ rqInputsQuery req
+  let newInp = ("messages", Input {
+                              inputValue = Right $ fromString $ show messages
                             , inputFilename = Nothing
                             , inputContentType = ContentType {
                                     ctType = "text"
                                   , ctSubtype = "plain"
                                   , ctParameters = [] }
                             })
-  localRq (\rq -> rq{ rqInputs = newInp : inps }) handler
+  localRq (\rq -> rq{ rqInputsQuery = newInp : inps }) handler
 
 -- | Returns a filestore object derived from the
 -- repository path and filestore type specified in configuration.
