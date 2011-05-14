@@ -1,3 +1,42 @@
+Version 0.8 released 13 May 2011
+
+* Uses happstack 6.
+
+* Added textile and org export formats, textile page format.
+
+* Added support for RPXNow authentication, based on a patch from
+  Pasqualino Titto Assini.
+
+* Added `authentication-required` field in config.
+
+    * If set to 'modify', authentication is required to modify the wiki.
+    * If set to 'read', atuhentication is required to view the wiki.
+    * If set to 'none', authentication is never required, and pages can
+      be edited anonymously.
+
+    API changes:
+
+    * currentUser moved to Authentication module
+    * requireAuthentication added to Config
+    * Added AuthenticationLevel type
+    * requireUser renamed authenticate, parameter for AuthenticationLevel
+      added; requireUserThat renamed authenticateUserThat
+
+* MathML and jsMath now work in the preview pane (Sean Seefried).
+
+* Use footnotes.js for fancy footnote styling (gwern).
+
+* Added a `--listen` parameter to specify the listen device
+  (Timo B. Hübel).
+
+* Removed withInput.
+
+* Replaced fileContents with filePath in Params.
+
+* Fixed bug in uploadForm.js which caused a prefix to be added in the
+  default wikiname.
+
+
 Version 0.7.3.12 released 01 Feb 2011
 
 * Use pandoc 1.8.
