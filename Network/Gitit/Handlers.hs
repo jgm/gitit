@@ -81,11 +81,6 @@ import Network.HTTP (urlEncodeVars)
 import Data.Time (getCurrentTime, addUTCTime)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
-import System.Directory (canonicalizePath)
-
--- Returns True if f is inside d.
-isInsideDir :: FilePath -> FilePath -> IO Bool
-isInsideDir f d = liftM2 isPrefixOf (canonicalizePath d) (canonicalizePath f)
 
 handleAny :: Handler
 handleAny = uriRest $ \uri ->
@@ -185,7 +180,9 @@ uploadFile :: Handler
 uploadFile = withData $ \(params :: Params) -> do
   let origPath = pFilename params
   let filePath = pFilePath params
-  let wikiname = pWikiname params `orIfNull` takeFileName origPath
+  let wikiname = normalise
+                 $ dropWhile (=='/')
+                 $ pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
   mbUser <- getLoggedInUser
@@ -198,14 +195,14 @@ uploadFile = withData $ \(params :: Params) -> do
                       if e == NotFound
                          then return False
                          else throwIO e >> return True
-  inStaticDir <- liftIO $
-                  (repositoryPath cfg </> wikiname) `isInsideDir` staticDir cfg
-  inTemplatesDir <- liftIO $
-                  (repositoryPath cfg </> wikiname) `isInsideDir` templatesDir cfg
+  let inStaticDir = staticDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
+  let inTemplatesDir = templatesDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
+  let dirs' = splitDirectories $ takeDirectory wikiname
   let imageExtensions = [".png", ".jpg", ".gif"]
   let errors = validate
                  [ (null . filter (not . isSpace) $ logMsg,
                     "Description cannot be empty.")
+                 , (".." `elem` dirs', "Wikiname cannot contain '..'")
                  , (null origPath, "File not found.")
                  , (inStaticDir,  "Destination is inside static directory.")
                  , (inTemplatesDir,  "Destination is inside templates directory.")
