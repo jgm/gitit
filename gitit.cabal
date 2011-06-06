@@ -124,7 +124,6 @@ Executable           gitit
                      directory,
                      mtl,
                      cgi,
-                     network,
                      old-time,
                      highlighting-kate >= 0.2.7.1,
                      bytestring,
