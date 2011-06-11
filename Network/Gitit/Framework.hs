@@ -268,7 +268,8 @@ isDiscussPageFile _ = False
 isSourceCode :: String -> Bool
 isSourceCode path' =
   let langs = languagesByFilename $ takeFileName path'
-  in  not . null $ langs
+  in  not (null langs || takeExtension path' == ".svg")
+                         -- allow svg to be served as image
 
 -- | Returns encoded URL path for the page with the given name, relative to
 -- the wiki base.
