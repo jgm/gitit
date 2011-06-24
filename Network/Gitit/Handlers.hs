@@ -324,13 +324,9 @@ showFileHistory = withData $ \(params :: Params) -> do
 
 showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
-  currTime <- liftIO getCurrentTime
-  let oneYearAgo = addUTCTime (-60 * 60 * 24 * 365) currTime
-  let since = case pSince params of
-                   Nothing -> Just oneYearAgo
-                   Just t  -> Just t
   fs <- getFileStore
-  hist <- liftIO $ history fs [file] (TimeRange since Nothing)
+  hist <- liftM (take (pLimit params)) $
+            liftIO $ history fs [file] (TimeRange Nothing Nothing)
   base' <- getWikiBase
   let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
                                     strAttr "revision" (revId rev),
@@ -357,23 +353,27 @@ showHistory file page params =  do
                   else []) ++
              [stringToHtml "]"])
         ]
-  if null hist
-     then mzero
-     else do
-       let contents = ulist ! [theclass "history"] <<
-                        zipWith versionToHtml hist
-                        [(length hist), (length hist - 1)..1]
-       let tabs = if file == page  -- source file, not wiki page
-                     then [ViewTab,HistoryTab]
-                     else pgTabs defaultPageLayout
-       formattedPage defaultPageLayout{
-                        pgPageName = page,
-                        pgMessages = pMessages params,
-                        pgScripts = ["dragdiff.js"],
-                        pgTabs = tabs,
-                        pgSelectedTab = HistoryTab,
-                        pgTitle = ("Changes to " ++ page)
-                        } contents
+  let contents = if null hist
+                    then noHtml
+                    else ulist ! [theclass "history"] <<
+                           zipWith versionToHtml hist
+                           [length hist, (length hist - 1)..1]
+  let more = if length hist == pLimit params
+                then anchor ! [href $ base' ++ "/_history" ++ urlForPage page
+                                 ++ "?limit=" ++ show (pLimit params + 100)] <<
+                                 "Show more..."
+                else noHtml
+  let tabs = if file == page  -- source file, not wiki page
+                then [ViewTab,HistoryTab]
+                else pgTabs defaultPageLayout
+  formattedPage defaultPageLayout{
+                   pgPageName = page,
+                   pgMessages = pMessages params,
+                   pgScripts = ["dragdiff.js"],
+                   pgTabs = tabs,
+                   pgSelectedTab = HistoryTab,
+                   pgTitle = ("Changes to " ++ page)
+                   } $ contents +++ more
 
 showActivity :: Handler
 showActivity = withData $ \(params :: Params) -> do
