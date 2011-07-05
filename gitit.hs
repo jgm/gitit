@@ -122,10 +122,10 @@ flags =
 checkListen :: String -> String
 checkListen l | isIPv6address l = l
               | isIPv4address l = l
-			  | otherwise         = error "Gitit.checkListen: Not a valid interface name"
+              | otherwise       = error "Gitit.checkListen: Not a valid interface name"
 
 getListenOrDefault :: [Opt] -> String
-getListenOrDefault [] = "127.0.0.1"
+getListenOrDefault [] = "0.0.0.0"
 getListenOrDefault ((Listen l):_) = l
 getListenOrDefault (_:os) = getListenOrDefault os
 
