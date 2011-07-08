@@ -70,6 +70,7 @@ where
 
 import Control.Exception (throwIO, catch)
 import Control.Monad.State
+import Control.Monad.Reader (ask)
 import Data.Maybe (isNothing, mapMaybe)
 import Network.Gitit.Cache (lookupCache, cacheContents)
 import Network.Gitit.Export (exportFormats)
@@ -499,13 +500,17 @@ readerFor pt lhs =
        Textile  -> readTextile defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
-wikiLinksTransform = return . bottomUp convertWikiLinks
+wikiLinksTransform pandoc
+  = do cfg <- liftM pluginConfig ask -- Can't use askConfig from Interface due to circular dependencies.
+       return (bottomUp (convertWikiLinks cfg) pandoc)
 
 -- | Convert links with no URL to wikilinks.
-convertWikiLinks :: Inline -> Inline
-convertWikiLinks (Link ref ("", "")) =
+convertWikiLinks :: Config -> Inline -> Inline
+convertWikiLinks cfg (Link ref ("", "")) | useAbsoluteUrls cfg =
+  Link ref (baseUrl cfg </> inlinesToURL ref, "Go to wiki page")
+convertWikiLinks _cfg (Link ref ("", "")) =
   Link ref (inlinesToURL ref, "Go to wiki page")
-convertWikiLinks x = x
+convertWikiLinks _cfg x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
 inlinesToURL :: [Inline] -> String
