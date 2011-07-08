@@ -99,6 +99,7 @@ extractConfig cp = do
       cfResetPasswordMessage <- get cp "DEFAULT" "reset-password-message"
       cfUseFeed <- get cp "DEFAULT" "use-feed"
       cfBaseUrl <- get cp "DEFAULT" "base-url"
+      cfAbsoluteUrls <- get cp "DEFAULT" "absolute-urls"
       cfWikiTitle <- get cp "DEFAULT" "wiki-title"
       cfFeedDays <- get cp "DEFAULT" "feed-days"
       cfFeedRefreshTime <- get cp "DEFAULT" "feed-refresh-time"
@@ -186,6 +187,7 @@ extractConfig cp = do
         , markupHelp           = markupHelpText
         , useFeed              = cfUseFeed
         , baseUrl              = stripTrailingSlash cfBaseUrl
+        , useAbsoluteUrls      = cfAbsoluteUrls
         , wikiTitle            = cfWikiTitle
         , feedDays             = readNumber "feed-days" cfFeedDays
         , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime
