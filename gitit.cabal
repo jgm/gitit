@@ -39,8 +39,8 @@ license:             GPL
 license-file:        LICENSE
 author:              John MacFarlane
 maintainer:          jgm@berkeley.edu
-bug-reports:         http://code.google.com/p/gitit/issues/list
-homepage:            http://github.com/jgm/gitit/tree/master
+bug-reports:         http://github.com/jgm/gitit/issues
+homepage:            http://gitit.net
 stability:           experimental
 data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/css/ie.css, data/static/css/hk-pyg.css,
