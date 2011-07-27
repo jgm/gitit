@@ -110,7 +110,7 @@ flags =
    , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
         "Specify port"
    , Option ['l'] ["listen"] (ReqArg (Listen . checkListen) "INTERFACE")
-        "Specify interface to listen on"
+        "Specify IP address to listen on"
    , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
         "Print default configuration"
    , Option [] ["debug"] (NoArg Debug)
