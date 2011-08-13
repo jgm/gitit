@@ -308,12 +308,17 @@ applyWikiTemplate c = do
 -- | Converts Page to Pandoc, applies page transforms, and adds page
 -- title.
 pageToWikiPandoc :: Page -> ContentTransformer Pandoc
-pageToWikiPandoc page' =
+pageToWikiPandoc page' = do
+  addMetaToContext page'
   pageToWikiPandoc' page' >>= addPageTitleToPandoc (pageTitle page')
 
 pageToWikiPandoc' :: Page -> ContentTransformer Pandoc
 pageToWikiPandoc' = applyPreParseTransforms >=>
-                     pageToPandoc >=> applyPageTransforms
+                    pageToPandoc >=> applyPageTransforms
+
+-- | Add metadata to context
+addMetaToContext :: Page -> ContentTransformer ()
+addMetaToContext page = modifyContext $ \ctx -> ctx { ctxMeta = pageMeta page }
 
 -- | Converts source text to Pandoc using default page type.
 pageToPandoc :: Page -> ContentTransformer Pandoc
