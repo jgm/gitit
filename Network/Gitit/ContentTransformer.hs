@@ -89,6 +89,7 @@ import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX)
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+import qualified Data.Text as T
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
@@ -337,7 +338,7 @@ pandocToHtml pandocContents = do
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
-  return $ primHtml $ sanitizeBalance $
+  return $ primHtml $ T.unpack . sanitizeBalance . T.pack $
            writeHtmlString defaultWriterOptions{
                         writerStandalone = True
                       , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
