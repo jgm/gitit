@@ -131,6 +131,7 @@ Executable           gitit
                      old-time,
                      highlighting-kate >= 0.2.7.1,
                      bytestring,
+                     text,
                      random,
                      network >= 2.1.0.0 && < 2.4,
                      utf8-string >= 0.3 && < 0.4,
@@ -149,7 +150,7 @@ Executable           gitit
                      hslogger >= 1 && < 1.2,
                      ConfigFile >= 1 && < 1.2,
                      feed >= 0.3.6 && < 0.4,
-                     xss-sanitize >= 0.2 && < 0.3,
+                     xss-sanitize >= 0.3 && < 0.4,
                      json >= 0.4 && < 0.5
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
