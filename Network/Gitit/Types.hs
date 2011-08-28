@@ -142,7 +142,9 @@ data Config = Config {
   -- | Allow PDF export?
   pdfExport            :: Bool,
   -- | Directory to search for pandoc customizations
-  pandocUserData       :: Maybe FilePath
+  pandocUserData       :: Maybe FilePath,
+  -- | Filter HTML through xss-sanitize
+  xssSanitize          :: Bool
   }
 
 -- | Data for rendering a wiki page.

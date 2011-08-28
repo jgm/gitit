@@ -338,7 +338,8 @@ pandocToHtml pandocContents = do
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
-  return $ primHtml $ T.unpack . sanitizeBalance . T.pack $
+  return $ primHtml $ T.unpack .
+           (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
            writeHtmlString defaultWriterOptions{
                         writerStandalone = True
                       , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
