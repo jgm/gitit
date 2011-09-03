@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.8.0.1
+version:             0.8.1
 Cabal-version:       >= 1.6
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
@@ -105,7 +105,7 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.8, pandoc-types >= 1.8, filepath, safe
+  build-depends:     base >= 3, pandoc >= 1.8.2, pandoc-types >= 1.8.2, filepath, safe
   extensions:        CPP
   if impl(ghc >= 6.12)
     ghc-options:     -Wall -fno-warn-unused-do-bind
@@ -121,8 +121,8 @@ Executable           gitit
                      pretty,
                      xhtml,
                      containers,
-                     pandoc >= 1.8,
-                     pandoc-types >= 1.8,
+                     pandoc >= 1.8.2,
+                     pandoc-types >= 1.8.2,
                      process,
                      filepath,
                      directory,
