@@ -1,3 +1,40 @@
+Version 0.8.1 released 02 Sep 2011
+
+*   Support mathjax as a math option.
+    Added MathJax as MathMethod, and mathjax as an option in
+    the 'math' config field.  Resolves GoogleCode 122.
+
+*   Added xss-sanitize configuaration option.
+    Setting it to 'no' turns off sanitization, enabling
+    file:// URLs and other things that get filtered out
+    by xss-sanitize.
+
+*   Listen interface explanation on help file could be more clear (#266)
+    (andyring)
+
+*   Add the new configuration option 'absolute-urls'.
+    When turned on, this makes wikilinks absolute w.r.t. the base-url.
+    By default, they are relative.  So, for example, in a wiki served
+    at the path 'wiki', on a page Sub/Page, the wikilink '[Cactus]()'
+    will produce a link to '/wiki/Cactus' if absolute-urls is on,
+    and otherwise the relative link 'Cactus'.  Patch due to lemmih.
+
+*   Change default listen address to 0.0.0.0.
+
+*   Serve svg file as image, not source code!
+
+*   Page history:  use 'limit' instead of restricting to past year.
+    limit defaults to 100.  If 100 are displayed, you'll get a
+    "Show more..." link that will increase the limit.
+    Also fixed bug that caused a 404 when no history was returned.
+
+*   Require pandoc >= 1.8.2.
+
+*   Allow build with happstack-server 6.2.
+
+*   Updated for use with xss-sanitize 0.3, which uses Text.
+    New dependency on text.
+
 Version 0.8.0.1 released 07 Jun 2011
 
 * Fixed file upload problem with recent versions of directory
