@@ -86,7 +86,7 @@ import Prelude hiding (catch)
 import System.FilePath
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Text.Highlighting.Kate
-import Text.Pandoc hiding (MathML, WebTeX)
+import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Data.Text as T
@@ -347,6 +347,7 @@ pandocToHtml pandocContents = do
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML Nothing
                                  WebTeX u -> Pandoc.WebTeX u
+                                 MathJax u -> Pandoc.MathJax u
                                  _      -> JsMath (Just $ base' ++
                                                       "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
@@ -452,6 +453,7 @@ addMathSupport c = do
          JsMathScript -> addScripts l ["jsMath/easy/load.js"]
          MathML       -> addScripts l ["MathMLinHTML.js"]
          WebTeX _     -> l
+         MathJax u    -> addScripts l [u]
          RawTeX       -> l
   return c
 
