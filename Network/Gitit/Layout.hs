@@ -75,8 +75,12 @@ filledPageTemplate :: String -> Config -> PageLayout -> Html ->
 filledPageTemplate base' cfg layout htmlContents templ =
   let rev  = pgRevision layout
       page = pgPageName layout
+      prefixedScript x = case x of
+                           'h':'t':'t':'p':_  -> x
+                           _                  -> base' ++ "/js/" ++ x
+
       scripts  = ["jquery.min.js", "jquery-ui.packed.js", "footnotes.js"] ++ pgScripts layout
-      scriptLink x = script ! [src (base' ++ "/js/" ++ x),
+      scriptLink x = script ! [src (prefixedScript x),
         thetype "text/javascript"] << noHtml
       javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
       tabli tab = if tab == pgSelectedTab layout

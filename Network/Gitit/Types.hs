@@ -42,7 +42,7 @@ data PageType = Markdown | RST | LaTeX | HTML | Textile
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
 
-data MathMethod = MathML | JsMathScript | WebTeX String | RawTeX
+data MathMethod = MathML | JsMathScript | WebTeX String | RawTeX | MathJax String
                   deriving (Read, Show, Eq)
 
 data AuthenticationLevel = Never | ForModify | ForRead

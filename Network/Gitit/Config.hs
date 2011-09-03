@@ -38,7 +38,7 @@ import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
-import Text.Pandoc hiding (MathML, WebTeX)
+import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
@@ -130,6 +130,7 @@ extractConfig cp = do
         , mathMethod           = case map toLower cfMathMethod of
                                       "jsmath"   -> JsMathScript
                                       "mathml"   -> MathML
+                                      "mathjax"  -> MathJax "https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
                                       "google"   -> WebTeX "http://chart.apis.google.com/chart?cht=tx&chl="
                                       _          -> RawTeX
         , defaultLHS           = lhs
