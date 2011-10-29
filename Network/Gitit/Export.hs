@@ -36,7 +36,7 @@ import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import Data.ByteString.Lazy.UTF8 (fromString)
-import System.FilePath ((<.>), (</>))
+import System.FilePath ((<.>), (</>), takeDirectory)
 import Control.Exception (throwIO)
 import System.Environment (getEnvironment)
 import System.Exit (ExitCode(..))
@@ -68,13 +68,16 @@ respondX templ mimetype ext fn opts page doc = do
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
-  doc' <- if ext `elem` ["odt","pdf","epub"]
-             then fixURLs doc
+  doc' <- if ext `elem` ["odt","pdf","epub", "rtf"]
+             then fixURLs page doc
              else return doc
+  doc'' <- if ext == "rtf"
+              then liftIO $ bottomUpM rtfEmbedImage doc'
+              else return doc'
   respond mimetype ext (fn opts{writerTemplate = template
                                ,writerSourceDirectory = repositoryPath cfg
                                ,writerUserDataDir = pandocUserData cfg})
-          page doc'
+          page doc''
 
 respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
           -> WriterOptions -> String -> Pandoc -> Handler
@@ -203,7 +206,7 @@ runShellCommand workingDir environment command optionList = do
   return status
 
 respondPDF :: String -> Pandoc -> Handler
-respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
+respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export disabled"
   let cacheName = pathForPage page ++ ".export.pdf"
@@ -253,8 +256,8 @@ respondPDF page old_pndc = fixURLs old_pndc >>= \pndc -> do
 -- Because the working directory will not in general be the root of the gitit instance
 -- at the time the Pandoc is fed to e.g. pdflatex, this function replaces the URLs of
 -- images in the staticDir with their correct absolute file path.
-fixURLs :: Pandoc -> GititServerPart Pandoc
-fixURLs pndc = do
+fixURLs :: String -> Pandoc -> GititServerPart Pandoc
+fixURLs page pndc = do
     curdir <- liftIO getCurrentDirectory
     cfg <- getConfig
 
@@ -262,7 +265,7 @@ fixURLs pndc = do
         go x                        = x
 
         fixURL ('/':url) = curdir </> staticDir cfg </> url
-        fixURL url       = url
+        fixURL url       = curdir </> repositoryPath cfg </> takeDirectory page </> url
 
     return $ bottomUp go pndc
 
