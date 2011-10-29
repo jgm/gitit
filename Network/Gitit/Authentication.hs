@@ -264,7 +264,8 @@ sharedValidation :: ValidationType
                  -> Params
                  -> GititServerPart (Either [String] (String,String,String))
 sharedValidation validationType params = do
-  let isValidUsername u = length u >= 3 && all isAlphaNum u
+  let isValidUsernameChar c = isAlphaNum c || c == ' '
+  let isValidUsername u = length u >= 3 && all isValidUsernameChar u
   let isValidPassword pw = length pw >= 6 && not (all isAlpha pw)
   let accessCode = pAccessCode params
   let uname = pUsername params
