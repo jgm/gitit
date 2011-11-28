@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc hiding (HTMLMathMethod(..))
 import qualified Text.Pandoc as Pandoc
+import Text.Pandoc.SelfContained as SelfContained
 import Text.Pandoc.Shared (escapeStringUsing, readDataFile)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage, getWikiBase)
@@ -128,8 +129,11 @@ respondS5 pg doc = do
                                 "data"</>"MathMLinHTML.js"
                       return [("mathml-script", s)]
                    else return []
-  respondS "s5" "text/html; charset=utf-8" ""
-    writeHtmlString
+  respondX "s5" "text/html; charset=utf-8" ""
+    (\o p -> do
+      let h = writeHtmlString o p
+      h' <- makeSelfContained (pandocUserData cfg) h
+      return $ fromString h')
     defaultRespOptions{writerSlideVariant = S5Slides
                       ,writerIncremental = True
                       ,writerVariables = variables'

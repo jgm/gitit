@@ -54,18 +54,18 @@ data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/js/preview.js, data/static/js/search.js,
                      data/static/js/MathMLinHTML.js,
                      data/static/robots.txt,
-                     data/static/s5/default/blank.gif,
-                     data/static/s5/default/bodybg.gif,
-                     data/static/s5/default/framing.css,
-                     data/static/s5/default/iepngfix.htc,
-                     data/static/s5/default/opera.css,
-                     data/static/s5/default/outline.css,
-                     data/static/s5/default/pretty.css,
-                     data/static/s5/default/print.css,
-                     data/static/s5/default/s5-core.css,
-                     data/static/s5/default/slides.css,
-                     data/static/s5/default/slides.js,
-                     data/static/s5/default/slides.min.js,
+                     data/s5/default/blank.gif,
+                     data/s5/default/bodybg.gif,
+                     data/s5/default/framing.css,
+                     data/s5/default/iepngfix.htc,
+                     data/s5/default/opera.css,
+                     data/s5/default/outline.css,
+                     data/s5/default/pretty.css,
+                     data/s5/default/print.css,
+                     data/s5/default/s5-core.css,
+                     data/s5/default/slides.css,
+                     data/s5/default/slides.js,
+                     data/s5/default/slides.min.js,
                      data/post-update, data/FrontPage.page, data/Help.page,
                      data/markup.Markdown, data/markup.RST,
                      data/markup.HTML, data/markup.LaTeX,
@@ -117,7 +117,7 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.8.2, pandoc-types >= 1.8.2, filepath, safe
+  build-depends:     base >= 3, pandoc >= 1.9, pandoc-types >= 1.8.2, filepath, safe
   extensions:        CPP
   if impl(ghc >= 6.12)
     ghc-options:     -Wall -fno-warn-unused-do-bind
@@ -133,7 +133,7 @@ Executable           gitit
                      pretty,
                      xhtml,
                      containers,
-                     pandoc >= 1.8.2,
+                     pandoc >= 1.9,
                      pandoc-types >= 1.8.2,
                      process,
                      filepath,
