@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc hiding (HTMLMathMethod(..))
 import qualified Text.Pandoc as Pandoc
-import Text.Pandoc.S5 (s5HeaderIncludes)
 import Text.Pandoc.Shared (escapeStringUsing, readDataFile)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage, getWikiBase)
@@ -117,7 +116,6 @@ respondS5 :: String -> Pandoc -> Handler
 respondS5 pg doc = do
   cfg <- getConfig
   base' <- getWikiBase
-  inc <- liftIO $ s5HeaderIncludes (pandocUserData cfg)
   let math = case mathMethod cfg of
                  MathML       -> Pandoc.MathML Nothing
                  WebTeX u     -> Pandoc.WebTeX u
@@ -128,8 +126,8 @@ respondS5 pg doc = do
                    then do
                       s <- liftIO $ readDataFile (pandocUserData cfg) $
                                 "data"</>"MathMLinHTML.js"
-                      return [("mathml-script", s),("s5includes",inc)]
-                   else return [("s5includes",inc)]
+                      return [("mathml-script", s)]
+                   else return []
   respondS "s5" "text/html; charset=utf-8" ""
     writeHtmlString
     defaultRespOptions{writerSlideVariant = S5Slides
