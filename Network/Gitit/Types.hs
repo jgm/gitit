@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeSynonymInstances, ScopedTypeVariables, FlexibleInstances #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
 Anton van Straaten <anton@appsolutions.com>
@@ -288,6 +288,14 @@ data Params = Params { pUsername     :: String
                      , pRecaptcha    :: Recaptcha
                      , pResetCode    :: String
                      }  deriving Show
+
+instance FromReqURI [String] where
+  fromReqURI s = case fromReqURI s of
+                      Just (s' :: String) ->
+                                   case reads s' of
+                                        ((xs,""):_) -> xs
+                                        _           -> Nothing
+                      Nothing             -> Nothing
 
 instance FromData Params where
      fromData = do
