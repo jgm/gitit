@@ -35,7 +35,7 @@ import Data.Time (parseTime)
 import System.Locale (defaultTimeLocale)
 import Data.FileStore.Types
 import Network.Gitit.Server
-import Text.Pandoc.CharacterReferences (decodeCharacterReferences)
+import Text.HTML.TagSoup.Entity (lookupEntity)
 
 data PageType = Markdown | RST | LaTeX | HTML | Textile
                 deriving (Read, Show, Eq)
@@ -291,7 +291,7 @@ data Params = Params { pUsername     :: String
 
 instance FromData Params where
      fromData = do
-         let look' = liftM decodeCharacterReferences . look
+         let look' = liftM fromEntities . look
          un <- look' "username"       `mplus` return ""
          pw <- look' "password"       `mplus` return ""
          p2 <- look' "password2"      `mplus` return ""
@@ -384,3 +384,16 @@ data WikiState = WikiState {
 type GititServerPart = ServerPartT (ReaderT WikiState IO)
 
 type Handler = GititServerPart Response
+
+-- Unescapes XML entities
+fromEntities :: String -> String
+fromEntities ('&':xs) =
+  case lookupEntity ent of
+        Just c  -> c : fromEntities rest
+        Nothing -> '&' : fromEntities rest
+    where (ent, rest) = case break (==';') xs of
+                             (zs,';':ys) -> (zs,ys)
+                             _           -> ("",xs)
+fromEntities (x:xs) = x : fromEntities xs
+fromEntities [] = []
+
