@@ -189,7 +189,7 @@ respondODT = respondX "opendocument" "application/vnd.oasis.opendocument.text"
               "odt" (writeODT Nothing) defaultRespOptions
 
 respondEPUB :: String -> Pandoc -> Handler
-respondEPUB = respondX "html" "application/epub+zip" "epub" (writeEPUB Nothing)
+respondEPUB = respondX "html" "application/epub+zip" "epub" (writeEPUB Nothing [])
                defaultRespOptions
 
 -- | Run shell command and return error status.  Assumes
