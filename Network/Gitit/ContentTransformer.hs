@@ -89,6 +89,7 @@ import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+import Text.Blaze.Renderer.String as Blaze ( renderHtml )
 import qualified Data.Text as T
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
@@ -361,12 +362,12 @@ highlightSource :: Maybe String -> ContentTransformer Html
 highlightSource Nothing = mzero
 highlightSource (Just source) = do
   file <- getFileName
-  let formatOpts = [OptNumberLines, OptLineAnchors]
+  let formatOpts = defaultFormatOpts { numberLines = True, lineAnchors = True }
   case languagesByExtension $ takeExtension file of
         []    -> mzero
-        (l:_) -> case highlightAs l (filter (/='\r') source) of
-                   Left _       -> mzero
-                   Right res    -> return $ formatAsXHtml formatOpts l $! res
+        (l:_) -> return $ primHtml $ Blaze.renderHtml
+                        $ formatHtmlBlock formatOpts
+                        $! highlightAs l $ filter (/='\r') source
 
 --
 -- Plugin combinators
@@ -536,10 +537,6 @@ inlinesToString = concatMap go
                Cite _ xs               -> concatMap go xs
                Code _ s                -> s
                Space                   -> " "
-               EmDash                  -> "---"
-               EnDash                  -> "--"
-               Apostrophe              -> "'"
-               Ellipses                -> "..."
                LineBreak               -> " "
                Math DisplayMath s      -> "$$" ++ s ++ "$$"
                Math InlineMath s       -> "$" ++ s ++ "$"

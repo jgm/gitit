@@ -173,9 +173,9 @@ wikiHandlers =
   , dir "_go"       goToPage
   , dir "_search"   searchResults
   , dir "_upload"   $  do guard =<< return . uploadsAllowed =<< getConfig
-                          msum [ methodOnly GET  >> authenticate ForModify uploadForm
-                                 , methodOnly POST >> authenticate ForModify uploadFile ]
-  , dir "_random"   $ methodOnly GET  >> randomPage
+                          msum [ method GET  >> authenticate ForModify uploadForm
+                                 , method POST >> authenticate ForModify uploadFile ]
+  , dir "_random"   $ method GET  >> randomPage
   , dir "_index"    indexPage
   , dir "_feed"     feedHandler
   , dir "_category" categoryPage
@@ -193,18 +193,18 @@ wikiHandlers =
       , guardPath isSourceCode >> showFileDiff ]
   , dir "_discuss" discussPage
   , dir "_delete" $ msum
-      [ methodOnly GET  >>
+      [ method GET  >>
           authenticate ForModify (unlessNoDelete confirmDelete showPage)
-      , methodOnly POST >>
+      , method POST >>
           authenticate ForModify (unlessNoDelete deletePage showPage) ]
   , dir "_preview" preview
   , guardIndex >> indexPage
   , guardCommand "export" >> exportPage
-  , methodOnly POST >> guardCommand "cancel" >> showPage
-  , methodOnly POST >> guardCommand "update" >>
+  , method POST >> guardCommand "cancel" >> showPage
+  , method POST >> guardCommand "update" >>
       authenticate ForModify (unlessNoEdit updatePage showPage)
   , showPage
-  , guardPath isSourceCode >> methodOnly GET >> showHighlightedSource
+  , guardPath isSourceCode >> method GET >> showHighlightedSource
   , handleAny
   , notFound =<< (guardPath isPage >> createPage)
   ]
