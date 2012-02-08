@@ -405,15 +405,15 @@ registerUserForm = registerForm >>=
 
 formAuthHandlers :: [Handler]
 formAuthHandlers =
-  [ dir "_register"  $ methodSP GET  registerUserForm
-  , dir "_register"  $ methodSP POST $ withData registerUser
-  , dir "_login"     $ methodSP GET  loginUserForm
-  , dir "_login"     $ methodSP POST $ withData loginUser
-  , dir "_logout"    $ methodSP GET  $ withData logoutUser
-  , dir "_resetPassword"   $ methodSP GET  $ withData resetPasswordRequestForm
-  , dir "_resetPassword"   $ methodSP POST $ withData resetPasswordRequest
-  , dir "_doResetPassword" $ methodSP GET  $ withData resetPassword
-  , dir "_doResetPassword" $ methodSP POST $ withData doResetPassword
+  [ dir "_register"  $ method GET >> registerUserForm
+  , dir "_register"  $ method POST >> withData registerUser
+  , dir "_login"     $ method GET  >> loginUserForm
+  , dir "_login"     $ method POST >> withData loginUser
+  , dir "_logout"    $ method GET  >> withData logoutUser
+  , dir "_resetPassword"   $ method GET  >> withData resetPasswordRequestForm
+  , dir "_resetPassword"   $ method POST >> withData resetPasswordRequest
+  , dir "_doResetPassword" $ method GET  >> withData resetPassword
+  , dir "_doResetPassword" $ method POST >> withData doResetPassword
   , dir "_user" currentUser
   ]
 
@@ -487,7 +487,7 @@ instance FromData RPars where
 
 rpxAuthHandlers :: [Handler]
 rpxAuthHandlers =
-  [ dir "_logout" $ methodSP GET $ withData logoutUser
+  [ dir "_logout" $ method GET >> withData logoutUser
   , dir "_login"  $ withData loginRPXUser
   , dir "_user" currentUser ]
 
