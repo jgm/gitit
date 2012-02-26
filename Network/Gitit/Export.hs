@@ -86,8 +86,8 @@ respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
 respondS templ mimetype ext fn =
   respondX templ mimetype ext (\o d -> return $ fromString $ fn o d)
 
-respondSlides :: String -> String -> Pandoc -> Handler
-respondSlides templ page doc = do
+respondSlides :: String -> HTMLSlideVariant -> String -> Pandoc -> Handler
+respondSlides templ slideVariant _page doc = do
     cfg <- getConfig
     base' <- getWikiBase
     let math = case mathMethod cfg of
@@ -97,17 +97,13 @@ respondSlides templ page doc = do
                                     (Just $ base' ++ "/js/jsMath/easy/load.js")
                    _            -> Pandoc.PlainMath
     let opts' = defaultRespOptions {
-                     writerSlideVariant = case templ of
-                                             "s5" -> S5Slides
-                                             "slidy" -> SlidySlides
-                                             "dzslides" -> DZSlides
-                                             _  -> SlidySlides
+                     writerSlideVariant = slideVariant
                     ,writerIncremental = True
                     ,writerHTMLMathMethod = math}
     -- We sanitize the body only, to protect against XSS attacks.
     -- (Sanitizing the whole HTML page would strip out javascript
     -- needed for the slides.)  We then pass the body into the
-    -- slide template using the 'before-body' variable.
+    -- slide template using the 'body' variable.
     let body' = writeHtmlString opts'{writerStandalone = False} doc -- just body
     let body'' = T.unpack
                $ (if xssSanitize cfg then sanitizeBalance else id)
@@ -124,14 +120,14 @@ respondSlides templ page doc = do
                      Left e   -> liftIO $ throwIO e
     let Pandoc meta _ = doc
     let h = writeHtmlString opts'{
-                writerVariables = ("include-before",body''):variables'
+                writerVariables = ("body",body''):variables'
                ,writerTemplate = template
                ,writerSourceDirectory = repositoryPath cfg
                ,writerUserDataDir = pandocUserData cfg
                } (Pandoc meta [])
     h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
-    ok . setContentType "text/html; charset=utf-8" .
-      (setFilename (page ++ ".html")) .
+    ok . setContentType "text/html;charset=UTF-8" .
+      -- (setFilename (page ++ ".html")) .
       toResponseBS B.empty $ fromString h'
 
 respondLaTeX :: String -> Pandoc -> Handler
@@ -164,10 +160,10 @@ respondMan = respondS "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
 
 respondS5 :: String -> Pandoc -> Handler
-respondS5 = respondSlides "s5"
+respondS5 = respondSlides "s5" S5Slides
 
 respondSlidy :: String -> Pandoc -> Handler
-respondSlidy = respondSlides "slidy"
+respondSlidy = respondSlides "slidy" SlidySlides
 
 respondTexinfo :: String -> Pandoc -> Handler
 respondTexinfo = respondS "texinfo" "application/x-texinfo" "texi"
