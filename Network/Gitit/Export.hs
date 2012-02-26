@@ -46,6 +46,7 @@ import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
 import Text.HTML.SanitizeXSS
 import qualified Data.Text as T
+import Data.List (isPrefixOf)
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True }
@@ -99,6 +100,7 @@ respondSlides templ slideVariant _page doc = do
     let opts' = defaultRespOptions {
                      writerSlideVariant = slideVariant
                     ,writerIncremental = True
+                    ,writerHtml5 = templ == "dzslides"
                     ,writerHTMLMathMethod = math}
     -- We sanitize the body only, to protect against XSS attacks.
     -- (Sanitizing the whole HTML page would strip out javascript
@@ -118,9 +120,18 @@ respondSlides templ slideVariant _page doc = do
     template <- case template' of
                      Right t  -> return t
                      Left e   -> liftIO $ throwIO e
+    dzcore <- if templ == "dzslides"
+                  then do
+                    dztempl <- liftIO $ readDataFile (pandocUserData cfg)
+                           $ "dzslides" </> "template.html"
+                    return $ unlines
+                        $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
+                        $ lines dztempl
+                  else return ""
     let Pandoc meta _ = doc
     let h = writeHtmlString opts'{
-                writerVariables = ("body",body''):variables'
+                writerVariables =
+                  ("body",body''):("dzslides-core",dzcore):variables'
                ,writerTemplate = template
                ,writerSourceDirectory = repositoryPath cfg
                ,writerUserDataDir = pandocUserData cfg
@@ -159,12 +170,6 @@ respondMan :: String -> Pandoc -> Handler
 respondMan = respondS "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
 
-respondS5 :: String -> Pandoc -> Handler
-respondS5 = respondSlides "s5" S5Slides
-
-respondSlidy :: String -> Pandoc -> Handler
-respondSlidy = respondSlides "slidy" SlidySlides
-
 respondTexinfo :: String -> Pandoc -> Handler
 respondTexinfo = respondS "texinfo" "application/x-texinfo" "texi"
   writeTexinfo defaultRespOptions
@@ -180,6 +185,10 @@ respondOrg = respondS "org" "text/plain; charset=utf-8" ""
 respondTextile :: String -> Pandoc -> Handler
 respondTextile = respondS "textile" "text/plain; charset=utf-8" ""
   writeTextile defaultRespOptions
+
+respondAsciiDoc :: String -> Pandoc -> Handler
+respondAsciiDoc = respondS "asciidoc" "text/plain; charset=utf-8" ""
+  writeAsciiDoc defaultRespOptions
 
 respondMediaWiki :: String -> Pandoc -> Handler
 respondMediaWiki = respondS "mediawiki" "text/plain; charset=utf-8" ""
@@ -285,10 +294,12 @@ exportFormats cfg = if pdfExport cfg
                 , ("MediaWiki", respondMediaWiki)
                 , ("man",       respondMan)
                 , ("DocBook",   respondDocbook)
-                , ("Slidy",     respondSlidy)
-                , ("S5",        respondS5)
+                , ("Slidy",     respondSlides "slidy" SlidySlides)
+                , ("S5",        respondSlides "s5" S5Slides)
+                , ("DZSlides",  respondSlides "dzslides" DZSlides)
                 , ("ODT",       respondODT)
                 , ("EPUB",      respondEPUB)
                 , ("Org",       respondOrg)
                 , ("Textile",   respondTextile)
+                , ("AsciiDoc",  respondAsciiDoc)
                 , ("RTF",       respondRTF) ]
