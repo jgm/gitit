@@ -44,6 +44,8 @@ import System.IO (openTempFile)
 import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
 import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
+import Text.HTML.SanitizeXSS
+import qualified Data.Text as T
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = defaultWriterOptions { writerStandalone = True }
@@ -84,6 +86,54 @@ respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
 respondS templ mimetype ext fn =
   respondX templ mimetype ext (\o d -> return $ fromString $ fn o d)
 
+respondSlides :: String -> String -> Pandoc -> Handler
+respondSlides templ page doc = do
+    cfg <- getConfig
+    base' <- getWikiBase
+    let math = case mathMethod cfg of
+                   MathML       -> Pandoc.MathML Nothing
+                   WebTeX u     -> Pandoc.WebTeX u
+                   JsMathScript -> Pandoc.JsMath
+                                    (Just $ base' ++ "/js/jsMath/easy/load.js")
+                   _            -> Pandoc.PlainMath
+    let opts' = defaultRespOptions {
+                     writerSlideVariant = case templ of
+                                             "s5" -> S5Slides
+                                             "slidy" -> SlidySlides
+                                             "dzslides" -> DZSlides
+                                             _  -> SlidySlides
+                    ,writerIncremental = True
+                    ,writerHTMLMathMethod = math}
+    -- We sanitize the body only, to protect against XSS attacks.
+    -- (Sanitizing the whole HTML page would strip out javascript
+    -- needed for the slides.)  We then pass the body into the
+    -- slide template using the 'before-body' variable.
+    let body' = writeHtmlString opts'{writerStandalone = False} doc -- just body
+    let body'' = T.unpack
+               $ (if xssSanitize cfg then sanitizeBalance else id)
+               $ T.pack body'
+    variables' <- if mathMethod cfg == MathML
+                     then do
+                        s <- liftIO $ readDataFile (pandocUserData cfg) $
+                                  "data"</>"MathMLinHTML.js"
+                        return [("mathml-script", s)]
+                     else return []
+    template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) templ
+    template <- case template' of
+                     Right t  -> return t
+                     Left e   -> liftIO $ throwIO e
+    let Pandoc meta _ = doc
+    let h = writeHtmlString opts'{
+                writerVariables = ("include-before",body''):variables'
+               ,writerTemplate = template
+               ,writerSourceDirectory = repositoryPath cfg
+               ,writerUserDataDir = pandocUserData cfg
+               } (Pandoc meta [])
+    h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
+    ok . setContentType "text/html; charset=utf-8" .
+      (setFilename (page ++ ".html")) .
+      toResponseBS B.empty $ fromString h'
+
 respondLaTeX :: String -> Pandoc -> Handler
 respondLaTeX = respondS "latex" "application/x-latex" "tex"
   writeLaTeX defaultRespOptions
@@ -114,55 +164,10 @@ respondMan = respondS "man" "text/plain; charset=utf-8" ""
   writeMan defaultRespOptions
 
 respondS5 :: String -> Pandoc -> Handler
-respondS5 pg doc = do
-  cfg <- getConfig
-  base' <- getWikiBase
-  let math = case mathMethod cfg of
-                 MathML       -> Pandoc.MathML Nothing
-                 WebTeX u     -> Pandoc.WebTeX u
-                 JsMathScript -> Pandoc.JsMath
-                                  (Just $ base' ++ "/js/jsMath/easy/load.js")
-                 _            -> Pandoc.PlainMath
-  variables' <- if mathMethod cfg == MathML
-                   then do
-                      s <- liftIO $ readDataFile (pandocUserData cfg) $
-                                "data"</>"MathMLinHTML.js"
-                      return [("mathml-script", s)]
-                   else return []
-  respondX "s5" "text/html; charset=utf-8" ""
-    (\o p -> do
-      let h = writeHtmlString o p
-      h' <- makeSelfContained (pandocUserData cfg) h
-      return $ fromString h')
-    defaultRespOptions{writerSlideVariant = S5Slides
-                      ,writerIncremental = True
-                      ,writerVariables = variables'
-                      ,writerHTMLMathMethod = math}
-    pg doc
+respondS5 = respondSlides "s5"
 
 respondSlidy :: String -> Pandoc -> Handler
-respondSlidy pg doc = do
-  cfg <- getConfig
-  base' <- getWikiBase
-  let math = case mathMethod cfg of
-                 MathML       -> Pandoc.MathML Nothing
-                 WebTeX u     -> Pandoc.WebTeX u
-                 JsMathScript -> Pandoc.JsMath
-                                  (Just $ base' ++ "/js/jsMath/easy/load.js")
-                 _            -> Pandoc.PlainMath
-  variables' <- if mathMethod cfg == MathML
-                   then do
-                      s <- liftIO $ readDataFile (pandocUserData cfg) $
-                                "data"</>"MathMLinHTML.js"
-                      return [("mathml-script", s)]
-                   else return []
-  respondS "slidy" "text/html; charset=utf-8" ""
-    writeHtmlString
-    defaultRespOptions{writerSlideVariant = SlidySlides
-                      ,writerIncremental = True
-                      ,writerHTMLMathMethod = math
-                      ,writerVariables = variables'}
-    pg doc
+respondSlidy = respondSlides "slidy"
 
 respondTexinfo :: String -> Pandoc -> Handler
 respondTexinfo = respondS "texinfo" "application/x-texinfo" "texi"
