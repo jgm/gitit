@@ -343,7 +343,7 @@ pandocToHtml pandocContents = do
            (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
            writeHtmlString defaultWriterOptions{
                         writerStandalone = True
-                      , writerTemplate = "$if(toc)$\n$toc$\n$endif$\n$body$"
+                      , writerTemplate = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML Nothing
