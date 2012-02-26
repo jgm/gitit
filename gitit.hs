@@ -77,7 +77,7 @@ main = do
   initializeGititState conf'
 
   let serverConf = Conf { validator = Nothing, port = portNumber conf',
-                          timeout = 20, logAccess = Nothing, tls = Nothing }
+                          timeout = 20, logAccess = Nothing }
 
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
@@ -87,7 +87,7 @@ main = do
   listen sock 10
 
   -- start the server
-  simpleHTTPWithSocket sock Nothing serverConf $ msum [ wiki conf'
+  simpleHTTPWithSocket sock serverConf $ msum [ wiki conf'
                                , dir "_reloadTemplates" reloadTemplates
                                ]
 
