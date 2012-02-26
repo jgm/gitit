@@ -71,7 +71,7 @@ respondX templ mimetype ext fn opts page doc = do
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
-  doc' <- if ext `elem` ["odt","pdf","epub", "rtf"]
+  doc' <- if ext `elem` ["odt","pdf","epub","docx","rtf"]
              then fixURLs page doc
              else return doc
   doc'' <- if ext == "rtf"
@@ -202,7 +202,12 @@ respondEPUB :: String -> Pandoc -> Handler
 respondEPUB = respondX "html" "application/epub+zip" "epub" (writeEPUB Nothing [])
                defaultRespOptions
 
--- | Run shell command and return error status.  Assumes
+respondDocx :: String -> Pandoc -> Handler
+respondDocx = respondX "native"
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  "docx" (writeDocx Nothing) defaultRespOptions
+
+--- | Run shell command and return error status.  Assumes
 -- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
 runShellCommand :: FilePath                     -- ^ Working directory
                 -> Maybe [(String, String)]     -- ^ Environment
@@ -298,6 +303,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("S5",        respondSlides "s5" S5Slides)
                 , ("DZSlides",  respondSlides "dzslides" DZSlides)
                 , ("ODT",       respondODT)
+                , ("Docx",      respondDocx)
                 , ("EPUB",      respondEPUB)
                 , ("Org",       respondOrg)
                 , ("Textile",   respondTextile)
