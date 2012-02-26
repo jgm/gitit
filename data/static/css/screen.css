@@ -80,8 +80,8 @@ h6 > a:link, h6 > a:active, h6 > a:hover, h6 > a:focus, h6 > a:visited {
 #sidebar ul { padding: 0; margin: 0; margin-left: 1.6em; line-height: 1.5em; }
 #sidebar ul li { color: #888; list-style: square; }
 
-div#toc { background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
-#toc ul { padding: 0 0 0 1em; margin: 0; list-style: none; }
+div#TOC { background-color: #f9f9f9; border: 10px solid white; margin: 0.8em; margin-right: 0; padding: 0.4em; }
+#TOC ul { padding: 0 0 0 1em; margin: 0; list-style: none; }
 
 #sidebar input, #sidebar select { font-size:  93%; padding: 0.1em; }
 #sidebar input[type='submit'] { border: none; background-color: #ccc; color: white; }
