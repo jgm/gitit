@@ -53,14 +53,22 @@ loadPlugin pluginName = do
                else if "Network/Gitit/Plugin/" `isInfixOf` pluginName
                        then "Network.Gitit.Plugin." ++ takeBaseName pluginName
                        else takeBaseName pluginName
+#if MIN_VERSION_ghc(7,4,0)
+      pr <- parseImportDecl "import Prelude"
+      i <- parseImportDecl "import Network.Gitit.Interface"
+      m <- parseImportDecl ("import " ++ modName)
+      setContext [IIDecl m, IIDecl  i, IIDecl pr]
+#else
       pr <- findModule (mkModuleName "Prelude") Nothing
       i <- findModule (mkModuleName "Network.Gitit.Interface") Nothing
       m <- findModule (mkModuleName modName) Nothing
-      setContext []
-#if MIN_VERSION_ghc(7,0,0)
-        [(m, Nothing), (i, Nothing), (pr, Nothing)]
+#if MIN_VERSION_ghc(7,2,0)
+      setContext [IIModule m, IIModule i, IIModule pr] []
+#elif MIN_VERSION_ghc(7,0,0)
+      setContext [] [(m, Nothing), (i, Nothing), (pr, Nothing)]
 #else
-        [m, i, pr]
+      setContext [] [m, i, pr]
+#endif
 #endif
       value <- compileExpr (modName ++ ".plugin :: Plugin")
       let value' = (unsafeCoerce value) :: Plugin
