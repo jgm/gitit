@@ -88,7 +88,7 @@ respondS templ mimetype ext fn =
   respondX templ mimetype ext (\o d -> return $ fromString $ fn o d)
 
 respondSlides :: String -> HTMLSlideVariant -> String -> Pandoc -> Handler
-respondSlides templ slideVariant _page doc = do
+respondSlides templ slideVariant page doc = do
     cfg <- getConfig
     base' <- getWikiBase
     let math = case mathMethod cfg of
@@ -106,7 +106,9 @@ respondSlides templ slideVariant _page doc = do
     -- (Sanitizing the whole HTML page would strip out javascript
     -- needed for the slides.)  We then pass the body into the
     -- slide template using the 'body' variable.
-    let body' = writeHtmlString opts'{writerStandalone = False} doc -- just body
+    Pandoc meta blocks <- fixURLs page doc
+    let body' = writeHtmlString opts'{writerStandalone = False}
+                   (Pandoc meta blocks) -- just body
     let body'' = T.unpack
                $ (if xssSanitize cfg then sanitizeBalance else id)
                $ T.pack body'
@@ -128,7 +130,6 @@ respondSlides templ slideVariant _page doc = do
                         $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
                         $ lines dztempl
                   else return ""
-    let Pandoc meta _ = doc
     let h = writeHtmlString opts'{
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):variables'
