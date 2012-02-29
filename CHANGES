@@ -1,3 +1,37 @@
+Version 0.9 released 29 Feb 2012
+
+*   Gitit now uses the latest pandoc (1.9.x) and happstack-server (6.6.x),
+    and compiles on ghc 7.4.1.
+
+*   Added Docx, AsciiDoc, and DZSlides as export formats.
+
+*   HTML slide show exports are now "self-contained":  they embed all
+    required js, css, and images, so they can be used offline.
+
+*   Allow spaces in usernames (Juraj Hercek).
+
+*   Improve PDF/RTF exports containing images in the wiki.
+    Wikidata paths are translated to absolute ones, so pandoc/pdflatex
+    can find them (Juraj Hercek).
+
+*   Protect against XSS in slide show exports.  Previous versions
+    of gitit sanitized wikipages, but not HTML slide shows.
+
+*   Table of contents is now in a div with ID `TOC`, so it can
+    be styled.
+
+*   Removed letter and word spacing from print.css.
+
+*   Added s5 directory to static.  This is needed by pandoc 1.9.
+
+*   Updated Interwiki plugin (gwern).
+
+*   Added `fromEntities` to `Types`, since `decodeCharacterReferences`
+    is no longer exported from Pandoc.  Added dependency on tagsoup.
+
+*   Provided `FromReqURI` instance for `[String]`, since
+    this is not automatic with recent happstack.
+
 Version 0.8.1 released 02 Sep 2011
 
 *   Support mathjax as a math option.
