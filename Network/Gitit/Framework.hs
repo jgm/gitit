@@ -62,8 +62,8 @@ import Data.FileStore
 import Data.Char (toLower)
 import Control.Monad (mzero, liftM, unless, MonadPlus)
 import qualified Data.Map as M
-import Data.ByteString.UTF8 (toString)
-import Data.ByteString.Lazy.UTF8 (fromString)
+import qualified Data.ByteString.UTF8 as UTF8
+import qualified Data.ByteString.Lazy.UTF8 as LazyUTF8
 import Data.Maybe (fromJust, fromMaybe)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
 import System.FilePath ((<.>), takeExtension, takeFileName)
@@ -71,7 +71,7 @@ import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Network.URI (isUnescapedInURI)
-import Happstack.Crypto.Base64 (decode)
+import Data.ByteString.Base64 (decodeLenient)
 import Network.HTTP (urlEncodeVars)
 
 -- | Require a logged in user if the authentication level demands it.
@@ -117,7 +117,7 @@ withUserFromHTTPAuth handler = do
   req <- askRq
   let user = case getHeader "authorization" req of
               Nothing         -> ""
-              Just authHeader -> case parse pAuthorizationHeader "" (toString authHeader) of
+              Just authHeader -> case parse pAuthorizationHeader "" (UTF8.toString authHeader) of
                                   Left _  -> ""
                                   Right u -> u
   localRq (setHeader "REMOTE_USER" user) handler
@@ -126,7 +126,7 @@ withUserFromHTTPAuth handler = do
 getLoggedInUser :: GititServerPart (Maybe User)
 getLoggedInUser = do
   req <- askRq
-  case maybe "" toString (getHeader "REMOTE_USER" req) of
+  case maybe "" UTF8.toString (getHeader "REMOTE_USER" req) of
         "" -> return Nothing
         u  -> do
           mbUser <- getUser u
@@ -148,7 +148,8 @@ pBasicHeader :: GenParser Char st String
 pBasicHeader = do
   _ <- string "Basic "
   result' <- many (noneOf " \t\n")
-  return $ takeWhile (/=':') $ decode result'
+  return $ takeWhile (/=':') $ UTF8.toString
+         $ decodeLenient $ UTF8.fromString result'
 
 -- | @unlessNoEdit responder fallback@ runs @responder@ unless the
 -- page has been designated not editable in configuration; in that
@@ -197,7 +198,7 @@ getReferer = do
   req <- askRq
   base' <- getWikiBase
   return $ case getHeader "referer" req of
-                 Just r  -> case toString r of
+                 Just r  -> case UTF8.toString r of
                                  ""  -> base'
                                  s   -> s
                  Nothing -> base'
@@ -327,7 +328,8 @@ withMessages messages handler = do
   req <- askRq
   let inps = filter (\(n,_) -> n /= "messages") $ rqInputsQuery req
   let newInp = ("messages", Input {
-                              inputValue = Right $ fromString $ show messages
+                              inputValue = Right
+                                         $ LazyUTF8.fromString $ show messages
                             , inputFilename = Nothing
                             , inputContentType = ContentType {
                                     ctType = "text"
