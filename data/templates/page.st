@@ -40,6 +40,7 @@
         </div>
     </div>
     $javascripts$
+    <script src="/js/gitit-bootstrap.js" type="text/javascript"></script>
     $expire()$
     $getuser()$
   </body>
