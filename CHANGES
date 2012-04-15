@@ -1,3 +1,15 @@
+Version 0.9.0.1 released 15 Feb 2012
+
+*   Fixed bug in fromEntities that caused text to be lost in the page
+    source after semicolons.  Thanks to Perry Wagle for reporting the bug.
+
+*   Updated code to run on happstack 7.
+
+*   Removed dependency on happstack-util; depend on base64-bytestring
+    instead.
+
+*   Updated gitit.cabal to include footnotes.js (Ben Sinclair).
+
 Version 0.9 released 29 Feb 2012
 
 *   Gitit now uses the latest pandoc (1.9.x) and happstack-server (6.6.x),
