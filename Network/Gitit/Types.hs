@@ -36,6 +36,7 @@ import System.Locale (defaultTimeLocale)
 import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
+import Data.Char (isSpace)
 
 data PageType = Markdown | RST | LaTeX | HTML | Textile
                 deriving (Read, Show, Eq)
@@ -398,8 +399,8 @@ fromEntities :: String -> String
 fromEntities ('&':xs) =
   case lookupEntity ent of
         Just c  -> c : fromEntities rest
-        Nothing -> '&' : fromEntities rest
-    where (ent, rest) = case break (==';') xs of
+        Nothing -> '&' : fromEntities xs
+    where (ent, rest) = case break (\c -> isSpace c || c == ';') xs of
                              (zs,';':ys) -> (zs,ys)
                              _           -> ("",xs)
 fromEntities (x:xs) = x : fromEntities xs
