@@ -292,7 +292,7 @@ To change the look of printed pages, copy gitit's default `print.css`
 to `static/css` and modify it.
 
 The logo picture can be changed by copying a new PNG file to
-`static/img/logo.png`.
+`static/img/logo.png`. The default logo is 138x155 pixels.
 
 To change the footer, modify `templates/footer.st`.
 
