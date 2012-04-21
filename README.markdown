@@ -332,6 +332,17 @@ setting of `math` in the configuration file:
 
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 
+Restricting access
+------------------
+
+If you want to limit account creation on your wiki, the easiest way to do this
+is to provide an `access-question` in your configuration file. (See the commented
+default configuration file.)  Nobody will be able to create an account without
+knowing the answer to the access question.
+
+Another approach is to use HTTP authentication. (See the config file comments on
+`authentication-method`.)
+
 Plugins
 =======
 
