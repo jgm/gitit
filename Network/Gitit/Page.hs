@@ -52,13 +52,15 @@ where
 import Network.Gitit.Types
 import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
-import Data.Char (toLower)
+import Data.Char (toLower, isSpace)
 import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe)
 import Data.ByteString.UTF8 (toString)
 import qualified Data.ByteString as B
 import System.IO (withFile, Handle, IOMode(..))
-import Codec.Binary.UTF8.String (encodeString)
+import Prelude hiding (catch)
+import Control.Exception (catch, throwIO)
+import System.IO.Error (isEOFError)
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -144,12 +146,6 @@ pageToString conf page' =
                        else "")
   in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
 
-extractCategories :: String -> [String]
-extractCategories s | "---" `isPrefixOf` s =
-  let (md,_) = parseMetadata s
-  in  splitCategories $ fromMaybe "" $ lookup "categories" md
-extractCategories _ = []
-
 -- | Read categories from metadata strictly.
 readCategories :: FilePath -> IO [String]
 readCategories f =
@@ -158,7 +154,7 @@ readCategories f =
 #else
   withFile (encodeString f) ReadMode $ \h -> do
 #endif
-    fl <- toString `fmap` B.hGetLine h
+    fl <- toString `fmap` (catch (B.hGetLine h) (\e -> if isEOFError e then return B.empty else throwIO e))
     if fl == "---"
        then do -- get rest of metadata
          rest <- hGetLinesTill h "..."
@@ -166,10 +162,13 @@ readCategories f =
          return $ splitCategories $ fromMaybe "" $ lookup "categories" md
        else return []
 
+rtrim :: String -> String
+rtrim = reverse . dropWhile isSpace . reverse
+
 hGetLinesTill :: Handle -> String -> IO [String]
 hGetLinesTill h end = do
-  next <- toString `fmap` B.hGetLine h
-  if next == end
+  next <- toString `fmap` (catch (B.hGetLine h) (\e -> if isEOFError e then return B.empty else throwIO e))
+  if rtrim next == end
      then return [end]
      else do
        rest <- hGetLinesTill h end
