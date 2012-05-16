@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 This program is free software; you can redistribute it and/or modify
@@ -40,7 +41,11 @@ import Codec.Binary.UTF8.String (encodeString)
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO String
+#if MIN_VERSION_base(4,5,0)
+readFileUTF8 f = liftM toString $ B.readFile f
+#else
 readFileUTF8 f = liftM toString $ B.readFile $ encodeString f
+#endif
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a
