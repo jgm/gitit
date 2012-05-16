@@ -37,7 +37,10 @@ import Data.ByteString.Lazy.UTF8 (toString)
 import qualified Data.ByteString.Lazy as B
 import Network.Gitit.Types
 import Control.Monad (liftM)
+#if MIN_VERSION_base(4,5,0)
+#else
 import Codec.Binary.UTF8.String (encodeString)
+#endif
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO String
