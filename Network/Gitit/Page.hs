@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -45,7 +46,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Page ( stringToPage
                           , pageToString
-                          , extractCategories
+                          , readCategories
                           )
 where
 import Network.Gitit.Types
@@ -54,6 +55,10 @@ import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
 import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe)
+import Data.ByteString.UTF8 (toString)
+import qualified Data.ByteString as B
+import System.IO (withFile, Handle, IOMode(..))
+import Codec.Binary.UTF8.String (encodeString)
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -144,3 +149,28 @@ extractCategories s | "---" `isPrefixOf` s =
   let (md,_) = parseMetadata s
   in  splitCategories $ fromMaybe "" $ lookup "categories" md
 extractCategories _ = []
+
+-- | Read categories from metadata strictly.
+readCategories :: FilePath -> IO [String]
+readCategories f =
+#if MIN_VERSION_base(4,5,0)
+  withFile f ReadMode $ \h -> do
+#else
+  withFile (encodeString f) ReadMode $ \h -> do
+#endif
+    fl <- toString `fmap` B.hGetLine h
+    if fl == "---"
+       then do -- get rest of metadata
+         rest <- hGetLinesTill h "..."
+         let (md,_) = parseMetadata $ unlines $ fl:rest
+         return $ splitCategories $ fromMaybe "" $ lookup "categories" md
+       else return []
+
+hGetLinesTill :: Handle -> String -> IO [String]
+hGetLinesTill h end = do
+  next <- toString `fmap` B.hGetLine h
+  if next == end
+     then return [end]
+     else do
+       rest <- hGetLinesTill h end
+       return (next:rest)
