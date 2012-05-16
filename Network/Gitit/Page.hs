@@ -52,15 +52,19 @@ where
 import Network.Gitit.Types
 import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
-import Data.Char (toLower, isSpace)
-import Data.List (isPrefixOf)
+import Data.Char (toLower)
 import Data.Maybe (fromMaybe)
 import Data.ByteString.UTF8 (toString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
 import System.IO (withFile, Handle, IOMode(..))
 import Prelude hiding (catch)
 import Control.Exception (catch, throwIO)
 import System.IO.Error (isEOFError)
+#if MIN_VERSION_base(4,5,0)
+#else
+import Codec.Binary.UTF8.String (encodeString)
+#endif
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -150,26 +154,37 @@ pageToString conf page' =
 readCategories :: FilePath -> IO [String]
 readCategories f =
 #if MIN_VERSION_base(4,5,0)
-  withFile f ReadMode $ \h -> do
+  withFile f ReadMode $ \h ->
 #else
-  withFile (encodeString f) ReadMode $ \h -> do
+  withFile (encodeString f) ReadMode $ \h ->
 #endif
-    fl <- toString `fmap` (catch (B.hGetLine h) (\e -> if isEOFError e then return B.empty else throwIO e))
-    if fl == "---"
-       then do -- get rest of metadata
-         rest <- hGetLinesTill h "..."
-         let (md,_) = parseMetadata $ unlines $ fl:rest
-         return $ splitCategories $ fromMaybe "" $ lookup "categories" md
-       else return []
+    catch (do fl <- B.hGetLine h
+              if dashline fl
+                 then do -- get rest of metadata
+                   rest <- hGetLinesTill h dotline
+                   let (md,_) = parseMetadata $ unlines $ "---":rest
+                   return $ splitCategories $ fromMaybe ""
+                          $ lookup "categories" md
+                 else return [])
+       (\e -> if isEOFError e then return [] else throwIO e)
 
-rtrim :: String -> String
-rtrim = reverse . dropWhile isSpace . reverse
+dashline :: B.ByteString -> Bool
+dashline x =
+  case BC.unpack x of
+       ('-':'-':'-':xs) | all (==' ') xs -> True
+       _ -> False
 
-hGetLinesTill :: Handle -> String -> IO [String]
+dotline :: B.ByteString -> Bool
+dotline x =
+  case BC.unpack x of
+       ('.':'.':'.':xs) | all (==' ') xs -> True
+       _ -> False
+
+hGetLinesTill :: Handle -> (B.ByteString -> Bool) -> IO [String]
 hGetLinesTill h end = do
-  next <- toString `fmap` (catch (B.hGetLine h) (\e -> if isEOFError e then return B.empty else throwIO e))
-  if rtrim next == end
-     then return [end]
+  next <- B.hGetLine h
+  if end next
+     then return [toString next]
      else do
        rest <- hGetLinesTill h end
-       return (next:rest)
+       return (toString next:rest)
