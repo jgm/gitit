@@ -325,8 +325,8 @@ showFileHistory = withData $ \(params :: Params) -> do
 showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
   fs <- getFileStore
-  hist <- liftM (take (pLimit params)) $
-            liftIO $ history fs [file] (TimeRange Nothing Nothing)
+  hist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
+            (Just $ pLimit params)
   base' <- getWikiBase
   let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
                                     strAttr "revision" (revId rev),
@@ -384,8 +384,8 @@ showActivity = withData $ \(params :: Params) -> do
                    Just t  -> Just t
   let forUser = pForUser params
   fs <- getFileStore
-  hist <- liftIO $ (take (pLimit params)) `fmap`
-               history fs [] (TimeRange since Nothing)
+  hist <- liftIO $ history fs [] (TimeRange since Nothing)
+                     (Just $ pLimit params)
   let hist' = case forUser of
                    Nothing -> hist
                    Just u  -> filter (\r -> authorName (revAuthor r) == u) hist
