@@ -447,6 +447,7 @@ showDiff file page params = do
               (Nothing, Just t)  -> do
                 pageHist <- liftIO $ history fs [file]
                                      (TimeRange Nothing Nothing)
+                                     Nothing
                 let (_, upto) = break (\r -> idsMatch fs (revId r) t)
                                   pageHist
                 return $ if length upto >= 2
