@@ -384,7 +384,8 @@ showActivity = withData $ \(params :: Params) -> do
                    Just t  -> Just t
   let forUser = pForUser params
   fs <- getFileStore
-  hist <- liftIO $ history fs [] (TimeRange since Nothing)
+  hist <- liftIO $ (take (pLimit params)) `fmap`
+               history fs [] (TimeRange since Nothing)
   let hist' = case forUser of
                    Nothing -> hist
                    Just u  -> filter (\r -> authorName (revAuthor r) == u) hist
