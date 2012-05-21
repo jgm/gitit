@@ -73,7 +73,7 @@ changeLog days a mbPath now' = do
   let files = F.concatMap (\f -> [f, f <.> "page"]) mbPath
   let startTime = addUTCTime (fromIntegral $ -60 * 60 * 24 * days) now'
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
-          Nothing
+          (Just 200) -- hard limit of 200 to conserve resources
   return $ sortBy (comparing revDateTime) rs
 
 generateEmptyfeed :: Generator -> String ->String ->Maybe String -> [Person] -> Date -> Feed
