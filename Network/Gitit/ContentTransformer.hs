@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
 Anton van Straaten <anton@appsolutions.com>
@@ -89,7 +90,11 @@ import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+#if MIN_VERSION_blaze_html(0,5,0)
+import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
+#else
 import Text.Blaze.Renderer.String as Blaze ( renderHtml )
+#endif
 import qualified Data.Text as T
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
