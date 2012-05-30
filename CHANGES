@@ -1,3 +1,28 @@
+Version 0.10 released 30 May 2012
+
+*   Changed 'readFileUTF8' so it doesn't encode filename on ghc 7.4.
+
+*   Upgraded for compatibility with blaze-html 0.5.  Closes #299.
+
+*   Improved categories. Files are now read strictly to avoid a 'too
+    many open files' error. 'Page' now exports 'readCategories' instead of
+    'extractCategories'.
+
+*   Require filestore 0.5.  This brings in (a) correct handling
+    of unicode paths when compiled under GHC 7.4, and (b) a 'limit'
+    parameter for 'history'. The limit parameter is essential when
+    gitit is used with very large repositories; otherwise history
+    commands would have to parse the entire log.  Handler functions
+    that use 'history' have been updated to use the optional
+    'limit' parameter.
+
+*   Atom feeds are now limited to 200 entries, to prevent server
+    overload.
+
+*   Indicate size of default logo picture in README. Closes #291.
+
+*   Added a README section on restricting access.  Closes #292.
+
 Version 0.9.0.1 released 15 Feb 2012
 
 *   Fixed bug in fromEntities that caused text to be lost in the page
