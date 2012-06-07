@@ -179,7 +179,7 @@ unlessNoDelete responder fallback = withData $ \(params :: Params) -> do
 
 -- | Returns the current path (subtracting initial commands like @\/_edit@).
 getPath :: ServerMonad m => m String
-getPath = liftM (fromJust . decString True . intercalate "/" . rqPaths) askRq
+getPath = liftM (intercalate "/" . rqPaths) askRq
 
 -- | Returns the current page name (derived from the path).
 getPage :: GititServerPart String
