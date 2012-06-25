@@ -61,7 +61,11 @@ inDir d action = do
 
 -- | Perform a function in a temporary directory and clean up.
 withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
-withTempDir baseName = bracket (createTempDir 0 baseName) removeDirectoryRecursive
+withTempDir baseName f = do
+  oldDir <- getCurrentDirectory
+  bracket (createTempDir 0 baseName)
+          (\tmp -> setCurrentDirectory oldDir >> removeDirectoryRecursive tmp)
+          f
 
 -- | Create a temporary directory with a unique name.
 createTempDir :: Integer -> FilePath -> IO FilePath
