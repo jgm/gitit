@@ -480,8 +480,9 @@ Reload your apache configuration and you should be all set.
 
 Using nginx to achieve the same
 -------------------------------
-Drop a file called wiki.example.com.conf into /etc/nginx/conf.d (or where ever
-your distribution puts it).
+
+Drop a file called `wiki.example.com.conf` into `/etc/nginx/conf.d`
+(or where ever your distribution puts it).
 
     server {
         listen 80;
@@ -494,7 +495,7 @@ your distribution puts it).
         access_log /var/log/nginx/wiki.example.com.log main;
     }
 
-Reload your nginx config and you should be good all set.
+Reload your nginx config and you should be all set.
 
 
 Proxying to `http://mysite.com/wiki`
