@@ -478,6 +478,26 @@ loaded, and set up a virtual host with the following configuration:
 
 Reload your apache configuration and you should be all set.
 
+Using nginx to achieve the same
+-------------------------------
+
+Drop a file called `wiki.example.com.conf` into `/etc/nginx/conf.d`
+(or where ever your distribution puts it).
+
+    server {
+        listen 80;
+        server_name wiki.example.com
+        location / {
+            proxy_pass        http://127.0.0.1:5001/;
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_redirect off;
+        }
+        access_log /var/log/nginx/wiki.example.com.log main;
+    }
+
+Reload your nginx config and you should be all set.
+
+
 Proxying to `http://mysite.com/wiki`
 ------------------------------------
 
