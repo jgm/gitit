@@ -55,7 +55,7 @@ install][] instructions.
 [GHC]: http://www.haskell.org/ghc/
 [here]: http://www.haskell.org/ghc/
 [cabal-install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall
-[quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick Installation on Unix
+[quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick+Installation+on+Unix
 
 Once you've got cabal-install, installing gitit is trivial:
 
@@ -330,6 +330,7 @@ setting of `math` in the configuration file:
 
 3.  `raw`: Math will be rendered as raw LaTeX codes.
 
+[jsMath]: http://www.math.union.edu/~dpvc/jsmath/
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 
 Restricting access
