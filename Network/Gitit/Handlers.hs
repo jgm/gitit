@@ -704,7 +704,7 @@ categoryPage = do
              forM pages $ \f -> do
                categories <- liftIO $ readCategories $ repoPath </> f
                return $ if category `elem` categories
-                           then Just $ dropExtension f
+                           then Just f
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
