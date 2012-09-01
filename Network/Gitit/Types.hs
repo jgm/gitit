@@ -300,7 +300,7 @@ instance FromReqURI [String] where
 
 instance FromData Params where
      fromData = do
-         let look' = liftM fromEntities . look
+         let look' = look
          un <- look' "username"       `mplus` return ""
          pw <- look' "password"       `mplus` return ""
          p2 <- look' "password2"      `mplus` return ""
