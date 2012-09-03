@@ -29,6 +29,7 @@ import Control.Monad (liftM)
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
+import Text.StringTemplate (StringTemplate)
 import qualified Data.Map as M
 import Data.List (intersect)
 import Data.Time (parseTime)
@@ -193,6 +194,7 @@ type ContentTransformer = StateT Context GititServerPart
 data Plugin = PageTransform (Pandoc -> PluginM Pandoc)
             | PreParseTransform (String -> PluginM String)
             | PreCommitTransform (String -> PluginM String)
+            | HSTMPTransform (StringTemplate String -> PluginM (StringTemplate String))
 
 data PluginData = PluginData { pluginConfig    :: Config
                              , pluginUser      :: Maybe User

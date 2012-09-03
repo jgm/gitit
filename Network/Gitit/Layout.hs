@@ -31,6 +31,7 @@ import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.State
 import Network.Gitit.Types
+import {-# SOURCE #-} Network.Gitit.ContentTransformer (applyHSTMPPlugins)
 import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
@@ -66,8 +67,9 @@ defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
   cfg <- getConfig
   base' <- getWikiBase
+  appliedTmpl <- applyHSTMPPlugins templ
   ok . setContentType "text/html; charset=utf-8" . toResponse . T.render .
-       filledPageTemplate base' cfg layout htmlContents $ templ
+       filledPageTemplate base' cfg layout htmlContents $ appliedTmpl
 
 -- | Returns a page template with gitit variables filled in.
 filledPageTemplate :: String -> Config -> PageLayout -> Html ->
