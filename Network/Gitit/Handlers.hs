@@ -541,6 +541,7 @@ editPage' params = do
   let pgScripts'' = case mathMethod cfg of
        JsMathScript -> "jsMath/easy/load.js" : pgScripts'
        MathML       -> "MathMLinHTML.js" : pgScripts'
+       MathJax url  -> url : pgScripts'
        _            -> pgScripts'
   formattedPage defaultPageLayout{
                   pgPageName = page,
