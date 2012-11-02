@@ -11,9 +11,9 @@
 #
 # To enable this hook, make this file executable by "chmod +x post-update".
 
-git-update-server-info
+git update-server-info
 
-is_bare=$(git-config --get --bool core.bare)
+is_bare=$(git config --get --bool core.bare)
 
 if [ -z "$is_bare" ]
 then
@@ -30,7 +30,7 @@ update_wc() {
 		echo "E:push to non-bare repository requires a HEAD reflog" >&2
 		exit 1
 	fi
-	if (cd $GIT_WORK_TREE; git-diff-files -q --exit-code >/dev/null)
+	if (cd $GIT_WORK_TREE; git diff-files -q --exit-code >/dev/null)
 	then
 		wc_dirty=0
 	else
@@ -56,23 +56,23 @@ update_wc() {
 		new=$(git rev-parse HEAD)
 		echo "W:stashing dirty $desc - see git-stash(1)" >&2
 		( trap 'echo trapped $$; git symbolic-ref HEAD "'"$ref"'"' 2 3 13 15 ERR EXIT
-		git-update-ref --no-deref HEAD HEAD@{1}
+		git update-ref --no-deref HEAD HEAD@{1}
 		cd $GIT_WORK_TREE
 		git stash save "dirty $desc before update to $new";
-		git-symbolic-ref HEAD "$ref"
+		git symbolic-ref HEAD "$ref"
 		)
 	fi
 
 	# eye candy - show the WC updates :)
 	echo "Updating working copy" >&2
 	(cd $GIT_WORK_TREE
-	git-diff-index -R --name-status HEAD >&2
-	git-reset --hard HEAD)
+	git diff-index -R --name-status HEAD >&2
+	git reset --hard HEAD)
 }
 
 if [ "$is_bare" = "false" ]
 then
-	active_branch=`git-symbolic-ref HEAD`
+	active_branch=`git symbolic-ref HEAD`
 	export GIT_DIR=$(cd $GIT_DIR; pwd)
 	GIT_WORK_TREE=${GIT_WORK_TREE-..}
 	for ref
