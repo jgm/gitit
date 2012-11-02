@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, FlexibleContexts #-}
+{-# LANGUAGE CPP, FlexibleContexts, ScopedTypeVariables #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -39,6 +39,7 @@ import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
+import qualified Control.Exception as E
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
@@ -249,12 +250,12 @@ getDefaultConfig = getDefaultConfigParser >>= extractConfig
 -- mime type, followed by space, followed by a list of zero or more
 -- extensions, separated by spaces. Example: text/plain txt text
 readMimeTypesFile :: FilePath -> IO (M.Map String String)
-readMimeTypesFile f = catch
+readMimeTypesFile f = E.catch
   (liftM (foldr go M.empty . map words . lines) $ readFileUTF8 f)
   handleMimeTypesFileNotFound
      where go []     m = m  -- skip blank lines
            go (x:xs) m = foldr (\ext -> M.insert ext x) m xs
-           handleMimeTypesFileNotFound e = do
+           handleMimeTypesFileNotFound (e :: E.SomeException) = do
              logM "gitit" WARNING $ "Could not read mime types file: " ++
                f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
              return mimeTypes

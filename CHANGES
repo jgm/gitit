@@ -1,3 +1,61 @@
+Version 0.10.0.2 released 1 Nov 2012
+
+*   Raised version bounds for dependencies.
+
+*   Updated post-update script to use new forms of git commands.
+    Closes #317.
+
+*   Fixed withTempDir so it returns to old directory.
+    Closes #303.  This is a slightly different solution than the one
+    proposed by tstgruby, but it has the advantage that only withTempDir
+    itself needs to be changed.
+
+*   Added nginx example for proxy setup (README) (Andre Kelpe).
+
+Version 0.10.0.1 released 07 Jun 2012
+
+*   Fixed double-encoding bug for unicode page names
+    (Alexander Vershilov).
+
+*   Require happstack-server >= 7.
+
+Version 0.10 released 30 May 2012
+
+*   Changed 'readFileUTF8' so it doesn't encode filename on ghc 7.4.
+
+*   Upgraded for compatibility with blaze-html 0.5.  Closes #299.
+
+*   Improved categories. Files are now read strictly to avoid a 'too
+    many open files' error. 'Page' now exports 'readCategories' instead of
+    'extractCategories'.
+
+*   Require filestore 0.5.  This brings in (a) correct handling
+    of unicode paths when compiled under GHC 7.4, and (b) a 'limit'
+    parameter for 'history'. The limit parameter is essential when
+    gitit is used with very large repositories; otherwise history
+    commands would have to parse the entire log.  Handler functions
+    that use 'history' have been updated to use the optional
+    'limit' parameter.
+
+*   Atom feeds are now limited to 200 entries, to prevent server
+    overload.
+
+*   Indicate size of default logo picture in README. Closes #291.
+
+*   Added a README section on restricting access.  Closes #292.
+
+Version 0.9.0.1 released 15 Feb 2012
+
+*   Fixed bug in fromEntities that caused text to be lost in the page
+    source after semicolons.  Thanks to Perry Wagle for reporting the bug.
+
+*   Updated code to run on happstack 7.
+
+*   Removed dependency on happstack-util; depend on base64-bytestring
+    instead.
+
+*   Updated gitit.cabal to include footnotes.js (Ben Sinclair).
+
 Version 0.9 released 29 Feb 2012
 
 *   Gitit now uses the latest pandoc (1.9.x) and happstack-server (6.6.x),

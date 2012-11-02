@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -45,15 +46,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Page ( stringToPage
                           , pageToString
-                          , extractCategories
+                          , readCategories
                           )
 where
 import Network.Gitit.Types
 import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
-import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe)
+import Data.ByteString.UTF8 (toString)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
+import System.IO (withFile, Handle, IOMode(..))
+import Prelude hiding (catch)
+import Control.Exception (catch, throwIO)
+import System.IO.Error (isEOFError)
+#if MIN_VERSION_base(4,5,0)
+#else
+import Codec.Binary.UTF8.String (encodeString)
+#endif
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -139,8 +150,41 @@ pageToString conf page' =
                        else "")
   in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
 
-extractCategories :: String -> [String]
-extractCategories s | "---" `isPrefixOf` s =
-  let (md,_) = parseMetadata s
-  in  splitCategories $ fromMaybe "" $ lookup "categories" md
-extractCategories _ = []
+-- | Read categories from metadata strictly.
+readCategories :: FilePath -> IO [String]
+readCategories f =
+#if MIN_VERSION_base(4,5,0)
+  withFile f ReadMode $ \h ->
+#else
+  withFile (encodeString f) ReadMode $ \h ->
+#endif
+    catch (do fl <- B.hGetLine h
+              if dashline fl
+                 then do -- get rest of metadata
+                   rest <- hGetLinesTill h dotline
+                   let (md,_) = parseMetadata $ unlines $ "---":rest
+                   return $ splitCategories $ fromMaybe ""
+                          $ lookup "categories" md
+                 else return [])
+       (\e -> if isEOFError e then return [] else throwIO e)
+
+dashline :: B.ByteString -> Bool
+dashline x =
+  case BC.unpack x of
+       ('-':'-':'-':xs) | all (==' ') xs -> True
+       _ -> False
+
+dotline :: B.ByteString -> Bool
+dotline x =
+  case BC.unpack x of
+       ('.':'.':'.':xs) | all (==' ') xs -> True
+       _ -> False
+
+hGetLinesTill :: Handle -> (B.ByteString -> Bool) -> IO [String]
+hGetLinesTill h end = do
+  next <- B.hGetLine h
+  if end next
+     then return [toString next]
+     else do
+       rest <- hGetLinesTill h end
+       return (toString next:rest)

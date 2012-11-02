@@ -55,7 +55,7 @@ install][] instructions.
 [GHC]: http://www.haskell.org/ghc/
 [here]: http://www.haskell.org/ghc/
 [cabal-install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall
-[quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick Installation on Unix
+[quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick+Installation+on+Unix
 
 Once you've got cabal-install, installing gitit is trivial:
 
@@ -292,7 +292,7 @@ To change the look of printed pages, copy gitit's default `print.css`
 to `static/css` and modify it.
 
 The logo picture can be changed by copying a new PNG file to
-`static/img/logo.png`.
+`static/img/logo.png`. The default logo is 138x155 pixels.
 
 To change the footer, modify `templates/footer.st`.
 
@@ -330,7 +330,19 @@ setting of `math` in the configuration file:
 
 3.  `raw`: Math will be rendered as raw LaTeX codes.
 
+[jsMath]: http://www.math.union.edu/~dpvc/jsmath/
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
+
+Restricting access
+------------------
+
+If you want to limit account creation on your wiki, the easiest way to do this
+is to provide an `access-question` in your configuration file. (See the commented
+default configuration file.)  Nobody will be able to create an account without
+knowing the answer to the access question.
+
+Another approach is to use HTTP authentication. (See the config file comments on
+`authentication-method`.)
 
 Plugins
 =======
@@ -466,6 +478,26 @@ loaded, and set up a virtual host with the following configuration:
     </VirtualHost>
 
 Reload your apache configuration and you should be all set.
+
+Using nginx to achieve the same
+-------------------------------
+
+Drop a file called `wiki.example.com.conf` into `/etc/nginx/conf.d`
+(or where ever your distribution puts it).
+
+    server {
+        listen 80;
+        server_name wiki.example.com
+        location / {
+            proxy_pass        http://127.0.0.1:5001/;
+            proxy_set_header  X-Real-IP  $remote_addr;
+            proxy_redirect off;
+        }
+        access_log /var/log/nginx/wiki.example.com.log main;
+    }
+
+Reload your nginx config and you should be all set.
+
 
 Proxying to `http://mysite.com/wiki`
 ------------------------------------

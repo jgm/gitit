@@ -58,11 +58,11 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
-import Network.Gitit.Util (orIfNull, readFileUTF8)
+import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
-import Network.Gitit.Page (extractCategories)
+import Network.Gitit.Page (readCategories)
 import Control.Exception (throwIO, catch, try)
 import System.Time
 import System.FilePath
@@ -325,8 +325,8 @@ showFileHistory = withData $ \(params :: Params) -> do
 showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
   fs <- getFileStore
-  hist <- liftM (take (pLimit params)) $
-            liftIO $ history fs [file] (TimeRange Nothing Nothing)
+  hist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
+            (Just $ pLimit params)
   base' <- getWikiBase
   let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
                                     strAttr "revision" (revId rev),
@@ -385,6 +385,7 @@ showActivity = withData $ \(params :: Params) -> do
   let forUser = pForUser params
   fs <- getFileStore
   hist <- liftIO $ history fs [] (TimeRange since Nothing)
+                     (Just $ pLimit params)
   let hist' = case forUser of
                    Nothing -> hist
                    Just u  -> filter (\r -> authorName (revAuthor r) == u) hist
@@ -446,6 +447,7 @@ showDiff file page params = do
               (Nothing, Just t)  -> do
                 pageHist <- liftIO $ history fs [file]
                                      (TimeRange Nothing Nothing)
+                                     Nothing
                 let (_, upto) = break (\r -> idsMatch fs (revId r) t)
                                   pageHist
                 return $ if length upto >= 2
@@ -539,6 +541,7 @@ editPage' params = do
   let pgScripts'' = case mathMethod cfg of
        JsMathScript -> "jsMath/easy/load.js" : pgScripts'
        MathML       -> "MathMLinHTML.js" : pgScripts'
+       MathJax url  -> url : pgScripts'
        _            -> pgScripts'
   formattedPage defaultPageLayout{
                   pgPageName = page,
@@ -699,9 +702,9 @@ categoryPage = do
   files <- liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   matches <- liftM catMaybes $
-             forM pages $ \f ->
-               liftIO (readFileUTF8 $ repoPath </> f) >>= \s ->
-               return $ if category `elem` (extractCategories s)
+             forM pages $ \f -> do
+               categories <- liftIO $ readCategories $ repoPath </> f
+               return $ if category `elem` categories
                            then Just $ dropExtension f
                            else Nothing
   base' <- getWikiBase
@@ -723,10 +726,8 @@ categoryListPage = do
   fs <- getFileStore
   files <- liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
-  categories <- liftIO $
-                liftM (nub . sort . concat) $
-                forM pages $ \f ->
-                liftM extractCategories (readFileUTF8 (repoPath </> f))
+  categories <- liftIO $ liftM (nub . sort . concat) $ forM pages $ \f ->
+                  readCategories (repoPath </> f)
   base' <- getWikiBase
   let toCatLink ctg = li <<
         [ anchor ! [href $ base' ++ "/_category" ++ urlForPage ctg] << ctg ]

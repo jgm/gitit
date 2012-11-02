@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 This program is free software; you can redistribute it and/or modify
@@ -35,12 +36,20 @@ import Data.Char (toLower)
 import Data.ByteString.Lazy.UTF8 (toString)
 import qualified Data.ByteString.Lazy as B
 import Network.Gitit.Types
+import qualified Control.Exception as E
 import Control.Monad (liftM)
+#if MIN_VERSION_base(4,5,0)
+#else
 import Codec.Binary.UTF8.String (encodeString)
+#endif
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO String
+#if MIN_VERSION_base(4,5,0)
+readFileUTF8 f = liftM toString $ B.readFile f
+#else
 readFileUTF8 f = liftM toString $ B.readFile $ encodeString f
+#endif
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a
@@ -53,14 +62,18 @@ inDir d action = do
 
 -- | Perform a function in a temporary directory and clean up.
 withTempDir :: FilePath -> (FilePath -> IO a) -> IO a
-withTempDir baseName = bracket (createTempDir 0 baseName) removeDirectoryRecursive
+withTempDir baseName f = do
+  oldDir <- getCurrentDirectory
+  bracket (createTempDir 0 baseName)
+          (\tmp -> setCurrentDirectory oldDir >> removeDirectoryRecursive tmp)
+          f
 
 -- | Create a temporary directory with a unique name.
 createTempDir :: Integer -> FilePath -> IO FilePath
 createTempDir num baseName = do
   sysTempDir <- getTemporaryDirectory
   let dirName = sysTempDir </> baseName <.> show num
-  liftIO $ catch (createDirectory dirName >> return dirName) $
+  liftIO $ E.catch (createDirectory dirName >> return dirName) $
       \e -> if isAlreadyExistsError e
                then createTempDir (num + 1) baseName
                else ioError e
