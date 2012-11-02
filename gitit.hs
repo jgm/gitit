@@ -35,7 +35,7 @@ import System.Console.GetOpt
 import Network.Socket hiding (Debug)
 import Network.URI
 import Data.Version (showVersion)
-import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B
 import Data.ByteString.UTF8 (fromString)
 
 import Paths_gitit (version, getDataFileName)
@@ -76,8 +76,8 @@ main = do
   -- initialize state
   initializeGititState conf'
 
-  let serverConf = Conf { validator = Nothing, port = portNumber conf',
-                          timeout = 20, logAccess = Nothing }
+  let serverConf = nullConf { validator = Nothing, port = portNumber conf',
+                             timeout = 20, logAccess = Nothing }
 
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
