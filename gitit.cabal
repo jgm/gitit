@@ -138,7 +138,7 @@ Executable           gitit
                      pandoc-types >= 1.9.0.2 && < 1.10,
                      process,
                      filepath,
-                     directory,
+                     directory >= 1.2,
                      mtl,
                      cgi,
                      old-time,
