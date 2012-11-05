@@ -27,7 +27,7 @@ where
 import qualified Data.ByteString as B (ByteString, readFile, writeFile)
 import System.FilePath
 import System.Directory (doesFileExist, removeFile, createDirectoryIfMissing, getModificationTime)
-import System.Time (ClockTime)
+import Data.Time.Clock (UTCTime)
 import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
@@ -53,7 +53,7 @@ expireCachedPDF file =
     exists <- doesFileExist pdfname
     when exists $ removeFile pdfname
 
-lookupCache :: String -> GititServerPart (Maybe (ClockTime, B.ByteString))
+lookupCache :: String -> GititServerPart (Maybe (UTCTime, B.ByteString))
 lookupCache file = do
   cfg <- getConfig
   let target = encodeString $ cacheDir cfg </> file
