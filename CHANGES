@@ -1,3 +1,24 @@
+Version 0.10.0.2 released 1 Nov 2012
+
+*   Raised version bounds for dependencies.
+
+*   Updated post-update script to use new forms of git commands.
+    Closes #317.
+
+*   Fixed withTempDir so it returns to old directory.
+    Closes #303.  This is a slightly different solution than the one
+    proposed by tstgruby, but it has the advantage that only withTempDir
+    itself needs to be changed.
+
+*   Added nginx example for proxy setup (README) (Andre Kelpe).
+
+Version 0.10.0.1 released 07 Jun 2012
+
+*   Fixed double-encoding bug for unicode page names
+    (Alexander Vershilov).
+
+*   Require happstack-server >= 7.
+
 Version 0.10 released 30 May 2012
 
 *   Changed 'readFileUTF8' so it doesn't encode filename on ghc 7.4.

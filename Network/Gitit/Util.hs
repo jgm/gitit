@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ import Data.Char (toLower)
 import Data.ByteString.Lazy.UTF8 (toString)
 import qualified Data.ByteString.Lazy as B
 import Network.Gitit.Types
+import qualified Control.Exception as E
 import Control.Monad (liftM)
 #if MIN_VERSION_base(4,5,0)
 #else
@@ -72,7 +73,7 @@ createTempDir :: Integer -> FilePath -> IO FilePath
 createTempDir num baseName = do
   sysTempDir <- getTemporaryDirectory
   let dirName = sysTempDir </> baseName <.> show num
-  liftIO $ catch (createDirectory dirName >> return dirName) $
+  liftIO $ E.catch (createDirectory dirName >> return dirName) $
       \e -> if isAlreadyExistsError e
                then createTempDir (num + 1) baseName
                else ioError e

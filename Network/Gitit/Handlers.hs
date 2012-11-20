@@ -64,7 +64,6 @@ import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (readCategories)
 import Control.Exception (throwIO, catch, try)
-import System.Time
 import System.FilePath
 import Prelude hiding (catch)
 import Network.Gitit.State
@@ -78,7 +77,7 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as S
 import Network.HTTP (urlEncodeVars)
-import Data.Time (getCurrentTime, addUTCTime)
+import Data.Time.Clock
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
 
@@ -117,9 +116,9 @@ randomPage = do
   if null pages
      then error "No pages found!"
      else do
-       TOD _ picosecs <- liftIO getClockTime
+       secs <- liftIO (fmap utctDayTime getCurrentTime)
        let newPage = pages !!
-                     ((fromIntegral picosecs `div` 1000000) `mod` length pages)
+                     (truncate (secs * 1000000) `mod` length pages)
        seeOther (base' ++ urlForPage newPage) $ toResponse $
          p << "Redirecting to a random page"
 
@@ -541,6 +540,7 @@ editPage' params = do
   let pgScripts'' = case mathMethod cfg of
        JsMathScript -> "jsMath/easy/load.js" : pgScripts'
        MathML       -> "MathMLinHTML.js" : pgScripts'
+       MathJax url  -> url : pgScripts'
        _            -> pgScripts'
   formattedPage defaultPageLayout{
                   pgPageName = page,
@@ -704,7 +704,7 @@ categoryPage = do
              forM pages $ \f -> do
                categories <- liftIO $ readCategories $ repoPath </> f
                return $ if category `elem` categories
-                           then Just $ dropExtension f
+                           then Just f
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
@@ -768,9 +768,8 @@ feedHandler = do
   let file = (path' `orIfNull` "_site") <.> "feed"
   let mbPath = if null path' then Nothing else Just path'
   -- first, check for a cached version that is recent enough
-  now <- liftIO $ getClockTime
-  let isRecentEnough t = normalizeTimeDiff (diffClockTimes now t) <
-                         normalizeTimeDiff (noTimeDiff{tdMin = fromIntegral $ feedRefreshTime cfg})
+  now <- liftIO $ getCurrentTime
+  let isRecentEnough t = truncate (diffUTCTime now t) < 60 * feedRefreshTime cfg
   mbCached <- lookupCache file
   case mbCached of
        Just (modtime, contents) | isRecentEnough modtime -> do
