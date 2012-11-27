@@ -88,7 +88,9 @@ pBlankline = try $ many (oneOf " \t") >> newline
 
 pMetadataLine :: GenParser Char st (String, String)
 pMetadataLine = try $ do
-  ident <- many1 letter
+  first <- letter
+  rest <- many (letter <|> digit <|> oneOf "-_")
+  let ident = first:rest
   skipMany (oneOf " \t")
   _ <- char ':'
   rawval <- many $ noneOf "\n\r"
