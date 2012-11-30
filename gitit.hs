@@ -24,6 +24,7 @@ import Network.Gitit.Server
 import Network.Gitit.Util (readFileUTF8)
 import System.Directory
 import Data.Maybe (isNothing)
+import Control.Monad.Error()
 import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
@@ -44,7 +45,18 @@ main :: IO ()
 main = do
 
   -- parse options to get config file
-  opts <- getArgs >>= parseArgs
+  args <- getArgs >>= parseArgs
+  progname <- getProgName
+
+  -- sequence in Either monad gets first Left or all Rights
+  opts <- case sequence args of
+    Left Help -> putErr ExitSuccess (usageInfo (usageHeader progname) flags)
+    Left Version -> putErr ExitSuccess (progname ++ " version " ++
+        showVersion version ++ compileInfo ++ copyrightMessage)
+    Left PrintDefaultConfig -> getDataFileName "data/default.conf" >>=
+        readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
+    Right xs -> return xs
+
   defaultConfig <- getDefaultConfig
   conf <- foldM handleFlag defaultConfig opts
   -- check for external programs that are needed
@@ -91,31 +103,35 @@ main = do
                                , dir "_reloadTemplates" reloadTemplates
                                ]
 
-data Opt
+data ExitOpt
     = Help
-    | ConfigFile FilePath
-    | Port Int
-	| Listen String
-    | Debug
     | Version
     | PrintDefaultConfig
+
+data ConfigOpt
+    = ConfigFile FilePath
+    | Port Int
+    | Listen String
+    | Debug
     deriving (Eq)
+
+type Opt = Either ExitOpt ConfigOpt
 
 flags :: [OptDescr Opt]
 flags =
-   [ Option ['h'] ["help"] (NoArg Help)
+   [ Option ['h'] ["help"] (NoArg (Left Help))
         "Print this help message"
-   , Option ['v'] ["version"] (NoArg Version)
+   , Option ['v'] ["version"] (NoArg (Left Version))
         "Print version information"
-   , Option ['p'] ["port"] (ReqArg (Port . read) "PORT")
+   , Option ['p'] ["port"] (ReqArg (Right . Port . read) "PORT")
         "Specify port"
-   , Option ['l'] ["listen"] (ReqArg (Listen . checkListen) "INTERFACE")
+   , Option ['l'] ["listen"] (ReqArg (Right . Listen . checkListen) "INTERFACE")
         "Specify IP address to listen on"
-   , Option [] ["print-default-config"] (NoArg PrintDefaultConfig)
+   , Option [] ["print-default-config"] (NoArg (Left PrintDefaultConfig))
         "Print default configuration"
-   , Option [] ["debug"] (NoArg Debug)
+   , Option [] ["debug"] (NoArg (Right Debug))
         "Print debugging information on each request"
-   , Option ['f'] ["config-file"] (ReqArg ConfigFile "FILE")
+   , Option ['f'] ["config-file"] (ReqArg (Right . ConfigFile) "FILE")
         "Specify configuration file"
    ]
 
@@ -124,7 +140,7 @@ checkListen l | isIPv6address l = l
               | isIPv4address l = l
               | otherwise       = error "Gitit.checkListen: Not a valid interface name"
 
-getListenOrDefault :: [Opt] -> String
+getListenOrDefault :: [ConfigOpt] -> String
 getListenOrDefault [] = "0.0.0.0"
 getListenOrDefault ((Listen l):_) = l
 getListenOrDefault (_:os) = getListenOrDefault os
@@ -152,13 +168,9 @@ compileInfo =
   " -plugins"
 #endif
 
-handleFlag :: Config -> Opt -> IO Config
-handleFlag conf opt = do
-  progname <- getProgName
+handleFlag :: Config -> ConfigOpt -> IO Config
+handleFlag conf opt =
   case opt of
-    Help               -> putErr ExitSuccess (usageInfo (usageHeader progname) flags)
-    Version            -> putErr ExitSuccess (progname ++ " version " ++ showVersion version ++ compileInfo ++ copyrightMessage)
-    PrintDefaultConfig -> getDataFileName "data/default.conf" >>= readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
     Debug              -> return conf{ debugMode = True }
     Port p             -> return conf{ portNumber = p }
     ConfigFile fname   -> getConfigFromFile fname
