@@ -46,13 +46,14 @@ main = do
 
   -- parse options to get config file
   args <- getArgs >>= parseArgs
-  progname <- getProgName
 
   -- sequence in Either monad gets first Left or all Rights
   opts <- case sequence args of
-    Left Help -> putErr ExitSuccess (usageInfo (usageHeader progname) flags)
-    Left Version -> putErr ExitSuccess (progname ++ " version " ++
-        showVersion version ++ compileInfo ++ copyrightMessage)
+    Left Help -> putErr ExitSuccess =<< usageMessage
+    Left Version -> do
+        progname <- getProgName
+        putErr ExitSuccess (progname ++ " version " ++
+            showVersion version ++ compileInfo ++ copyrightMessage)
     Left PrintDefaultConfig -> getDataFileName "data/default.conf" >>=
         readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
     Right xs -> return xs
@@ -147,13 +148,17 @@ getListenOrDefault (_:os) = getListenOrDefault os
 
 parseArgs :: [String] -> IO [Opt]
 parseArgs argv = do
-  progname <- getProgName
   case getOpt Permute flags argv of
     (opts,_,[])  -> return opts
-    (_,_,errs)   -> putErr (ExitFailure 1) (concat errs ++ usageInfo (usageHeader progname) flags)
+    (_,_,errs)   -> putErr (ExitFailure 1) . (concat errs ++) =<< usageMessage
 
-usageHeader :: String -> String
-usageHeader progname = "Usage:  " ++ progname ++ " [opts...]"
+usageMessage :: IO String
+usageMessage = do
+  progname <- getProgName
+  confLoc <- getDataFileName "data/default.conf"
+  return $ usageInfo ("Usage:  " ++ progname ++ " [opts...]") flags
+    ++ "\nDefault configuration file path:\n  " ++ confLoc
+    ++ "\nSet the `gitit_datadir' environment variable to change this."
 
 copyrightMessage :: String
 copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
