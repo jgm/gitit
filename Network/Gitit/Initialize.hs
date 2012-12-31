@@ -142,11 +142,16 @@ createDefaultPages conf = do
     let helpcontents = helpcontentsInitial ++ "\n\n" ++ helpcontentsMarkup
     usersguidepath <- getDataFileName "README.markdown"
     usersguidecontents <- liftM converter $ readFileUTF8 usersguidepath
+    -- include header in case user changes default format:
+    let header = "---\nformat: markdown\n...\n\n"
     -- add front page, help page, and user's guide
     let auth = Author "Gitit" ""
-    createIfMissing fs (frontPage conf <.> "page") auth "Default front page" welcomecontents
-    createIfMissing fs "Help.page" auth "Default help page" helpcontents
-    createIfMissing fs "Gitit User's Guide.page" auth "User's guide (README)" usersguidecontents
+    createIfMissing fs (frontPage conf <.> "page") auth "Default front page"
+      $ header ++ welcomecontents
+    createIfMissing fs "Help.page" auth "Default help page"
+      $ header ++ helpcontents
+    createIfMissing fs "Gitit User's Guide.page" auth "User's guide (README)"
+      $ header ++ usersguidecontents
 
 createIfMissing :: FileStore -> FilePath -> Author -> Description -> String -> IO ()
 createIfMissing fs p a comm cont = do
