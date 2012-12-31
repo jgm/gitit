@@ -322,21 +322,21 @@ guardBareBase = do
     mzero
 
 -- | Runs a server monad in a local context after setting
--- the "messages" request header.
+-- the "message" request header.
 withMessages :: ServerMonad m => [String] -> m a -> m a
 withMessages messages handler = do
   req <- askRq
-  let inps = filter (\(n,_) -> n /= "messages") $ rqInputsQuery req
-  let newInp = ("messages", Input {
+  let inps = filter (\(n,_) -> n /= "message") $ rqInputsQuery req
+  let newInp msg = ("message", Input {
                               inputValue = Right
-                                         $ LazyUTF8.fromString $ show messages
+                                         $ LazyUTF8.fromString msg
                             , inputFilename = Nothing
                             , inputContentType = ContentType {
                                     ctType = "text"
                                   , ctSubtype = "plain"
                                   , ctParameters = [] }
                             })
-  localRq (\rq -> rq{ rqInputsQuery = newInp : inps }) handler
+  localRq (\rq -> rq{ rqInputsQuery = map newInp messages ++ inps }) handler
 
 -- | Returns a filestore object derived from the
 -- repository path and filestore type specified in configuration.
