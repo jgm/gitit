@@ -459,7 +459,7 @@ showDiff file page params = do
        Left e         -> liftIO $ throwIO e
        Right htmlDiff -> formattedPage defaultPageLayout{
                                           pgPageName = page,
-                                          pgRevision = from',
+                                          pgRevision = from' `mplus` to,
                                           pgMessages = pMessages params,
                                           pgTabs = DiffTab :
                                                    pgTabs defaultPageLayout,
