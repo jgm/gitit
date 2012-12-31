@@ -1,4 +1,41 @@
-Version 0.10.0.2 released 1 Nov 2012
+Version 0.10.1 released 31 Dec 2012
+
+*   Fixed duplicate dropExtension on categoryPage.  (atsuo yamada)
+    This created problems with categories containing periods.
+
+*   Fixed duplicate unescaping of HTML entities. (atsuo yamada)
+
+*   Supply $revision$ at _diff if "Changes from beginning to..."
+    (atsuo yamada)
+
+*   MathJax rendering is now working in edit preview mode
+    (Dmitry Gerasimov).
+
+*   Upgrade directory package dependency to 1.2, and
+    fix compilation issue with GHC 7.6.1 (Bin Jin).
+
+*   Allow metadata keys to include digits, _, -.  Closes #328.
+
+*   Don't read config for --help or --version (Ben Millwood).
+    Also involves a refactor of options into those that make the program
+    quit immediately, and those that just alter the configuration.
+
+*   Updated to use filestore 0.6 (new diff API).
+    Thanks to markwright for partial patch.
+
+*   Include format metadata in default installed pages.
+    This allows them to continue working when the user changes the
+    default page format.  Closes #329.
+
+*   Added explicit path to Gitit User's Guide in default front page.
+
+*   Fix Gitit User's Guide link on front page.
+    Previously it was broken due to "smart punctuation."
+
+*   Fixed validation messages.  Switched from using lookRead "messages"
+    to using looks "message" for messages.  Closes #294.
+
+Version 0.10.0.2 released 02 Nov 2012
 
 *   Raised version bounds for dependencies.
 
