@@ -316,7 +316,7 @@ instance FromData Params where
          pa <- look' "patterns"       `mplus` return ""
          gt <- look' "gotopage"       `mplus` return ""
          ft <- look' "filetodelete"   `mplus` return ""
-         me <- lookRead "messages"   `mplus` return []
+         me <- looks "message"
          fm <- liftM Just (look' "from") `mplus` return Nothing
          to <- liftM Just (look' "to")   `mplus` return Nothing
          et <- liftM (Just . filter (/='\r')) (look' "editedText")
