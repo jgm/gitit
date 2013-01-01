@@ -1,3 +1,7 @@
+Version 0.10.1.1 released 01 Jan 2013
+
+*   Allow compilation with directory < 1.2.
+
 Version 0.10.1 released 31 Dec 2012
 
 *   Fixed duplicate dropExtension on categoryPage.  (atsuo yamada)
