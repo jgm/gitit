@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2008 John MacFarlane <jgm@berkeley.edu>
 
@@ -28,6 +29,11 @@ import qualified Data.ByteString as B (ByteString, readFile, writeFile)
 import System.FilePath
 import System.Directory (doesFileExist, removeFile, createDirectoryIfMissing, getModificationTime)
 import Data.Time.Clock (UTCTime)
+#if MIN_VERSION_directory(1,2,0)
+#else
+import System.Time (ClockTime(..))
+import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+#endif
 import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
@@ -60,7 +66,12 @@ lookupCache file = do
   exists <- liftIO $ doesFileExist target
   if exists
      then liftIO $ do
+#if MIN_VERSION_directory(1,2,0)
        modtime <- getModificationTime target
+#else
+       TOD secs _ <- getModificationTime target
+       let modtime = posixSecondsToUTCTime $ fromIntegral secs
+#endif
        contents <- B.readFile target
        return $ Just (modtime, contents)
      else return Nothing
