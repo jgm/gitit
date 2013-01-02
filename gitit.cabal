@@ -148,7 +148,7 @@ Executable           gitit
                      random,
                      network >= 2.1.0.0 && < 2.4,
                      utf8-string >= 0.3 && < 0.4,
-                     SHA > 1 && < 1.6,
+                     SHA > 1 && < 1.7,
                      HTTP >= 4000.0 && < 4000.3,
                      HStringTemplate >= 0.6 && < 0.7,
                      old-locale >= 1,
