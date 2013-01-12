@@ -1,3 +1,8 @@
+Version 0.10.1.2 released 11 Jan 2013
+
+*   Fixed regression in option parsing.  An earlier patch
+    caused the '-f' option not to work.  Closes #336.
+
 Version 0.10.1.1 released 01 Jan 2013
 
 *   Allow compilation with directory < 1.2.
