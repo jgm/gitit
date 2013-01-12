@@ -58,8 +58,12 @@ main = do
         readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
     Right xs -> return xs
 
-  defaultConfig <- getDefaultConfig
-  conf <- foldM handleFlag defaultConfig opts
+  conf' <- case [f | ConfigFile f <- opts] of
+                (x:_) -> getConfigFromFile x
+                []    -> getDefaultConfig
+
+  let conf = foldl handleFlag conf' opts
+
   -- check for external programs that are needed
   let repoProg = case repositoryType conf of
                        Mercurial   -> "hg"
@@ -79,28 +83,26 @@ main = do
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] serverLogger
   saveGlobalLogger $ setLevel level $ setHandlers [logFileHandler] gititLogger
 
-  let conf' = conf{logLevel = level}
-
   -- setup the page repository, template, and static files, if they don't exist
-  createRepoIfMissing conf'
-  createStaticIfMissing conf'
-  createTemplateIfMissing conf'
+  createRepoIfMissing conf
+  createStaticIfMissing conf
+  createTemplateIfMissing conf
 
   -- initialize state
-  initializeGititState conf'
+  initializeGititState conf
 
-  let serverConf = nullConf { validator = Nothing, port = portNumber conf',
+  let serverConf = nullConf { validator = Nothing, port = portNumber conf,
                              timeout = 20, logAccess = Nothing }
 
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
   setSocketOption sock ReuseAddr 1
   device <- inet_addr (getListenOrDefault opts)
-  bindSocket sock (SockAddrInet (toEnum (portNumber conf')) device)
+  bindSocket sock (SockAddrInet (toEnum (portNumber conf)) device)
   listen sock 10
 
   -- start the server
-  simpleHTTPWithSocket sock serverConf $ msum [ wiki conf'
+  simpleHTTPWithSocket sock serverConf $ msum [ wiki conf
                                , dir "_reloadTemplates" reloadTemplates
                                ]
 
@@ -155,10 +157,7 @@ parseArgs argv = do
 usageMessage :: IO String
 usageMessage = do
   progname <- getProgName
-  confLoc <- getDataFileName "data/default.conf"
   return $ usageInfo ("Usage:  " ++ progname ++ " [opts...]") flags
-    ++ "\nDefault configuration file path:\n  " ++ confLoc
-    ++ "\nSet the `gitit_datadir' environment variable to change this."
 
 copyrightMessage :: String
 copyrightMessage = "\nCopyright (C) 2008 John MacFarlane\n" ++
@@ -173,13 +172,10 @@ compileInfo =
   " -plugins"
 #endif
 
-handleFlag :: Config -> ConfigOpt -> IO Config
-handleFlag conf opt =
-  case opt of
-    Debug              -> return conf{ debugMode = True }
-    Port p             -> return conf{ portNumber = p }
-    ConfigFile fname   -> getConfigFromFile fname
-    Listen _           -> return conf
+handleFlag :: Config -> ConfigOpt -> Config
+handleFlag conf Debug = conf{ debugMode = True, logLevel = DEBUG }
+handleFlag conf (Port p) = conf { portNumber = p }
+handleFlag conf _ = conf
 
 putErr :: ExitCode -> String -> IO a
 putErr c s = B.hPutStrLn stderr (fromString s) >> exitWith c
