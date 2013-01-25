@@ -23,7 +23,7 @@ module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc hiding (HTMLMathMethod(..))
 import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.SelfContained as SelfContained
-import Text.Pandoc.Shared (escapeStringUsing, readDataFile)
+import Text.Pandoc.Shared (escapeStringUsing, readDataFileUTF8)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage, getWikiBase)
 import Network.Gitit.Util (withTempDir, readFileUTF8)
@@ -45,11 +45,12 @@ import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
 import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
 import Text.HTML.SanitizeXSS
+import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
 import qualified Data.Text as T
 import Data.List (isPrefixOf)
 
 defaultRespOptions :: WriterOptions
-defaultRespOptions = defaultWriterOptions { writerStandalone = True }
+defaultRespOptions = def { writerStandalone = True }
 
 respond :: String
         -> String
@@ -74,13 +75,10 @@ respondX templ mimetype ext fn opts page doc = do
   doc' <- if ext `elem` ["odt","pdf","epub","docx","rtf"]
              then fixURLs page doc
              else return doc
-  doc'' <- if ext == "rtf"
-              then liftIO $ bottomUpM rtfEmbedImage doc'
-              else return doc'
   respond mimetype ext (fn opts{writerTemplate = template
                                ,writerSourceDirectory = repositoryPath cfg
                                ,writerUserDataDir = pandocUserData cfg})
-          page doc''
+          page doc'
 
 respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
           -> WriterOptions -> String -> Pandoc -> Handler
@@ -114,7 +112,7 @@ respondSlides templ slideVariant page doc = do
                $ T.pack body'
     variables' <- if mathMethod cfg == MathML
                      then do
-                        s <- liftIO $ readDataFile (pandocUserData cfg) $
+                        s <- liftIO $ readDataFileUTF8 (pandocUserData cfg) $
                                   "data"</>"MathMLinHTML.js"
                         return [("mathml-script", s)]
                      else return []
@@ -124,7 +122,7 @@ respondSlides templ slideVariant page doc = do
                      Left e   -> liftIO $ throwIO e
     dzcore <- if templ == "dzslides"
                   then do
-                    dztempl <- liftIO $ readDataFile (pandocUserData cfg)
+                    dztempl <- liftIO $ readDataFileUTF8 (pandocUserData cfg)
                            $ "dzslides" </> "template.html"
                     return $ unlines
                         $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
@@ -152,8 +150,8 @@ respondConTeXt = respondS "context" "application/x-context" "tex"
 
 
 respondRTF :: String -> Pandoc -> Handler
-respondRTF = respondS "rtf" "application/rtf" "rtf"
-  writeRTF defaultRespOptions
+respondRTF = respondX "rtf" "application/rtf" "rtf"
+  (\o d -> fromString `fmap` writeRTFWithEmbeddedImages o d) defaultRespOptions
 
 respondRST :: String -> Pandoc -> Handler
 respondRST = respondS "rst" "text/plain; charset=utf-8" ""
@@ -197,16 +195,16 @@ respondMediaWiki = respondS "mediawiki" "text/plain; charset=utf-8" ""
 
 respondODT :: String -> Pandoc -> Handler
 respondODT = respondX "opendocument" "application/vnd.oasis.opendocument.text"
-              "odt" (writeODT Nothing) defaultRespOptions
+              "odt" writeODT defaultRespOptions
 
 respondEPUB :: String -> Pandoc -> Handler
-respondEPUB = respondX "html" "application/epub+zip" "epub" (writeEPUB Nothing [])
+respondEPUB = respondX "html" "application/epub+zip" "epub" writeEPUB
                defaultRespOptions
 
 respondDocx :: String -> Pandoc -> Handler
 respondDocx = respondX "native"
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  "docx" (writeDocx Nothing) defaultRespOptions
+  "docx" writeDocx defaultRespOptions
 
 --- | Run shell command and return error status.  Assumes
 -- UTF-8 locale. Note that this does not actually go through \/bin\/sh!

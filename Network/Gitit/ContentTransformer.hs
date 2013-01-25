@@ -88,7 +88,6 @@ import System.FilePath
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
-import Text.Pandoc.Shared (ObfuscationMethod(..))
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 #if MIN_VERSION_blaze_html(0,5,0)
 import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
@@ -96,10 +95,12 @@ import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 import Text.Blaze.Renderer.String as Blaze ( renderHtml )
 #endif
 import qualified Data.Text as T
+import qualified Data.Set as Set
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
+
 --
 -- ContentTransformer runners
 --
@@ -346,7 +347,7 @@ pandocToHtml pandocContents = do
   cfg <- lift getConfig
   return $ primHtml $ T.unpack .
            (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
-           writeHtmlString defaultWriterOptions{
+           writeHtmlString def{
                         writerStandalone = True
                       , writerTemplate = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
                       , writerHTMLMathMethod =
@@ -357,7 +358,11 @@ pandocToHtml pandocContents = do
                                  _      -> JsMath (Just $ base' ++
                                                       "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
-                      , writerLiterateHaskell = bird
+                      , writerExtensions = if bird
+                                              then Set.insert
+                                                   Ext_literate_haskell
+                                                   $ writerExtensions def
+                                              else writerExtensions def
                       -- note: javascript obfuscation gives problems on preview
                       , writerEmailObfuscation = ReferenceObfuscation
                       } pandocContents
@@ -500,8 +505,11 @@ updateLayout f = do
 
 readerFor :: PageType -> Bool -> String -> Pandoc
 readerFor pt lhs =
-  let defPS = defaultParserState{ stateSmart = True
-                                , stateLiterateHaskell = lhs }
+  let defPS = def{ readerSmart = True
+                 , readerExtensions = if lhs
+                                         then Set.insert Ext_literate_haskell
+                                              $ readerExtensions def
+                                         else readerExtensions def }
   in case pt of
        RST      -> readRST defPS
        Markdown -> readMarkdown defPS

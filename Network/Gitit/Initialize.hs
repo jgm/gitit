@@ -27,6 +27,7 @@ where
 import System.FilePath ((</>), (<.>))
 import Data.FileStore
 import qualified Data.Map as M
+import qualified Data.Set as Set
 import Network.Gitit.Util (readFileUTF8)
 import Network.Gitit.Types
 import Network.Gitit.State
@@ -118,13 +119,16 @@ createDefaultPages conf = do
     let fs = filestoreFromConfig conf
         pt = defaultPageType conf
         toPandoc = readMarkdown
-                   defaultParserState{ stateSmart = True }
-        defOpts = defaultWriterOptions{
-                          writerStandalone = False
-                        , writerHTMLMathMethod = JsMath
-                                 (Just "/js/jsMath/easy/load.js")
-                        , writerLiterateHaskell = showLHSBirdTracks conf
-                        }
+                   def{ readerSmart = True }
+        defOpts = def{ writerStandalone = False
+                     , writerHTMLMathMethod = JsMath
+                              (Just "/js/jsMath/easy/load.js")
+                     , writerExtensions = if showLHSBirdTracks conf
+                                             then Set.insert
+                                                  Ext_literate_haskell
+                                                  $ writerExtensions def
+                                             else writerExtensions def
+                     }
         -- note: we convert this (markdown) to the default page format
         converter = case defaultPageType conf of
                        Markdown -> id
