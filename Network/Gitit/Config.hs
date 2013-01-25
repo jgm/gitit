@@ -110,7 +110,7 @@ extractConfig cp = do
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
-      markupHelpText <- liftM (writeHtmlString defaultWriterOptions . readMarkdown defaultParserState) $
+      markupHelpText <- liftM (writeHtmlString def . readMarkdown def) $
                             liftIO $ readFileUTF8 markupHelpPath
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
