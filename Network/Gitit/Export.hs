@@ -112,8 +112,8 @@ respondSlides templ slideVariant page doc = do
                $ T.pack body'
     variables' <- if mathMethod cfg == MathML
                      then do
-                        s <- liftIO $ readDataFileUTF8 (pandocUserData cfg) $
-                                  "data"</>"MathMLinHTML.js"
+                        s <- liftIO $ readDataFileUTF8 (pandocUserData cfg)
+                                  "MathMLinHTML.js"
                         return [("mathml-script", s)]
                      else return []
     template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) templ
