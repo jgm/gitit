@@ -41,13 +41,15 @@ import Control.Exception (throwIO)
 import System.Environment (getEnvironment)
 import System.Exit (ExitCode(..))
 import System.IO (openTempFile)
-import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile)
+import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile,
+                         doesFileExist)
 import System.Process (runProcess, waitForProcess)
 import Codec.Binary.UTF8.String (encodeString)
 import Text.HTML.SanitizeXSS
 import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
 import qualified Data.Text as T
 import Data.List (isPrefixOf)
+import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
 defaultRespOptions = def { writerStandalone = True }
@@ -274,16 +276,27 @@ respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
 -- images in the staticDir with their correct absolute file path.
 fixURLs :: String -> Pandoc -> GititServerPart Pandoc
 fixURLs page pndc = do
-    curdir <- liftIO getCurrentDirectory
     cfg <- getConfig
+    defaultStatic <- liftIO $ getDataFileName $ "data" </> "static"
 
-    let go (Image ils (url, title)) = Image ils (fixURL url, title)
-        go x                        = x
+    let static = staticDir cfg
+    let repoPath = repositoryPath cfg
 
-        fixURL ('/':url) = curdir </> staticDir cfg </> url
-        fixURL url       = curdir </> repositoryPath cfg </> takeDirectory page </> url
+    let go (Image ils (url, title)) = do
+           fixedURL <- fixURL url
+           return $ Image ils (fixedURL, title)
+        go x                        = return x
 
-    return $ bottomUp go pndc
+        fixURL ('/':url) = resolve url
+        fixURL url       = resolve $ takeDirectory page </> url
+
+        resolve p = do
+           sp <- doesFileExist $ static </> p
+           dsp <- doesFileExist $ defaultStatic </> p
+           return (if sp then static </> p
+                   else (if dsp then defaultStatic </> p
+                         else repoPath </> p))
+    liftIO $ bottomUpM go pndc
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg
