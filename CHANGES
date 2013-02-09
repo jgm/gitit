@@ -1,3 +1,16 @@
+Version 0.10.2 released 09 Feb 2013
+
+*   Updated to work with pandoc 1.10.
+
+*   Fixed path for MathMLInHTML.js script.  Closes #345.
+    Thanks to tstgruby.
+
+*   Updated interwiki plugin (gwern).
+
+*   Made it possible to export pages with images stored in the
+    repository itself (as opposed to the static directory).  Thanks
+    to Claudio Bley for the patch.
+
 Version 0.10.1.2 released 11 Jan 2013
 
 *   Fixed regression in option parsing.  An earlier patch
