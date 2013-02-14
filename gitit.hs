@@ -34,7 +34,6 @@ import System.Exit
 import System.IO (stderr)
 import System.Console.GetOpt
 import Network.Socket hiding (Debug)
-import Network.URI
 import Data.Version (showVersion)
 import qualified Data.ByteString.Char8 as B
 import Data.ByteString.UTF8 (fromString)
@@ -97,7 +96,7 @@ main = do
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
   setSocketOption sock ReuseAddr 1
-  device <- inet_addr (getListenOrDefault opts)
+  device <- inet_addr (address conf)
   bindSocket sock (SockAddrInet (toEnum (portNumber conf)) device)
   listen sock 10
 
@@ -128,7 +127,7 @@ flags =
         "Print version information"
    , Option ['p'] ["port"] (ReqArg (Right . Port . read) "PORT")
         "Specify port"
-   , Option ['l'] ["listen"] (ReqArg (Right . Listen . checkListen) "INTERFACE")
+   , Option ['l'] ["listen"] (ReqArg (Right . Listen) "INTERFACE")
         "Specify IP address to listen on"
    , Option [] ["print-default-config"] (NoArg (Left PrintDefaultConfig))
         "Print default configuration"
@@ -137,16 +136,6 @@ flags =
    , Option ['f'] ["config-file"] (ReqArg (Right . ConfigFile) "FILE")
         "Specify configuration file"
    ]
-
-checkListen :: String -> String
-checkListen l | isIPv6address l = l
-              | isIPv4address l = l
-              | otherwise       = error "Gitit.checkListen: Not a valid interface name"
-
-getListenOrDefault :: [ConfigOpt] -> String
-getListenOrDefault [] = "0.0.0.0"
-getListenOrDefault ((Listen l):_) = l
-getListenOrDefault (_:os) = getListenOrDefault os
 
 parseArgs :: [String] -> IO [Opt]
 parseArgs argv = do
@@ -175,6 +164,7 @@ compileInfo =
 handleFlag :: Config -> ConfigOpt -> Config
 handleFlag conf Debug = conf{ debugMode = True, logLevel = DEBUG }
 handleFlag conf (Port p) = conf { portNumber = p }
+handleFlag conf (Listen l) = conf { address = l }
 handleFlag conf _ = conf
 
 putErr :: ExitCode -> String -> IO a
