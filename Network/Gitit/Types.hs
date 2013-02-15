@@ -90,6 +90,8 @@ data Config = Config {
   maxUploadSize        :: Integer,
   -- | Max size of page uploads
   maxPageSize          :: Integer,
+  -- | IP address to bind to
+  address              :: String,
   -- | Port number to serve content on
   portNumber           :: Int,
   -- | Print debug info to the console?
