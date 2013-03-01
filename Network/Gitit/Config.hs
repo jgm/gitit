@@ -66,6 +66,7 @@ extractConfig cp = do
       cfRepositoryPath <- get cp "DEFAULT" "repository-path"
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"
       cfMathMethod <- get cp "DEFAULT" "math"
+      cfMathjaxScript <- get cp "DEFAULT" "mathjax-script"
       cfShowLHSBirdTracks <- get cp "DEFAULT" "show-lhs-bird-tracks"
       cfRequireAuthentication <- get cp "DEFAULT" "require-authentication"
       cfAuthenticationMethod <- get cp "DEFAULT" "authentication-method"
@@ -132,7 +133,7 @@ extractConfig cp = do
         , mathMethod           = case map toLower cfMathMethod of
                                       "jsmath"   -> JsMathScript
                                       "mathml"   -> MathML
-                                      "mathjax"  -> MathJax "https://d3eoax9i5htok0.cloudfront.net/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+                                      "mathjax"  -> MathJax cfMathjaxScript
                                       "google"   -> WebTeX "http://chart.apis.google.com/chart?cht=tx&chl="
                                       _          -> RawTeX
         , defaultLHS           = lhs
