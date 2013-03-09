@@ -1,3 +1,16 @@
+Version 0.10.3 released 09 Mar 2013
+
+*   Allow latest versions of pandoc, blaze-html, HStringTemplate.
+
+*   Fixed duplicate ids in user box.
+
+*   Added `mathjax-script` option, specifies the mathjax script to
+    use. (Dmitry Gerasimov.)
+
+*   Set focus on editedText on page load.  (Mathieu Larose.)
+
+*   Added `address` config option.  (Matieu Larose.)
+
 Version 0.10.2 released 09 Feb 2013
 
 *   Updated to work with pandoc 1.10.
