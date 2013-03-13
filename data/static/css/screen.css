@@ -46,7 +46,7 @@ sup { vertical-align: super; }
 sub { vertical-align: sub; }
 sub, sup { line-height: 0.3em; }
 p, fieldset, table, pre { margin-bottom: 1em; }
-button, input[type="checkbox"], input[type="radio"], input[type="reset"], input[type="submit"] { padding: 1px; }
+button, input[type="checkbox"], input[type="radio"], input[type="reset"], input[type="submit"], input[type="button"] { padding: 1px; }
 
 blockquote { padding: 0 1.6em; color: #666; }
 
