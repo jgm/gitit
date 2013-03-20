@@ -130,7 +130,7 @@ createDefaultPages conf = do
                                              else writerExtensions def
                      }
         -- note: we convert this (markdown) to the default page format
-        converter = case defaultPageType conf of
+        converter = case pt of
                        Markdown -> id
                        LaTeX    -> writeLaTeX defOpts . toPandoc
                        HTML     -> writeHtmlString defOpts . toPandoc
@@ -147,7 +147,9 @@ createDefaultPages conf = do
     usersguidepath <- getDataFileName "README.markdown"
     usersguidecontents <- liftM converter $ readFileUTF8 usersguidepath
     -- include header in case user changes default format:
-    let header = "---\nformat: markdown\n...\n\n"
+    let header = "---\nformat: " ++
+          show pt ++ (if defaultLHS conf then "+lhs" else "") ++
+          "\n...\n\n"
     -- add front page, help page, and user's guide
     let auth = Author "Gitit" ""
     createIfMissing fs (frontPage conf <.> "page") auth "Default front page"
