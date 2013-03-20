@@ -1,3 +1,12 @@
+Version 0.10.3.1 released 19 Mar 2013
+
+*   Fixed filename encoding problem affecting caching,
+    for gitit compiled with GHC 7.4 or later.
+
+*   Fixed padding on some buttons (akerbos).
+
+*   Specify correct format in header for initial pages (benmachine).
+
 Version 0.10.3 released 09 Mar 2013
 
 *   Allow latest versions of pandoc, blaze-html, HStringTemplate.
