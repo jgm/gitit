@@ -38,7 +38,7 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
 import Control.Monad.Trans (liftIO)
-import Codec.Binary.UTF8.String (encodeString)
+import Text.Pandoc.UTF8 (encodePath)
 
 -- | Expire a cached file, identified by its filename in the filestore.
 -- If there is an associated exported PDF, expire it too.
@@ -46,7 +46,7 @@ import Codec.Binary.UTF8.String (encodeString)
 expireCachedFile :: String -> GititServerPart ()
 expireCachedFile file = do
   cfg <- getConfig
-  let target = encodeString $ cacheDir cfg </> file
+  let target = encodePath $ cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
   when exists $ liftIO $ do
     liftIO $ removeFile target
@@ -62,7 +62,7 @@ expireCachedPDF file =
 lookupCache :: String -> GititServerPart (Maybe (UTCTime, B.ByteString))
 lookupCache file = do
   cfg <- getConfig
-  let target = encodeString $ cacheDir cfg </> file
+  let target = encodePath $ cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
   if exists
      then liftIO $ do
@@ -79,7 +79,7 @@ lookupCache file = do
 cacheContents :: String -> B.ByteString -> GititServerPart ()
 cacheContents file contents = do
   cfg <- getConfig
-  let target = encodeString $ cacheDir cfg </> file
+  let target = encodePath $ cacheDir cfg </> file
   let targetDir = takeDirectory target
   liftIO $ do
     createDirectoryIfMissing True targetDir

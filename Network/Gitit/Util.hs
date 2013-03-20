@@ -33,23 +33,13 @@ import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower)
-import Data.ByteString.Lazy.UTF8 (toString)
-import qualified Data.ByteString.Lazy as B
 import Network.Gitit.Types
 import qualified Control.Exception as E
-import Control.Monad (liftM)
-#if MIN_VERSION_base(4,5,0)
-#else
-import Codec.Binary.UTF8.String (encodeString)
-#endif
+import qualified Text.Pandoc.UTF8 as UTF8
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO String
-#if MIN_VERSION_base(4,5,0)
-readFileUTF8 f = liftM toString $ B.readFile f
-#else
-readFileUTF8 f = liftM toString $ B.readFile $ encodeString f
-#endif
+readFileUTF8 = UTF8.readFile
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a
