@@ -49,6 +49,7 @@ import Text.HTML.SanitizeXSS
 import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
 import qualified Data.Text as T
 import Data.List (isPrefixOf)
+import Text.Highlighting.Kate (styleToCss, pygments)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
@@ -132,7 +133,7 @@ respondSlides templ slideVariant page doc = do
                   else return ""
     let h = writeHtmlString opts'{
                 writerVariables =
-                  ("body",body''):("dzslides-core",dzcore):variables'
+                  ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
                ,writerTemplate = template
                ,writerSourceDirectory = repositoryPath cfg
                ,writerUserDataDir = pandocUserData cfg
@@ -321,3 +322,6 @@ exportFormats cfg = if pdfExport cfg
                 , ("ODT",       respondODT)
                 , ("Docx",      respondDocx)
                 , ("RTF",       respondRTF) ]
+
+pygmentsCss :: String
+pygmentsCss = styleToCss pygments
