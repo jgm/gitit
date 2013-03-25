@@ -136,7 +136,7 @@ respondSlides templ slideVariant page doc = do
                ,writerTemplate = template
                ,writerSourceDirectory = repositoryPath cfg
                ,writerUserDataDir = pandocUserData cfg
-               } (Pandoc meta [])
+               } (Pandoc meta blocks)
     h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
     ok . setContentType "text/html;charset=UTF-8" .
       -- (setFilename (page ++ ".html")) .
