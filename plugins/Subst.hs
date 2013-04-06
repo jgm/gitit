@@ -8,7 +8,7 @@ module Subst (plugin) where
 
 import Control.Monad.CatchIO (try)
 import Data.FileStore (FileStoreError, retrieve)
-import Text.Pandoc (defaultParserState, readMarkdown)
+import Text.Pandoc (def, readMarkdown)
 import Network.Gitit.ContentTransformer (inlinesToString)
 import Network.Gitit.Interface
 import Network.Gitit.Framework (filestoreFromConfig)
@@ -27,7 +27,7 @@ substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) =
                             alt = "'" ++ target ++ "' doesn't exist. Click here to create it."
                             lnk = Para [Link [txt] (target,alt)]
                         in  (lnk :) `fmap` substituteIntoBlock xs
-          Right a    -> let (Pandoc _ content) = readMarkdown defaultParserState a
+          Right a    -> let (Pandoc _ content) = readMarkdown def a
                         in  (content ++) `fmap` substituteIntoBlock xs
 substituteIntoBlock (x:xs) = (x:) `fmap` substituteIntoBlock xs
 substituteIntoBlock [] = return []
