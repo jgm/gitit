@@ -298,9 +298,10 @@ To change the footer, modify `templates/footer.st`.
 
 For more radical changes, you can override any of the default
 templates in `$CABALDIR/share/gitit-x.y.z/data/templates` by copying
-the file into `templates` and modifying it. The `page.st` template is
-the master template; it includes the others. Interpolated variables are
-surrounded by `$`s, so `literal $` must be backslash-escaped.
+the file into `templates`, modifying it, and restarting gitit. The 
+`page.st` template is the master template; it includes the others. 
+Interpolated variables are surrounded by `$`s, so `literal $` must 
+be backslash-escaped.
 
 Adding support for math
 -----------------------
