@@ -211,7 +211,7 @@ getReferer = do
 getWikiBase :: ServerMonad m => m String
 getWikiBase = do
   path' <- getPath
-  uri' <- liftM (fromJust . decString True . rqUri) askRq
+  uri' <- liftM (fromJust . decString False . rqUri) askRq
   case calculateWikiBase path' uri' of
        Just b    -> return b
        Nothing   -> error $ "Could not getWikiBase: (path, uri) = " ++ show (path',uri')
