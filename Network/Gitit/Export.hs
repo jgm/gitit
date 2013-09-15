@@ -79,7 +79,7 @@ respondX templ mimetype ext fn opts page doc = do
              then fixURLs page doc
              else return doc
   respond mimetype ext (fn opts{writerTemplate = template
-                               ,writerSourceDirectory = repositoryPath cfg
+                               ,writerSourceURL = Just $ baseUrl cfg
                                ,writerUserDataDir = pandocUserData cfg})
           page doc'
 
@@ -135,7 +135,7 @@ respondSlides templ slideVariant page doc = do
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
                ,writerTemplate = template
-               ,writerSourceDirectory = repositoryPath cfg
+               ,writerSourceURL = Just $ baseUrl cfg
                ,writerUserDataDir = pandocUserData cfg
                } (Pandoc meta [])
     h' <- liftIO $ makeSelfContained (pandocUserData cfg) h

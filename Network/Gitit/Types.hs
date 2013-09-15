@@ -400,7 +400,7 @@ type Handler = GititServerPart Response
 fromEntities :: String -> String
 fromEntities ('&':xs) =
   case lookupEntity ent of
-        Just c  -> c : fromEntities rest
+        Just c  -> c ++ fromEntities rest
         Nothing -> '&' : fromEntities xs
     where (ent, rest) = case break (\c -> isSpace c || c == ';') xs of
                              (zs,';':ys) -> (zs,ys)

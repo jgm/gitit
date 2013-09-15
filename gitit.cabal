@@ -117,8 +117,8 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.10.0.5 && < 1.12,
-                     pandoc-types >= 1.10 && < 1.11, filepath, safe
+  build-depends:     base >= 3, pandoc >= 1.12 && < 1.13,
+                     pandoc-types >= 1.12 && < 1.13, filepath, safe
   extensions:        CPP
   if impl(ghc >= 6.12)
     ghc-options:     -Wall -fno-warn-unused-do-bind
@@ -134,8 +134,8 @@ Executable           gitit
                      pretty,
                      xhtml,
                      containers,
-                     pandoc >= 1.10.0.5 && < 1.12,
-                     pandoc-types >= 1.10 && < 1.11,
+                     pandoc >= 1.12 && < 1.13,
+                     pandoc-types >= 1.12 && < 1.13,
                      process,
                      filepath,
                      directory,
@@ -164,7 +164,7 @@ Executable           gitit
                      ConfigFile >= 1 && < 1.2,
                      feed >= 0.3.6 && < 0.4,
                      xss-sanitize >= 0.3 && < 0.4,
-                     tagsoup >= 0.12 && < 0.13,
+                     tagsoup >= 0.13 && < 0.14,
                      blaze-html >= 0.4 && < 0.7,
                      json >= 0.4 && < 0.8
   if impl(ghc >= 6.10)
