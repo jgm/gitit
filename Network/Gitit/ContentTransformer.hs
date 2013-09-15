@@ -85,6 +85,7 @@ import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
 import Prelude hiding (catch)
 import System.FilePath
+import qualified Text.Pandoc.Builder as B
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
@@ -452,8 +453,8 @@ addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
 addPageTitleToPandoc title' (Pandoc _ blocks) = do
   updateLayout $ \layout -> layout{ pgTitle = title' }
   return $ if null title'
-              then Pandoc (Meta [] [] []) blocks
-              else Pandoc (Meta [Str title'] [] []) blocks
+              then Pandoc nullMeta blocks
+              else Pandoc (B.setMeta "title" (B.str title') nullMeta) blocks
 
 -- | Adds javascript links for math support.
 addMathSupport :: a -> ContentTransformer a
@@ -553,9 +554,10 @@ inlinesToString = concatMap go
                LineBreak               -> " "
                Math DisplayMath s      -> "$$" ++ s ++ "$$"
                Math InlineMath s       -> "$" ++ s ++ "$"
-               RawInline "tex" s       -> s
+               RawInline (Format "tex") s -> s
                RawInline _ _           -> ""
                Link xs _               -> concatMap go xs
                Image xs _              -> concatMap go xs
                Note _                  -> ""
+               Span _ xs               -> concatMap go xs
 
