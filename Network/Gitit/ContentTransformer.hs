@@ -73,7 +73,7 @@ import Control.Exception (throwIO, catch)
 import Control.Monad.State
 import Control.Monad.Reader (ask)
 import Data.Maybe (isNothing, mapMaybe)
-import Network.Gitit.Cache (lookupCache, cacheContents)
+import Network.Gitit.Cache (lookupCache, cacheContents, lookupModTime)
 import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Framework
 import Network.Gitit.Layout
@@ -117,6 +117,7 @@ runTransformer pathFor xform = withData $ \params -> do
                            , ctxLayout = defaultPageLayout{
                                              pgPageName = page
                                            , pgTitle = page
+                                           , pgModTime = ""
                                            , pgPrintable = pPrintable params
                                            , pgMessages = pMessages params
                                            , pgRevision = pRevision params
@@ -452,6 +453,10 @@ wikiDivify c = do
 addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
 addPageTitleToPandoc title' (Pandoc _ blocks) = do
   updateLayout $ \layout -> layout{ pgTitle = title' }
+  file <- getFileName
+  modTime <- lift $ lookupModTime(file)
+  case modTime of Just xvalue -> updateLayout $ \layout -> layout{ pgModTime = xvalue } 
+                  Nothing -> updateLayout $ \layout -> layout{ pgModTime = ""} 
   return $ if null title'
               then Pandoc nullMeta blocks
               else Pandoc (B.setMeta "title" (B.str title') nullMeta) blocks

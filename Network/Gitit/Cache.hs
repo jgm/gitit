@@ -22,7 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Cache ( expireCachedFile
                            , lookupCache
-                           , cacheContents )
+                           , cacheContents
+                           , lookupModTime )
 where
 
 import qualified Data.ByteString as B (ByteString, readFile, writeFile)
@@ -34,6 +35,9 @@ import Data.Time.Clock (UTCTime)
 import System.Time (ClockTime(..))
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 #endif
+import Data.Time
+import Data.Time.Format (formatTime)
+import System.Locale
 import Network.Gitit.State
 import Network.Gitit.Types
 import Control.Monad
@@ -74,6 +78,23 @@ lookupCache file = do
 #endif
        contents <- B.readFile target
        return $ Just (modtime, contents)
+     else return Nothing
+
+lookupModTime :: String -> GititServerPart (Maybe String)
+lookupModTime file = do
+  cfg <- getConfig
+  let target = encodePath $ repositoryPath cfg </> file
+  exists <- liftIO $ doesFileExist target
+  if exists
+     then liftIO $ do
+#if MIN_VERSION_directory(1,2,0)
+       modtime <- getModificationTime target
+#else
+       TOD secs _ <- getModificationTime target
+       let modtime = posixSecondsToUTCTime $ fromIntegral secs
+#endif
+       let modTimeStr = formatTime defaultTimeLocale "%H:%M:%S %d/%m/%Y UTC" modtime
+       return (Just modTimeStr)
      else return Nothing
 
 cacheContents :: String -> B.ByteString -> GititServerPart ()

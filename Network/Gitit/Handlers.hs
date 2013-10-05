@@ -59,7 +59,7 @@ import Network.Gitit.Layout
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
-import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
+import Network.Gitit.Cache (expireCachedFile, cacheContents, lookupCache)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (readCategories)

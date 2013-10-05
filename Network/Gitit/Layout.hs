@@ -53,6 +53,7 @@ defaultPageLayout = PageLayout
   , pgTabs           = [ViewTab, EditTab, HistoryTab, DiscussTab]
   , pgSelectedTab    = ViewTab
   , pgLinkToFeed     = False
+  , pgModTime 	 = ""
   }
 
 -- | Returns formatted page
@@ -98,6 +99,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
                    setStrAttr "pageUrl" (urlForPage page) .
+                   setStrAttr "modTime" (pgModTime layout) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .

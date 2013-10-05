@@ -242,6 +242,7 @@ data PageLayout = PageLayout
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   , pgLinkToFeed     :: Bool
+  , pgModTime    	 :: String
   }
 
 data Tab = ViewTab
