@@ -242,7 +242,6 @@ goToPage = withData $ \(params :: Params) -> do
   let findPage f = find f allPageNames
   let exactMatch f = gotopage == f
   let insensitiveMatch f = (map toLower gotopage) == (map toLower f)
-  let prefixMatch f = (map toLower gotopage) `isPrefixOf` (map toLower f)
   base' <- getWikiBase
   case findPage exactMatch of
        Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
@@ -250,11 +249,8 @@ goToPage = withData $ \(params :: Params) -> do
        Nothing -> case findPage insensitiveMatch of
                        Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
                                     "Redirecting to case-insensitive match"
-                       Nothing -> case findPage prefixMatch of
-                                       Just m  -> seeOther (base' ++ urlForPage m) $
-                                                  toResponse $ "Redirecting" ++
-                                                    " to partial match"
-                                       Nothing -> searchResults
+                       Nothing -> seeOther (base' ++ urlForPage gotopage) $ toResponse
+                                    "Redirecting to new page"
 
 searchResults :: Handler
 searchResults = withData $ \(params :: Params) -> do
