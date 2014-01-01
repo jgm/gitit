@@ -171,7 +171,7 @@ wikiHandlers =
     guardBareBase >> getWikiBase >>= \b -> movedPermanently (b ++ "/") (toResponse ())
   , dir "_activity" showActivity
   , dir "_go"       goToPage
-  , dir "_search"   searchResults
+  , method GET >> dir "_search"   searchResults
   , dir "_upload"   $  do guard =<< return . uploadsAllowed =<< getConfig
                           msum [ method GET  >> authenticate ForModify uploadForm
                                  , method POST >> authenticate ForModify uploadFile ]
