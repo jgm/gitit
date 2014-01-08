@@ -674,8 +674,10 @@ fileListToHtml base' prefix files =
         li ! [theclass "page"  ] <<
           anchor ! [href $ base' ++ urlForPage (prefix ++ dropExtension f)] <<
             dropExtension f
-      fileLink (FSFile f) =
-        li ! [theclass "upload"] << anchor ! [href $ base' ++ urlForPage (prefix ++ f)] << f
+      fileLink (FSFile f) = li ! [theclass "upload"] << concatHtml
+        [ anchor ! [href $ base' ++ urlForPage (prefix ++ f)] << f
+        , anchor ! [href $ base' ++ "_delete" ++ urlForPage (prefix ++ f)] << "(delete)"
+        ]
       fileLink (FSDirectory f) =
         li ! [theclass "folder"] <<
           anchor ! [href $ base' ++ urlForPage (prefix ++ f) ++ "/"] << f
