@@ -130,6 +130,7 @@ ul.tabs li a { text-decoration: none; font-size: 93%; font-weight: bold; margin:
 .index li.page { background-image: url(../img/icons/page.png); }
 .index li.folder { background-image: url(../img/icons/folder.png); }
 .index a { color: #000000; cursor: pointer; text-decoration: none; }
+.index a + a { margin-left: 0.5em; }
 .index a:hover { text-decoration: underline; }
 
 a.updir { font-weight: bold; }
