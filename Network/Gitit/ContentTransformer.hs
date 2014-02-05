@@ -35,6 +35,7 @@ module Network.Gitit.ContentTransformer
   , showFile
   , preview
   , applyPreCommitPlugins
+  , applyHSTMPPlugins
   -- * Cache support for transformers
   , cacheHtml
   , cachedHtml
@@ -90,6 +91,7 @@ import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+import Text.StringTemplate (StringTemplate)
 #if MIN_VERSION_blaze_html(0,5,0)
 import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 #else
@@ -110,7 +112,12 @@ runTransformer :: ToMessage a
                => (String -> String)
                -> ContentTransformer a
                -> GititServerPart a
-runTransformer pathFor xform = withData $ \params -> do
+runTransformer = runTransformer'
+
+runTransformer' :: (String -> String)
+               -> ContentTransformer a
+               -> GititServerPart a
+runTransformer' pathFor xform = withData $ \params -> do
   page <- getPage
   cfg <- getConfig
   evalStateT xform  Context{ ctxFile = pathFor page
@@ -140,6 +147,11 @@ runFileTransformer :: ToMessage a
                    => ContentTransformer a
                    -> GititServerPart a
 runFileTransformer = runTransformer id
+
+-- | Converts a @ContentTransformer@ into a @GititServerPart@;
+-- specialized to StringTemplate.
+runHSTMPTransformer :: ContentTransformer a -> GititServerPart a
+runHSTMPTransformer = runTransformer' id
 
 --
 -- Gitit responders
@@ -183,6 +195,11 @@ preview = runPageTransformer $
 -- modifying it.
 applyPreCommitPlugins :: String -> GititServerPart String
 applyPreCommitPlugins = runPageTransformer . applyPreCommitTransforms
+
+-- | Applies HStringTemplate plugins to template, possibly
+-- modifying it.
+applyHSTMPPlugins :: StringTemplate String -> GititServerPart (StringTemplate String)
+applyHSTMPPlugins = runHSTMPTransformer . applyHSTMPTransforms
 
 --
 -- Top level, composed transformers
@@ -401,6 +418,12 @@ getPreCommitTransforms = liftM (mapMaybe preCommitTransform) $
   where preCommitTransform (PreCommitTransform x) = Just x
         preCommitTransform _                      = Nothing
 
+getHSTMPTransforms :: ContentTransformer [StringTemplate String -> PluginM (StringTemplate String)]
+getHSTMPTransforms = liftM (mapMaybe hSTMPTransform) $
+                          queryGititState plugins
+  where hSTMPTransform (HSTMPTransform x) = Just x
+        hSTMPTransform _                  = Nothing
+
 -- | @applyTransform a t@ applies the transform @t@ to input @a@.
 applyTransform :: a -> (a -> PluginM a) -> ContentTransformer a
 applyTransform inp transform = do
@@ -431,6 +454,10 @@ applyPreParseTransforms page' = getPreParseTransforms >>= foldM applyTransform (
 -- | Applies all the pre-commit transform plugins to a raw string.
 applyPreCommitTransforms :: String -> ContentTransformer String
 applyPreCommitTransforms c = getPreCommitTransforms >>= foldM applyTransform c
+
+-- | Applies all the HStringTemplate transform plugins to a template.
+applyHSTMPTransforms :: StringTemplate String -> ContentTransformer (StringTemplate String)
+applyHSTMPTransforms st = getHSTMPTransforms >>= foldM applyTransform st
 
 --
 -- Content or context augmentation combinators
