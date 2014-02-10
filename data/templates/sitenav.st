@@ -15,7 +15,7 @@
       $endif$
       <li><a href="$base$/Help">Help</a></li>
     </ul>
-    <form action="$base$/_search" method="post" id="searchform">
+    <form action="$base$/_search" method="get" id="searchform">
      <input type="text" name="patterns" id="patterns"/>
      <input type="submit" name="search" id="search" value="Search"/>
     </form>
