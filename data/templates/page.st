@@ -41,6 +41,5 @@
     </div>
     $javascripts$
     $expire()$
-    $getuser()$
   </body>
 </html>

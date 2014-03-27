@@ -66,13 +66,14 @@ defaultRenderPage :: T.StringTemplate String -> PageLayout -> Html -> Handler
 defaultRenderPage templ layout htmlContents = do
   cfg <- getConfig
   base' <- getWikiBase
+  user <- getLoggedInUser
   ok . setContentType "text/html; charset=utf-8" . toResponse . T.render .
-       filledPageTemplate base' cfg layout htmlContents $ templ
+       filledPageTemplate user base' cfg layout htmlContents $ templ
 
 -- | Returns a page template with gitit variables filled in.
-filledPageTemplate :: String -> Config -> PageLayout -> Html ->
+filledPageTemplate :: Maybe User -> String -> Config -> PageLayout -> Html ->
                       T.StringTemplate String -> T.StringTemplate String
-filledPageTemplate base' cfg layout htmlContents templ =
+filledPageTemplate user base' cfg layout htmlContents templ =
   let rev  = pgRevision layout
       page = pgPageName layout
       prefixedScript x = case x of
@@ -101,6 +102,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
+                   maybe id (T.setAttribute "loggedinuser" . uUsername) user .
                    maybe id (T.setAttribute "markuphelp") (pgMarkupHelp layout) .
                    setBoolAttr "printable" (pgPrintable layout) .
                    maybe id (T.setAttribute "revision") rev .
