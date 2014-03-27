@@ -79,7 +79,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                            'h':'t':'t':'p':_  -> x
                            _                  -> base' ++ "/js/" ++ x
 
-      scripts  = ["jquery.min.js", "jquery-ui.packed.js", "footnotes.js"] ++ pgScripts layout
+      scripts  = ["jquery.min.js", "jquery-ui.packed.js", "footnotesispage.js"] ++ pgScripts layout
       scriptLink x = script ! [src (prefixedScript x),
         thetype "text/javascript"] << noHtml
       javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
@@ -99,10 +99,14 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    setStrAttr "pagetitle" (pgTitle layout) .
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
+                   setStrAttr "articlename" article .
+                   setStrAttr "discussionname" discussion .
                    setStrAttr "pageUrl" (urlForPage page) .
                    setStrAttr "articleUrl" (urlForPage article) .
                    setStrAttr "discussionUrl" (urlForPage discussion) .
                    setBoolAttr "ispage" (isPage page) .
+                   setBoolAttr "isarticlepage" (isPage page && not (isDiscussPage page)) .
+                   setBoolAttr "isdiscusspage" (isDiscussPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
                    maybe id (T.setAttribute "markuphelp") (pgMarkupHelp layout) .
