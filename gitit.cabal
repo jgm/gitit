@@ -165,7 +165,7 @@ Executable           gitit
                      feed >= 0.3.6 && < 0.4,
                      xss-sanitize >= 0.3 && < 0.4,
                      tagsoup >= 0.13 && < 0.14,
-                     blaze-html >= 0.4 && < 0.7,
+                     blaze-html >= 0.4 && < 0.8,
                      json >= 0.4 && < 0.8
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
