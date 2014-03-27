@@ -107,6 +107,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' cfg page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
+                   setBoolAttr "hasmessages" (not . null $ pgMessages layout) .
                    T.setAttribute "messages" (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) .
