@@ -83,6 +83,8 @@ filledPageTemplate base' cfg layout htmlContents templ =
       scriptLink x = script ! [src (prefixedScript x),
         thetype "text/javascript"] << noHtml
       javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
+      article = if isDiscussPage page then drop 1 page else page
+      discussion = '@':article
       tabli tab = if tab == pgSelectedTab layout
                      then li ! [theclass "selected"]
                      else li
@@ -98,6 +100,8 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "javascripts" javascriptlinks .
                    setStrAttr "pagename" page .
                    setStrAttr "pageUrl" (urlForPage page) .
+                   setStrAttr "articleUrl" (urlForPage article) .
+                   setStrAttr "discussionUrl" (urlForPage discussion) .
                    setBoolAttr "ispage" (isPage page) .
                    setBoolAttr "pagetools" (pgShowPageTools layout) .
                    setBoolAttr "sitenav" (pgShowSiteNav layout) .
@@ -112,7 +116,6 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "content" (renderHtmlFragment htmlContents) .
                    setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
                    templ
-
 
 
 exportBox :: String -> Config -> String -> Maybe String -> Html
