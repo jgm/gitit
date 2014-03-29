@@ -72,16 +72,20 @@ where
 import Control.Exception (throwIO, catch)
 import Control.Monad.State
 import Control.Monad.Reader (ask)
+import Data.Foldable (traverse_)
+import Data.List (stripPrefix)
 import Data.Maybe (isNothing, mapMaybe)
+import Network.CGI (formDecode)
 import Network.Gitit.Cache (lookupCache, cacheContents)
 import Network.Gitit.Export (exportFormats)
-import Network.Gitit.Framework
+import Network.Gitit.Framework hiding (uriPath)
 import Network.Gitit.Layout
 import Network.Gitit.Page (stringToPage)
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.URI (isUnescapedInURI)
+import Network.HTTP (urlDecode)
+import Network.URI (URI (..), isUnescapedInURI, parseURIReference)
 import Network.URL (encString)
 import Prelude hiding (catch)
 import System.FilePath
@@ -90,6 +94,7 @@ import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Text.Highlighting.Kate
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
+import Text.XHtml.Strict (stringToHtmlString)
 #if MIN_VERSION_blaze_html(0,5,0)
 import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 #else
@@ -98,6 +103,7 @@ import Text.Blaze.Renderer.String as Blaze ( renderHtml )
 import qualified Data.Text as T
 import qualified Data.Set as Set
 import qualified Data.ByteString as S (concat)
+import qualified Data.ByteString.Char8 as SC (unpack)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
@@ -208,12 +214,14 @@ htmlViaPandoc = cachedHtml `mplus`
                   (rawContents >>=
                    maybe mzero return >>=
                    contentsToPage >>=
-                   pageToWikiPandoc >>=
-                   addMathSupport >>=
-                   pandocToHtml >>=
-                   wikiDivify >>=
-                   applyWikiTemplate >>=
-                   cacheHtml)
+                   handleRedirects >>=
+                   either return
+                     (pageToWikiPandoc >=>
+                      addMathSupport >=>
+                      pandocToHtml >=>
+                      wikiDivify >=>
+                      applyWikiTemplate >=>
+                      cacheHtml))
 
 -- | Responds with highlighted source code in a wiki
 -- page template.  Uses the cache when possible and
@@ -331,6 +339,154 @@ pageToPandoc page' = do
                              , ctxCategories = pageCategories page'
                              , ctxMeta = pageMeta page' }
   return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
+
+-- | Detects if the page is a redirect page and handles accordingly. The exact
+-- behaviour is as follows:
+--
+-- If the page is /not/ a redirect page (the most common case), then check the
+-- referer to see if the client came to this page as a result of a redirect
+-- from another page. If so, then add a notice to the messages to notify the
+-- user that they were redirected from another page, and provide a link back
+-- to the original page, with an extra parameter to disable redirection
+-- (e.g., to allow the original page to be edited).
+--
+-- If the page /is/ a redirect page, then check the query string for the
+-- @redirect@ parameter. This can modify the behaviour of the redirect as
+-- follows:
+--
+-- 1. If the @redirect@ parameter is unset, then check the referer to see if
+--    client came to this page as a result of a redirect from another page. If
+--    so, then do not redirect, and add a notice to the messages explaining
+--    that this page is a redirect page, that would have redirected to the
+--    destination given in the metadata (and provide a link thereto), but this
+--    was stopped because a double-redirect was detected. This is a simple way
+--    to prevent cyclical redirects and other abuses enabled by redirects.
+--    redirect to the same page. If the client did /not/ come to this page as
+--    a result of a redirect, then redirect back to the same page, except with
+--    the redirect parameter set to @\"yes\"@.
+--
+-- 2. If the @redirect@ parameter is set to \"yes\", then redirect to the
+--    destination specificed in the metadata. This uses a client-side (meta
+--    refresh + javascript backup) redirect to make sure the referer is set to
+--    this URL.
+--
+-- 3. If the @redirect@ parameter is set to \"no\", then do not redirect, but
+--    add a notice to the messages that this page /would/ have redirected to
+--    the destination given in the metadata had it not been disabled, and
+--    provide a link to the destination given in the metadata. This behaviour
+--    is the @revision@ parameter is present in the query string.
+handleRedirects :: Page -> ContentTransformer (Either Response Page)
+handleRedirects page = case lookup "redirect" (pageMeta page) of
+    Nothing -> isn'tRedirect
+    Just destination -> isRedirect destination
+  where
+    addMessage message = modifyContext $ \context -> context
+        { ctxLayout = (ctxLayout context)
+            { pgMessages = pgMessages (ctxLayout context) ++ [message]
+            }
+        }
+    redirectedFrom source = do
+        (url, html) <- processSource source
+        return $ concat
+            [ "Redirected from <a href=\""
+            , url
+            , "?redirect=no\" title=\"Go to original page\">"
+            , html
+            , "</a>"
+            ]
+    doubleRedirect source destination = do
+        (url, html) <- processSource source
+        (url', html') <- processDestination destination
+        return $ concat
+            [ "This page normally redirects to <a href=\""
+            , url'
+            , "\" title=\"Continue to destination\">"
+            , html'
+            , "</a>, but as you were already redirected from <a href=\""
+            , url
+            , "?redirect=no\" title=\"Go to original page\">"
+            , html
+            , "</a>"
+            , ", this was stopped to prevent a double-redirect."
+            ]
+    cancelledRedirect destination = do
+        (url', html') <- processDestination destination
+        return $ concat
+            [ "This page redirects to <a href=\""
+            , url'
+            , "\" title=\"Continue to destination\">"
+            , html'
+            , "</a>."
+            ]
+    processSource source = do
+        base' <- getWikiBase
+        let url = base' ++ urlForPage source
+        let html = stringToHtmlString source
+        return (url, html)
+    processDestination destination = do
+        base' <- getWikiBase
+        let (page', fragment) = break (== '#') destination
+        let url = concat [base', urlForPage page', fragment]
+        let html = stringToHtmlString page'
+        return (url, html)
+    getSource = do
+        cfg <- lift getConfig
+        base' <- getWikiBase
+        request <- askRq
+        return $ do
+            referer <- fmap SC.unpack $ getHeader "referer" request
+            uri <- parseURIReference referer
+            let params = formDecode (drop 1 (uriQuery uri))
+            redirect' <- lookup "redirect" params
+            guard $ redirect' == "yes"
+            path' <- stripPrefix (base' ++ "/") (uriPath uri)
+            let path'' = if null path' then frontPage cfg else urlDecode path'
+            guard $ isPage path''
+            return path''
+    withBody = setContentType "text/html; charset=utf-8" . toResponse
+    isn'tRedirect = do
+        getSource >>= traverse_ (redirectedFrom >=> addMessage)
+        return (Right page)
+    isRedirect destination = do
+        params <- getParams
+        case maybe (pRedirect params) (\_ -> Just False) (pRevision params) of
+             Nothing -> do
+                source <- getSource
+                case source of
+                     Just source' -> do
+                        doubleRedirect source' destination >>= addMessage
+                        return (Right page)
+                     Nothing -> fmap Left $ do
+                        base' <- getWikiBase
+                        let url' = concat
+                             [ base'
+                             , urlForPage (pageName page)
+                             , "?redirect=yes"
+                             ]
+                        lift $ seeOther url' $ withBody $ concat
+                            [ "<!doctype html><html><head><title>307 Redirect"
+                            , "</title></head><body><p>You are being <a href=\""
+                            , url'
+                            , "\">redirected</a>.</body></p></html>"
+                            ]
+             Just True -> fmap Left $ do
+                (url', html') <- processDestination destination
+                lift $ ok $ withBody $ concat
+                    [ "<!doctype html><html><head><title>Redirecting to "
+                    , html'
+                    , "</title><meta http-equiv=\"refresh\" contents=\"0; url="
+                    , url'
+                    , "\" /><script type=\"text/javascript\">window.location=\""
+                    , url'
+                    , "\"</script></head><body><p>Redirecting to <a href=\""
+                    , url'
+                    , "\">"
+                    , html'
+                    , "</a>...</p></body></html>"
+                    ]
+             Just False -> do
+                cancelledRedirect destination >>= addMessage
+                return (Right page)
 
 -- | Converts contents of page file to Page object.
 contentsToPage :: String -> ContentTransformer Page
