@@ -290,6 +290,7 @@ data Params = Params { pUsername     :: String
                      , pSessionKey   :: Maybe SessionKey
                      , pRecaptcha    :: Recaptcha
                      , pResetCode    :: String
+                     , pRedirect     :: Maybe Bool
                      }  deriving Show
 
 instance FromReqURI [String] where
@@ -341,6 +342,10 @@ instance FromData Params where
          rc <- look' "recaptcha_challenge_field" `mplus` return ""
          rr <- look' "recaptcha_response_field" `mplus` return ""
          rk <- look' "reset_code" `mplus` return ""
+         rd <- (look' "redirect" >>= \r -> return (case r of
+             "yes" -> Just True
+             "no" -> Just False
+             _ -> Nothing)) `mplus` return Nothing
          return   Params { pUsername     = un
                          , pPassword     = pw
                          , pPassword2    = p2
@@ -374,6 +379,7 @@ instance FromData Params where
                               recaptchaChallengeField = rc,
                               recaptchaResponseField = rr }
                          , pResetCode    = rk
+                         , pRedirect     = rd
                          }
 
 data Command = Command (Maybe String) deriving Show
