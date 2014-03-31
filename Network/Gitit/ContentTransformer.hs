@@ -420,13 +420,17 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
             ]
     processSource source = do
         base' <- getWikiBase
-        let url = base' ++ urlForPage source
+        let url = stringToHtmlString $ base' ++ urlForPage source
         let html = stringToHtmlString source
         return (url, html)
     processDestination destination = do
         base' <- getWikiBase
         let (page', fragment) = break (== '#') destination
-        let url = concat [base', urlForPage page', fragment]
+        let url = stringToHtmlString $ concat
+             [ base'
+             , urlForPage page'
+             , fragment
+             ]
         let html = stringToHtmlString page'
         return (url, html)
     getSource = do
@@ -466,7 +470,7 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
                         lift $ seeOther url' $ withBody $ concat
                             [ "<!doctype html><html><head><title>307 Redirect"
                             , "</title></head><body><p>You are being <a href=\""
-                            , url'
+                            , stringToHtmlString url'
                             , "\">redirected</a>.</body></p></html>"
                             ]
              Just True -> fmap Left $ do
