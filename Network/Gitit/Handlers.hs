@@ -141,10 +141,17 @@ createPage = do
                                     , pgTabs = []
                                     , pgTitle = "Create " ++ page ++ "?"
                                     } $
-                    p << [ stringToHtml ("There is no page '" ++ page ++
-                              "'.  You may create the page by "),
-                            anchor ! [href $ base' ++ "/_edit" ++ urlForPage page] <<
-                              "clicking here." ]
+                    (p << stringToHtml ("There is no page named '" ++ page ++
+                        "'. You can:")) +++
+                    (unordList $
+                      [ anchor !
+                            [href $ base' ++ "/_edit" ++ urlForPage page] <<
+                              ("Create the page “" ++ page ++ "”")
+                      , anchor !
+                            [href $ base' ++ "/_search?" ++
+                                (urlEncodeVars [("patterns", page)])] <<
+                              ("Search for pages containing the text '" ++
+                                page ++ "'")])
 
 uploadForm :: Handler
 uploadForm = withData $ \(params :: Params) -> do
