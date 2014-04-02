@@ -110,6 +110,7 @@ extractConfig cp = do
       cfPandocUserData <- get cp "DEFAULT" "pandoc-user-data"
       cfXssSanitize <- get cp "DEFAULT" "xss-sanitize"
       cfRecentActivityDays <- get cp "DEFAULT" "recent-activity-days"
+      cfShowUserEmails <- get cp "DEFAULT" "show-user-emails"
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
@@ -204,6 +205,7 @@ extractConfig cp = do
                                     else Just cfPandocUserData
         , xssSanitize          = cfXssSanitize
         , recentActivityDays   = cfRecentActivityDays
+        , showUserEmails       = cfShowUserEmails
         }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'

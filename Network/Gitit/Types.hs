@@ -151,7 +151,9 @@ data Config = Config {
   -- | Filter HTML through xss-sanitize
   xssSanitize          :: Bool,
   -- | The default number of days in the past to look for \"recent\" activity
-  recentActivityDays   :: Int
+  recentActivityDays   :: Int,
+  -- | Show email addresses in user list page
+  showUserEmails       :: Bool
   }
 
 -- | Data for rendering a wiki page.

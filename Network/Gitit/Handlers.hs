@@ -34,6 +34,7 @@ module Network.Gitit.Handlers (
                       , indexPage
                       , categoryPage
                       , categoryListPage
+                      , userListPage
                       , preview
                       , showRawPage
                       , showFileAsText
@@ -56,6 +57,7 @@ import Safe
 import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.Layout
+import Network.Gitit.State (queryGititState)
 import Network.Gitit.Types
 import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
@@ -73,15 +75,21 @@ import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixO
 import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
-import Data.Char (toLower, isSpace)
+import Data.Char (toLower, isSpace, ord)
+import Numeric (showHex)
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
 import qualified Data.ByteString as S
+import Network.URL (encString)
+import Network.URI (isUnescapedInURI)
 import Network.HTTP (urlEncodeVars)
-import Data.Time (getCurrentTime, addUTCTime)
+import Data.Time (getCurrentTime, addUTCTime, fromGregorian,
+        secondsToDiffTime, formatTime)
 import Data.Time.Clock (diffUTCTime, UTCTime(..))
+import System.Locale (defaultTimeLocale)
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
+import Data.Map (elems)
 
 handleAny :: Handler
 handleAny = uriRest $ \uri ->
@@ -765,6 +773,73 @@ categoryListPage = do
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = "Categories" } htmlMatches
+
+userListPage :: Handler
+userListPage = do
+    base' <- getWikiBase
+    fs <- getFileStore
+    cfg <- getConfig
+    hist <- liftIO $ history fs [] (TimeRange Nothing Nothing) Nothing
+    let uEdits u = length $
+         filter (\r -> authorName (revAuthor r) == (uUsername u)) hist
+    let compareUsers u u' = compare
+         (uLastSeen u', uEdits u', map toLower $ uUsername u)
+         (uLastSeen u, uEdits u, map toLower $ uUsername u')
+    users' <- fmap (sortBy compareUsers . elems) (queryGititState users)
+    let activityLink u = anchor ! [href $ concat
+         [ base'
+         , "/_activity?"
+         , urlEncodeVars [("forUser", (uUsername u))]
+         ]]
+    let userHtml u = tr << do
+         let username = td ! [theclass "username"] << activityLink u <<
+              uUsername u
+         let email = if not (showUserEmails cfg) then noHtml else do
+              let email' = uEmail u
+              let url = "mailto:" ++ encString False isUnescapedInURI email'
+              let href' = htmlAttr "href" (primHtml (obfuscateString url))
+              let text' = primHtml $ obfuscateString $ take 10 email' ++
+                   if length email' < 11 then "" else "..."
+              let link' = if null email' then noHtml else anchor ! [href'] <<
+                   text'
+              td ! [theclass "email"] << link'
+         let edits = td ! [theclass "edits"] << show (uEdits u)
+         let created = td ! [theclass "created"] << if uCreated u == epoch
+              then stringToHtml "unknown"
+              else showTime (uCreated u)
+         let lastSeen = td ! [theclass "lastseen"] << if uLastSeen u == epoch
+              then stringToHtml "never"
+              else showTime (uLastSeen u)
+         tr << [username, email, edits, lastSeen, created]
+    let headrow = tr <<
+         [ th ! [theclass "username"] << "User"
+         , if showUserEmails cfg
+            then th ! [theclass "email"] << "Email"
+            else noHtml
+         , th ! [theclass "edits"] << "Edits"
+         , th ! [theclass "lastseen"] << "Last seen"
+         , th ! [theclass "created"] << "Joined"
+         ]
+    let html = thediv ! [identifier "userList"] << table <<
+         (thead headrow +++ tbody << map userHtml users')
+    formattedPage defaultPageLayout{
+                  pgPageName = "Users",
+                  pgShowPageTools = False,
+                  pgTabs = [],
+                  pgTitle = "Users" } html
+  where
+    epoch = UTCTime (fromGregorian 1970 1 1) (secondsToDiffTime 0)
+    obfuscateChar char = do
+        let num = ord char
+        let numstr = if even num then show num else "x" ++ showHex num ""
+        "&#" ++ numstr ++ ";"
+    obfuscateString = concatMap obfuscateChar . fromEntities
+
+showTime :: UTCTime -> Html
+showTime then_ = do
+    let full = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S%z" then_
+    let text' = formatTime defaultTimeLocale "%H:%M, %e %B %Y" then_
+    tag "time" ! [strAttr "datetime" full] << text'
 
 expireCache :: Handler
 expireCache = do
