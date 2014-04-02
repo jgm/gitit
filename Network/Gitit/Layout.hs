@@ -107,7 +107,7 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' cfg page rev) .
                    T.setAttribute "tabs" (renderHtmlFragment tabs) .
-                   T.setAttribute "messages" (pgMessages layout) .
+                   (\f x xs -> if null xs then x else f xs) (T.setAttribute "messages") id (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) .
                    setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
