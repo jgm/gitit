@@ -41,6 +41,7 @@ import Control.Monad.Trans (MonadIO(), liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha, isAscii)
+import Data.Foldable (for_)
 import qualified Data.Map as M
 import Text.Pandoc.Shared (substitute)
 import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
@@ -51,6 +52,7 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
+import Data.Time.Clock (getCurrentTime)
 
 data ValidationType = Register
                     | ResetPassword
@@ -379,6 +381,9 @@ loginUser params = do
   cfg <- getConfig
   if allowed
     then do
+      now <- liftIO getCurrentTime
+      mbUser <- getUser uname
+      for_ mbUser $ \user -> adjustUser uname (user {uLastSeen = now})
       key <- newSession (SessionData uname)
       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)

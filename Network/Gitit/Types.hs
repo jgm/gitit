@@ -25,7 +25,7 @@ module Network.Gitit.Types where
 
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
-import Control.Monad (liftM)
+import Control.Monad (liftM, msum)
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
@@ -37,6 +37,8 @@ import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
+import Text.Read hiding (get, look)
+import Data.Time (UTCTime (UTCTime), fromGregorian, secondsToDiffTime)
 
 data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
                 deriving (Read, Show, Eq)
@@ -180,8 +182,46 @@ data Password = Password { pSalt :: String, pHashed :: String }
 data User = User {
   uUsername :: String,
   uPassword :: Password,
-  uEmail    :: String
-} deriving (Show,Read)
+  uEmail    :: String,
+  uCreated  :: UTCTime,
+  uLastSeen :: UTCTime
+} deriving (Show)
+
+instance Read User where
+    readPrec = parens $ prec 11 $ do
+        Ident "User" <- lexP
+        Punc "{" <- lexP
+        Ident "uUsername" <- lexP
+        Punc "=" <- lexP
+        username <- readPrec
+        Punc "," <- lexP
+        Ident "uPassword" <- lexP
+        Punc "=" <- lexP
+        password <- readPrec
+        Punc "," <- lexP
+        Ident "uEmail" <- lexP
+        Punc "=" <- lexP
+        email <- readPrec
+        (created, lastSeen) <- msum
+            [ do
+                Punc "," <- lexP
+                Ident "uCreated" <- lexP
+                Punc "=" <- lexP
+                created <- readPrec
+                Punc "," <- lexP
+                Ident "uLastSeen" <- lexP
+                Punc "=" <- lexP
+                lastSeen <- readPrec
+                Punc "}" <- lexP
+                return (created, lastSeen)
+            , do
+                Punc "}" <- lexP
+                let t = UTCTime (fromGregorian 1970 1 1) (secondsToDiffTime 0)
+                return (t, t)
+            ]
+        return (User username password email created lastSeen)
+    readList = readListDefault
+    readListPrec = readListPrecDefault
 
 -- | Common state for all gitit wikis in an application.
 data GititState = GititState {
