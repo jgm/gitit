@@ -460,7 +460,8 @@ showDiff file page params = do
                                           pgMessages = pMessages params,
                                           pgTabs = DiffTab :
                                                    pgTabs defaultPageLayout,
-                                          pgSelectedTab = DiffTab
+                                          pgSelectedTab = DiffTab,
+                                          pgTitle = page
                                           }
                                        htmlDiff
 
