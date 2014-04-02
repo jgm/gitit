@@ -141,12 +141,13 @@ createPage = do
                                     , pgTabs = []
                                     , pgTitle = "Create " ++ page ++ "?"
                                     } $
-                    (p << stringToHtml ("There is no page named '" ++ page ++
-                        "'. You can:")) +++
+                    (p << stringToHtml
+                        ("There is no page named '" ++ page ++ "'. You can:"))
+                        +++
                     (unordList $
                       [ anchor !
                             [href $ base' ++ "/_edit" ++ urlForPage page] <<
-                              ("Create the page “" ++ page ++ "”")
+                              ("Create the page '" ++ page ++ "'")
                       , anchor !
                             [href $ base' ++ "/_search?" ++
                                 (urlEncodeVars [("patterns", page)])] <<
