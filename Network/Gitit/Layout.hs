@@ -114,7 +114,8 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    maybe id (T.setAttribute "revision") rev .
                    T.setAttribute "exportbox"
                        (renderHtmlFragment $  exportBox base' cfg page rev) .
-                   T.setAttribute "tabs" (renderHtmlFragment tabs) .
+                   (if null (pgTabs layout) then id else T.setAttribute "tabs"
+                       (renderHtmlFragment tabs)) .
                    (\f x xs -> if null xs then x else f xs) (T.setAttribute "messages") id (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
                    T.setAttribute "content" (renderHtmlFragment htmlContents) .
