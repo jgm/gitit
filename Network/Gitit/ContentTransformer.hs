@@ -677,6 +677,7 @@ readerFor pt lhs =
        LaTeX    -> readLaTeX defPS
        HTML     -> readHtml defPS
        Textile  -> readTextile defPS
+       Org      -> readOrg defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform pandoc
