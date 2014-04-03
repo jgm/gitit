@@ -161,18 +161,18 @@ uploadForm = withData $ \(params :: Params) -> do
   let logMsg = pLogMsg params
   let upForm = form ! [X.method "post", enctype "multipart/form-data"] <<
        fieldset <<
-       [ p << [label << "File to upload:"
+       [ p << [label ! [thefor "file"] << "File to upload:"
               , br
               , afile "file" ! [value origPath] ]
-       , p << [ label << "Name on wiki, including extension"
+       , p << [ label ! [thefor "wikiname"] << "Name on wiki, including extension"
               , noscript << " (leave blank to use the same filename)"
               , stringToHtml ":"
               , br
               , textfield "wikiname" ! [value wikiname]
               , primHtmlChar "nbsp"
               , checkbox "overwrite" "yes"
-              , label << "Overwrite existing file" ]
-       , p << [ label << "Description of content or changes:"
+              , label ! [thefor "overwrite"] << "Overwrite existing file" ]
+       , p << [ label ! [thefor "logMsg"] << "Description of content or changes:"
               , br
               , textfield "logMsg" ! [size "60", value logMsg]
               , submit "upload" "Upload" ]
@@ -529,7 +529,7 @@ editPage' params = do
                    , textarea ! (readonly ++ [cols "80", name "editedText",
                                   identifier "editedText"]) << raw
                    , br
-                   , label << "Description of changes:"
+                   , label ! [thefor "logMsg"] << "Description of changes:"
                    , br
                    , textfield "logMsg" ! (readonly ++ [value logMsg])
                    , submit "update" "Save"
