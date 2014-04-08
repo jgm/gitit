@@ -53,6 +53,7 @@ import Network.Gitit.Types
 import Network.Gitit.Util (trim, splitCategories, parsePageType)
 import Text.ParserCombinators.Parsec
 import Data.Char (toLower)
+import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
 import Data.ByteString.UTF8 (toString)
 import qualified Data.ByteString as B
@@ -134,23 +135,29 @@ pageToString conf page' =
       pagelhs    = pageLHS page'
       pagetoc    = pageTOC page'
       pagecats   = pageCategories page'
+      metadata   = filter
+                       (\(k, _) -> not (k `elem`
+                           ["title", "format", "toc", "categories"]))
+                       (pageMeta page')
       metadata'  = (if pagename /= pagetitle
-                       then "!title: " ++ pagetitle ++ "\n"
+                       then "title: " ++ pagetitle ++ "\n"
                        else "") ++
                    (if pageformat /= defaultPageType conf ||
                           pagelhs /= defaultLHS conf
-                       then "!format: " ++
+                       then "format: " ++
                             map toLower (show pageformat) ++
                             if pagelhs then "+lhs\n" else "\n"
                        else "") ++
                    (if pagetoc /= tableOfContents conf
-                       then "!toc: " ++
+                       then "toc: " ++
                             (if pagetoc then "yes" else "no") ++ "\n"
                        else "") ++
                    (if not (null pagecats)
-                       then "!categories: " ++ unwords pagecats ++ "\n"
-                       else "")
-  in  metadata' ++ (if null metadata' then "" else "\n") ++ pageText page'
+                       then "categories: " ++ intercalate ", " pagecats ++ "\n"
+                       else "") ++
+                   (unlines (map (\(k, v) -> k ++ ": " ++ v) metadata))
+  in (if null metadata' then "" else "---\n" ++ metadata' ++ "...\n\n")
+        ++ pageText page'
 
 -- | Read categories from metadata strictly.
 readCategories :: FilePath -> IO [String]
