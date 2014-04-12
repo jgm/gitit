@@ -99,5 +99,7 @@ parsePageType s =
        "textile"      -> (Textile,False)
        "latex"        -> (LaTeX,False)
        "latex+lhs"    -> (LaTeX,True)
+       "org"          -> (Org, False)
+       "org-mode"     -> (Org, False)
        x              -> error $ "Unknown page type: " ++ x
 

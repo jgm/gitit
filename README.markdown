@@ -6,7 +6,7 @@ the web server and [pandoc][] for markup processing. Pages and uploaded
 files are stored in a [git][], [darcs][], or [mercurial][] repository
 and may be modified either by using the VCS's command-line tools or
 through the wiki's web interface. By default, pandoc's extended version
-of markdown is used as a markup language, but reStructuredText, LaTeX,
+of markdown is used as a markup language, but reStructuredText, LaTeX, org-mode
 or HTML can also be used. Pages can be exported in a number of different
 formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
 Gitit can be configured to display TeX math (using [texmath][]) and
