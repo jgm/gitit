@@ -381,10 +381,12 @@ showHistory file page params =  do
 
 showActivity :: Handler
 showActivity = withData $ \(params :: Params) -> do
+  cfg <- getConfig
   currTime <- liftIO getCurrentTime
-  let oneMonthAgo = addUTCTime (-60 * 60 * 24 * 30) currTime
+  let defaultDaysAgo = fromIntegral (recentActivityDays cfg)
+  let daysAgo = addUTCTime (defaultDaysAgo * (-60) * 60 * 24) currTime
   let since = case pSince params of
-                   Nothing -> Just oneMonthAgo
+                   Nothing -> Just daysAgo
                    Just t  -> Just t
   let forUser = pForUser params
   fs <- getFileStore

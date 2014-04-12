@@ -147,7 +147,9 @@ data Config = Config {
   -- | Directory to search for pandoc customizations
   pandocUserData       :: Maybe FilePath,
   -- | Filter HTML through xss-sanitize
-  xssSanitize          :: Bool
+  xssSanitize          :: Bool,
+  -- | The default number of days in the past to look for \"recent\" activity
+  recentActivityDays   :: Int
   }
 
 -- | Data for rendering a wiki page.
