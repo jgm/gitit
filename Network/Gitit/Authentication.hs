@@ -77,7 +77,7 @@ registerUser params = do
 resetPasswordRequestForm :: Params -> Handler
 resetPasswordRequestForm _ = do
   let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
-              [ label << "Username: "
+              [ label ! [thefor "username"] << "Username: "
               , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
               , submit "resetPassword" "Reset Password" ! [intAttr "tabindex" 2]]
   cfg <- getConfig
@@ -217,7 +217,7 @@ sharedForm mbUser = withData $ \params -> do
                 x   -> return x
   let accessQ = case accessQuestion cfg of
                       Nothing          -> noHtml
-                      Just (prompt, _) -> label << prompt +++ br +++
+                      Just (prompt, _) -> label ! [thefor "accessCode"] << prompt +++ br +++
                                           X.password "accessCode" ! [size "15", intAttr "tabindex" 1]
                                           +++ br
   let captcha = if useRecaptcha cfg
@@ -227,12 +227,13 @@ sharedForm mbUser = withData $ \params -> do
                       Nothing    -> ""
                       Just user  -> field user
   let userNameField = case mbUser of
-                      Nothing    -> label <<
+                      Nothing    -> label ! [thefor "username"] <<
                                      "Username (at least 3 letters or digits):"
                                     +++ br +++
                                     textfield "username" ! [size "20", intAttr "tabindex" 2] +++ br
-                      Just user  -> label << ("Username (cannot be changed): "
-                                               ++ uUsername user) +++ br
+                      Just user  -> label ! [thefor "username"] <<
+                                    ("Username (cannot be changed): " ++ uUsername user)
+                                    +++ br
   let submitField = case mbUser of
                       Nothing    -> submit "register" "Register"
                       Just _     -> submit "resetPassword" "Reset Password"
@@ -240,17 +241,18 @@ sharedForm mbUser = withData $ \params -> do
   return $ gui "" ! [identifier "loginForm"] << fieldset <<
             [ accessQ
             , userNameField
-            , label << "Email (optional, will not be displayed on the Wiki):"
+            , label ! [thefor "email"] << "Email (optional, will not be displayed on the Wiki):"
             , br
             , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)], br
             , textfield "full_name_1" ! [size "20", theclass "req"]
-            , label << ("Password (at least 6 characters," ++
+            , label ! [thefor "password"]
+                    << ("Password (at least 6 characters," ++
                         " including at least one non-letter):")
             , br
             , X.password "password" ! [size "20", intAttr "tabindex" 4]
             , stringToHtml " "
             , br
-            , label << "Confirm Password:"
+            , label ! [thefor "password2"] << "Confirm Password:"
             , br
             , X.password "password2" ! [size "20", intAttr "tabindex" 5]
             , stringToHtml " "
@@ -332,10 +334,10 @@ loginForm dest = do
   base' <- getWikiBase
   return $ gui (base' ++ "/_login") ! [identifier "loginForm"] <<
     fieldset <<
-      [ label << "Username "
+      [ label ! [thefor "username"] << "Username "
       , textfield "username" ! [size "15", intAttr "tabindex" 1]
       , stringToHtml " "
-      , label << "Password "
+      , label ! [thefor "password"] << "Password "
       , X.password "password" ! [size "15", intAttr "tabindex" 2]
       , stringToHtml " "
       , textfield "destination" ! [thestyle "display: none;", value dest]
