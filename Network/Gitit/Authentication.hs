@@ -215,7 +215,9 @@ sharedForm mbUser = withData $ \params -> do
   dest <- case pDestination params of
                 ""  -> getReferer
                 x   -> return x
-  let accessQ = case accessQuestion cfg of
+  let accessQ = case mbUser of
+            Just _ -> noHtml
+            Nothing -> case accessQuestion cfg of
                       Nothing          -> noHtml
                       Just (prompt, _) -> label ! [thefor "accessCode"] << prompt +++ br +++
                                           X.password "accessCode" ! [size "15", intAttr "tabindex" 1]
@@ -281,9 +283,11 @@ sharedValidation validationType params = do
   let optionalTests Register =
           [(taken, "Sorry, that username is already taken.")]
       optionalTests ResetPassword = []
-  let isValidAccessCode = case accessQuestion cfg of
-        Nothing           -> True
-        Just (_, answers) -> accessCode `elem` answers
+  let isValidAccessCode = case validationType of
+        ResetPassword -> True
+        Register -> case accessQuestion cfg of
+            Nothing           -> True
+            Just (_, answers) -> accessCode `elem` answers
   let isValidEmail e = length (filter (=='@') e) == 1
   peer <- liftM (fst . rqPeer) askRq
   captchaResult <-
