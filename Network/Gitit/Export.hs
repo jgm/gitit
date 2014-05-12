@@ -184,6 +184,10 @@ respondOrg :: String -> Pandoc -> Handler
 respondOrg = respondS "org" "text/plain; charset=utf-8" ""
   writeOrg defaultRespOptions
 
+respondICML :: String -> Pandoc -> Handler
+respondICML = respondS "icml" "application/xml; charset=utf-8" ""
+  writeICML defaultRespOptions
+
 respondTextile :: String -> Pandoc -> Handler
 respondTextile = respondS "textile" "text/plain; charset=utf-8" ""
   writeTextile defaultRespOptions
@@ -311,6 +315,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("Plain text",respondPlain)
                 , ("MediaWiki", respondMediaWiki)
                 , ("Org-mode",  respondOrg)
+                , ("ICML",      respondICML)
                 , ("Textile",   respondTextile)
                 , ("AsciiDoc",  respondAsciiDoc)
                 , ("Man page",  respondMan)
