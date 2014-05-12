@@ -38,7 +38,7 @@ import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 
-data PageType = Markdown | RST | LaTeX | HTML | Textile
+data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
                 deriving (Read, Show, Eq)
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
