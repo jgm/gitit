@@ -404,10 +404,8 @@ showActivity = withData $ \(params :: Params) -> do
       fileFromChange (Deleted f)  = f
 
   base' <- getWikiBase
-  let fileAnchor revis file =
-        anchor ! [href $ base' ++ "/_diff" ++ urlForPage file ++ "?to=" ++ revis] << file
   let fileAnchor revis file = if isPageFile file
-        then anchor ! [href $ base' ++ "/_diff" ++ urlForPage(dropExtension(file)) ++ "?to=" ++ revis] << dropExtension file
+        then anchor ! [href $ base' ++ "/_diff" ++ urlForPage file ++ "?to=" ++ revis] << dropExtension file
         else anchor ! [href $ base' ++ urlForPage file ] << file
   let filesFor changes revis = intersperse (stringToHtml " ") $
         map (fileAnchor revis . fileFromChange) changes
