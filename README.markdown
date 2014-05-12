@@ -6,11 +6,11 @@ the web server and [pandoc][] for markup processing. Pages and uploaded
 files are stored in a [git][], [darcs][], or [mercurial][] repository
 and may be modified either by using the VCS's command-line tools or
 through the wiki's web interface. By default, pandoc's extended version
-of markdown is used as a markup language, but reStructuredText, LaTeX,
-or HTML can also be used. Pages can be exported in a number of different
-formats, including LaTeX, RTF, OpenOffice ODT, and MediaWiki markup.
-Gitit can be configured to display TeX math (using [texmath][]) and
-highlighted source code (using [highlighting-kate][]).
+of markdown is used as a markup language, but reStructuredText, LaTeX, HTML,
+DocBook, or Emacs Org-mode markup can also be used. Pages can be exported in a
+number of different formats, including LaTeX, RTF, OpenOffice ODT, and
+MediaWiki markup.  Gitit can be configured to display TeX math (using
+[texmath][]) and highlighted source code (using [highlighting-kate][]).
 
 Other features include
 
@@ -349,9 +349,9 @@ Plugins
 =======
 
 Plugins are small Haskell programs that transform a wiki page after it
-has been converted from Markdown or RST. See the example plugins in the
-`plugins` directory. To enable a plugin, include the path to the plugin
-(or its module name) in the `plugins` field of the configuration file.
+has been converted from Markdown or another source format. See the example
+plugins in the `plugins` directory. To enable a plugin, include the path to the
+plugin (or its module name) in the `plugins` field of the configuration file.
 (If the plugin name starts with `Network.Gitit.Plugin.`, gitit will assume that
 the plugin is an installed module and will not look for a source file.)
 

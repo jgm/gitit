@@ -136,6 +136,8 @@ createDefaultPages conf = do
                        HTML     -> writeHtmlString defOpts . toPandoc
                        RST      -> writeRST defOpts . toPandoc
                        Textile  -> writeTextile defOpts . toPandoc
+                       Org      -> writeOrg defOpts . toPandoc
+                       DocBook  -> writeDocbook defOpts . toPandoc
 
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
     welcomecontents <- liftM converter $ readFileUTF8 welcomepath
