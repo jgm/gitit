@@ -724,7 +724,7 @@ categoryPage = do
   matches <- liftM catMaybes $
              forM pages $ \f -> do
                categories <- liftIO $ readCategories $ repoPath </> f
-               return $ if pcategories == pcategories `intersect` categories
+               return $ if all ( `elem` categories) pcategories
                            then Just f
                            else Nothing
   base' <- getWikiBase
