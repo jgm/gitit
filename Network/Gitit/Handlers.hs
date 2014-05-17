@@ -69,7 +69,8 @@ import Prelude hiding (catch)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
-import Data.List (intersect, intercalate, intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
+import Data.List (intercalate, intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
+import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
 import Data.Char (toLower, isSpace)
@@ -701,13 +702,6 @@ fileListToHtml base' prefix files =
                   lastNote "fileListToHtml" d, accum]) noHtml updirs
   in uplink +++ ulist ! [theclass "index"] << map fileLink files
 
-splitOn :: Eq a => a -> [a] -> [[a]]
-splitOn c cs =
-  let (next, rest) = break (==c) cs
-  in case rest of
-         []     -> [next]
-         (_:rs) -> next : splitOn c rs
-
 -- NOTE:  The current implementation of categoryPage does not go via the
 -- filestore abstraction.  That is bad, but can only be fixed if we add
 -- more sophisticated searching options to filestore.
@@ -715,7 +709,7 @@ categoryPage :: Handler
 categoryPage = do
   path' <- getPath
   cfg <- getConfig
-  let pcategories = splitOn '/' path'
+  let pcategories = wordsBy (==',') path'
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ (intercalate " + " pcategories)
   fs <- getFileStore
