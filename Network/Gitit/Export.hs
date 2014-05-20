@@ -22,29 +22,23 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Export ( exportFormats ) where
 import Text.Pandoc hiding (HTMLMathMethod(..))
 import qualified Text.Pandoc as Pandoc
+import Text.Pandoc.PDF (makePDF)
 import Text.Pandoc.SelfContained as SelfContained
-import Text.Pandoc.Shared (escapeStringUsing, readDataFileUTF8)
+import Text.Pandoc.Shared (readDataFileUTF8)
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage, getWikiBase)
-import Network.Gitit.Util (withTempDir, readFileUTF8)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Network.Gitit.Cache (cacheContents, lookupCache)
 import Control.Monad.Trans (liftIO)
-import Control.Monad (unless, when)
+import Control.Monad (unless)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
-import Data.ByteString.Lazy.UTF8 (fromString)
-import System.FilePath ((<.>), (</>), takeDirectory)
+import Data.ByteString.Lazy.UTF8 (fromString, toString)
+import System.FilePath ((</>), takeDirectory)
 import Control.Exception (throwIO)
-import System.Environment (getEnvironment)
-import System.Exit (ExitCode(..))
-import System.IO (openTempFile)
-import System.Directory (getCurrentDirectory, setCurrentDirectory, removeFile,
-                         doesFileExist)
-import System.Process (runProcess, waitForProcess)
-import Codec.Binary.UTF8.String (encodeString)
+import System.Directory (doesFileExist)
 import Text.HTML.SanitizeXSS
 import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
 import qualified Data.Text as T
@@ -211,21 +205,6 @@ respondDocx = respondX "native"
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   "docx" writeDocx defaultRespOptions
 
---- | Run shell command and return error status.  Assumes
--- UTF-8 locale. Note that this does not actually go through \/bin\/sh!
-runShellCommand :: FilePath                     -- ^ Working directory
-                -> Maybe [(String, String)]     -- ^ Environment
-                -> String                       -- ^ Command
-                -> [String]                     -- ^ Arguments
-                -> IO ExitCode
-runShellCommand workingDir environment command optionList = do
-  (errPath, err) <- openTempFile workingDir "err"
-  hProcess <- runProcess (encodeString command) (map encodeString optionList)
-               (Just workingDir) environment Nothing (Just err) (Just err)
-  status <- waitForProcess hProcess
-  removeFile errPath
-  return status
-
 respondPDF :: String -> Pandoc -> Handler
 respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   cfg <- getConfig
@@ -235,39 +214,24 @@ respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
                then lookupCache cacheName
                else return Nothing
   pdf' <- case cached of
-            Just (_modtime, bs) -> return $ Right (False, L.fromChunks [bs])
-            Nothing -> liftIO $ withTempDir "gitit-tmp-pdf" $ \tempdir -> do
+            Just (_modtime, bs) -> return $ Right $ L.fromChunks [bs]
+            Nothing -> do
               template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
-              template  <- either throwIO return template'
+              template  <- liftIO $ either throwIO return template'
               let toc = tableOfContents cfg
-              let latex = writeLaTeX defaultRespOptions{writerTemplate = template
-                                                       ,writerSourceURL = Just $ baseUrl cfg
-                                                       ,writerTableOfContents = toc} pndc
-              let tempfile = "export" <.> "tex"
-              curdir <- getCurrentDirectory
-              setCurrentDirectory tempdir
-              writeFile tempfile latex
-              -- run pdflatex twice to get the references and toc right
-              let cmd = "pdflatex"
-              oldEnv <- getEnvironment
-              let env = Just $ ("TEXINPUTS",".:" ++
-                               escapeStringUsing [(' ',"\\ "),('"',"\\\"")]
-                               (curdir </> repositoryPath cfg) ++ ":") : oldEnv
-              let opts = ["-interaction=batchmode", "-no-shell-escape", tempfile]
-              _ <- runShellCommand tempdir env cmd opts
-              canary <- runShellCommand tempdir env cmd opts
-              setCurrentDirectory curdir -- restore original location
-              case canary of
-                  ExitSuccess   -> do pdfBS <- L.readFile (tempdir </> "export" <.> "pdf")
-                                      return $ Right (useCache cfg, pdfBS)
-                  ExitFailure n -> do l <- readFileUTF8 (tempdir </> "export" <.> "log")
-                                      return $ Left (n, l)
+              res <- liftIO $ makePDF "pdflatex" writeLaTeX
+                         defaultRespOptions{writerTemplate = template
+                                           ,writerSourceURL = Just $ baseUrl cfg
+                                           ,writerTableOfContents = toc} pndc
+              return res
   case pdf' of
-       Left (n,logOutput) -> simpleErrorHandler ("PDF creation failed with code: " ++
-                               show n ++ "\n" ++ logOutput)
-       Right (needsCaching, pdfBS) -> do
-              when needsCaching $
-                 cacheContents cacheName $ B.concat . L.toChunks $ pdfBS
+       Left logOutput -> simpleErrorHandler ("PDF creation failed:\n"
+                           ++ toString logOutput)
+       Right pdfBS -> do
+              case cached of
+                Nothing ->
+                     cacheContents cacheName $ B.concat . L.toChunks $ pdfBS
+                _ -> return ()
               ok $ setContentType "application/pdf" $ setFilename (page ++ ".pdf") $
                         (toResponse noHtml) {rsBody = pdfBS}
 
