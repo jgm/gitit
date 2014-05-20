@@ -79,7 +79,6 @@ respondX templ mimetype ext fn opts page doc = do
              then fixURLs page doc
              else return doc
   respond mimetype ext (fn opts{writerTemplate = template
-                               ,writerSourceURL = Just $ baseUrl cfg
                                ,writerUserDataDir = pandocUserData cfg})
           page doc'
 
@@ -135,7 +134,6 @@ respondSlides templ slideVariant page doc = do
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
                ,writerTemplate = template
-               ,writerSourceURL = Just $ baseUrl cfg
                ,writerUserDataDir = pandocUserData cfg
                } (Pandoc meta [])
     h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
@@ -243,6 +241,7 @@ respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
               template  <- either throwIO return template'
               let toc = tableOfContents cfg
               let latex = writeLaTeX defaultRespOptions{writerTemplate = template
+                                                       ,writerSourceURL = Just $ baseUrl cfg
                                                        ,writerTableOfContents = toc} pndc
               let tempfile = "export" <.> "tex"
               curdir <- getCurrentDirectory
