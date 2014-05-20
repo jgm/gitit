@@ -69,7 +69,8 @@ import Prelude hiding (catch)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
-import Data.List (intersperse, nub, sortBy, find, isPrefixOf, inits, sort)
+import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixOf, inits, sort, (\\))
+import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
 import Data.Char (toLower, isSpace)
@@ -609,7 +610,7 @@ deletePage = withData $ \(params :: Params) -> do
   if pConfirm params && (file == page || file == page <.> "page")
      then do
        fs <- getFileStore
-       liftIO $ delete fs file author descrip
+       liftIO $ Data.FileStore.delete fs file author descrip
        seeOther (base' ++ "/") $ toResponse $ p << "File deleted"
      else seeOther (base' ++ urlForPage page) $ toResponse $ p << "Not deleted"
 
@@ -706,30 +707,44 @@ fileListToHtml base' prefix files =
 -- more sophisticated searching options to filestore.
 categoryPage :: Handler
 categoryPage = do
-  category <- getPath
+  path' <- getPath
   cfg <- getConfig
+  let pcategories = wordsBy (==',') path'
   let repoPath = repositoryPath cfg
-  let categoryDescription = "Category: " ++ category
+  let categoryDescription = "Category: " ++ (intercalate " + " pcategories)
   fs <- getFileStore
   files <- liftIO $ index fs
   let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
   matches <- liftM catMaybes $
              forM pages $ \f -> do
                categories <- liftIO $ readCategories $ repoPath </> f
-               return $ if category `elem` categories
-                           then Just f
+               return $ if all ( `elem` categories) pcategories
+                           then Just (f, categories \\ pcategories)
                            else Nothing
   base' <- getWikiBase
   let toMatchListItem file = li <<
         [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file ]
-  let htmlMatches = ulist << map toMatchListItem matches
+  let toRemoveListItem cat = li << 
+        [ anchor ! [href $ base' ++
+        (if null (tail pcategories)
+         then "/_categories"
+         else "/_category" ++ urlForPage (intercalate "," $ Data.List.delete cat pcategories)) ]
+        << ("-" ++ cat) ]
+  let toAddListItem cat = li <<
+        [ anchor ! [href $ base' ++
+          "/_category" ++ urlForPage (path' ++ "," ++ cat) ]
+        << ("+" ++ cat) ]
+  let matchList = ulist << map toMatchListItem (fst $ unzip matches) +++
+                  thediv ! [ identifier "categoryList" ] <<
+                  ulist << (++) (map toAddListItem (nub $ concat $ snd $ unzip matches)) 
+                                (map toRemoveListItem pcategories) 
   formattedPage defaultPageLayout{
                   pgPageName = categoryDescription,
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgScripts = ["search.js"],
                   pgTitle = categoryDescription }
-                htmlMatches
+                matchList
 
 categoryListPage :: Handler
 categoryListPage = do
