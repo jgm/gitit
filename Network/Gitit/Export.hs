@@ -47,7 +47,7 @@ import Text.Highlighting.Kate (styleToCss, pygments)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
-defaultRespOptions = def { writerStandalone = True }
+defaultRespOptions = def { writerStandalone = True, writerHighlight = True }
 
 respond :: String
         -> String
@@ -69,7 +69,7 @@ respondX templ mimetype ext fn opts page doc = do
   template <- case template' of
                   Right t  -> return t
                   Left e   -> liftIO $ throwIO e
-  doc' <- if ext `elem` ["odt","pdf","epub","docx","rtf"]
+  doc' <- if ext `elem` ["odt","pdf","beamer","epub","docx","rtf"]
              then fixURLs page doc
              else return doc
   respond mimetype ext (fn opts{writerTemplate = template
@@ -205,8 +205,8 @@ respondDocx = respondX "native"
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   "docx" writeDocx defaultRespOptions
 
-respondPDF :: String -> Pandoc -> Handler
-respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
+respondPDF :: Bool -> String -> Pandoc -> Handler
+respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export disabled"
   let cacheName = pathForPage page ++ ".export.pdf"
@@ -216,13 +216,15 @@ respondPDF page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   pdf' <- case cached of
             Just (_modtime, bs) -> return $ Right $ L.fromChunks [bs]
             Nothing -> do
-              template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) "latex"
+              template' <- liftIO $ getDefaultTemplate (pandocUserData cfg)
+                                  $ if useBeamer then "beamer" else "latex"
               template  <- liftIO $ either throwIO return template'
               let toc = tableOfContents cfg
               res <- liftIO $ makePDF "pdflatex" writeLaTeX
                          defaultRespOptions{writerTemplate = template
                                            ,writerSourceURL = Just $ baseUrl cfg
-                                           ,writerTableOfContents = toc} pndc
+                                           ,writerTableOfContents = toc
+                                           ,writerBeamer = useBeamer} pndc
               return res
   case pdf' of
        Left logOutput -> simpleErrorHandler ("PDF creation failed:\n"
@@ -268,7 +270,9 @@ fixURLs page pndc = do
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]
 exportFormats cfg = if pdfExport cfg
-                       then ("PDF", respondPDF) : rest
+                       then ("PDF", respondPDF False) :
+                            ("Beamer", respondPDF True) :
+                            rest
                        else rest
    where rest = [ ("LaTeX",     respondLaTeX)     -- (description, writer)
                 , ("ConTeXt",   respondConTeXt)
@@ -288,7 +292,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("S5",        respondSlides "s5" S5Slides)
                 , ("EPUB",      respondEPUB)
                 , ("ODT",       respondODT)
-                , ("Docx",      respondDocx)
+                , ("DOCX",      respondDocx)
                 , ("RTF",       respondRTF) ]
 
 pygmentsCss :: String
