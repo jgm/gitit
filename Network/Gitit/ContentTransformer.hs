@@ -518,6 +518,7 @@ pandocToHtml pandocContents = do
                                  _      -> JsMath (Just $ base' ++
                                                       "/js/jsMath/easy/load.js")
                       , writerTableOfContents = toc
+                      , writerHighlight = True
                       , writerExtensions = if bird
                                               then Set.insert
                                                    Ext_literate_haskell
