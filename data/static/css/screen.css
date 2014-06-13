@@ -16,7 +16,7 @@ option { padding: 0 .4em; }
 table, tr, td, th { border: none; }
 hr { height: 1px; color: #aaa; background-color: #aaa; border: 0; margin: .2em 0 .2em 0; }
 
-h1, h2, h3, h4, h5, h6 { font-weight: normal; border-bottom: 1px solid black; }
+h1, h2, h3, h4, h5, h6 { font-weight: normal; border-bottom: 1px solid #aaa; }
 
 h1.pageTitle { font-size: 197%; margin: 0.2em 0 .5em; }
 
