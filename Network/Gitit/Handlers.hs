@@ -84,13 +84,14 @@ import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
 
 handleAny :: Handler
-handleAny = uriRest $ \uri ->
+handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
   let path' = uriPath uri
   in  do fs <- getFileStore
+         let rev = pRevision params
          mimetype <- getMimeTypeForExtension
                       (takeExtension path')
          res <- liftIO $ try
-                (retrieve fs path' Nothing :: IO B.ByteString)
+                (retrieve fs path' rev :: IO B.ByteString)
          case res of
                 Right contents -> ignoreFilters >>  -- don't compress
                                   (ok $ setContentType mimetype $
@@ -406,8 +407,8 @@ showActivity = withData $ \(params :: Params) -> do
 
   base' <- getWikiBase
   let fileAnchor revis file = if isPageFile file
-        then anchor ! [href $ base' ++ "/_diff" ++ urlForPage file ++ "?to=" ++ revis] << dropExtension file
-        else anchor ! [href $ base' ++ urlForPage file ] << file
+        then anchor ! [href $ base' ++ "/_diff" ++ urlForPage (dropExtension file) ++ "?to=" ++ revis] << dropExtension file
+        else anchor ! [href $ base' ++ urlForPage file ++ "?revision=" ++ revis] << file
   let filesFor changes revis = intersperse (stringToHtml " ") $
         map (fileAnchor revis . fileFromChange) changes
   let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
