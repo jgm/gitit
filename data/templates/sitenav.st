@@ -17,7 +17,7 @@
     </ul>
     <form action="$base$/_search" method="get" id="searchform">
      <input type="text" name="patterns" id="patterns"/>
-     <input type="submit" name="search" id="search" value="Search"/>
+     <input type="submit" name="search" id="search" value="Search"/><br\>
      <input type="checkbox" name="exactphrase" id="exactphrase">&nbsp;Exact Phrase
     </form>
     <form action="$base$/_go" method="post" id="goform">
