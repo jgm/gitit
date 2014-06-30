@@ -1,3 +1,94 @@
+Version 0.10.4 released 30 Jun 2014
+
+*   Updated package bounds for happstack (#382), pandoc, blaze-html,
+    network.
+
+*   Display EPS as image, not code.
+
+*   Fixed recent activity page for binary files (Sergey Koposov).
+
+*   Use normal spaces instead of nbsp in activity page (Sergey Koposov).
+
+*   Display a delete link next to uploads in file list (rekado).
+
+*   Change _search to use HTTP GET, so searches can be linked
+    and refreshed (Joe Hillenbrand).
+
+*   Document mod_proxy_html setting in README.  Added a mod_proxy_html
+    configuration directive to insert a DOCTYPE string (Johann Visagie).
+
+*   Added new template variables `isdiscusspage`, `isarticleUrl`,
+    `discussionUrl`.  This makes it possible to treat discussion pages
+    specially in templates, and insert appropriate links (Shane O'Brien).
+
+*   Added template variables `articlename`, `discussionname`,
+    `isarticlepage` (Shane O'Brien).
+
+*   Added redirects (#233).  You can now create a redirect page by adding
+    a `redirect` field to the metadata of a page (Shane O'Brien).
+
+    - When a user visits a redirect page, they are redirected to the
+      destination page.
+    - At the destination page, a message is displayed telling the user
+      that they have been redirected from the source page. A link is
+      provided back to the source page, with a parameter to disable the
+      redirect (so that it can be edited).
+    - Gitit will detects circular redirects and explain to the user
+      what is going on in such cases.
+
+*   Added "search for pages containing..." option to `createPage`.
+    Changed "page not found" page to give the option of searching for
+    the page name or creating a page with that name (Shane O'Brien).
+
+*   Set `pgTitle` in `showDiff` (Shane O'Brien).
+
+*   Made the default "since" for the activity page configurable
+    (Shane O'Brien).
+
+*   Only set the `tabs` template variable if there are tabs (Shane O'Brien).
+
+*   Removed access question from password reset form. It's only
+    needed for the register form (Shane O'Brien).
+
+*   Added `for` attribute to all labels on forms (Shane O'Brien).
+
+*   Updated `pageToString` to use new metadata format (Shane O'Brien).
+
+*   Handlers: Fixed duplicate function defn for `fileAnchor`.
+
+*   Added `Org` and `BocBook` to `PageType` (API change).  Pages
+    may now be written in Ord mode or DocBook syntax.
+
+*   Allow multiple categories, separated by commas,
+    in a `_category` URL (Caleb McDaniel).  The pages in all listed
+    categories will be returned.
+
+*   Added filter links for `_category` pages (Cabel McDaniel).
+
+*   Fixed image exports in Docx, RTF, slides, PDF (#399, #353).
+
+*   Restored inline syntax highlighting.
+
+*   Fixed highlighting in exports (#356).
+
+*   Added `ICML` and `beamer` as export formats (#391).
+
+*   Added github-style backgrounds to code blocks (Joe Hillenbrand).
+
+*   Lighter heading border (like wikimedia) (Joe Hillenbrand).
+
+*   Fixed links on activity page (Shane O'Brien).
+
+*   Added markup help for Textile, Org, DocBook (#434).
+
+*   Modified plugins/Subst.hs to work with latest pandoc (Tianyi Cui).
+
+*   Fixed wiki links when `base-url` is empty and `absolute-urls` yes
+    (Tianyi Cui).
+
+*   README:  document that changes to templates require a restart (Raphael).
+
+
 Version 0.10.3.1 released 19 Mar 2013
 
 *   Fixed filename encoding problem affecting caching,
