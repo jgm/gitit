@@ -1,0 +1,356 @@
+* Markdown
+
+This wiki's pages are written in
+[[http://johnmacfarlane.net/pandoc][pandoc]]'s extended form of
+[[http://daringfireball.net/projects/markdown][markdown]]. If you're not
+familiar with markdown, you should start by looking at the
+[[http://daringfireball.net/projects/markdown/basics][markdown "basics"
+page]] and the
+[[http://daringfireball.net/projects/markdown/syntax][markdown syntax
+description]]. Consult the
+[[http://johnmacfarlane.net/pandoc/README.html][pandoc User's Guide]]
+for information about pandoc's syntax for footnotes, tables, description
+lists, and other elements not present in standard markdown.
+
+Markdown is pretty intuitive, since it is based on email conventions.
+Here are some examples to get you started:
+
+#+BEGIN_HTML
+  <table>
+  <tr>
+  <td>
+#+END_HTML
+
+=*emphasized text*=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+/emphasized text/
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=**strong emphasis**=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+*strong emphasis*
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=`literal text`=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+=literal text=
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=\*escaped special characters\*=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+*escaped special characters*
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=[external link](http://google.com)=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+[[http://google.com][external link]]
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=![folder](/img/icons/folder.png)=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+[[/img/icons/folder.png]]
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+Wikilink: =[Front Page]()=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+Wikilink: [[][Front Page]]
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=H~2~O=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+H_{2}O
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=10^100^=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+10^{100}
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=~~strikeout~~=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
++strikeout+
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=$x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+$x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$ [1]
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+#+END_HTML
+
+=A simple footnote.^[Or is it so simple?]=
+
+#+BEGIN_HTML
+  </td>
+  <td>
+#+END_HTML
+
+A simple footnote. [2]
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  > an indented paragraph,
+  > usually used for quotations
+  </pre>
+  </td>
+  <td>
+#+END_HTML
+
+#+BEGIN_QUOTE
+  an indented paragraph, usually used for quotations
+#+END_QUOTE
+
+#+BEGIN_HTML
+  </td>
+  <tr>
+  <td>
+  <pre>
+      #!/bin/sh -e
+      # code, indented four spaces
+      echo "Hello world"
+  </pre>
+  </td>
+  <td>
+#+END_HTML
+
+#+BEGIN_EXAMPLE
+    #!/bin/sh -e
+    # code, indented four spaces
+    echo "Hello world"
+#+END_EXAMPLE
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  * a bulleted list
+  * second item
+      - sublist
+      - and more
+  * back to main list
+      1. this item has an ordered
+      2. sublist
+          a) you can also use letters
+          b) another item
+  </pre>
+  </td>
+  <td>
+#+END_HTML
+
+-  a bulleted list
+-  second item
+
+   -  sublist
+   -  and more
+
+-  back to main list
+
+   1. this item has an ordered
+   2. sublist
+
+      1) you can also use letters
+      2) another item
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  Fruit        Quantity
+  --------  -----------
+  apples         30,200
+  oranges         1,998
+  pears              42
+
+  Table:  Our fruit inventory
+  </pre>
+  </td>
+  <td>
+#+END_HTML
+
+| Fruit     | Quantity   |
+|-----------+------------|
+| apples    | 30,200     |
+| oranges   | 1,998      |
+| pears     | 42         |
+#+CAPTION: Our fruit inventory
+
+#+BEGIN_HTML
+  </td>
+  </tr>
+  </table>
+#+END_HTML
+
+For headings, prefix a line with one or more =#= signs: one for a major
+heading, two for a subheading, three for a subsubheading. Be sure to
+leave space before and after the heading.
+
+#+BEGIN_EXAMPLE
+    # Markdown
+
+    Text...
+
+    ## Some examples...
+
+    Text...
+#+END_EXAMPLE
+
+** Wiki links
+
+Links to other wiki pages are formed this way: =[Page Name]()=. (Gitit
+converts markdown links with empty targets into wikilinks.)
+
+To link to a wiki page using something else as the link text:
+=[something else](Page Name)=.
+
+Note that page names may contain spaces and some special characters.
+They need not be CamelCase. CamelCase words are /not/ automatically
+converted to wiki links.
+
+Wiki pages may be organized into directories. So, if you have several
+pages on wine, you may wish to organize them like so:
+
+#+BEGIN_EXAMPLE
+    Wine/Pinot Noir
+    Wine/Burgundy
+    Wine/Cabernet Sauvignon
+#+END_EXAMPLE
+
+Note that a wiki link =[Burgundy]()= that occurs inside the =Wine=
+directory will link to =Wine/Burgundy=, and not to =Burgundy=. To link
+to a top-level page called =Burgundy=, you'd have to use
+=[Burgundy](/Burgundy)=.
+
+To link to a directory listing for a subdirectory, use a trailing slash:
+=[Wine/]()= will link to a listing of the =Wine= subdirectory.
+
+[1] If this looks like code, it's because jsMath is not installed on
+    your system. Contact your administrator to request it.
+
+[2] Or is it so simple?
