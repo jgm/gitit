@@ -32,6 +32,7 @@ import Data.FileStore
 import Data.List (intercalate)
 import System.Log.Logger (Priority(..), logM)
 import Network.Gitit.Types
+import Data.Time.Clock (getCurrentTime)
 
 gititstate :: IORef GititState
 gititstate = unsafePerformIO $  newIORef  GititState { sessions = undefined
@@ -55,10 +56,13 @@ mkUser :: String   -- username
        -> IO User
 mkUser uname email pass = do
   salt <- genSalt
+  now <- getCurrentTime
   return  User { uUsername = uname,
                  uPassword = Password { pSalt = salt,
                                         pHashed = hashPassword salt pass },
-                 uEmail = email }
+                 uEmail = email,
+                 uCreated = now,
+                 uLastSeen = now}
 
 genSalt :: IO String
 genSalt = replicateM 32 $ randomRIO ('0','z')

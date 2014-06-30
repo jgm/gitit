@@ -180,6 +180,7 @@ wikiHandlers =
   , dir "_feed"     feedHandler
   , dir "_category" categoryPage
   , dir "_categories" categoryListPage
+  , dir "_users"    userListPage
   , dir "_expire"     expireCache
   , dir "_showraw"  $ msum
       [ showRawPage
