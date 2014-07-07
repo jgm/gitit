@@ -270,7 +270,6 @@ data Params = Params { pUsername     :: String
                      , pSince        :: Maybe UTCTime
                      , pRaw          :: String
                      , pLimit        :: Int
-                     , pExactPhrase  :: Bool
                      , pPatterns     :: [String]
                      , pGotoPage     :: String
                      , pFileToDelete :: String
@@ -319,7 +318,6 @@ instance FromData Params where
          ds <- look' "destination" `mplus` return ""
          ra <- look' "raw"            `mplus` return ""
          lt <- lookRead "limit"       `mplus` return 100
-         ph <- (look' "exactphrase" >> return True) `mplus` return False
          pa <- look' "patterns"       `mplus` return ""
          gt <- look' "gotopage"       `mplus` return ""
          ft <- look' "filetodelete"   `mplus` return ""
@@ -359,7 +357,6 @@ instance FromData Params where
                          , pDestination  = ds
                          , pRaw          = ra
                          , pLimit        = lt
-                         , pExactPhrase  = ph
                          , pPatterns     = words pa
                          , pGotoPage     = gt
                          , pFileToDelete = ft
