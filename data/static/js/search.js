@@ -21,7 +21,7 @@ jQuery.fn.highlightPattern = function (patt, className)
     return this.each(function ()
     {
         this.innerHTML = this.innerHTML.replace(regex,
-          '<span class=\'' + className + '\'>' + '$1' + '</span>');
+          '<span class=\'' + className + '\'>' + '$1' + '$2' + '</span>');
     });
 };
 function toggleMatches(obj) {
