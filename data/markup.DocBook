@@ -1,0 +1,347 @@
+<sect1 id="markdown">
+  <title>Markdown</title>
+  <para>
+    This wiki's pages are written in
+    <ulink url="http://johnmacfarlane.net/pandoc">pandoc</ulink>'s
+    extended form of
+    <ulink url="http://daringfireball.net/projects/markdown">markdown</ulink>.
+    If you're not familiar with markdown, you should start by looking at
+    the
+    <ulink url="http://daringfireball.net/projects/markdown/basics">markdown
+    &quot;basics&quot; page</ulink> and the
+    <ulink url="http://daringfireball.net/projects/markdown/syntax">markdown
+    syntax description</ulink>. Consult the
+    <ulink url="http://johnmacfarlane.net/pandoc/README.html">pandoc
+    User's Guide</ulink> for information about pandoc's syntax for
+    footnotes, tables, description lists, and other elements not present
+    in standard markdown.
+  </para>
+  <para>
+    Markdown is pretty intuitive, since it is based on email
+    conventions. Here are some examples to get you started:
+  </para>
+  <table>
+  <tr>
+  <td>
+  <literal>*emphasized text*</literal>
+  </td>
+  <td>
+  <emphasis>emphasized text</emphasis>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>**strong emphasis**</literal>
+  </td>
+  <td>
+  <emphasis role="strong">strong emphasis</emphasis>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>`literal text`</literal>
+  </td>
+  <td>
+  <literal>literal text</literal>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>\*escaped special characters\*</literal>
+  </td>
+  <td>
+  *escaped special characters*
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>[external link](http://google.com)</literal>
+  </td>
+  <td>
+  <ulink url="http://google.com">external link</ulink>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>![folder](/img/icons/folder.png)</literal>
+  </td>
+  <td>
+  <inlinemediaobject>
+    <imageobject>
+      <imagedata fileref="/img/icons/folder.png" />
+    </imageobject>
+  </inlinemediaobject>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  Wikilink: <literal>[Front Page]()</literal>
+  </td>
+  <td>
+  Wikilink: <ulink url="">Front Page</ulink>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>H~2~O</literal>
+  </td>
+  <td>
+  H<subscript>2</subscript>O
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>10^100^</literal>
+  </td>
+  <td>
+  10<superscript>100</superscript>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>~~strikeout~~</literal>
+  </td>
+  <td>
+  <emphasis role="strikethrough">strikeout</emphasis>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>$x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$</literal>
+  </td>
+  <td>
+  $x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$<footnote>
+    <para>
+      If this looks like code, it's because jsMath is not installed on
+      your system. Contact your administrator to request it.
+    </para>
+  </footnote>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <literal>A simple footnote.^[Or is it so simple?]</literal>
+  </td>
+  <td>
+  A simple footnote.<footnote>
+    <para>
+      Or is it so simple?
+    </para>
+  </footnote>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  > an indented paragraph,
+  > usually used for quotations
+  </pre>
+  </td>
+  <td>
+  <blockquote>
+    <para>
+      an indented paragraph, usually used for quotations
+    </para>
+  </blockquote>
+  </td>
+  <tr>
+  <td>
+  <pre>
+      #!/bin/sh -e
+      # code, indented four spaces
+      echo "Hello world"
+  </pre>
+  </td>
+  <td>
+  <programlisting>
+#!/bin/sh -e
+# code, indented four spaces
+echo &quot;Hello world&quot;
+</programlisting>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  * a bulleted list
+  * second item
+      - sublist
+      - and more
+  * back to main list
+      1. this item has an ordered
+      2. sublist
+          a) you can also use letters
+          b) another item
+  </pre>
+  </td>
+  <td>
+  <itemizedlist spacing="compact">
+    <listitem>
+      <para>
+        a bulleted list
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        second item
+      </para>
+      <itemizedlist spacing="compact">
+        <listitem>
+          <para>
+            sublist
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            and more
+          </para>
+        </listitem>
+      </itemizedlist>
+    </listitem>
+    <listitem>
+      <para>
+        back to main list
+      </para>
+      <orderedlist numeration="arabic" spacing="compact">
+        <listitem>
+          <para>
+            this item has an ordered
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            sublist
+          </para>
+          <orderedlist numeration="loweralpha" spacing="compact">
+            <listitem>
+              <para>
+                you can also use letters
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                another item
+              </para>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+    </listitem>
+  </itemizedlist>
+  </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  Fruit        Quantity
+  --------  -----------
+  apples         30,200
+  oranges         1,998
+  pears              42
+
+  Table:  Our fruit inventory
+  </pre>
+  </td>
+  <td>
+  <table>
+    <title>
+      Our fruit inventory
+    </title>
+    <tgroup cols="2">
+      <colspec align="left" />
+      <colspec align="right" />
+      <thead>
+        <row>
+          <entry>
+            Fruit
+          </entry>
+          <entry>
+            Quantity
+          </entry>
+        </row>
+      </thead>
+      <tbody>
+        <row>
+          <entry>
+            apples
+          </entry>
+          <entry>
+            30,200
+          </entry>
+        </row>
+        <row>
+          <entry>
+            oranges
+          </entry>
+          <entry>
+            1,998
+          </entry>
+        </row>
+        <row>
+          <entry>
+            pears
+          </entry>
+          <entry>
+            42
+          </entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </table>
+  </td>
+  </tr>
+  </table>
+  <para>
+    For headings, prefix a line with one or more <literal>#</literal>
+    signs: one for a major heading, two for a subheading, three for a
+    subsubheading. Be sure to leave space before and after the heading.
+  </para>
+  <programlisting>
+# Markdown
+
+Text...
+
+## Some examples...
+
+Text...
+</programlisting>
+  <sect2 id="wiki-links">
+    <title>Wiki links</title>
+    <para>
+      Links to other wiki pages are formed this way:
+      <literal>[Page Name]()</literal>. (Gitit converts markdown links
+      with empty targets into wikilinks.)
+    </para>
+    <para>
+      To link to a wiki page using something else as the link text:
+      <literal>[something else](Page Name)</literal>.
+    </para>
+    <para>
+      Note that page names may contain spaces and some special
+      characters. They need not be CamelCase. CamelCase words are
+      <emphasis>not</emphasis> automatically converted to wiki links.
+    </para>
+    <para>
+      Wiki pages may be organized into directories. So, if you have
+      several pages on wine, you may wish to organize them like so:
+    </para>
+    <programlisting>
+Wine/Pinot Noir
+Wine/Burgundy
+Wine/Cabernet Sauvignon
+</programlisting>
+    <para>
+      Note that a wiki link <literal>[Burgundy]()</literal> that occurs
+      inside the <literal>Wine</literal> directory will link to
+      <literal>Wine/Burgundy</literal>, and not to
+      <literal>Burgundy</literal>. To link to a top-level page called
+      <literal>Burgundy</literal>, you'd have to use
+      <literal>[Burgundy](/Burgundy)</literal>.
+    </para>
+    <para>
+      To link to a directory listing for a subdirectory, use a trailing
+      slash: <literal>[Wine/]()</literal> will link to a listing of the
+      <literal>Wine</literal> subdirectory.
+    </para>
+  </sect2>
+</sect1>

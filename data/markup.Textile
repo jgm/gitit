@@ -1,0 +1,254 @@
+h1(#markdown). Markdown
+
+This wiki's pages are written in "pandoc":http://johnmacfarlane.net/pandoc's extended form of "markdown":http://daringfireball.net/projects/markdown. If you're not familiar with markdown, you should start by looking at the "markdown &quot;basics&quot; page":http://daringfireball.net/projects/markdown/basics and the "markdown syntax description":http://daringfireball.net/projects/markdown/syntax. Consult the "pandoc User's Guide":http://johnmacfarlane.net/pandoc/README.html for information about pandoc's syntax for footnotes, tables, description lists, and other elements not present in standard markdown.
+
+Markdown is pretty intuitive, since it is based on email conventions. Here are some examples to get you started:
+
+<table>
+<tr>
+<td>
+@*emphasized text*@
+</td>
+<td>
+_emphasized text_
+</td>
+</tr>
+<tr>
+<td>
+@**strong emphasis**@
+</td>
+<td>
+*strong emphasis*
+</td>
+</tr>
+<tr>
+<td>
+@`literal text`@
+</td>
+<td>
+@literal text@
+</td>
+</tr>
+<tr>
+<td>
+@\*escaped special characters\*@
+</td>
+<td>
+&#42;escaped special characters&#42;
+</td>
+</tr>
+<tr>
+<td>
+@[external link](http://google.com)@
+</td>
+<td>
+"external link":http://google.com
+</td>
+</tr>
+<tr>
+<td>
+@![folder](/img/icons/folder.png)@
+</td>
+<td>
+!/img/icons/folder.png(folder)!
+</td>
+</tr>
+<tr>
+<td>
+Wikilink: @[Front Page]()@
+</td>
+<td>
+Wikilink: "Front Page":
+</td>
+</tr>
+<tr>
+<td>
+@H~2~O@
+</td>
+<td>
+H[~2~]O
+</td>
+</tr>
+<tr>
+<td>
+@10^100^@
+</td>
+<td>
+10[^100^]
+</td>
+</tr>
+<tr>
+<td>
+@~~strikeout~~@
+</td>
+<td>
+-strikeout-
+</td>
+</tr>
+<tr>
+<td>
+@$x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$@
+</td>
+<td>
+<span class="math">x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}</math>[1]
+</td>
+</tr>
+<tr>
+<td>
+@A simple footnote.^[Or is it so simple?]@
+</td>
+<td>
+A simple footnote.[2]
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+> an indented paragraph,
+> usually used for quotations
+</pre>
+</td>
+<td>
+
+bq. an indented paragraph, usually used for quotations
+
+
+
+</td>
+<tr>
+<td>
+<pre>
+    #!/bin/sh -e
+    # code, indented four spaces
+    echo "Hello world"
+</pre>
+</td>
+<td>
+
+bc. #!/bin/sh -e
+# code, indented four spaces
+echo "Hello world"
+
+
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+* a bulleted list
+* second item
+    - sublist
+    - and more
+* back to main list
+    1. this item has an ordered
+    2. sublist
+        a) you can also use letters
+        b) another item
+</pre>
+</td>
+<td>
+
+<ul>
+<li>a bulleted list</li>
+<li>second item
+<ul>
+<li>sublist</li>
+<li>and more</li>
+</ul>
+</li>
+<li>back to main list
+<ol style="list-style-type: decimal;">
+<li>this item has an ordered</li>
+<li>sublist
+<ol style="list-style-type: lower-alpha;">
+<li>you can also use letters</li>
+<li>another item</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+Fruit        Quantity
+--------  -----------
+apples         30,200
+oranges         1,998
+pears              42
+
+Table:  Our fruit inventory
+</pre>
+</td>
+<td>
+
+<table>
+<caption>Our fruit inventory</caption>
+<thead>
+<tr class="header">
+<th align="left">Fruit</th>
+<th align="right">Quantity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">apples</td>
+<td align="right">30,200</td>
+</tr>
+<tr class="even">
+<td align="left">oranges</td>
+<td align="right">1,998</td>
+</tr>
+<tr class="odd">
+<td align="left">pears</td>
+<td align="right">42</td>
+</tr>
+</tbody>
+</table>
+
+</td>
+</tr>
+</table>
+
+For headings, prefix a line with one or more @#@ signs: one for a major heading, two for a subheading, three for a subsubheading. Be sure to leave space before and after the heading.
+
+<pre>
+# Markdown
+
+Text...
+
+## Some examples...
+
+Text...
+</pre>
+
+h2(#wiki-links). Wiki links
+
+Links to other wiki pages are formed this way: @[Page Name]()@. (Gitit converts markdown links with empty targets into wikilinks.)
+
+To link to a wiki page using something else as the link text: @[something else](Page Name)@.
+
+Note that page names may contain spaces and some special characters. They need not be CamelCase. CamelCase words are _not_ automatically converted to wiki links.
+
+Wiki pages may be organized into directories. So, if you have several pages on wine, you may wish to organize them like so:
+
+bc. Wine/Pinot Noir
+Wine/Burgundy
+Wine/Cabernet Sauvignon
+
+
+Note that a wiki link @[Burgundy]()@ that occurs inside the @Wine@ directory will link to @Wine/Burgundy@, and not to @Burgundy@. To link to a top-level page called @Burgundy@, you'd have to use @[Burgundy](/Burgundy)@.
+
+To link to a directory listing for a subdirectory, use a trailing slash: @[Wine/]()@ will link to a listing of the @Wine@ subdirectory.
+
+
+fn1. If this looks like code, it's because jsMath is not installed on your system. Contact your administrator to request it.
+
+
+fn2. Or is it so simple?
+
+
+

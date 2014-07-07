@@ -2,8 +2,7 @@ jQuery.fn.highlightPattern = function (patt, className)
 {
     // patt is a space separated list of strings - we want to highlight
     // an occurrence of any of these strings as a separate word.
-    var epatt = patt.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1")
-    var regex = new RegExp('(' + epatt.replace(/ /g, '|') + ')', 'gi');
+    var regex = new RegExp('\\b(' + patt.replace(/ /g, '|') + ')\\b', 'gi');
 
     return this.each(function ()
     {
