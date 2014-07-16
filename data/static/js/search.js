@@ -2,10 +2,10 @@ jQuery.fn.highlightPattern = function (patt, className)
 {
     // check if patt starts or ends with non-word character
     // and set regex boundary accordingly.
-    var start = '(\\b)(';
+    var start = '\\b(';
     var end = ')\\b';
     if (/\W/.test(patt.charAt(0))) {
-       var start = '(\\W)(';
+       var start = '\(?=\\W\)(';
     };
     if (/\W/.test(patt.charAt(patt.length - 1))) {
        var end = ')\(?!\\w\)';
@@ -16,12 +16,12 @@ jQuery.fn.highlightPattern = function (patt, className)
 
     // patt is a space separated list of strings - we want to highlight
     // an occurrence of any of these strings as a separate word.
-    var regex = new RegExp(start + epatt.replace(/ /g, '|') + end, 'gi');
+    var regex = new RegExp(start + epatt.replace(/ /g, '| ') + end, 'gi');
 
     return this.each(function ()
     {
         this.innerHTML = this.innerHTML.replace(regex,
-          '$1<span class=\'' + className + '\'>' + '$2' + '</span>');
+          '<span class=\'' + className + '\'>' + '$1' + '</span>');
     });
 };
 function toggleMatches(obj) {
