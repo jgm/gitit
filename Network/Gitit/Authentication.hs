@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, StandaloneDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
                    Henry Laxen <nadine.and.henry@pobox.com>
@@ -39,7 +39,7 @@ import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
 import System.Process (readProcessWithExitCode)
 import Control.Monad (unless, liftM, mplus)
-import Control.Monad.Trans (MonadIO(), liftIO)
+import Control.Monad.Trans (liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha, isAscii)
@@ -301,11 +301,8 @@ sharedValidation validationType params = do
                then return $ Left "missing-challenge-or-response"
                else liftIO $ do
                       mbIPaddr <- lookupIPAddr peer
-                      let ipaddr = case mbIPaddr of
-                                        Just ip -> ip
-                                        Nothing -> error $
-                                          "Could not find ip address for " ++
-                                          peer
+                      let ipaddr = fromMaybe (error $ "Could not find ip address for " ++ peer)
+                                   mbIPaddr
                       ipaddr `seq` validateCaptcha (recaptchaPrivateKey cfg)
                               ipaddr (recaptchaChallengeField recaptcha)
                               (recaptchaResponseField recaptcha)
@@ -475,7 +472,7 @@ loginRPXUser params = do
   if isNothing mtoken
      then do
        let url = baseUrl cfg ++ "/_login?destination=" ++
-                  (fromMaybe ref $ rDestination params)
+                  fromMaybe ref (rDestination params)
        if null (rpxDomain cfg)
           then error "rpx-domain is not set."
           else do

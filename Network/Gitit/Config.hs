@@ -34,7 +34,6 @@ import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import Data.ConfigFile hiding (readfile)
 import Control.Monad.Error
-import System.Log.Logger ()
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
@@ -142,10 +141,10 @@ extractConfig cp = do
                         "mercurial" -> Mercurial
                         x           -> error $ "Unknown repository type: " ++ x
       when (authMethod == "rpx" && cfRPXDomain == "") $
-         liftIO $ logM "gitit" WARNING $ "rpx-domain is not set"
+         liftIO $ logM "gitit" WARNING "rpx-domain is not set"
       githubConfig <- extractGithubConfig cp
 
-      return $! Config{
+      return Config{
           repositoryPath       = cfRepositoryPath
         , repositoryType       = repotype'
         , defaultPageType      = pt
@@ -294,10 +293,10 @@ getDefaultConfig = getDefaultConfigParser >>= extractConfig
 -- extensions, separated by spaces. Example: text/plain txt text
 readMimeTypesFile :: FilePath -> IO (M.Map String String)
 readMimeTypesFile f = E.catch
-  (liftM (foldr go M.empty . map words . lines) $ readFileUTF8 f)
+  (liftM (foldr (go . words)  M.empty . lines) $ readFileUTF8 f)
   handleMimeTypesFileNotFound
      where go []     m = m  -- skip blank lines
-           go (x:xs) m = foldr (\ext -> M.insert ext x) m xs
+           go (x:xs) m = foldr (`M.insert` x) m xs
            handleMimeTypesFileNotFound (e :: E.SomeException) = do
              logM "gitit" WARNING $ "Could not read mime types file: " ++
                f ++ "\n" ++ show e ++ "\n" ++ "Using defaults instead."
