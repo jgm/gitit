@@ -53,6 +53,20 @@ getConfigFromFile fname = do
   cp <- getDefaultConfigParser
   readfile cp fname >>= extractConfig . forceEither
 
+-- | Get configuration from config files.
+getConfigFromFiles :: [FilePath] -> IO Config
+getConfigFromFiles fnames = do
+  config <- getConfigParserFromFiles fnames
+  extractConfig config
+
+getConfigParserFromFiles :: [FilePath] ->
+                            IO ConfigParser
+getConfigParserFromFiles (fname:fnames) = do
+  cp <- getConfigParserFromFiles fnames
+  config <- readfile cp fname
+  return $ forceEither config
+getConfigParserFromFiles [] = getDefaultConfigParser
+
 -- | A version of readfile that treats the file as UTF-8.
 readfile :: MonadError CPError m
           => ConfigParser
