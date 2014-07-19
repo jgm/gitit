@@ -37,6 +37,7 @@ import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
+import Network.OAuth.OAuth2
 
 data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
                 deriving (Read, Show, Eq)
@@ -149,7 +150,9 @@ data Config = Config {
   -- | Filter HTML through xss-sanitize
   xssSanitize          :: Bool,
   -- | The default number of days in the past to look for \"recent\" activity
-  recentActivityDays   :: Int
+  recentActivityDays   :: Int,
+  -- | Github client data for authentication (id, secret, callback, authorize endpoint, access token endpoint)
+  githubAuth :: OAuth2
   }
 
 -- | Data for rendering a wiki page.

@@ -24,7 +24,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Authentication ( loginUserForm
                                     , formAuthHandlers
                                     , httpAuthHandlers
-                                    , rpxAuthHandlers) where
+                                    , rpxAuthHandlers
+                                    , githubAuthHandlers) where
 
 import Network.Gitit.State
 import Network.Gitit.Types
@@ -32,6 +33,7 @@ import Network.Gitit.Framework
 import Network.Gitit.Layout
 import Network.Gitit.Server
 import Network.Gitit.Util
+import Network.Gitit.Authentication.Github
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( password )
@@ -51,6 +53,7 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
+import Network.OAuth.OAuth2
 
 data ValidationType = Register
                     | ResetPassword
@@ -385,9 +388,6 @@ loginUser params = do
     else
       withMessages ["Invalid username or password."] loginUserForm
 
-encUrl :: String -> String
-encUrl = encString True isAscii
-
 logoutUser :: Params -> Handler
 logoutUser params = do
   let key = pSessionKey params
@@ -434,8 +434,35 @@ logoutUserHTTP = unauthorized $ toResponse ()  -- will this work?
 
 httpAuthHandlers :: [Handler]
 httpAuthHandlers =
-  [ dir "_logout" $ logoutUserHTTP
+  [ dir "_logout" logoutUserHTTP
   , dir "_login"  $ withData loginUserHTTP
+  , dir "_user" currentUser ]
+
+oauthGithubCallback :: OAuth2
+                   -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
+                   -> Handler
+oauthGithubCallback githubKey githubCallbackPars = do
+    mUser <- liftIO $ getGithubUser githubKey githubCallbackPars
+    case mUser of
+      Right user -> do
+               let userEmail = uEmail user
+               updateGititState $ \s -> s { users = M.insert userEmail user (users s) }
+               addUser (uUsername user) user
+               key <- newSession (SessionData userEmail)
+               cfg <- getConfig
+               addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+               base' <- getWikiBase
+               let destination = base' ++ "/"
+               seeOther (encUrl destination) $ toResponse ()
+      Left err ->
+               error err
+
+githubAuthHandlers :: OAuth2
+                   -> [Handler]
+githubAuthHandlers githubKey =
+  [ dir "_logout" $ withData logoutUser
+  , dir "_login" $ loginGithubUser githubKey
+  , dir "_githubCallback" $ withData $ oauthGithubCallback githubKey
   , dir "_user" currentUser ]
 
 -- Login using RPX (see RPX development docs at https://rpxnow.com/docs)

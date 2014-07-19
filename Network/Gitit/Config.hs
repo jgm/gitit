@@ -21,13 +21,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Config ( getConfigFromFile
+                            , getConfigFromFiles
                             , getDefaultConfig
                             , readMimeTypesFile )
 where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
-import Network.Gitit.Authentication (formAuthHandlers, rpxAuthHandlers, httpAuthHandlers)
+import Network.Gitit.Authentication (formAuthHandlers, rpxAuthHandlers, httpAuthHandlers, githubAuthHandlers)
 import Network.Gitit.Util (parsePageType, readFileUTF8)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
@@ -40,6 +41,8 @@ import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import qualified Control.Exception as E
+import Network.OAuth.OAuth2
+import qualified Data.ByteString.Char8 as BS
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
@@ -126,6 +129,7 @@ extractConfig cp = do
                         x           -> error $ "Unknown repository type: " ++ x
       when (authMethod == "rpx" && cfRPXDomain == "") $
          liftIO $ logM "gitit" WARNING $ "rpx-domain is not set"
+      githubConfig <- extractGithubConfig cp
 
       return $! Config{
           repositoryPath       = cfRepositoryPath
@@ -141,6 +145,7 @@ extractConfig cp = do
         , showLHSBirdTracks    = cfShowLHSBirdTracks
         , withUser             = case authMethod of
                                       "form"     -> withUserFromSession
+                                      "github"   -> withUserFromSession
                                       "http"     -> withUserFromHTTPAuth
                                       "rpx"      -> withUserFromSession
                                       _          -> id
@@ -152,6 +157,7 @@ extractConfig cp = do
 
         , authHandler          = case authMethod of
                                       "form"     -> msum formAuthHandlers
+                                      "github"   -> msum $ githubAuthHandlers githubConfig
                                       "http"     -> msum httpAuthHandlers
                                       "rpx"      -> msum rpxAuthHandlers
                                       _          -> mzero
@@ -204,11 +210,29 @@ extractConfig cp = do
                                     else Just cfPandocUserData
         , xssSanitize          = cfXssSanitize
         , recentActivityDays   = cfRecentActivityDays
+        , githubAuth           = githubConfig
         }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
         Right c                 -> return c
+
+extractGithubConfig ::  MonadError CPError m => ConfigParser
+                    -> m OAuth2
+extractGithubConfig cp = do
+      cfOauthClientId <- getGithubProp "oauthClientId"
+      cfOauthClientSecret <- getGithubProp "oauthClientSecret"
+      cfOauthCallback  <- getGithubProp "oauthCallback"
+      cfOauthOAuthorizeEndpoint  <- getGithubProp "oauthOAuthorizeEndpoint"
+      cfOauthAccessTokenEndpoint <- getGithubProp "oauthAccessTokenEndpoint"
+      return OAuth2{
+        oauthClientId =  BS.pack cfOauthClientId
+      , oauthClientSecret =  BS.pack cfOauthClientSecret
+      , oauthCallback = Just $ BS.pack cfOauthCallback
+      , oauthOAuthorizeEndpoint = BS.pack cfOauthOAuthorizeEndpoint
+      , oauthAccessTokenEndpoint = BS.pack cfOauthAccessTokenEndpoint
+      }
+  where getGithubProp = get cp "Github"
 
 fromQuotedMultiline :: String -> String
 fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
