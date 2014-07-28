@@ -60,7 +60,7 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Data.FileStore
 import Data.Char (toLower)
-import Control.Monad (mzero, liftM, unless, MonadPlus)
+import Control.Monad (mzero, liftM, unless)
 import qualified Data.Map as M
 import qualified Data.ByteString.UTF8 as UTF8
 import qualified Data.ByteString.Lazy.UTF8 as LazyUTF8

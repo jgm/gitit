@@ -158,7 +158,7 @@ serveDirectory' p = do
   resp' <- serveDirectory EnableBrowsing [] p
   if rsCode resp' == 404 || lastNote "fileServeStrict'" (rqUri rq) == '/'
      then mzero  -- pass through if not found or directory index
-     else do
+     else
        -- turn off compresion filter unless it's text
        case getHeader "Content-Type" resp' of
             Just ct | B.pack "text/" `B.isPrefixOf` ct -> return resp'

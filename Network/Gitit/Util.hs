@@ -25,6 +25,7 @@ module Network.Gitit.Util ( readFileUTF8
                           , trim
                           , yesOrNo
                           , parsePageType
+                          , encUrl
                           )
 where
 import System.Directory
@@ -32,10 +33,11 @@ import Control.Exception (bracket)
 import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
-import Data.Char (toLower)
+import Data.Char (toLower, isAscii)
 import Network.Gitit.Types
 import qualified Control.Exception as E
 import qualified Text.Pandoc.UTF8 as UTF8
+import Network.URL (encString)
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO String
@@ -101,3 +103,5 @@ parsePageType s =
        "latex+lhs"    -> (LaTeX,True)
        x              -> error $ "Unknown page type: " ++ x
 
+encUrl :: String -> String
+encUrl = encString True isAscii

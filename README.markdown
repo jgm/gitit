@@ -345,6 +345,22 @@ knowing the answer to the access question.
 Another approach is to use HTTP authentication. (See the config file comments on
 `authentication-method`.)
 
+Authentication through github
+-----------------------------
+
+If you want to authenticate the user from github through oauth2, you need to
+register your app with github to obtain a OAuth client secret and add the
+following section to your configuration file:
+
+```
+[Github]
+oauthclientid: 01239456789abcdef012
+oauthclientsecret: 01239456789abcdef01239456789abcdef012394
+oauthcallback: http://mysite/_githubCallback
+oauthoauthorizeendpoint: https://github.com/login/oauth/authorize
+oauthaccesstokenendpoint: https://github.com/login/oauth/access_token
+```
+
 Plugins
 =======
 

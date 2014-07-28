@@ -58,8 +58,7 @@ main = do
     Right xs -> return xs
 
   conf' <- case [f | ConfigFile f <- opts] of
-                (x:_) -> getConfigFromFile x
-                []    -> getDefaultConfig
+                fs -> getConfigFromFiles fs
 
   let conf = foldl handleFlag conf' opts
 

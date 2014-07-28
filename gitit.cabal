@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.10.4
+version:             0.10.4.1
 Cabal-version:       >= 1.6
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
@@ -108,7 +108,8 @@ Library
   exposed-modules:   Network.Gitit, Network.Gitit.ContentTransformer,
                      Network.Gitit.Types, Network.Gitit.Framework,
                      Network.Gitit.Initialize, Network.Gitit.Config,
-                     Network.Gitit.Layout, Network.Gitit.Authentication
+                     Network.Gitit.Layout, Network.Gitit.Authentication,
+                     Network.Gitit.Authentication.Github
   other-modules:     Network.Gitit.Cache, Network.Gitit.State,
                      Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
                      Network.Gitit.Util, Network.Gitit.Handlers,
@@ -168,7 +169,11 @@ Executable           gitit
                      blaze-html >= 0.4 && < 0.8,
                      json >= 0.4 && < 0.8,
                      uri >= 0.1 && < 0.2,
-                     split
+                     split,
+                     hoauth2 >= 0.4.1 && < 0.5,
+                     http-client >= 0.3.5 && < 0.4,
+                     http-client-tls >= 0.2.2 && < 0.3,
+                     aeson == 0.7.*
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)
