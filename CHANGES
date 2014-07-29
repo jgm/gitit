@@ -1,3 +1,12 @@
+29 July, 2014:
+Hi this is user requesting is there any custom ability in the config to prevent anyone from deleting a page except for the page's author?
+I notice there are other ways to stop people from registering, which I have no problem with, but then that they not be able to delete as an option unless they meet that criteria seems like a valid option.
+
+Or else make it so that no one can delete except for going in on the actual file through other channels.
+I have gitit hosted on a linux box at home, has been live webpage on living free for over two months now consecutive.
+
+Thanks for the great software and hope that this comes out! Visit me at http://github.com/em-che and http://freedomnexus.zapto.org
+
 Version 0.10.4 released 30 Jun 2014
 
 *   Updated package bounds for happstack (#382), pandoc, blaze-html,
