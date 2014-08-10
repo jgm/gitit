@@ -468,7 +468,7 @@ Proxying to `http://wiki.mysite.com`
 ------------------------------------
 
 Set up your DNS so that `http://wiki.mysite.com` maps to
-your server's IP address. Make sure that the `mod_proxy` module is
+your server's IP address. Make sure that the `mod_proxy`, `mod_proxy_http` and `mod_rewrite` modules are
 loaded, and set up a virtual host with the following configuration:
 
     <VirtualHost *>
