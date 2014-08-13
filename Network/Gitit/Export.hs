@@ -214,7 +214,7 @@ respondPDF :: Bool -> String -> Pandoc -> Handler
 respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   cfg <- getConfig
   unless (pdfExport cfg) $ error "PDF export disabled"
-  let cacheName = pathForPage page ++ ".export.pdf"
+  let cacheName = pathForPage page (defaultExtension cfg) ++ ".export.pdf"
   cached <- if useCache cfg
                then lookupCache cacheName
                else return Nothing
