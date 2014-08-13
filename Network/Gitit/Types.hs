@@ -151,8 +151,9 @@ data Config = Config {
   xssSanitize          :: Bool,
   -- | The default number of days in the past to look for \"recent\" activity
   recentActivityDays   :: Int,
-  -- | Github client data for authentication (id, secret, callback, authorize endpoint, access token endpoint)
-  githubAuth :: OAuth2
+  -- | Github client data for authentication (id, secret, callback,
+  -- authorize endpoint, access token endpoint)
+  githubAuth           :: OAuth2
   }
 
 -- | Data for rendering a wiki page.

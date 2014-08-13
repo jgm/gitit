@@ -31,16 +31,16 @@ getGithubUser :: OAuth2                  -- ^ Oauth2 configuration (client secre
 getGithubUser githubKey githubCallbackPars = do
   let (Just code) = rCode githubCallbackPars
   let setting = tlsManagerSettings
-  mgr <- newManager setting 
+  mgr <- newManager setting
   token <- fetchAccessToken mgr githubKey (sToBS code)
   let mUser = case token of
                 Right at -> do
                       uinfo <- userInfo mgr at
                       minfo <- mailInfo mgr at
-                      case (uinfo, minfo) of 
+                      case (uinfo, minfo) of
                          (Right githubUser, Right githubUserMail) -> do
-                                  user <- mkUser (unpack $ gname githubUser) 
-                                                 (unpack $ email $ head githubUserMail) 
+                                  user <- mkUser (unpack $ gname githubUser)
+                                                 (unpack $ email $ head githubUserMail)
                                                  "none"
                                   return $ Right user
                          (Left err, _) -> return $ Left $ lbsToStr err
@@ -54,7 +54,7 @@ data GithubCallbackPars = GithubCallbackPars { rCode :: Maybe String }
                           deriving Show
 
 instance FromData GithubCallbackPars where
-    fromData = do 
+    fromData = do
          vcode <- liftM Just (look "code") `mplus` return Nothing
          return GithubCallbackPars {rCode = vcode }
 

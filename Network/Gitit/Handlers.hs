@@ -63,9 +63,8 @@ import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
         exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (readCategories)
-import Control.Exception (throwIO, catch, try)
+import qualified Control.Exception as E
 import System.FilePath
-import Prelude hiding (catch)
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
@@ -90,7 +89,7 @@ handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
          let rev = pRevision params
          mimetype <- getMimeTypeForExtension
                       (takeExtension path')
-         res <- liftIO $ try
+         res <- liftIO $ E.try
                 (retrieve fs path' rev :: IO B.ByteString)
          case res of
                 Right contents -> ignoreFilters >>  -- don't compress
@@ -201,10 +200,10 @@ uploadFile = withData $ \(params :: Params) -> do
                         Just u  -> return (uUsername u, uEmail u)
   let overwrite = pOverwrite params
   fs <- getFileStore
-  exists <- liftIO $ catch (latest fs wikiname >> return True) $ \e ->
+  exists <- liftIO $ E.catch (latest fs wikiname >> return True) $ \e ->
                       if e == NotFound
                          then return False
-                         else throwIO e >> return True
+                         else E.throwIO e >> return True
   let inStaticDir = staticDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
   let inTemplatesDir = templatesDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
   let dirs' = splitDirectories $ takeDirectory wikiname
@@ -272,7 +271,7 @@ searchResults = withData $ \(params :: Params) -> do
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
-                   else liftIO $ catch (search fs SearchQuery{
+                   else liftIO $ E.catch (search fs SearchQuery{
                                                   queryPatterns = patterns
                                                 , queryWholeWords = True
                                                 , queryMatchAll = True
@@ -465,10 +464,10 @@ showDiff file page params = do
                             -- immediately preceding revision
                             then Just $ revId $ upto !! 1
                             else Nothing
-  result' <- liftIO $ try $ getDiff fs file from' to
+  result' <- liftIO $ E.try $ getDiff fs file from' to
   case result' of
        Left NotFound  -> mzero
-       Left e         -> liftIO $ throwIO e
+       Left e         -> liftIO $ E.throwIO e
        Right htmlDiff -> formattedPage defaultPageLayout{
                                           pgPageName = page,
                                           pgRevision = from' `mplus` to,
@@ -500,7 +499,7 @@ editPage' params = do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
   page <- getPage
-  let getRevisionAndText = catch
+  let getRevisionAndText = E.catch
         (do c <- liftIO $ retrieve fs (pathForPage page) rev
             -- even if pRevision is set, we return revId of latest
             -- saved version (because we're doing a revert and
@@ -510,7 +509,7 @@ editPage' params = do
             return (Just $ revId r, c))
         (\e -> if e == NotFound
                   then return (Nothing, "")
-                  else throwIO e)
+                  else E.throwIO e)
   (mbRev, raw) <- case pEditedText params of
                          Nothing -> liftIO getRevisionAndText
                          Just t  -> let r = if null (pSHA1 params)
@@ -573,11 +572,11 @@ confirmDelete = do
   fs <- getFileStore
   -- determine whether there is a corresponding page, and if not whether there
   -- is a corresponding file
-  pageTest <- liftIO $ try $ latest fs (pathForPage page)
+  pageTest <- liftIO $ E.try $ latest fs (pathForPage page)
   fileToDelete <- case pageTest of
                        Right _        -> return $ pathForPage page  -- a page
                        Left  NotFound -> do
-                         fileTest <- liftIO $ try $ latest fs page
+                         fileTest <- liftIO $ E.try $ latest fs page
                          case fileTest of
                               Right _       -> return page  -- a source file
                               Left NotFound -> return ""
@@ -642,12 +641,12 @@ updatePage = withData $ \(params :: Params) -> do
                                      return (Right ())
                        else do
                          expireCachedFile (pathForPage page) `mplus` return ()
-                         liftIO $ catch (modify fs (pathForPage page)
+                         liftIO $ E.catch (modify fs (pathForPage page)
                                             oldSHA1 (Author user email) logMsg
                                             editedText)
                                      (\e -> if e == Unchanged
                                                then return (Right ())
-                                               else throwIO e)
+                                               else E.throwIO e)
        case modifyRes of
             Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p << "Page updated"
             Left (MergeInfo mergedWithRev conflicts mergedText) -> do

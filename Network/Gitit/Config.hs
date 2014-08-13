@@ -172,7 +172,8 @@ extractConfig cp = do
 
         , authHandler          = case authMethod of
                                       "form"     -> msum formAuthHandlers
-                                      "github"   -> msum $ githubAuthHandlers githubConfig
+                                      "github"   -> msum $ githubAuthHandlers
+                                                         $ githubConfig
                                       "http"     -> msum httpAuthHandlers
                                       "rpx"      -> msum rpxAuthHandlers
                                       _          -> mzero
