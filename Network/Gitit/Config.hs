@@ -33,7 +33,6 @@ import Network.Gitit.Util (parsePageType, readFileUTF8)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import Data.ConfigFile hiding (readfile)
-import Control.Monad.Error
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
 import Paths_gitit (getDataFileName)
@@ -42,6 +41,9 @@ import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import qualified Control.Exception as E
 import Network.OAuth.OAuth2
 import qualified Data.ByteString.Char8 as BS
+import Network.Gitit.Compat.Except
+import Control.Monad
+import Control.Monad.Trans
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
@@ -77,7 +79,7 @@ readfile cp path' = do
 
 extractConfig :: ConfigParser -> IO Config
 extractConfig cp = do
-  config' <- runErrorT $ do
+  config' <- runExceptT $ do
       cfRepositoryType <- get cp "DEFAULT" "repository-type"
       cfRepositoryPath <- get cp "DEFAULT" "repository-path"
       cfDefaultPageType <- get cp "DEFAULT" "default-page-type"

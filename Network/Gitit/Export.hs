@@ -124,13 +124,18 @@ respondSlides templ slideVariant page doc = do
                         $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
                         $ lines dztempl
                   else return ""
-    let h = writeHtmlString opts'{
+    let opts'' = opts'{
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
                ,writerTemplate = template
                ,writerUserDataDir = pandocUserData cfg
-               } (Pandoc meta [])
+               }
+    let h = writeHtmlString opts'' (Pandoc meta [])
+#if MIN_VERSION_pandoc(1,13,0)
+    h' <- liftIO $ makeSelfContained opts'' h
+#else
     h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
+#endif
     ok . setContentType "text/html;charset=UTF-8" .
       -- (setFilename (page ++ ".html")) .
       toResponseBS B.empty $ fromString h'

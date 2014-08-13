@@ -24,7 +24,7 @@ import Network.Gitit.Server
 import Network.Gitit.Util (readFileUTF8)
 import System.Directory
 import Data.Maybe (isNothing)
-import Control.Monad.Error()
+import Network.Gitit.Compat.Except()
 import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)

@@ -34,7 +34,6 @@ import Network.Gitit.Types
 import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
-import Prelude hiding (catch)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing, isJust, fromJust)

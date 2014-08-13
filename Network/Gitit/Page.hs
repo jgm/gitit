@@ -59,8 +59,7 @@ import Data.ByteString.UTF8 (toString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import System.IO (withFile, Handle, IOMode(..))
-import Prelude hiding (catch)
-import Control.Exception (catch, throwIO)
+import qualified Control.Exception as E
 import System.IO.Error (isEOFError)
 #if MIN_VERSION_base(4,5,0)
 #else
@@ -167,15 +166,15 @@ readCategories f =
 #else
   withFile (encodeString f) ReadMode $ \h ->
 #endif
-    catch (do fl <- B.hGetLine h
-              if dashline fl
-                 then do -- get rest of metadata
-                   rest <- hGetLinesTill h dotline
-                   let (md,_) = parseMetadata $ unlines $ "---":rest
-                   return $ splitCategories $ fromMaybe ""
-                          $ lookup "categories" md
-                 else return [])
-       (\e -> if isEOFError e then return [] else throwIO e)
+    E.catch (do fl <- B.hGetLine h
+                if dashline fl
+                   then do -- get rest of metadata
+                     rest <- hGetLinesTill h dotline
+                     let (md,_) = parseMetadata $ unlines $ "---":rest
+                     return $ splitCategories $ fromMaybe ""
+                            $ lookup "categories" md
+                   else return [])
+       (\e -> if isEOFError e then return [] else E.throwIO e)
 
 dashline :: B.ByteString -> Bool
 dashline x =

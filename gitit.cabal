@@ -114,12 +114,13 @@ Library
                      Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
                      Network.Gitit.Util, Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
-                     Network.Gitit.Page, Network.Gitit.Feed
+                     Network.Gitit.Page, Network.Gitit.Feed,
+                     Network.Gitit.Compat.Except
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.12.4 && < 1.13,
+  build-depends:     base >= 3, pandoc >= 1.12.4 && < 1.14,
                      pandoc-types >= 1.12.3 && < 1.13, filepath, safe
   extensions:        CPP
   if impl(ghc >= 6.12)
@@ -136,7 +137,7 @@ Executable           gitit
                      pretty,
                      xhtml,
                      containers,
-                     pandoc >= 1.12.4 && < 1.13,
+                     pandoc >= 1.12.4 && < 1.14,
                      pandoc-types >= 1.12.3 && < 1.13,
                      process,
                      filepath,
@@ -173,7 +174,7 @@ Executable           gitit
                      hoauth2 >= 0.4.1 && < 0.5,
                      http-client >= 0.3.5 && < 0.4,
                      http-client-tls >= 0.2.2 && < 0.3,
-                     aeson == 0.7.*
+                     aeson >= 0.7 && < 0.9
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(plugins)

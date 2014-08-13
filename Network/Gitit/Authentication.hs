@@ -42,11 +42,11 @@ import Control.Monad (unless, liftM, mplus)
 import Control.Monad.Trans (liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
-import Data.Char (isAlphaNum, isAlpha, isAscii)
+import Data.Char (isAlphaNum, isAlpha)
 import qualified Data.Map as M
 import Text.Pandoc.Shared (substitute)
 import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
-import Network.URL (encString, exportURL, add_param, importURL)
+import Network.URL (exportURL, add_param, importURL)
 import Network.BSD (getHostName)
 import qualified Text.StringTemplate as T
 import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)

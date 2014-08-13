@@ -69,7 +69,7 @@ module Network.Gitit.ContentTransformer
   )
 where
 
-import Control.Exception (throwIO, catch)
+import qualified Control.Exception as E
 import Control.Monad.State
 import Control.Monad.Reader (ask)
 import Data.Foldable (traverse_)
@@ -86,7 +86,6 @@ import Network.Gitit.Types
 import Network.HTTP (urlDecode)
 import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
-import Prelude hiding (catch)
 import System.FilePath
 import qualified Text.Pandoc.Builder as B
 import Text.HTML.SanitizeXSS (sanitizeBalance)
@@ -274,8 +273,8 @@ rawContents = do
   file <- getFileName
   fs <- lift getFileStore
   let rev = pRevision params
-  liftIO $ catch (liftM Just $ FS.retrieve fs file rev)
-                 (\e -> if e == FS.NotFound then return Nothing else throwIO e)
+  liftIO $ E.catch (liftM Just $ FS.retrieve fs file rev)
+               (\e -> if e == FS.NotFound then return Nothing else E.throwIO e)
 
 --
 -- Response-generating combinators
