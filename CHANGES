@@ -8,6 +8,8 @@ Version 0.10.5 released 23 August 2014
     Added Network.Gitit.Compat.Except module for compatibility
     with earlier and later mtl versions.
 
+  * Added network-uri flag to accommodate network-uri/network split.
+
   * Fixed failure when loading the Subst plugin (Glenn Searby).
 
   * Added Makefile, for use in installing on server.

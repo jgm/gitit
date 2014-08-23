@@ -97,6 +97,10 @@ Source-repository head
   type:          git
   location:      git://github.com/jgm/gitit.git
 
+Flag network-uri
+  Description: Get Network.URI from the network-uri package
+  Default: True
+
 Flag plugins
   description:       Compile in support for plugins.  This will increase the size of
                      the executable and the memory it uses, so those who will not need
@@ -148,7 +152,6 @@ Executable           gitit
                      bytestring,
                      text,
                      random,
-                     network >= 2.3 && < 2.6,
                      utf8-string >= 0.3 && < 0.4,
                      SHA > 1 && < 1.7,
                      HTTP >= 4000.0 && < 4000.3,
@@ -177,6 +180,10 @@ Executable           gitit
                      aeson >= 0.7 && < 0.9
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
+  if flag(network-uri)
+    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
+  else
+    build-depends:   network >= 2 && < 2.6
   if flag(plugins)
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
