@@ -1,14 +1,18 @@
-Version X released DD MONTH YYYY
+Version 0.10.5 released 23 August 2014
+
+  * Added github login option (Freiric Barral).
+
+  * Change default math display to mathjax.
+
+  * Relaxed package bounds, fixed compiler warnings.
+    Added Network.Gitit.Compat.Except module for compatibility
+    with earlier and later mtl versions.
 
   * Fixed failure when loading the Subst plugin (Glenn Searby).
 
   * Added Makefile, for use in installing on server.
 
   * Include takeBaseName in System.FilePath import (Caleb McDaniel).
-
-  * Relaxed package bounds, fixed compiler warnings.
-    Added Network.Gitit.Compat.Except module for compatibility
-    with earlier and later mtl versions.
 
   * Update README.markdown on Apache installation (Peter Gallagher).
 
@@ -17,13 +21,7 @@ Version X released DD MONTH YYYY
   * Enable highlighting of patterns that start or end with punctuation
     (Caleb McDaniel).
 
-  * Small hlint suggested code fixes (Freiric Barral).
-
   * Moved oauth secret to separate config file (Freiric Barral).
-
-  * Added github login option (Freiric Barral).
-
-  * Change default math display to mathjax.
 
   * Corrected MathJax CDN URL (Maciek Makowski).
 
