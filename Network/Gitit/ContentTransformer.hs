@@ -671,13 +671,14 @@ readerFor pt lhs =
                                               $ readerExtensions def
                                          else readerExtensions def }
   in case pt of
-       RST      -> readRST defPS
-       Markdown -> readMarkdown defPS
-       LaTeX    -> readLaTeX defPS
-       HTML     -> readHtml defPS
-       Textile  -> readTextile defPS
-       Org      -> readOrg defPS
-       DocBook  -> readDocBook defPS
+       RST        -> readRST defPS
+       Markdown   -> readMarkdown defPS
+       LaTeX      -> readLaTeX defPS
+       HTML       -> readHtml defPS
+       Textile    -> readTextile defPS
+       Org        -> readOrg defPS
+       DocBook    -> readDocBook defPS
+       MediaWiki  -> readMediaWiki defPS
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform pandoc
