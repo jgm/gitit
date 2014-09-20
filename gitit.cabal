@@ -118,8 +118,7 @@ Library
                      Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
                      Network.Gitit.Util, Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
-                     Network.Gitit.Page, Network.Gitit.Feed,
-                     Network.Gitit.Compat.Except
+                     Network.Gitit.Page, Network.Gitit.Feed
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
