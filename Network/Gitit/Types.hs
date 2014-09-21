@@ -56,9 +56,11 @@ module Network.Gitit.Types (
                            , WikiState(..)
                            , GititServerPart
                            , Handler
-                           , fromEntities)
-
-where
+                           , fromEntities
+                           , GithubConfig
+                           , oAuth2
+                           , org
+                           , githubConfig) where
 
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
@@ -67,6 +69,7 @@ import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
 import qualified Data.Map as M
+import Data.Text (Text)
 import Data.List (intersect)
 import Data.Time (parseTime)
 import System.Locale (defaultTimeLocale)
@@ -190,7 +193,7 @@ data Config = Config {
   recentActivityDays   :: Int,
   -- | Github client data for authentication (id, secret, callback,
   -- authorize endpoint, access token endpoint)
-  githubAuth           :: OAuth2
+  githubAuth           :: GithubConfig
   }
 
 -- | Data for rendering a wiki page.
@@ -464,3 +467,9 @@ fromEntities ('&':xs) =
 fromEntities (x:xs) = x : fromEntities xs
 fromEntities [] = []
 
+data GithubConfig = GithubConfig { oAuth2 :: OAuth2
+                                 , org :: Maybe Text
+                                 }
+
+githubConfig :: OAuth2 -> Maybe Text -> GithubConfig
+githubConfig = GithubConfig

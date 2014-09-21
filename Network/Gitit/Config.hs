@@ -35,6 +35,7 @@ import qualified Data.Map as M
 import Data.ConfigFile hiding (readfile)
 import Data.List (intercalate)
 import Data.Char (toLower, toUpper, isDigit)
+import Data.Text (pack)
 import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
@@ -144,7 +145,7 @@ extractConfig cp = do
                         x           -> error $ "Unknown repository type: " ++ x
       when (authMethod == "rpx" && cfRPXDomain == "") $
          liftIO $ logM "gitit" WARNING "rpx-domain is not set"
-      githubConfig <- extractGithubConfig cp
+      ghConfig <- extractGithubConfig cp
 
       return Config{
           repositoryPath       = cfRepositoryPath
@@ -172,8 +173,7 @@ extractConfig cp = do
 
         , authHandler          = case authMethod of
                                       "form"     -> msum formAuthHandlers
-                                      "github"   -> msum $ githubAuthHandlers
-                                                         $ githubConfig
+                                      "github"   -> msum $ githubAuthHandlers ghConfig
                                       "http"     -> msum httpAuthHandlers
                                       "rpx"      -> msum rpxAuthHandlers
                                       _          -> mzero
@@ -226,29 +226,33 @@ extractConfig cp = do
                                     else Just cfPandocUserData
         , xssSanitize          = cfXssSanitize
         , recentActivityDays   = cfRecentActivityDays
-        , githubAuth           = githubConfig
+        , githubAuth           = ghConfig
         }
   case config' of
         Left (ParseError e, e') -> error $ "Parse error: " ++ e ++ "\n" ++ e'
         Left e                  -> error (show e)
         Right c                 -> return c
 
-extractGithubConfig ::  MonadError CPError m => ConfigParser
-                    -> m OAuth2
+extractGithubConfig ::  (Functor m, MonadError CPError m) => ConfigParser
+                    -> m GithubConfig
 extractGithubConfig cp = do
       cfOauthClientId <- getGithubProp "oauthClientId"
       cfOauthClientSecret <- getGithubProp "oauthClientSecret"
-      cfOauthCallback  <- getGithubProp "oauthCallback"
+      cfOauthCallback <- getGithubProp "oauthCallback"
       cfOauthOAuthorizeEndpoint  <- getGithubProp "oauthOAuthorizeEndpoint"
       cfOauthAccessTokenEndpoint <- getGithubProp "oauthAccessTokenEndpoint"
-      return OAuth2{
-        oauthClientId =  BS.pack cfOauthClientId
-      , oauthClientSecret =  BS.pack cfOauthClientSecret
-      , oauthCallback = Just $ BS.pack cfOauthCallback
-      , oauthOAuthorizeEndpoint = BS.pack cfOauthOAuthorizeEndpoint
-      , oauthAccessTokenEndpoint = BS.pack cfOauthAccessTokenEndpoint
-      }
+      cfOrg <- if hasGithubProp "github-org"
+                 then fmap Just (getGithubProp "github-org")
+                 else return Nothing
+      let cfgOAuth2 = OAuth2 { oauthClientId =  BS.pack cfOauthClientId
+                          , oauthClientSecret =  BS.pack cfOauthClientSecret
+                          , oauthCallback = Just $ BS.pack cfOauthCallback
+                          , oauthOAuthorizeEndpoint = BS.pack cfOauthOAuthorizeEndpoint
+                          , oauthAccessTokenEndpoint = BS.pack cfOauthAccessTokenEndpoint
+                          }
+      return $ githubConfig cfgOAuth2 $ fmap pack cfOrg
   where getGithubProp = get cp "Github"
+        hasGithubProp = has_option cp "Github"
 
 fromQuotedMultiline :: String -> String
 fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")

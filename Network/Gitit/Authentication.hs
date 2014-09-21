@@ -53,7 +53,6 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
-import Network.OAuth.OAuth2
 
 data ValidationType = Register
                     | ResetPassword
@@ -435,18 +434,18 @@ httpAuthHandlers =
   , dir "_login"  $ withData loginUserHTTP
   , dir "_user" currentUser ]
 
-oauthGithubCallback :: OAuth2
+oauthGithubCallback :: GithubConfig
                    -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
                    -> Handler
-oauthGithubCallback githubKey githubCallbackPars =
+oauthGithubCallback ghConfig githubCallbackPars =
   withData $ \(sk :: Maybe SessionKey) ->
       do
         mbSd <- maybe (return Nothing) getSession sk
         mbGititState <- case mbSd of
                           Nothing    -> return Nothing
                           Just sd    -> return $ sessionGithubState sd
-        let gititState = fromMaybe (error "Github did not returned any state") mbGititState
-        mUser <- getGithubUser githubKey githubCallbackPars gititState
+        let gititState = fromMaybe (error "No Github state found in session (is it the same domain?)") mbGititState
+        mUser <- getGithubUser ghConfig githubCallbackPars gititState
         case mUser of
           Right user -> do
                      let userEmail = uEmail user
@@ -461,12 +460,12 @@ oauthGithubCallback githubKey githubCallbackPars =
           Left err ->
               error err
 
-githubAuthHandlers :: OAuth2
+githubAuthHandlers :: GithubConfig
                    -> [Handler]
-githubAuthHandlers githubKey =
+githubAuthHandlers ghConfig =
   [ dir "_logout" $ withData logoutUser
-  , dir "_login" $ loginGithubUser githubKey
-  , dir "_githubCallback" $ withData $ oauthGithubCallback githubKey
+  , dir "_login" $ loginGithubUser $ oAuth2 ghConfig
+  , dir "_githubCallback" $ withData $ oauthGithubCallback ghConfig
   , dir "_user" currentUser ]
 
 -- Login using RPX (see RPX development docs at https://rpxnow.com/docs)

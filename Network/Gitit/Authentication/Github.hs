@@ -4,8 +4,6 @@ module Network.Gitit.Authentication.Github ( loginGithubUser
                                            , getGithubUser
                                            , GithubCallbackPars) where
 
-import Network.OAuth.OAuth2
-
 import Network.Gitit.Types
 import Network.Gitit.Server
 import Network.Gitit.State
@@ -13,6 +11,7 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
 import Network.HTTP.Conduit
 import Network.HTTP.Client.TLS
+import Network.OAuth.OAuth2
 import Control.Monad (liftM, mplus, mzero)
 import Data.Aeson
 import Data.Text (Text, pack, unpack)
@@ -29,15 +28,15 @@ loginGithubUser githubKey = do
   key <- newSession (sessionDataGithubState state)
   cfg <- getConfig
   addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-  let scopes = "user:email"
+  let scopes = "user:email,read:org"
   let url = authorizationUrl githubKey `appendQueryParam` [("state", BS.pack state), ("scope", scopes)]
   seeOther (BS.unpack url) $ toResponse ("redirecting to github" :: String)
 
-getGithubUser :: OAuth2                  -- ^ Oauth2 configuration (client secret)
+getGithubUser :: GithubConfig            -- ^ Oauth2 configuration (client secret)
               -> GithubCallbackPars      -- ^ Authentication code gained after authorization
               -> String                  -- ^ Github state, we expect the state we sent in loginGithubUser
               -> GititServerPart (Either String User) -- ^ user email and name (password 'none')
-getGithubUser githubKey githubCallbackPars githubState =
+getGithubUser ghConfig githubCallbackPars githubState =
   withManagerSettings tlsManagerSettings getUserInternal
   where
     getUserInternal mgr = liftIO $ do
@@ -45,22 +44,29 @@ getGithubUser githubKey githubCallbackPars githubState =
       if state == githubState
         then do
           let (Just code) = rCode githubCallbackPars
-          token <- fetchAccessToken mgr githubKey (sToBS code)
-          let mUser = case token of
-                             Right at -> do
-                                        uinfo <- userInfo mgr at
-                                        minfo <- mailInfo mgr at
-                                        case (uinfo, minfo) of
-                                          (Right githubUser, Right githubUserMail) -> do
-                                                              user <- mkUser (unpack $ gname githubUser)
-                                                                      (unpack $ email $ head githubUserMail)
-                                                                      "none"
-                                                              return $ Right user
-                                          (Left err, _) -> return $ Left $ lbsToStr err
-                                          (_, Left err) -> return $ Left $ lbsToStr err
-                             Left err ->
-                                 return $ Left $  "no access token found yet: " ++ lbsToStr  err
-          mUser
+          token <- fetchAccessToken mgr (oAuth2 ghConfig) (sToBS code)
+          case token of
+            Right at -> do
+                       uinfo <- userInfo mgr at
+                       minfo <- mailInfo mgr at
+                       case (uinfo, minfo) of
+                         (Right githubUser, Right githubUserMail) -> do
+                                             let gitLogin = gLogin githubUser
+                                             let gitName = gName githubUser
+                                             user <- mkUser (unpack gitName)
+                                                     (unpack $ email $ head githubUserMail)
+                                                     "none"
+                                             let mbOrg = org ghConfig
+                                             case mbOrg of
+                                               Nothing -> return $ Right user
+                                               Just githuborg -> do
+                                                          isOrgMember <- orgInfo gitLogin githuborg mgr at
+                                                          case isOrgMember of
+                                                            Right _ -> return $ Right user
+                                                            Left err -> return $ Left $ lbsToStr err
+                         (Left err, _) -> return $ Left $ lbsToStr err
+                         (_, Left err) -> return $ Left $ lbsToStr err
+            Left err -> return $ Left $  "no access token found yet: " ++ lbsToStr  err
         else
           return $ Left $ "returned state: " ++ state ++ ", expected state: " ++  githubState
 
@@ -80,13 +86,18 @@ userInfo mgr token = authGetJSON mgr token "https://api.github.com/user"
 mailInfo :: Manager -> AccessToken -> IO (OAuth2Result [GithubUserMail])
 mailInfo mgr token = authGetJSON mgr token "https://api.github.com/user/emails"
 
-data GithubUser = GithubUser { gid   :: Integer
-                             , gname :: Text
+orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (OAuth2Result BSL.ByteString)
+orgInfo gitLogin githubOrg mgr token = do
+  let url  = "https://api.github.com/orgs/" `BS.append` encodeUtf8 githubOrg `BS.append` "/members/" `BS.append` encodeUtf8 gitLogin
+  authGetBS mgr token url
+
+data GithubUser = GithubUser { gLogin :: Text
+                             , gName :: Text
                              } deriving (Show, Eq)
 
 instance FromJSON GithubUser where
     parseJSON (Object o) = GithubUser
-                           <$> o .: "id"
+                           <$> o .: "login"
                            <*> o .: "name"
     parseJSON _ = mzero
 
