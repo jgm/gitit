@@ -13,6 +13,7 @@ import Network.HTTP.Conduit
 import Network.HTTP.Client.TLS
 import Network.OAuth.OAuth2
 import Control.Monad (liftM, mplus, mzero)
+import Data.Maybe
 import Data.Aeson
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
@@ -28,8 +29,9 @@ loginGithubUser githubKey = do
   key <- newSession (sessionDataGithubState state)
   cfg <- getConfig
   addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-  let scopes = "user:email,read:org"
-  let url = authorizationUrl githubKey `appendQueryParam` [("state", BS.pack state), ("scope", scopes)]
+  let usingOrg = isJust $ org $ githubAuth cfg
+  let scopes = "user:email" ++ if usingOrg then ",read:org" else ""
+  let url = authorizationUrl githubKey `appendQueryParam` [("state", BS.pack state), ("scope", BS.pack scopes)]
   seeOther (BS.unpack url) $ toResponse ("redirecting to github" :: String)
 
 getGithubUser :: GithubConfig            -- ^ Oauth2 configuration (client secret)
@@ -52,8 +54,7 @@ getGithubUser ghConfig githubCallbackPars githubState =
                        case (uinfo, minfo) of
                          (Right githubUser, Right githubUserMail) -> do
                                              let gitLogin = gLogin githubUser
-                                             let gitName = gName githubUser
-                                             user <- mkUser (unpack gitName)
+                                             user <- mkUser (unpack gitLogin)
                                                      (unpack $ email $ head githubUserMail)
                                                      "none"
                                              let mbOrg = org ghConfig
@@ -92,13 +93,11 @@ orgInfo gitLogin githubOrg mgr token = do
   authGetBS mgr token url
 
 data GithubUser = GithubUser { gLogin :: Text
-                             , gName :: Text
                              } deriving (Show, Eq)
 
 instance FromJSON GithubUser where
     parseJSON (Object o) = GithubUser
                            <$> o .: "login"
-                           <*> o .: "name"
     parseJSON _ = mzero
 
 data GithubUserMail = GithubUserMail { email :: Text
