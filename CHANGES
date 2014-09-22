@@ -1,3 +1,11 @@
+Version 0.10.5.1 released 21 September 2014
+
+  * Added markup help for org mode.  Closes #449.
+
+  * Utils.parsePageType:  Added case for "org".
+
+  * Allow newer versions of dependencies.
+
 Version 0.10.5 released 23 August 2014
 
   * Added github login option (Freiric Barral).
