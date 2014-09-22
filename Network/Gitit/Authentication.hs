@@ -439,7 +439,7 @@ oauthGithubCallback :: OAuth2
                    -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
                    -> Handler
 oauthGithubCallback githubKey githubCallbackPars = do
-    mUser <- liftIO $ getGithubUser githubKey githubCallbackPars
+    mUser <- getGithubUser githubKey githubCallbackPars
     case mUser of
       Right user -> do
                let userEmail = uEmail user

@@ -9,13 +9,14 @@ import Network.Gitit.Server
 import Network.Gitit.State
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
-import Network.HTTP.Client
+import Network.HTTP.Conduit
 import Network.HTTP.Client.TLS
 import Control.Monad (liftM, mplus, mzero)
 import Data.Aeson
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
 import Control.Applicative
+import Control.Monad.Trans (liftIO)
 import Data.Char (chr)
 
 loginGithubUser :: OAuth2 -> Handler
@@ -27,28 +28,30 @@ loginGithubUser githubKey = do
 
 getGithubUser :: OAuth2                  -- ^ Oauth2 configuration (client secret)
               -> GithubCallbackPars      -- ^ Authentication code gained after authorization
-              -> IO (Either String User) -- ^ user email and name (password 'none')
-getGithubUser githubKey githubCallbackPars = do
-  let (Just code) = rCode githubCallbackPars
-  let setting = tlsManagerSettings
-  mgr <- newManager setting
-  token <- fetchAccessToken mgr githubKey (sToBS code)
-  let mUser = case token of
-                Right at -> do
-                      uinfo <- userInfo mgr at
-                      minfo <- mailInfo mgr at
-                      case (uinfo, minfo) of
-                         (Right githubUser, Right githubUserMail) -> do
-                                  user <- mkUser (unpack $ gname githubUser)
-                                                 (unpack $ email $ head githubUserMail)
-                                                 "none"
-                                  return $ Right user
-                         (Left err, _) -> return $ Left $ lbsToStr err
-                         (_, Left err) -> return $ Left $ lbsToStr err
-                Left err ->
-                     return $ Left $  "no access token found yet: " ++ lbsToStr  err
-  closeManager mgr
-  mUser
+              -> GititServerPart (Either String User) -- ^ user email and name (password 'none')
+getGithubUser githubKey githubCallbackPars =
+  withManagerSettings tlsManagerSettings getUserInternal
+  where
+    getUserInternal mgr = liftIO $ do
+          let (Just code) = rCode githubCallbackPars
+          token <- fetchAccessToken mgr githubKey (sToBS code)
+          let mUser = case token of
+                             Right at -> do
+                                        uinfo <- userInfo mgr at
+                                        minfo <- mailInfo mgr at
+                                        case (uinfo, minfo) of
+                                          (Right githubUser, Right githubUserMail) -> do
+                                                              user <- mkUser (unpack $ gname githubUser)
+                                                                      (unpack $ email $ head githubUserMail)
+                                                                      "none"
+                                                              return $ Right user
+                                          (Left err, _) -> return $ Left $ lbsToStr err
+                                          (_, Left err) -> return $ Left $ lbsToStr err
+                             Left err ->
+                                 return $ Left $  "no access token found yet: " ++ lbsToStr  err
+          mUser
+
+
 
 data GithubCallbackPars = GithubCallbackPars { rCode :: Maybe String }
                           deriving Show
