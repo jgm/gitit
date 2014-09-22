@@ -157,7 +157,7 @@ Executable           gitit
                      HTTP >= 4000.0 && < 4000.3,
                      HStringTemplate >= 0.6 && < 0.8,
                      old-locale >= 1,
-                     time >= 1.1 && < 1.5,
+                     time >= 1.1 && < 1.6,
                      recaptcha >= 0.1,
                      filestore >= 0.6 && < 0.7,
                      zlib >= 0.5 && < 0.6,
@@ -175,7 +175,7 @@ Executable           gitit
                      uri >= 0.1 && < 0.2,
                      split,
                      hoauth2 >= 0.4.1 && < 0.5,
-                     http-client >= 0.3.5 && < 0.4,
+                     http-client >= 0.3.5 && < 0.5,
                      http-client-tls >= 0.2.2 && < 0.3,
                      aeson >= 0.7 && < 0.9
   if impl(ghc >= 6.10)
