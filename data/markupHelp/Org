@@ -1,4 +1,3 @@
-#+BEGIN_EXAMPLE
     * Section heading
 
     ** Subsection
@@ -41,8 +40,5 @@
 
     -  term :: definition orange
        orange fruit
-#+END_EXAMPLE
 
-For more: [[http://daringfireball.net/projects/markdown][markdown
-syntax]], [[http://johnmacfarlane.net/pandoc/README.html][pandoc
-extensions]].
+For more: [org-mode manual](http://orgmode.org/manual/)
