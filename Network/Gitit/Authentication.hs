@@ -379,7 +379,7 @@ loginUser params = do
   cfg <- getConfig
   if allowed
     then do
-      key <- newSession (SessionData uname)
+      key <- newSession (sessionData uname)
       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
@@ -438,21 +438,28 @@ httpAuthHandlers =
 oauthGithubCallback :: OAuth2
                    -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
                    -> Handler
-oauthGithubCallback githubKey githubCallbackPars = do
-    mUser <- getGithubUser githubKey githubCallbackPars
-    case mUser of
-      Right user -> do
-               let userEmail = uEmail user
-               updateGititState $ \s -> s { users = M.insert userEmail user (users s) }
-               addUser (uUsername user) user
-               key <- newSession (SessionData userEmail)
-               cfg <- getConfig
-               addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-               base' <- getWikiBase
-               let destination = base' ++ "/"
-               seeOther (encUrl destination) $ toResponse ()
-      Left err ->
-               error err
+oauthGithubCallback githubKey githubCallbackPars =
+  withData $ \(sk :: Maybe SessionKey) ->
+      do
+        mbSd <- maybe (return Nothing) getSession sk
+        mbGititState <- case mbSd of
+                          Nothing    -> return Nothing
+                          Just sd    -> return $ sessionGithubState sd
+        let gititState = fromMaybe (error "Github did not returned any state") mbGititState
+        mUser <- getGithubUser githubKey githubCallbackPars gititState
+        case mUser of
+          Right user -> do
+                     let userEmail = uEmail user
+                     updateGititState $ \s -> s { users = M.insert userEmail user (users s) }
+                     addUser (uUsername user) user
+                     key <- newSession (sessionData userEmail)
+                     cfg <- getConfig
+                     addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+                     base' <- getWikiBase
+                     let destination = base' ++ "/"
+                     seeOther (encUrl destination) $ toResponse ()
+          Left err ->
+              error err
 
 githubAuthHandlers :: OAuth2
                    -> [Handler]
@@ -495,7 +502,7 @@ loginRPXUser params = do
        let email  = prop "verifiedEmail" uid
        user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
        updateGititState $ \s -> s { users = M.insert userId user (users s) }
-       key <- newSession (SessionData userId)
+       key <- newSession (sessionData userId)
        addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
        see $ fromJust $ rDestination params
       where

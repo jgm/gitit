@@ -21,7 +21,44 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 {- | Types for Gitit modules.
 -}
 
-module Network.Gitit.Types where
+module Network.Gitit.Types (
+                            PageType(..)
+                           , FileStoreType(..)
+                           , MathMethod(..)
+                           , AuthenticationLevel(..)
+                           , Config(..)
+                           , Page(..)
+                           , SessionKey
+                           -- we do not export SessionData constructors, in case we need to extend  SessionData with other data in the future
+                           , SessionData
+                           , sessionData
+                           , sessionDataGithubState
+                           , sessionUser
+                           , sessionGithubState
+                           , User(..)
+                           , Sessions(..)
+                           , Password(..)
+                           , GititState(..)
+                           , HasContext
+                           , modifyContext
+                           , getContext
+                           , ContentTransformer
+                           , Plugin(..)
+                           , PluginData(..)
+                           , PluginM
+                           , runPluginM
+                           , Context(..)
+                           , PageLayout(..)
+                           , Tab(..)
+                           , Recaptcha(..)
+                           , Params(..)
+                           , Command(..)
+                           , WikiState(..)
+                           , GititServerPart
+                           , Handler
+                           , fromEntities)
+
+where
 
 import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
@@ -171,8 +208,15 @@ data Page = Page {
 type SessionKey = Integer
 
 data SessionData = SessionData {
-  sessionUser :: String
+  sessionUser :: Maybe String,
+  sessionGithubState :: Maybe String
 } deriving (Read,Show,Eq)
+
+sessionData :: String -> SessionData
+sessionData user = SessionData (Just user) Nothing
+
+sessionDataGithubState  :: String -> SessionData
+sessionDataGithubState  githubState = SessionData Nothing (Just githubState)
 
 data Sessions a = Sessions {unsession::M.Map SessionKey a}
   deriving (Read,Show,Eq)

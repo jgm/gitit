@@ -106,7 +106,9 @@ withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
             Nothing    -> return Nothing
             Just sd    -> do
               addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
-              getUser $! sessionUser sd
+              case sessionUser sd of
+                Nothing -> return Nothing
+                Just user -> getUser user
   let user = maybe "" uUsername mbUser
   localRq (setHeader "REMOTE_USER" user) handler
 
