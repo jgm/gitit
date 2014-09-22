@@ -38,7 +38,7 @@
 
     3. item three
 
-    -  term :: definition orange
-       orange fruit
+    -  term :: definition
+    -  orange :: orange fruit
 
 For more: [org-mode manual](http://orgmode.org/manual/)
