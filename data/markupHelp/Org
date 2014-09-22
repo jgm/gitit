@@ -1,0 +1,48 @@
+#+BEGIN_EXAMPLE
+    * Section heading
+
+    ** Subsection
+
+    Formatting: /italics/, *bold*, super^{script}, sub_{script},
+    +strikeout+. A line break\\
+    can be forced with two backslashes at the end of the line.
+
+    #+BEGIN_QUOTE
+      Indented quotation
+    #+END_QUOTE
+
+    Links: [[http://google.com][external]], [[][Wiki Link]],
+    [[/img/gitit-banner.png]], [[#section-heading][to heading]].
+
+    Indented code block:
+
+    #+BEGIN_EXAMPLE
+        #include <stdbool.h>
+    #+END_EXAMPLE
+
+    Or
+
+    #+BEGIN_SRC haskell
+        let a = 1:a in head a
+    #+END_SRC
+
+    -  bulleted
+    -  list
+
+    --------------
+
+    1. ordered
+    2. list
+
+       1. sublist (indent 4 spaces)
+       2. another
+
+    3. item three
+
+    -  term :: definition orange
+       orange fruit
+#+END_EXAMPLE
+
+For more: [[http://daringfireball.net/projects/markdown][markdown
+syntax]], [[http://johnmacfarlane.net/pandoc/README.html][pandoc
+extensions]].
