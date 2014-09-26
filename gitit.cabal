@@ -173,7 +173,7 @@ Executable           gitit
                      json >= 0.4 && < 0.8,
                      uri >= 0.1 && < 0.2,
                      split,
-                     hoauth2 >= 0.4.1 && < 0.5,
+                     hoauth2 >= 0.4.2 && < 0.5,
                      http-conduit >= 2.1.4 && < 2.1.5,
                      http-client-tls >= 0.2.2 && < 0.3,
                      aeson >= 0.7 && < 0.9,
