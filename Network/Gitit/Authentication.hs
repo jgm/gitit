@@ -446,6 +446,8 @@ oauthGithubCallback ghConfig githubCallbackPars =
                           Just sd    -> return $ sessionGithubState sd
         let gititState = fromMaybe (error "No Github state found in session (is it the same domain?)") mbGititState
         mUser <- getGithubUser ghConfig githubCallbackPars gititState
+        base' <- getWikiBase
+        let destination = base' ++ "/"
         case mUser of
           Right user -> do
                      let userEmail = uEmail user
@@ -454,11 +456,10 @@ oauthGithubCallback ghConfig githubCallbackPars =
                      key <- newSession (sessionData userEmail)
                      cfg <- getConfig
                      addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-                     base' <- getWikiBase
-                     let destination = base' ++ "/"
                      seeOther (encUrl destination) $ toResponse ()
-          Left err ->
-              error err
+          Left err -> do
+              liftIO $ logM "gitit" WARNING $ "Login Failed: " ++ err
+              seeOther (encUrl destination) $ toResponse $ p << "Login Failed"
 
 githubAuthHandlers :: GithubConfig
                    -> [Handler]

@@ -19,9 +19,9 @@ import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
 import Control.Applicative
 import Control.Monad.Trans (liftIO)
-import Data.Char (chr)
 import Data.UUID (toString)
 import Data.UUID.V4 (nextRandom)
+import qualified Control.Exception as E
 
 loginGithubUser :: OAuth2 -> Handler
 loginGithubUser githubKey = do
@@ -39,37 +39,41 @@ getGithubUser :: GithubConfig            -- ^ Oauth2 configuration (client secre
               -> String                  -- ^ Github state, we expect the state we sent in loginGithubUser
               -> GititServerPart (Either String User) -- ^ user email and name (password 'none')
 getGithubUser ghConfig githubCallbackPars githubState =
-  withManagerSettings tlsManagerSettings getUserInternal
-  where
-    getUserInternal mgr = liftIO $ do
-      let (Just state) = rState githubCallbackPars
-      if state == githubState
-        then do
-          let (Just code) = rCode githubCallbackPars
-          token <- fetchAccessToken mgr (oAuth2 ghConfig) (sToBS code)
-          case token of
-            Right at -> do
-                       uinfo <- userInfo mgr at
-                       minfo <- mailInfo mgr at
-                       case (uinfo, minfo) of
-                         (Right githubUser, Right githubUserMail) -> do
-                                             let gitLogin = gLogin githubUser
-                                             user <- mkUser (unpack gitLogin)
-                                                     (unpack $ email $ head githubUserMail)
-                                                     "none"
-                                             let mbOrg = org ghConfig
-                                             case mbOrg of
-                                               Nothing -> return $ Right user
-                                               Just githuborg -> do
-                                                          isOrgMember <- orgInfo gitLogin githuborg mgr at
-                                                          case isOrgMember of
-                                                            Right _ -> return $ Right user
-                                                            Left err -> return $ Left $ lbsToStr err
-                         (Left err, _) -> return $ Left $ lbsToStr err
-                         (_, Left err) -> return $ Left $ lbsToStr err
-            Left err -> return $ Left $  "no access token found yet: " ++ lbsToStr  err
-        else
-          return $ Left $ "returned state: " ++ state ++ ", expected state: " ++  githubState
+       withManagerSettings tlsManagerSettings getUserInternal
+    where
+    getUserInternal mgr =
+        liftIO $ do
+            let (Just state) = rState githubCallbackPars
+            if state == githubState
+              then do
+                let (Just code) = rCode githubCallbackPars
+                ifSuccess
+                   "No access token found yet"
+                   (fetchAccessToken mgr (oAuth2 ghConfig) (sToBS code))
+                   (\at -> ifSuccess
+                           "User Authentication failed"
+                           (userInfo mgr at)
+                           (\githubUser -> ifSuccess
+                            ("No email for user " ++ unpack (gLogin githubUser) ++ " returned by Github")
+                            (mailInfo mgr at)
+                            (\githubUserMail -> do
+                                       let gitLogin = gLogin githubUser
+                                       user <- mkUser (unpack gitLogin)
+                                                   (unpack $ email $ head githubUserMail)
+                                                   "none"
+                                       let mbOrg = org ghConfig
+                                       case mbOrg of
+                                             Nothing -> return $ Right user
+                                             Just githuborg -> ifSuccess
+                                                      ("Membership check of user " ++ unpack gitLogin ++  " to "  ++ unpack githuborg ++ " failed")
+                                                      (orgInfo gitLogin githuborg mgr at)
+                                                      (\_ -> return $ Right user))))
+              else
+                return $ Left $ "The state sent to github is not the same as the state received: " ++ state ++ ", but expected sent state: " ++  githubState
+    ifSuccess errMsg failableAction successAction  = E.catch
+                                                 (do Right outcome <- failableAction
+                                                     successAction outcome)
+                                                 (\exception -> liftIO $ return $ Left $ errMsg ++ ". The exception was: " ++ show (exception :: E.SomeException))
 
 data GithubCallbackPars = GithubCallbackPars { rCode :: Maybe String
                                              , rState :: Maybe String }
@@ -110,6 +114,3 @@ instance FromJSON GithubUserMail where
 
 sToBS :: String -> BS.ByteString
 sToBS = encodeUtf8 . pack
-
-lbsToStr :: BSL.ByteString -> String
-lbsToStr = map (chr . fromEnum) . BSL.unpack
