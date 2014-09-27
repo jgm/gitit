@@ -366,11 +366,15 @@ oauthclientsecret: 01239456789abcdef01239456789abcdef012394
 oauthcallback: http://mysite/_githubCallback
 oauthoauthorizeendpoint: https://github.com/login/oauth/authorize
 oauthaccesstokenendpoint: https://github.com/login/oauth/access_token
+## Uncomment if you are checking membership against an organization and change
+## gitit-testorg to this organization:
+# github-org: gitit-testorg
 ```
 
 The github authentication uses the scope `user:email`. This way, gitit gets the
 email of the user, and the commit can be assigned to the right author if the
-wikidata repository is pushed to github.
+wikidata repository is pushed to github. Additionally, it uses `read:org` if you
+uses the option `github-org` to check membership against an organization.
 
 To push your repository to gitub after each commit, you can add the file
 `post-commit` with the content below in the .git/hooks directory of your
