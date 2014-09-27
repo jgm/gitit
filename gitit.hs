@@ -54,7 +54,7 @@ main = do
         putErr ExitSuccess (progname ++ " version " ++
             showVersion version ++ compileInfo ++ copyrightMessage)
     Left PrintDefaultConfig -> getDataFileName "data/default.conf" >>=
-        readFileUTF8 >>= B.putStrLn . fromString >> exitWith ExitSuccess
+        readFileUTF8 >>= B.putStrLn . fromString >> exitSuccess
     Right xs -> return xs
 
   conf' <- case [f | ConfigFile f <- opts] of
@@ -137,7 +137,7 @@ flags =
    ]
 
 parseArgs :: [String] -> IO [Opt]
-parseArgs argv = do
+parseArgs argv =
   case getOpt Permute flags argv of
     (opts,_,[])  -> return opts
     (_,_,errs)   -> putErr (ExitFailure 1) . (concat errs ++) =<< usageMessage

@@ -118,8 +118,7 @@ Library
                      Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
                      Network.Gitit.Util, Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
-                     Network.Gitit.Page, Network.Gitit.Feed,
-                     Network.Gitit.Compat.Except
+                     Network.Gitit.Page, Network.Gitit.Feed
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
@@ -174,10 +173,11 @@ Executable           gitit
                      json >= 0.4 && < 0.8,
                      uri >= 0.1 && < 0.2,
                      split,
-                     hoauth2 >= 0.4.1 && < 0.5,
-                     http-client >= 0.3.5 && < 0.5,
+                     hoauth2 >= 0.4.2 && < 0.5,
+                     http-conduit >= 2.1.4 && < 2.1.5,
                      http-client-tls >= 0.2.2 && < 0.3,
-                     aeson >= 0.7 && < 0.9
+                     aeson >= 0.7 && < 0.9,
+                     uuid >= 1.3 && < 1.4
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   if flag(network-uri)
