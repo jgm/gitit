@@ -223,7 +223,7 @@ Use the option `-f [filename]` to specify a configuration file:
 
 The configuation can be splitted between several files:
 
-	gitit -f my.conf additional.conf
+	gitit -f my.conf -f additional.conf
 
 One use case is to keep sensible part of the configuration outside of a SCM
 (oauth client secret for example).
