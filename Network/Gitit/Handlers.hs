@@ -50,6 +50,7 @@ module Network.Gitit.Handlers (
                       , showHighlightedSource
                       , expireCache
                       , feedHandler
+                      , reloadCache
                       )
 where
 import Safe
@@ -68,7 +69,7 @@ import System.FilePath
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import qualified Text.XHtml as X ( method )
-import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixOf, inits, sort, (\\))
+import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixOf, isInfixOf, inits, sort, (\\))
 import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
 import Data.Ord (comparing)
@@ -81,6 +82,7 @@ import Data.Time (getCurrentTime, addUTCTime)
 import Data.Time.Clock (diffUTCTime, UTCTime(..))
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
+import qualified Data.ByteString.UTF8 as UTF8
 
 handleAny :: Handler
 handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
@@ -773,6 +775,17 @@ expireCache = do
   expireCachedFile (pathForPage page)
   expireCachedFile page
   ok $ toResponse ()
+
+reloadCache :: GititServerPart ()
+reloadCache = do
+  cfg <- getConfig
+  rq <- askRq
+  let cc = maybe "" UTF8.toString $ getHeader "cache-control" $ rq
+  when (useCache cfg && isInfixOf "no-cache" cc) $ do
+    -- try it as a page first, then as an uploaded file
+    page <- getPage
+    expireCachedFile (pathForPage page)
+    expireCachedFile page
 
 feedHandler :: Handler
 feedHandler = do

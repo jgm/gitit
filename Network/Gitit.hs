@@ -198,14 +198,14 @@ wikiHandlers =
       , method POST >>
           authenticate ForModify (unlessNoDelete deletePage showPage) ]
   , dir "_preview" preview
-  , guardIndex >> indexPage
+  , guardIndex >> reloadCache >> indexPage
   , guardCommand "export" >> exportPage
   , method POST >> guardCommand "cancel" >> showPage
   , method POST >> guardCommand "update" >>
       authenticate ForModify (unlessNoEdit updatePage showPage)
-  , showPage
+  , reloadCache >> showPage
   , guardPath isSourceCode >> method GET >> showHighlightedSource
-  , handleAny
+  , reloadCache >> handleAny
   , notFound =<< (guardPath isPage >> createPage)
   ]
 
