@@ -458,8 +458,9 @@ oauthGithubCallback ghConfig githubCallbackPars =
                      addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
                      seeOther (encUrl destination) $ toResponse ()
           Left err -> do
-              liftIO $ logM "gitit" WARNING $ "Login Failed: " ++ err
-              seeOther (encUrl destination) $ toResponse $ p << "Login Failed"
+              liftIO $ logM "gitit" WARNING $ "Login Failed: " ++ ghUserMessage err ++ maybe "" (". Github response" ++) (ghDetails err)
+              let url = destination ++ "?message=" ++ ghUserMessage err
+              seeOther (encUrl url) $ toResponse ()
 
 githubAuthHandlers :: GithubConfig
                    -> [Handler]
