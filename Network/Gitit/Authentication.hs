@@ -53,7 +53,6 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
-import Network.OAuth.OAuth2
 
 data ValidationType = Register
                     | ResetPassword
@@ -379,7 +378,7 @@ loginUser params = do
   cfg <- getConfig
   if allowed
     then do
-      key <- newSession (SessionData uname)
+      key <- newSession (sessionData uname)
       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
     else
@@ -435,31 +434,39 @@ httpAuthHandlers =
   , dir "_login"  $ withData loginUserHTTP
   , dir "_user" currentUser ]
 
-oauthGithubCallback :: OAuth2
+oauthGithubCallback :: GithubConfig
                    -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
                    -> Handler
-oauthGithubCallback githubKey githubCallbackPars = do
-    mUser <- liftIO $ getGithubUser githubKey githubCallbackPars
-    case mUser of
-      Right user -> do
-               let userEmail = uEmail user
-               updateGititState $ \s -> s { users = M.insert userEmail user (users s) }
-               addUser (uUsername user) user
-               key <- newSession (SessionData userEmail)
-               cfg <- getConfig
-               addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-               base' <- getWikiBase
-               let destination = base' ++ "/"
-               seeOther (encUrl destination) $ toResponse ()
-      Left err ->
-               error err
+oauthGithubCallback ghConfig githubCallbackPars =
+  withData $ \(sk :: Maybe SessionKey) ->
+      do
+        mbSd <- maybe (return Nothing) getSession sk
+        mbGititState <- case mbSd of
+                          Nothing    -> return Nothing
+                          Just sd    -> return $ sessionGithubState sd
+        let gititState = fromMaybe (error "No Github state found in session (is it the same domain?)") mbGititState
+        mUser <- getGithubUser ghConfig githubCallbackPars gititState
+        base' <- getWikiBase
+        let destination = base' ++ "/"
+        case mUser of
+          Right user -> do
+                     let userEmail = uEmail user
+                     updateGititState $ \s -> s { users = M.insert userEmail user (users s) }
+                     addUser (uUsername user) user
+                     key <- newSession (sessionData userEmail)
+                     cfg <- getConfig
+                     addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+                     seeOther (encUrl destination) $ toResponse ()
+          Left err -> do
+              liftIO $ logM "gitit" WARNING $ "Login Failed: " ++ err
+              seeOther (encUrl destination) $ toResponse $ p << "Login Failed"
 
-githubAuthHandlers :: OAuth2
+githubAuthHandlers :: GithubConfig
                    -> [Handler]
-githubAuthHandlers githubKey =
+githubAuthHandlers ghConfig =
   [ dir "_logout" $ withData logoutUser
-  , dir "_login" $ loginGithubUser githubKey
-  , dir "_githubCallback" $ withData $ oauthGithubCallback githubKey
+  , dir "_login" $ loginGithubUser $ oAuth2 ghConfig
+  , dir "_githubCallback" $ withData $ oauthGithubCallback ghConfig
   , dir "_user" currentUser ]
 
 -- Login using RPX (see RPX development docs at https://rpxnow.com/docs)
@@ -495,7 +502,7 @@ loginRPXUser params = do
        let email  = prop "verifiedEmail" uid
        user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
        updateGititState $ \s -> s { users = M.insert userId user (users s) }
-       key <- newSession (SessionData userId)
+       key <- newSession (sessionData userId)
        addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
        see $ fromJust $ rDestination params
       where
