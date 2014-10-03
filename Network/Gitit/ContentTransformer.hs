@@ -669,7 +669,9 @@ readerFor pt lhs =
                  , readerExtensions = if lhs
                                          then Set.insert Ext_literate_haskell
                                               $ readerExtensions def
-                                         else readerExtensions def }
+                                         else readerExtensions def
+                 , readerParseRaw = True
+                 }
   in case pt of
        RST      -> readRST defPS
        Markdown -> readMarkdown defPS
