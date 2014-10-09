@@ -79,7 +79,8 @@ import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 import Network.OAuth.OAuth2
 
-data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
+data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook 
+              | MediaWiki
                 deriving (Read, Show, Eq)
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
