@@ -2,7 +2,10 @@
 
 module Network.Gitit.Authentication.Github ( loginGithubUser
                                            , getGithubUser
-                                           , GithubCallbackPars) where
+                                           , GithubCallbackPars
+                                           , GithubLoginError
+                                           , ghUserMessage
+                                           , ghDetails) where
 
 import Network.Gitit.Types
 import Network.Gitit.Server
@@ -34,10 +37,14 @@ loginGithubUser githubKey = do
   let url = authorizationUrl githubKey `appendQueryParam` [("state", BS.pack state), ("scope", BS.pack scopes)]
   seeOther (BS.unpack url) $ toResponse ("redirecting to github" :: String)
 
+data GithubLoginError = GithubLoginError { ghUserMessage :: String
+                                         , ghDetails :: Maybe String
+                                         }
+
 getGithubUser :: GithubConfig            -- ^ Oauth2 configuration (client secret)
               -> GithubCallbackPars      -- ^ Authentication code gained after authorization
               -> String                  -- ^ Github state, we expect the state we sent in loginGithubUser
-              -> GititServerPart (Either String User) -- ^ user email and name (password 'none')
+              -> GititServerPart (Either GithubLoginError User) -- ^ user email and name (password 'none')
 getGithubUser ghConfig githubCallbackPars githubState =
        withManagerSettings tlsManagerSettings getUserInternal
     where
@@ -69,11 +76,15 @@ getGithubUser ghConfig githubCallbackPars githubState =
                                                       (orgInfo gitLogin githuborg mgr at)
                                                       (\_ -> return $ Right user))))
               else
-                return $ Left $ "The state sent to github is not the same as the state received: " ++ state ++ ", but expected sent state: " ++  githubState
+                return $ Left $
+                       GithubLoginError ("The state sent to github is not the same as the state received: " ++ state ++ ", but expected sent state: " ++  githubState)
+                                        Nothing
     ifSuccess errMsg failableAction successAction  = E.catch
                                                  (do Right outcome <- failableAction
                                                      successAction outcome)
-                                                 (\exception -> liftIO $ return $ Left $ errMsg ++ ". The exception was: " ++ show (exception :: E.SomeException))
+                                                 (\exception -> liftIO $ return $ Left $
+                                                                GithubLoginError errMsg
+                                                                                 (Just $ show (exception :: E.SomeException)))
 
 data GithubCallbackPars = GithubCallbackPars { rCode :: Maybe String
                                              , rState :: Maybe String }
