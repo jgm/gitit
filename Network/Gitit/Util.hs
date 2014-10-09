@@ -102,6 +102,7 @@ parsePageType s =
        "latex"        -> (LaTeX,False)
        "latex+lhs"    -> (LaTeX,True)
        "org"          -> (Org,False)
+       "mediawiki"    -> (MediaWiki,False)
        x              -> error $ "Unknown page type: " ++ x
 
 encUrl :: String -> String
