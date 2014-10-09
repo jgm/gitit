@@ -42,6 +42,12 @@ maintainer:          jgm@berkeley.edu
 bug-reports:         http://github.com/jgm/gitit/issues
 homepage:            http://gitit.net
 stability:           experimental
+extra-source-files:  data/static/js/jquery-1.2.6.js
+                     data/static/js/jquery.hotkeys-0.7.9.js
+                     data/static/js/jquery-ui.core-1.6rc2.js
+                     data/static/js/jquery-ui.droppable-1.6rc2.js
+                     data/static/js/jquery-ui.draggable-1.6rc2.js
+                     data/static/js/jquery-ui.tabs-1.6rc2.js
 data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/css/ie.css, data/static/css/hk-pyg.css,
                      data/static/css/reset-fonts-grids.css,
