@@ -63,7 +63,7 @@ transformBlock (CodeBlock (_, classes, namevals) contents)
     system $ "latex " ++ outfile ++ ".tex > /dev/null"
     setCurrentDirectory curr
     system $ "dvipng -T tight -bd 1000 -freetype0 -Q 5 --gamma 1.3 " ++
-              (tmpdir </> outfile <.> "dvi") ++ " -o " ++ (staticDir cfg </> "img" </> outfile)
+              (tmpdir </> outfile <.> "dvi") ++ " -o " ++ (cacheDir cfg </> "img" </> outfile)
     return $ Para [Image name ("/img" </> outfile, "")]
 transformBlock x = return x
 
