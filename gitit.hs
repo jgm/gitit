@@ -83,6 +83,7 @@ main = do
 
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf
+  createCacheIfMissing conf
   createStaticIfMissing conf
   createTemplateIfMissing conf
 
