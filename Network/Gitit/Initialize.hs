@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Initialize ( initializeGititState
                                 , recompilePageTemplate
                                 , compilePageTemplate
+                                , createCacheIfMissing
                                 , createStaticIfMissing
                                 , createRepoIfMissing
                                 , createDefaultPages
@@ -85,6 +86,11 @@ compilePageTemplate tempsDir = do
   case T.getStringTemplate "page" combinedGroup of
         Just t    -> return t
         Nothing   -> error "Could not get string template"
+
+createCacheIfMissing :: Config -> IO ()
+createCacheIfMissing c = do
+  createDirectoryIfMissing True $ cacheDir c
+  createDirectoryIfMissing True $ cacheDir c </> "img"
 
 -- | Create templates dir if it doesn't exist.
 createTemplateIfMissing :: Config -> IO ()
