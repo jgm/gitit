@@ -95,6 +95,7 @@ extractConfig cp = do
       cfLogFile <- get cp "DEFAULT" "log-file"
       cfLogLevel <- get cp "DEFAULT" "log-level"
       cfStaticDir <- get cp "DEFAULT" "static-dir"
+      cfPluginDir <- get cp "DEFAULT" "plugin-dir"
       cfPlugins <- get cp "DEFAULT" "plugins"
       cfTableOfContents <- get cp "DEFAULT" "table-of-contents"
       cfMaxUploadSize <- get cp "DEFAULT" "max-upload-size"
@@ -188,6 +189,7 @@ extractConfig cp = do
                                         then read levelString
                                         else error $ "Invalid log-level.\nLegal values are: " ++ intercalate ", " levels
         , staticDir            = cfStaticDir
+        , pluginDir            = cfPluginDir
         , pluginModules        = splitCommaList cfPlugins
         , tableOfContents      = cfTableOfContents
         , maxUploadSize        = readSize "max-upload-size" cfMaxUploadSize
