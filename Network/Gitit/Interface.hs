@@ -117,6 +117,7 @@ module Network.Gitit.Interface ( Plugin(..)
                                , askFileStore
                                , askMeta
                                , doNotCache
+                               , fileListToHtmlNoUplink
                                , getContext
                                , modifyContext
                                , inlinesToURL
@@ -131,6 +132,7 @@ import Text.Pandoc.Definition
 import Text.Pandoc.Generic
 import Data.Data
 import Network.Gitit.Types
+import Network.Gitit.Handlers (fileListToHtmlNoUplink)
 import Network.Gitit.ContentTransformer
 import Network.Gitit.Util (withTempDir)
 import Network.Gitit.Server (Request(..))

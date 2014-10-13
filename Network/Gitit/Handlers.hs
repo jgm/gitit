@@ -50,6 +50,7 @@ module Network.Gitit.Handlers (
                       , showHighlightedSource
                       , expireCache
                       , feedHandler
+                      , fileListToHtmlNoUplink
                       )
 where
 import Safe
@@ -680,7 +681,13 @@ indexPage = do
                   pgTitle = "Contents"} htmlIndex
 
 fileListToHtml :: String -> String -> [Resource] -> Html
-fileListToHtml base' prefix files =
+fileListToHtml = fileListToHtmlOptionalUplink True
+
+fileListToHtmlNoUplink :: String -> String -> [Resource] -> Html
+fileListToHtmlNoUplink = fileListToHtmlOptionalUplink False
+
+fileListToHtmlOptionalUplink :: Bool -> String -> String -> [Resource] -> Html
+fileListToHtmlOptionalUplink withUplink base' prefix files =
   let fileLink (FSFile f) | isPageFile f =
         li ! [theclass "page"  ] <<
           anchor ! [href $ base' ++ urlForPage (prefix ++ dropExtension f)] <<
@@ -700,7 +707,10 @@ fileListToHtml base' prefix files =
                                                    else base' ++
                                                         urlForPage (joinPath $ drop 1 d)] <<
                   lastNote "fileListToHtml" d, accum]) noHtml updirs
-  in uplink +++ ulist ! [theclass "index"] << map fileLink files
+      fileLinks = ulist ! [theclass "index"] << map fileLink files
+  in case withUplink of
+       True  -> uplink +++ fileLinks
+       False -> fileLinks
 
 -- NOTE:  The current implementation of categoryPage does not go via the
 -- filestore abstraction.  That is bad, but can only be fixed if we add
