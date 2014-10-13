@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Plugins ( loadPlugin, loadPlugins )
 where
 import Network.Gitit.Types
-import System.FilePath (takeBaseName)
+import System.FilePath ((</>), takeBaseName)
 import Control.Monad (unless)
 import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
@@ -32,8 +32,8 @@ import GHC
 import GHC.Paths
 import Unsafe.Coerce
 
-loadPlugin :: FilePath -> IO Plugin
-loadPlugin pluginName = do
+loadPlugin :: FilePath -> FilePath -> IO Plugin
+loadPlugin plugindir pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
@@ -42,7 +42,7 @@ loadPlugin pluginName = do
       -- initDynFlags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
         $ do
-            addTarget =<< guessTarget pluginName Nothing
+            addTarget =<< guessTarget (plugindir </> pluginName) Nothing
             r <- load LoadAllTargets
             case r of
               Failed -> error $ "Error loading plugin: " ++ pluginName
@@ -76,17 +76,18 @@ loadPlugin pluginName = do
 
 #else
 
-loadPlugin :: FilePath -> IO Plugin
-loadPlugin pluginName = do
+loadPlugin :: FilePath -> FilePath -> IO Plugin
+loadPlugin plugindir pluginName = do
   error $ "Cannot load plugin '" ++ pluginName ++
           "'. gitit was not compiled with plugin support."
   return undefined
 
 #endif
 
-loadPlugins :: [FilePath] -> IO [Plugin]
-loadPlugins pluginNames = do
-  plugins' <- mapM loadPlugin pluginNames
+loadPlugins :: FilePath -> [FilePath] -> IO [Plugin]
+loadPlugins plugindir pluginNames = do
+  let loadPlugin' = (\names -> loadPlugin plugindir names)
+  plugins' <- mapM loadPlugin' pluginNames
   unless (null pluginNames) $ logM "gitit" WARNING "Finished loading plugins."
   return plugins'
 

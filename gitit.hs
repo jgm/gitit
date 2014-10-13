@@ -84,6 +84,7 @@ main = do
   -- setup the page repository, template, and static files, if they don't exist
   createRepoIfMissing conf
   createStaticIfMissing conf
+  createPluginIfMissing conf
   createTemplateIfMissing conf
 
   -- initialize state
