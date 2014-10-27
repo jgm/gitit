@@ -164,7 +164,9 @@ validateReset params postValidate = do
   let errors = case (knownUser, resetCodeMatches) of
                      (True, True)   -> []
                      (True, False)  -> ["Your reset code is invalid"]
-                     (False, _)     -> ["User " ++ uname ++ " is not known"]
+                     (False, _)     -> ["User " ++
+                       renderHtmlFragment (stringToHtml uname) ++
+                       " is not known"]
   if null errors
      then postValidate (fromJust user)
      else registerForm >>=
@@ -380,7 +382,8 @@ loginUser params = do
     then do
       key <- newSession (sessionData uname)
       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
-      seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++ uname)
+      seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++
+        renderHtmlFragment (stringToHtml uname))
     else
       withMessages ["Invalid username or password."] loginUserForm
 
