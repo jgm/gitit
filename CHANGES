@@ -1,3 +1,7 @@
+Version 0.10.6.1 released 28 October 2014
+
+  * Added Network.Gitit.Compat.Except to cabal module list.
+
 Version 0.10.6 released 28 October 2014
 
   * Escape HTML characters in user name when showing it on a web page.
