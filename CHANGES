@@ -1,3 +1,31 @@
+Version 0.10.6 released 28 October 2014
+
+  * Escape HTML characters in user name when showing it on a web page.
+    This addresses a security flaw in previous versions, pointed out
+    by Davy Stoffel.  A fake password reset email could be provided
+    to users, with the link:
+
+        http://gitit.net/_doResetPassword?reset_code=azeaze&username=
+        davy%3Cscript%3Ealert%281%29%3C/script%3E
+
+    If the person clicked the link, the unknown username would be
+    displayed (unescaped), and the javascript would run.
+    This fix addresses the flaw, not by preventing the funny user name,
+    but by ensuring that the HTML tags are escaped when the user name
+    is shown on the page.
+
+  * Network.Gitit.Initialize: Allow mediawiki for default pages.
+
+  * Enable readerParseRaw for all formats.
+    This will enable things like script and iframe tags to get
+    parsed from HTML sources, and unrecognized latex tags from LaTeX.
+
+  * Refined github login (Freiric Barral).
+
+  * Include jquery sources in sdist tarballs (Anthony Towns).
+
+  * Add support for `mediawiki` as a page format (Raymond Gauthier).
+
 Version 0.10.5.1 released 21 September 2014
 
   * Added markup help for org mode.  Closes #449.
