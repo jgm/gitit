@@ -221,7 +221,7 @@ Use the option `-f [filename]` to specify a configuration file:
 
     gitit -f my.conf
 
-The configuation can be splitted between several files:
+The configuration can be split between several files:
 
 	gitit -f my.conf -f additional.conf
 
