@@ -22,7 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
 import Data.Time (UTCTime, formatTime, getCurrentTime, addUTCTime)
+#if MIN_VERSION_time(1,5,0)
+import Data.Time (defaultTimeLocale)
+#else
 import System.Locale (defaultTimeLocale)
+#endif
 import Data.Foldable as F (concatMap)
 import Data.List (intercalate, sortBy, nub)
 import Data.Maybe (fromMaybe)
