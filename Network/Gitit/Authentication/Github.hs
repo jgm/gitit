@@ -25,6 +25,7 @@ import Control.Monad.Trans (liftIO)
 import Data.UUID (toString)
 import Data.UUID.V4 (nextRandom)
 import qualified Control.Exception as E
+import Prelude
 
 loginGithubUser :: OAuth2 -> Handler
 loginGithubUser githubKey = do

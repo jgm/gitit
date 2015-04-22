@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
                    Henry Laxen <nadine.and.henry@pobox.com>

@@ -72,14 +72,18 @@ import qualified Data.Map as M
 import Data.Text (Text)
 import Data.List (intersect)
 import Data.Time (parseTime)
+#if MIN_VERSION_time(1,5,0)
+import Data.Time (defaultTimeLocale)
+#else
 import System.Locale (defaultTimeLocale)
+#endif
 import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 import Network.OAuth.OAuth2
 
-data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook 
+data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
               | MediaWiki
                 deriving (Read, Show, Eq)
 
