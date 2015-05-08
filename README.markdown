@@ -1,16 +1,16 @@
 Gitit
 =====
 
-Gitit is a wiki program written in Haskell. It uses [Happstack][] for
-the web server and [pandoc][] for markup processing. Pages and uploaded
-files are stored in a [git][], [darcs][], or [mercurial][] repository
+Gitit is a wiki program written in Haskell. It uses [Happstack] for
+the web server and [pandoc] for markup processing. Pages and uploaded
+files are stored in a [git], [darcs], or [mercurial] repository
 and may be modified either by using the VCS's command-line tools or
 through the wiki's web interface. By default, pandoc's extended version
 of markdown is used as a markup language, but reStructuredText, LaTeX, HTML,
 DocBook, or Emacs Org-mode markup can also be used. Pages can be exported in a
 number of different formats, including LaTeX, RTF, OpenOffice ODT, and
 MediaWiki markup.  Gitit can be configured to display TeX math (using
-[texmath][]) and highlighted source code (using [highlighting-kate][]).
+[texmath]) and highlighted source code (using [highlighting-kate]).
 
 Other features include
 
@@ -47,10 +47,10 @@ Getting started
 Compiling and installing gitit
 ------------------------------
 
-You'll need the [GHC][] compiler and the [cabal-install][] tool. GHC can
-be downloaded [here][]. Note that, starting with release 0.5, GHC 6.10
-or higher is required. For [cabal-install][] on *nix, follow the [quick
-install][] instructions.
+You'll need the [GHC] compiler and the [cabal-install] tool. GHC can
+be downloaded [here]. Note that, starting with release 0.5, GHC 6.10
+or higher is required. For [cabal-install] on *nix, follow the [quick
+install] instructions.
 
 [GHC]: http://www.haskell.org/ghc/
 [here]: http://www.haskell.org/ghc/
@@ -86,7 +86,7 @@ If pandoc was compiled with optional syntax highlighting support,
 this will be available in gitit too.  This feature is recommended
 if you plan to display source code on your wiki.
 
-Highlighting support requires the [pcre][] library, so make sure that
+Highlighting support requires the [pcre] library, so make sure that
 is installed before continuing.
 
 [pcre]:  http://www.pcre.org/ 
@@ -197,7 +197,7 @@ Highlighted source code
 
 If gitit was compiled against a version of pandoc that has highlighting
 support (see above), you can get highlighted source code by using
-[delimited code blocks][]:
+[delimited code blocks]:
 
     ~~~ {.haskell .numberLines}
     qsort []     = []
@@ -326,12 +326,12 @@ Gitit can display TeX math in three different ways, depending on the
 setting of `math` in the configuration file:
 
 1.  `mathml` (default): Math will be converted to MathML using
-    [texmath][]. This method works with IE+mathplayer, Firefox, and
+    [texmath]. This method works with IE+mathplayer, Firefox, and
     Opera, but not Safari.
 
-2.  `jsMath`: Math will be rendered using the [jsMath][] javascript.
+2.  `jsMath`: Math will be rendered using the [jsMath] javascript.
     If you want to use this method, download `jsMath` and `jsMath
-    Image Fonts` from the [jsMath download page][]. You'll have two
+    Image Fonts` from the [jsMath download page]. You'll have two
     `.zip` archives. Unzip them both in the `static/js` directory (a new
     subdirectory, `jsMath`, will be created).  This works with all
     browsers, but is slower and not as nice looking as MathML.
