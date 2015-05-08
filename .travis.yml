@@ -6,8 +6,6 @@ sudo: false
 # The following enables several GHC versions to be tested; often it's enough to test only against the last release in a major GHC version. Feel free to omit lines listings versions you don't need/want testing for.
 matrix:
  include:
-  - env: CABALVER=1.18 GHCVER=7.6.3 GHCOPTS="-Werror" JOPTS="-j2"
-    addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3], sources: [hvr-ghc]}}
   - env: CABALVER=1.18 GHCVER=7.8.4 GHCOPTS="" JOPTS="-j2"
     addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
   - env: CABALVER=1.22 GHCVER=7.10.1 GHCOPTS="" JOPTS="-j2"
