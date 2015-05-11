@@ -54,8 +54,8 @@ install] instructions.
 
 [GHC]: http://www.haskell.org/ghc/
 [here]: http://www.haskell.org/ghc/
-[cabal-install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall
-[quick install]:  http://hackage.haskell.org/trac/hackage/wiki/CabalInstall#Quick+Installation+on+Unix
+[cabal-install]:  https://wiki.haskell.org/Cabal-Install
+[quick install]:  https://wiki.haskell.org/Cabal-Install#Unix
 
 Once you've got cabal-install, installing gitit is trivial:
 
