@@ -76,12 +76,15 @@ pMetadataBlock :: GenParser Char st ([(String, String)], String)
 pMetadataBlock = try $ do
   _ <- string "---"
   _ <- pBlankline
-  ls <- many pMetadataLine
-  _ <- string "..."
-  _ <- pBlankline
+  ls <- manyTill pMetadataLine pMetaEnd
   skipMany pBlankline
   rest <- getInput
   return (ls, rest)
+
+pMetaEnd :: GenParser Char st Char
+pMetaEnd = try $ do
+  string "..." <|> string "---"
+  pBlankline
 
 pBlankline :: GenParser Char st Char
 pBlankline = try $ many (oneOf " \t") >> newline
