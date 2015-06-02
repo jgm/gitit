@@ -25,6 +25,7 @@ The following is a minimal standalone wiki program:
 >
 > main = do
 >   conf <- getDefaultConfig
+>   createCacheIfMissing conf
 >   createStaticIfMissing conf
 >   createTemplateIfMissing conf
 >   createRepoIfMissing conf
@@ -75,6 +76,7 @@ under different paths, and uses a custom authentication scheme:
 >                       , repositoryType = fstype
 >                       , defaultPageType = pagetype
 >                       }
+>     createCacheIfMissing conf''
 >     createStaticIfMissing conf''
 >     createRepoIfMissing conf''
 >   createTemplateIfMissing conf'
@@ -135,11 +137,13 @@ wiki conf = do
   let maxSize = fromIntegral $ maxUploadSize conf
   decodeBody $ defaultBodyPolicy tempDir maxSize maxSize maxSize
   let static = staticDir conf
+      cache  = cacheDir  conf
   defaultStatic <- liftIO $ getDataFileName $ "data" </> "static"
   -- if file not found in staticDir, we check also in the data/static
   -- directory, which contains defaults
   let staticHandler = withExpiresHeaders $
         serveDirectory' static `mplus` serveDirectory' defaultStatic
+  let cacheHandler  = withExpiresHeaders $ serveDirectory' cache
   let debugHandler' = msum [debugHandler | debugMode conf]
   let handlers = debugHandler' `mplus` authHandler conf `mplus`
                  authenticate ForRead (msum wikiHandlers)
@@ -148,7 +152,7 @@ wiki conf = do
   if compressResponses conf
      then compressedResponseFilter
      else return ""
-  staticHandler `mplus` runHandler ws (withUser conf handlers)
+  staticHandler `mplus` cacheHandler `mplus` runHandler ws (withUser conf handlers)
 
 -- | Like 'serveDirectory', but if file is not found, fail instead of
 -- returning a 404 error.
