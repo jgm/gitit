@@ -1,3 +1,20 @@
+Version 0.10.7 released 02 Jun 2015
+
+  * Fixes to allow building with pandoc 1.14. `CommonMark` added
+    as a constructor of `PageType`.  CommonMark can now be used as
+    a page format and is also available for page export.
+  * Plugins:  added some recommended option flags.
+  * Allow `---` as well as `...` to end metadata (#493).
+  * README: changed dead links (Rick Hanson).
+
+Version 0.10.6.3 released 08 May 2015
+
+  * README:  use shortcut style markdown links.
+  * Fixed profiling options.
+  * Added .travis.yml.
+  * Allow both time >= 1.5.0.0 and time < 1.5.0.0 with old-locale
+    (Michal Antkiewicz)
+
 Version 0.10.6.2 released 02 April 2015
 
   * Bumped upper version bounds.
