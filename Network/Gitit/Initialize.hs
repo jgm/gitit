@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 This program is free software; you can redistribute it and/or modify
@@ -41,6 +42,13 @@ import Control.Monad (unless, forM_, liftM)
 import Text.Pandoc
 import System.Log.Logger (logM, Priority(..))
 import qualified Text.StringTemplate as T
+
+#if MIN_VERSION_pandoc(1,14,0)
+import Text.Pandoc.Error (handleError)
+#else
+handleError :: Pandoc -> Pandoc
+handleError = id
+#endif
 
 -- | Initialize Gitit State.
 initializeGititState :: Config -> IO ()
@@ -118,8 +126,7 @@ createDefaultPages :: Config -> IO ()
 createDefaultPages conf = do
     let fs = filestoreFromConfig conf
         pt = defaultPageType conf
-        toPandoc = readMarkdown
-                   def{ readerSmart = True }
+        toPandoc = handleError . readMarkdown def{ readerSmart = True }
         defOpts = def{ writerStandalone = False
                      , writerHTMLMathMethod = JsMath
                               (Just "/js/jsMath/easy/load.js")

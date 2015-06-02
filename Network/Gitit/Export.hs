@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -161,6 +162,12 @@ respondMarkdown :: String -> Pandoc -> Handler
 respondMarkdown = respondS "markdown" "text/plain; charset=utf-8" ""
   writeMarkdown defaultRespOptions{writerReferenceLinks = True}
 
+#if MIN_VERSION_pandoc(1,14,4)
+respondCommonMark :: String -> Pandoc -> Handler
+respondCommonMark = respondS "commonmark" "text/plain; charset=utf-8" ""
+  writeCommonMark defaultRespOptions{writerReferenceLinks = True}
+#endif
+
 respondPlain :: String -> Pandoc -> Handler
 respondPlain = respondS "plain" "text/plain; charset=utf-8" ""
   writePlain defaultRespOptions
@@ -284,6 +291,9 @@ exportFormats cfg = if pdfExport cfg
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
                 , ("Markdown",  respondMarkdown)
+#if MIN_VERSION_pandoc(1,14,4)
+                , ("CommonMark",respondCommonMark)
+#endif
                 , ("Plain text",respondPlain)
                 , ("MediaWiki", respondMediaWiki)
                 , ("Org-mode",  respondOrg)

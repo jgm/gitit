@@ -107,6 +107,12 @@ import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
 import Text.URI (parseURI, URI(..), uriQueryItems)
 
+#if MIN_VERSION_pandoc(1,14,0)
+import Text.Pandoc.Error (handleError)
+#else
+handleError :: Pandoc -> Pandoc
+handleError = id
+#endif
 --
 -- ContentTransformer runners
 --
@@ -672,9 +678,14 @@ readerFor pt lhs =
                                          else readerExtensions def
                  , readerParseRaw = True
                  }
-  in case pt of
+  in handleError . case pt of
        RST        -> readRST defPS
        Markdown   -> readMarkdown defPS
+#if MIN_VERSION_pandoc(1,14,0)
+       CommonMark -> readCommonMark defPS
+#else
+       CommonMark -> error "CommonMark input requires pandoc 1.14"
+#endif
        LaTeX      -> readLaTeX defPS
        HTML       -> readHtml defPS
        Textile    -> readTextile defPS

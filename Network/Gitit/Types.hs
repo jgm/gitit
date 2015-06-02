@@ -83,7 +83,14 @@ import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 import Network.OAuth.OAuth2
 
-data PageType = Markdown | RST | LaTeX | HTML | Textile | Org | DocBook
+data PageType = Markdown
+              | CommonMark
+              | RST
+              | LaTeX
+              | HTML
+              | Textile
+              | Org
+              | DocBook
               | MediaWiki
                 deriving (Read, Show, Eq)
 

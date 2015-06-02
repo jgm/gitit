@@ -46,6 +46,13 @@ import Network.Gitit.Compat.Except
 import Control.Monad
 import Control.Monad.Trans
 
+#if MIN_VERSION_pandoc(1,14,0)
+import Text.Pandoc.Error (handleError)
+#else
+handleError :: Pandoc -> Pandoc
+handleError = id
+#endif
+
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id
 
@@ -132,7 +139,8 @@ extractConfig cp = do
       let (pt, lhs) = parsePageType cfDefaultPageType
       let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
-      markupHelpText <- liftM (writeHtmlString def . readMarkdown def) $
+      markupHelpText <- liftM (writeHtmlString def . handleError .
+                            readMarkdown def) $
                             liftIO $ readFileUTF8 markupHelpPath
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
