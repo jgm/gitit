@@ -162,7 +162,7 @@ respondMarkdown :: String -> Pandoc -> Handler
 respondMarkdown = respondS "markdown" "text/plain; charset=utf-8" ""
   writeMarkdown defaultRespOptions{writerReferenceLinks = True}
 
-#if MIN_VERSION_pandoc(1,14,4)
+#if MIN_VERSION_pandoc(1,14,0)
 respondCommonMark :: String -> Pandoc -> Handler
 respondCommonMark = respondS "commonmark" "text/plain; charset=utf-8" ""
   writeCommonMark defaultRespOptions{writerReferenceLinks = True}
@@ -291,7 +291,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
                 , ("Markdown",  respondMarkdown)
-#if MIN_VERSION_pandoc(1,14,4)
+#if MIN_VERSION_pandoc(1,14,0)
                 , ("CommonMark",respondCommonMark)
 #endif
                 , ("Plain text",respondPlain)
