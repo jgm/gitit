@@ -250,19 +250,18 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
                         (toResponse noHtml) {rsBody = pdfBS}
 
 -- | When we create a PDF or ODT from a Gitit page, we need to fix the URLs of any
--- images on the page. Those URLs will often be relative to the staticDir or cacheDir, but the
+-- images on the page. Those URLs will often be relative to the staticDir, but the
 -- PDF or ODT processor only understands paths relative to the working directory.
 --
 -- Because the working directory will not in general be the root of the gitit instance
 -- at the time the Pandoc is fed to e.g. pdflatex, this function replaces the URLs of
--- images in the staticDir or cacheDir with their correct absolute file path.
+-- images in the staticDir with their correct absolute file path.
 fixURLs :: String -> Pandoc -> GititServerPart Pandoc
 fixURLs page pndc = do
     cfg <- getConfig
     defaultStatic <- liftIO $ getDataFileName $ "data" </> "static"
 
     let static = staticDir cfg
-        cache  = cacheDir  cfg
     let repoPath = repositoryPath cfg
 
     let go (Image ils (url, title)) = do
@@ -274,14 +273,11 @@ fixURLs page pndc = do
         fixURL url       = resolve $ takeDirectory page </> url
 
         resolve p = do
-           cp <- doesFileExist $ cache  </> p
            sp <- doesFileExist $ static </> p
            dsp <- doesFileExist $ defaultStatic </> p
            return (if sp then static </> p
-                    else (if dsp then defaultStatic </> p
-                      else (if cp then cache </> p
-                        else repoPath </> p)))
-
+                   else (if dsp then defaultStatic </> p
+                         else repoPath </> p))
     liftIO $ bottomUpM go pndc
 
 exportFormats :: Config -> [(String, String -> Pandoc -> Handler)]

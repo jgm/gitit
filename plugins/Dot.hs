@@ -8,11 +8,10 @@ module Dot (plugin) where
 -- ~~~
 --
 -- The "dot" executable must be in the path.
--- The generated svg file will be cached in the cache directory.
--- A unique name will be generated from a hash of the file contents,
--- prefixed with the 'name' attribute if one is given.
+-- The generated png file will be saved in the static img directory.
+-- If no name is specified, a unique name will be generated from a hash
+-- of the file contents.
 
-import Data.Maybe (fromMaybe)
 import Network.Gitit.Interface
 import System.Process (readProcessWithExitCode)
 import System.Exit (ExitCode(ExitSuccess))
@@ -20,9 +19,7 @@ import System.Exit (ExitCode(ExitSuccess))
 import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
 import Data.Digest.Pure.SHA (sha1, showDigest)
-import System.Directory (doesFileExist)
 import System.FilePath ((</>))
-import Control.Monad (unless)
 import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
@@ -36,7 +33,7 @@ transformBlock (CodeBlock (_, classes, namevals) contents) | "dot" `elem` classe
                                 Nothing   -> ([], uniqueName contents ++ ".png")
   liftIO $ do
     (ec, _out, err) <- readProcessWithExitCode "dot" ["-Tpng", "-o",
-                         cacheDir cfg </> "img" </> outfile] contents
+                         staticDir cfg </> "img" </> outfile] contents
     if ec == ExitSuccess
        then return $ Para [Image name ("/img" </> outfile, "")]
        else error $ "dot returned an error status: " ++ err
@@ -45,3 +42,4 @@ transformBlock x = return x
 -- | Generate a unique filename given the file's contents.
 uniqueName :: String -> String
 uniqueName = showDigest . sha1 . fromString
+

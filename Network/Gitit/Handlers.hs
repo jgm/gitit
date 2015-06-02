@@ -204,7 +204,6 @@ uploadFile = withData $ \(params :: Params) -> do
                       if e == NotFound
                          then return False
                          else E.throwIO e >> return True
-  let inCacheDir  = cacheDir  cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
   let inStaticDir = staticDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
   let inTemplatesDir = templatesDir cfg `isPrefixOf` (repositoryPath cfg </> wikiname)
   let dirs' = splitDirectories $ takeDirectory wikiname
@@ -214,7 +213,6 @@ uploadFile = withData $ \(params :: Params) -> do
                     "Description cannot be empty.")
                  , (".." `elem` dirs', "Wikiname cannot contain '..'")
                  , (null origPath, "File not found.")
-                 , (inCacheDir,  "Destination is inside cache directory.")
                  , (inStaticDir,  "Destination is inside static directory.")
                  , (inTemplatesDir,  "Destination is inside templates directory.")
                  , (not overwrite && exists, "A file named '" ++ wikiname ++
