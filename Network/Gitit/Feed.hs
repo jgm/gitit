@@ -78,7 +78,7 @@ changeLog days a mbPath now' = do
   let startTime = addUTCTime (fromIntegral $ -60 * 60 * 24 * days) now'
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
           (Just 200) -- hard limit of 200 to conserve resources
-  return $ sortBy (comparing revDateTime) rs
+  return $ sortBy (flip $ comparing revDateTime) rs
 
 generateEmptyfeed :: Generator -> String ->String ->Maybe String -> [Person] -> Date -> Feed
 generateEmptyfeed generator title home mbPath authors now =
