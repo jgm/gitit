@@ -4,8 +4,8 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     $if(feed)$
-    <link href="$base$/_feed/" type="application/atom+xml" rel="alternate" title="Sitewide ATOM Feed" />
-    <link href="$base$/_feed$pageUrl$" type="application/atom+xml" rel="alternate" title="This page's ATOM Feed" />
+    <link href="$base$/_feed/" type="application/atom+xml" rel="alternate" title="$wikititle$" />
+    <link href="$base$/_feed$pageUrl$" type="application/atom+xml" rel="alternate" title="$wikititle$ - $pagetitle$" />
     $endif$
     <title>$wikititle$ - $pagetitle$</title>
     $if(printable)$
