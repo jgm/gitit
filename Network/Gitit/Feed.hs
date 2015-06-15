@@ -95,10 +95,10 @@ revisionToEntry home Revision{ revId = rid, revDateTime = rdt,
                                revChanges = rv} =
   baseEntry{ entrySummary = Just $ TextString rd
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
-   where baseEntry = nullEntry url (TextString (intercalate ", " $ map show rv))
-                        (formatFeedTime rdt)
+   where baseEntry = nullEntry url title (formatFeedTime rdt)
          url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
          ln = (nullLink url) {linkRel = Just (Left "alternate")}
+         title = TextString $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person
