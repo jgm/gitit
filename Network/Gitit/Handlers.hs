@@ -786,6 +786,7 @@ feedHandler = do
                         Nothing    -> error "Could not determine base URL"
                         Just hn    -> return $ "http://" ++ hn ++ base'
                  else case baseUrl cfg ++ base' of
+                           w@('h':'t':'t':'p':'s':':':'/':'/':_) -> return w
                            x@('h':'t':'t':'p':':':'/':'/':_) -> return x
                            y                                 -> return $ "http://" ++ y
   let fc = FeedConfig{
