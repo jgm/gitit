@@ -33,13 +33,14 @@ import Data.Maybe (fromMaybe)
 import Data.Ord (comparing)
 import Network.URI (isUnescapedInURI, escapeURIString)
 import System.FilePath (dropExtension, takeExtension, (<.>))
-import Data.FileStore.Types (history, Author(authorName), Change(..),
-         FileStore, Revision(..), TimeRange(..))
+import Data.FileStore.Generic (Diff(..), diff)
+import Data.FileStore.Types (history, retrieve, Author(authorName), Change(..),
+         FileStore, Revision(..), TimeRange(..), RevisionId)
 import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
          Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
-         Person(personName), TextContent(TextString))
+         Person(personName), EntryContent(..), TextContent(TextString))
 import Text.Atom.Feed.Export (xmlFeed)
-import Text.XML.Light (ppTopElement)
+import Text.XML.Light (ppTopElement, showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
 import Data.Version (showVersion)
 import Paths_gitit (version)
 
@@ -64,11 +65,12 @@ generateFeed :: FeedConfig -> Generator -> FileStore -> Maybe FilePath -> IO Fee
 generateFeed cfg generator fs mbPath = do
   now <- getCurrentTime
   revs <- changeLog (fcFeedDays cfg) fs mbPath now
+  diffs <- mapM (getDiffs fs) revs
   let home = fcBaseUrl cfg ++ "/"
   -- TODO: 'nub . sort' `persons` - but no Eq or Ord instances!
       persons = map authorToPerson $ nub $ sortBy (comparing authorName) $ map revAuthor revs
       basefeed = generateEmptyfeed generator (fcTitle cfg) home mbPath persons (formatFeedTime now)
-      revisions = map (revisionToEntry home) revs
+      revisions = map (revisionToEntry home) (zip revs diffs)
   return basefeed {feedEntries = revisions}
 
 -- | Get the last N days history.
@@ -78,7 +80,31 @@ changeLog days a mbPath now' = do
   let startTime = addUTCTime (fromIntegral $ -60 * 60 * 24 * days) now'
   rs <- history a files TimeRange{timeFrom = Just startTime, timeTo = Just now'}
           (Just 200) -- hard limit of 200 to conserve resources
-  return $ sortBy (comparing revDateTime) rs
+  return $ sortBy (flip $ comparing revDateTime) rs
+
+getDiffs :: FileStore -> Revision -> IO [(FilePath, [Diff [String]])]
+getDiffs fs Revision{ revId = to, revDateTime = rd, revChanges = rv } = do
+  revPair <- history fs [] (TimeRange Nothing $ Just rd) (Just 2)
+  let from = if length revPair >= 2
+                then Just $ revId $ revPair !! 1
+                else Nothing
+  diffs <- mapM (getDiff fs from (Just to)) rv
+  return $ map filterPages $ zip (map getFP rv) diffs
+  where getFP (Added fp) = fp
+        getFP (Modified fp) = fp
+        getFP (Deleted fp) = fp
+        filterPages (fp, d) = case (reverse fp) of
+                                   'e':'g':'a':'p':'.':x -> (reverse x, d)
+                                   _ -> (fp, [])
+
+getDiff :: FileStore -> Maybe RevisionId -> Maybe RevisionId -> Change -> IO [Diff [String]]
+getDiff fs from _ (Deleted fp) = do
+  contents <- retrieve fs fp from
+  return [First $ lines contents]
+getDiff fs from to (Modified fp) = diff fs fp from to
+getDiff fs _ to (Added fp) = do
+  contents <- retrieve fs fp to
+  return [Second $ lines contents]
 
 generateEmptyfeed :: Generator -> String ->String ->Maybe String -> [Person] -> Date -> Feed
 generateEmptyfeed generator title home mbPath authors now =
@@ -89,16 +115,37 @@ generateEmptyfeed generator title home mbPath authors now =
             }
     where baseNull = nullFeed home (TextString title) now
 
-revisionToEntry :: String -> Revision -> Entry
-revisionToEntry home Revision{ revId = rid, revDateTime = rdt,
+revisionToEntry :: String -> (Revision, [(FilePath, [Diff [String]])]) -> Entry
+revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
                                revAuthor = ra, revDescription = rd,
-                               revChanges = rv} =
-  baseEntry{ entrySummary = Just $ TextString rd
+                               revChanges = rv}, diffs) =
+  baseEntry{ entryContent = Just $ HTMLContent $ concat $ map showContent $ map diffFile diffs
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
-   where baseEntry = nullEntry url (TextString (intercalate ", " $ map show rv))
-                        (formatFeedTime rdt)
+   where baseEntry = nullEntry url title (formatFeedTime rdt)
          url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
          ln = (nullLink url) {linkRel = Just (Left "alternate")}
+         title = TextString $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
+
+diffFile :: (FilePath, [Diff [String]]) -> Content
+diffFile (fp, d) =
+    enTag "div" $ header : text
+  where
+    header = enTag1 "h1" $ enText fp
+    text = map (enTag1 "p") $ concat $ map diffLines d
+
+diffLines :: Diff [String] -> [Content]
+diffLines (First x) = map (enTag1 "s" . enText) x
+diffLines (Second x) = map (enTag1 "b" . enText) x
+diffLines (Both x _) = map enText x
+
+enTag :: String -> [Content] -> Content
+enTag tag content = Elem blank_element{ elName=blank_name{qName=tag}
+				      , elContent=content
+				      }
+enTag1 :: String -> Content -> Content
+enTag1 tag content = enTag tag [content]
+enText :: String -> Content
+enText content = Text blank_cdata{cdData=content}
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person
