@@ -250,7 +250,7 @@ sharedForm mbUser = withData $ \params -> do
             , label ! [thefor "email"] << "Email (optional, will not be displayed on the Wiki):"
             , br
             , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)]
-            , br
+            , br ! [theclass "req"]
             , textfield "full_name_1" ! [size "20", theclass "req"]
             , br
             , label ! [thefor "password"]
