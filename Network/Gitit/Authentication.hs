@@ -249,8 +249,10 @@ sharedForm mbUser = withData $ \params -> do
             , userNameField
             , label ! [thefor "email"] << "Email (optional, will not be displayed on the Wiki):"
             , br
-            , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)], br
+            , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)]
+            , br ! [theclass "req"]
             , textfield "full_name_1" ! [size "20", theclass "req"]
+            , br
             , label ! [thefor "password"]
                     << ("Password (at least 6 characters," ++
                         " including at least one non-letter):")
@@ -537,5 +539,3 @@ currentUser :: Handler
 currentUser = do
   req <- askRq
   ok $ toResponse $ maybe "" toString (getHeader "REMOTE_USER" req)
-
-
