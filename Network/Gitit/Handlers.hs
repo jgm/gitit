@@ -111,10 +111,9 @@ debugHandler = withData $ \(params :: Params) -> do
 randomPage :: Handler
 randomPage = do
   fs <- getFileStore
-  files <- liftIO $ index fs
   base' <- getWikiBase
-  let pages = map dropExtension $
-              filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
+  prunedFiles <- liftIO (index fs) >>= filterM isPageFile >>= filterM isNotDiscussPageFile
+  let pages = map dropExtension prunedFiles
   if null pages
      then error "No pages found!"
      else do
@@ -194,6 +193,7 @@ uploadFile = withData $ \(params :: Params) -> do
                  $ pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
   cfg <- getConfig
+  wPF <- isPageFile wikiname
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
                         Nothing -> return ("Anonymous", "")
@@ -218,7 +218,7 @@ uploadFile = withData $ \(params :: Params) -> do
                  , (not overwrite && exists, "A file named '" ++ wikiname ++
                     "' already exists in the repository: choose a new name " ++
                     "or check the box to overwrite the existing file.")
-                 , (isPageFile wikiname,
+                 , (wPF,
                     "This file extension is reserved for wiki pages.")
                  ]
   if null errors
@@ -246,8 +246,8 @@ goToPage :: Handler
 goToPage = withData $ \(params :: Params) -> do
   let gotopage = pGotoPage params
   fs <- getFileStore
-  allPageNames <- liftM (map dropExtension . filter isPageFile) $
-                   liftIO $ index fs
+  pruned_files <- liftIO (index fs) >>= filterM isPageFile
+  let allPageNames = map dropExtension pruned_files
   let findPage f = find f allPageNames
   let exactMatch f = gotopage == f
   let insensitiveMatch f = (map toLower gotopage) == (map toLower f)
@@ -281,14 +281,14 @@ searchResults = withData $ \(params :: Params) -> do
                                        -- doesn't handle this properly:
                                        (\(_ :: FileStoreError)  -> return [])
   let contentMatches = map matchResourceName matchLines
-  allPages <- liftM (filter isPageFile) $ liftIO $ index fs
+  allPages <- liftIO (index fs) >>= filterM isPageFile
   let slashToSpace = map (\c -> if c == '/' then ' ' else c)
   let inPageName pageName' x = x `elem` (words $ slashToSpace $ dropExtension pageName')
   let matchesPatterns pageName' = not (null patterns) &&
        all (inPageName (map toLower pageName')) (map (map toLower) patterns)
   let pageNameMatches = filter matchesPatterns allPages
-  let allMatchedFiles = nub $ filter isPageFile contentMatches ++
-                              pageNameMatches
+  prunedFiles <- filterM isPageFile (contentMatches ++ pageNameMatches)
+  let allMatchedFiles = nub $ prunedFiles
   let matchesInFile f =  mapMaybe (\x -> if matchResourceName x == f
                                             then Just (matchLine x)
                                             else Nothing) matchLines
@@ -324,7 +324,8 @@ searchResults = withData $ \(params :: Params) -> do
 showPageHistory :: Handler
 showPageHistory = withData $ \(params :: Params) -> do
   page <- getPage
-  showHistory (pathForPage page) page params
+  cfg <- getConfig
+  showHistory (pathForPage page $ defaultExtension cfg) page params
 
 showFileHistory :: Handler
 showFileHistory = withData $ \(params :: Params) -> do
@@ -403,9 +404,8 @@ showActivity = withData $ \(params :: Params) -> do
   let fileFromChange (Added f)    = f
       fileFromChange (Modified f) = f
       fileFromChange (Deleted f)  = f
-
   base' <- getWikiBase
-  let fileAnchor revis file = if isPageFile file
+  let fileAnchor revis file = if takeExtension file == "." ++ (defaultExtension cfg)
         then anchor ! [href $ base' ++ "/_diff" ++ urlForPage (dropExtension file) ++ "?to=" ++ revis] << dropExtension file
         else anchor ! [href $ base' ++ urlForPage file ++ "?revision=" ++ revis] << file
   let filesFor changes revis = intersperse (stringToHtml " ") $
@@ -435,7 +435,8 @@ showActivity = withData $ \(params :: Params) -> do
 showPageDiff :: Handler
 showPageDiff = withData $ \(params :: Params) -> do
   page <- getPage
-  showDiff (pathForPage page) page params
+  cfg <- getConfig
+  showDiff (pathForPage page $ defaultExtension cfg) page params
 
 showFileDiff :: Handler
 showFileDiff = withData $ \(params :: Params) -> do
@@ -499,13 +500,14 @@ editPage' params = do
   let rev = pRevision params  -- if this is set, we're doing a revert
   fs <- getFileStore
   page <- getPage
+  cfg <- getConfig
   let getRevisionAndText = E.catch
-        (do c <- liftIO $ retrieve fs (pathForPage page) rev
+        (do c <- liftIO $ retrieve fs (pathForPage page $ defaultExtension cfg) rev
             -- even if pRevision is set, we return revId of latest
             -- saved version (because we're doing a revert and
             -- we don't want gitit to merge the changes with the
             -- latest version)
-            r <- liftIO $ latest fs (pathForPage page) >>= revision fs
+            r <- liftIO $ latest fs (pathForPage page $ defaultExtension cfg) >>= revision fs
             return (Just $ revId r, c))
         (\e -> if e == NotFound
                   then return (Nothing, "")
@@ -528,7 +530,6 @@ editPage' params = do
                           strAttr "style" "color: gray"]
                     else []
   base' <- getWikiBase
-  cfg <- getConfig
   let editForm = gui (base' ++ urlForPage page) ! [identifier "editform"] <<
                    [ sha1Box
                    , textarea ! (readonly ++ [cols "80", name "editedText",
@@ -570,11 +571,12 @@ confirmDelete :: Handler
 confirmDelete = do
   page <- getPage
   fs <- getFileStore
+  cfg <- getConfig
   -- determine whether there is a corresponding page, and if not whether there
   -- is a corresponding file
-  pageTest <- liftIO $ E.try $ latest fs (pathForPage page)
+  pageTest <- liftIO $ E.try $ latest fs (pathForPage page $ defaultExtension cfg)
   fileToDelete <- case pageTest of
-                       Right _        -> return $ pathForPage page  -- a page
+                       Right _        -> return $ pathForPage page $ defaultExtension cfg -- a page
                        Left  NotFound -> do
                          fileTest <- liftIO $ E.try $ latest fs page
                          case fileTest of
@@ -599,6 +601,7 @@ confirmDelete = do
 deletePage :: Handler
 deletePage = withData $ \(params :: Params) -> do
   page <- getPage
+  cfg <- getConfig
   let file = pFileToDelete params
   mbUser <- getLoggedInUser
   (user, email) <- case mbUser of
@@ -607,7 +610,7 @@ deletePage = withData $ \(params :: Params) -> do
   let author = Author user email
   let descrip = "Deleted using web interface."
   base' <- getWikiBase
-  if pConfirm params && (file == page || file == page <.> "page")
+  if pConfirm params && (file == page || file == page <.> (defaultExtension cfg))
      then do
        fs <- getFileStore
        liftIO $ Data.FileStore.delete fs file author descrip
@@ -636,12 +639,12 @@ updatePage = withData $ \(params :: Params) -> do
           error "Page exceeds maximum size."
        -- check SHA1 in case page has been modified, merge
        modifyRes <- if null oldSHA1
-                       then liftIO $ create fs (pathForPage page)
+                       then liftIO $ create fs (pathForPage page $ defaultExtension cfg)
                                        (Author user email) logMsg editedText >>
                                      return (Right ())
                        else do
-                         expireCachedFile (pathForPage page) `mplus` return ()
-                         liftIO $ E.catch (modify fs (pathForPage page)
+                         expireCachedFile (pathForPage page $ defaultExtension cfg) `mplus` return ()
+                         liftIO $ E.catch (modify fs (pathForPage page $ defaultExtension cfg)
                                             oldSHA1 (Author user email) logMsg
                                             editedText)
                                      (\e -> if e == Unchanged
@@ -665,13 +668,15 @@ indexPage :: Handler
 indexPage = do
   path' <- getPath
   base' <- getWikiBase
+  cfg <- getConfig
+  let ext = defaultExtension cfg
   let prefix' = if null path' then "" else path' ++ "/"
   fs <- getFileStore
   listing <- liftIO $ directory fs prefix'
-  let isDiscussionPage (FSFile f) = isDiscussPageFile f
-      isDiscussionPage (FSDirectory _) = False
-  let prunedListing = filter (not . isDiscussionPage) listing
-  let htmlIndex = fileListToHtml base' prefix' prunedListing
+  let isNotDiscussionPage (FSFile f) = isNotDiscussPageFile f
+      isNotDiscussionPage (FSDirectory _) = return True
+  prunedListing <- filterM isNotDiscussionPage listing
+  let htmlIndex = fileListToHtml base' prefix' ext prunedListing
   formattedPage defaultPageLayout{
                   pgPageName = prefix',
                   pgShowPageTools = False,
@@ -679,9 +684,9 @@ indexPage = do
                   pgScripts = [],
                   pgTitle = "Contents"} htmlIndex
 
-fileListToHtml :: String -> String -> [Resource] -> Html
-fileListToHtml base' prefix files =
-  let fileLink (FSFile f) | isPageFile f =
+fileListToHtml :: String -> String -> String -> [Resource] -> Html
+fileListToHtml base' prefix ext files =
+  let fileLink (FSFile f) | takeExtension f == "." ++ ext =
         li ! [theclass "page"  ] <<
           anchor ! [href $ base' ++ urlForPage (prefix ++ dropExtension f)] <<
             dropExtension f
@@ -713,8 +718,7 @@ categoryPage = do
   let repoPath = repositoryPath cfg
   let categoryDescription = "Category: " ++ (intercalate " + " pcategories)
   fs <- getFileStore
-  files <- liftIO $ index fs
-  let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
+  pages <- liftIO (index fs) >>= filterM isPageFile >>= filterM isNotDiscussPageFile
   matches <- liftM catMaybes $
              forM pages $ \f -> do
                categories <- liftIO $ readCategories $ repoPath </> f
@@ -751,8 +755,7 @@ categoryListPage = do
   cfg <- getConfig
   let repoPath = repositoryPath cfg
   fs <- getFileStore
-  files <- liftIO $ index fs
-  let pages = filter (\f -> isPageFile f && not (isDiscussPageFile f)) files
+  pages <- liftIO (index fs) >>= filterM isPageFile >>= filterM isNotDiscussPageFile
   categories <- liftIO $ liftM (nub . sort . concat) $ forM pages $ \f ->
                   readCategories (repoPath </> f)
   base' <- getWikiBase
@@ -769,8 +772,9 @@ categoryListPage = do
 expireCache :: Handler
 expireCache = do
   page <- getPage
+  cfg <- getConfig
   -- try it as a page first, then as an uploaded file
-  expireCachedFile (pathForPage page)
+  expireCachedFile (pathForPage page $ defaultExtension cfg)
   expireCachedFile page
   ok $ toResponse ()
 

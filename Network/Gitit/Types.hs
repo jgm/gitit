@@ -110,6 +110,8 @@ data Config = Config {
   repositoryType       :: FileStoreType,
   -- | Default page markup type for this wiki
   defaultPageType      :: PageType,
+  -- | Default file extension for pages in this wiki
+  defaultExtension     :: String,
   -- | How to handle LaTeX math in pages?
   mathMethod           :: MathMethod,
   -- | Treat as literate haskell by default?

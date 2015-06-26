@@ -117,14 +117,33 @@ handleError = id
 -- ContentTransformer runners
 --
 
-runTransformer :: ToMessage a
-               => (String -> String)
-               -> ContentTransformer a
+runPageTransformer :: ToMessage a
+               => ContentTransformer a
                -> GititServerPart a
-runTransformer pathFor xform = withData $ \params -> do
+runPageTransformer xform = withData $ \params -> do
   page <- getPage
   cfg <- getConfig
-  evalStateT xform  Context{ ctxFile = pathFor page
+  evalStateT xform  Context{ ctxFile = pathForPage page (defaultExtension cfg)
+                           , ctxLayout = defaultPageLayout{
+                                             pgPageName = page
+                                           , pgTitle = page
+                                           , pgPrintable = pPrintable params
+                                           , pgMessages = pMessages params
+                                           , pgRevision = pRevision params
+                                           , pgLinkToFeed = useFeed cfg }
+                           , ctxCacheable = True
+                           , ctxTOC = tableOfContents cfg
+                           , ctxBirdTracks = showLHSBirdTracks cfg
+                           , ctxCategories = []
+                           , ctxMeta = [] }
+
+runFileTransformer :: ToMessage a
+               => ContentTransformer a
+               -> GititServerPart a
+runFileTransformer xform = withData $ \params -> do
+  page <- getPage
+  cfg <- getConfig
+  evalStateT xform  Context{ ctxFile = id page
                            , ctxLayout = defaultPageLayout{
                                              pgPageName = page
                                            , pgTitle = page
@@ -140,17 +159,17 @@ runTransformer pathFor xform = withData $ \params -> do
 
 -- | Converts a @ContentTransformer@ into a @GititServerPart@;
 -- specialized to wiki pages.
-runPageTransformer :: ToMessage a
-                   => ContentTransformer a
-                   -> GititServerPart a
-runPageTransformer = runTransformer pathForPage
+-- runPageTransformer :: ToMessage a
+--                    => ContentTransformer a
+--                    -> GititServerPart a
+-- runPageTransformer = runTransformer pathForPage
 
 -- | Converts a @ContentTransformer@ into a @GititServerPart@;
 -- specialized to non-pages.
-runFileTransformer :: ToMessage a
-                   => ContentTransformer a
-                   -> GititServerPart a
-runFileTransformer = runTransformer id
+-- runFileTransformer :: ToMessage a
+--                    => ContentTransformer a
+--                    -> GititServerPart a
+-- runFileTransformer = runTransformer id
 
 --
 -- Gitit responders

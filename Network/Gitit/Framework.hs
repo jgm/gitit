@@ -43,6 +43,7 @@ module Network.Gitit.Framework (
                                , isPageFile
                                , isDiscussPage
                                , isDiscussPageFile
+                               , isNotDiscussPageFile
                                , isSourceCode
                                -- * Combinators that change the request locally
                                , withMessages
@@ -257,16 +258,22 @@ isPage s = all (`notElem` "*?") s && not (".." `isInfixOf` s) && not ("/_" `isIn
 -- for now, we disallow @*@ and @?@ in page names, because git filestore
 -- does not deal with them properly, and darcs filestore disallows them.
 
-isPageFile :: FilePath -> Bool
-isPageFile f = takeExtension f == ".page"
+isPageFile :: FilePath -> GititServerPart Bool
+isPageFile f = do
+  cfg <- getConfig
+  return $ takeExtension f == "." ++ (defaultExtension cfg)
 
 isDiscussPage :: String -> Bool
 isDiscussPage ('@':xs) = isPage xs
 isDiscussPage _ = False
 
-isDiscussPageFile :: FilePath -> Bool
+isDiscussPageFile :: FilePath -> GititServerPart Bool
 isDiscussPageFile ('@':xs) = isPageFile xs
-isDiscussPageFile _ = False
+isDiscussPageFile _ = return False
+
+isNotDiscussPageFile :: FilePath -> GititServerPart Bool
+isNotDiscussPageFile ('@':_) = return False
+isNotDiscussPageFile _ = return True
 
 isSourceCode :: String -> Bool
 isSourceCode path' =
@@ -281,8 +288,8 @@ urlForPage :: String -> String
 urlForPage page = '/' : encString False isUnescapedInURI page
 
 -- | Returns the filestore path of the file containing the page's source.
-pathForPage :: String -> FilePath
-pathForPage page = page <.> "page"
+pathForPage :: String -> String -> FilePath
+pathForPage page ext = page <.> ext
 
 -- | Retrieves a mime type based on file extension.
 getMimeTypeForExtension :: String -> GititServerPart String

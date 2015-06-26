@@ -50,11 +50,11 @@ expireCachedFile file = do
   exists <- liftIO $ doesFileExist target
   when exists $ liftIO $ do
     liftIO $ removeFile target
-    expireCachedPDF target
+    expireCachedPDF target (defaultExtension cfg)
 
-expireCachedPDF :: String -> IO ()
-expireCachedPDF file =
-  when (takeExtension file == ".page") $ do
+expireCachedPDF :: String -> String -> IO ()
+expireCachedPDF file ext = 
+  when (takeExtension file == "." ++ ext) $ do
     let pdfname = file ++ ".export.pdf"
     exists <- doesFileExist pdfname
     when exists $ removeFile pdfname
@@ -84,4 +84,4 @@ cacheContents file contents = do
   liftIO $ do
     createDirectoryIfMissing True targetDir
     B.writeFile target contents
-    expireCachedPDF target
+    expireCachedPDF target (defaultExtension cfg)

@@ -162,11 +162,11 @@ createDefaultPages conf = do
           "\n...\n\n"
     -- add front page, help page, and user's guide
     let auth = Author "Gitit" ""
-    createIfMissing fs (frontPage conf <.> "page") auth "Default front page"
+    createIfMissing fs (frontPage conf <.> defaultExtension conf) auth "Default front page"
       $ header ++ welcomecontents
-    createIfMissing fs "Help.page" auth "Default help page"
+    createIfMissing fs ("Help" <.> defaultExtension conf) auth "Default help page"
       $ header ++ helpcontents
-    createIfMissing fs "Gitit User’s Guide.page" auth "User’s guide (README)"
+    createIfMissing fs ("Gitit User's Guide" <.> defaultExtension conf) auth "User's guide (README)"
       $ header ++ usersguidecontents
 
 createIfMissing :: FileStore -> FilePath -> Author -> Description -> String -> IO ()
