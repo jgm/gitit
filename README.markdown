@@ -47,12 +47,13 @@ Getting started
 Compiling and installing gitit
 ------------------------------
 
-You'll need the [GHC] compiler, the [cabal-install] tool and the [gcc](https://gcc.gnu.org). GHC can
+You'll need the [GHC] compiler, the [cabal-install] tool and the [gcc]. GHC can
 be downloaded [here]. Note that, starting with release 0.5, GHC 6.10
 or higher is required. For [cabal-install] on *nix, follow the [quick
 install] instructions.
 
 [GHC]: http://www.haskell.org/ghc/
+[gcc]: https://gcc.gnu.org
 [here]: http://www.haskell.org/ghc/
 [cabal-install]:  https://wiki.haskell.org/Cabal-Install
 [quick install]:  https://wiki.haskell.org/Cabal-Install#Unix
