@@ -1,3 +1,23 @@
+Version 0.11 released 02 Jun 2015
+
+  * Allow page extensions to be configurable (not just `.page`)
+    (Caleb McDaniel).
+    - Added `page-extension` option in config file (Caleb McDaniel).
+    - Added new type for `defaultExtension`
+    - Changed `isPageFile` to get extension from config
+    - New function `isNotDiscussPageFile`
+    - `pathForPage` must be passed extension as String
+    - `isPageFile` now returns GititServerPart Bool instead of just Bool.
+  * Reverted some changes to Plugins that caused excessive memory use.
+  * Allow pandoc 1.15.
+  * Added missing `<br>` tag in form on registration page (Vaughn Iverson).
+  * Show page diffs in feed (Imuli).
+  * Display commit messages in feed entry titles (Imuli).
+  * Fix preview button for modern jQuery (Imuli).
+  * Feed titles reflect site and page names (Imuli).
+  * Present feed in canonical order (recent first, Imuli).
+  * https support for base-url config option (Imuli).
+
 Version 0.10.7 released 02 Jun 2015
 
   * Fixes to allow building with pandoc 1.14. `CommonMark` added
