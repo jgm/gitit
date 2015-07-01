@@ -37,9 +37,7 @@ loadPlugin pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
-    setSessionDynFlags $ dflags{ hscTarget = HscInterpreted
-                               , ghcLink = LinkInMemory
-                               , ghcMode = CompManager }
+    setSessionDynFlags dflags
     defaultCleanupHandler dflags $ do
       -- initDynFlags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
