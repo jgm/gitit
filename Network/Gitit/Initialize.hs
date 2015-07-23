@@ -138,14 +138,15 @@ createDefaultPages conf = do
                      }
         -- note: we convert this (markdown) to the default page format
         converter = case pt of
-                       Markdown  -> id
-                       LaTeX     -> writeLaTeX defOpts . toPandoc
-                       HTML      -> writeHtmlString defOpts . toPandoc
-                       RST       -> writeRST defOpts . toPandoc
-                       Textile   -> writeTextile defOpts . toPandoc
-                       Org       -> writeOrg defOpts . toPandoc
-                       DocBook   -> writeDocbook defOpts . toPandoc
-                       MediaWiki -> writeMediaWiki defOpts . toPandoc
+                       Markdown   -> id
+                       CommonMark -> writeCommonMark defOpts . toPandoc
+                       LaTeX      -> writeLaTeX defOpts . toPandoc
+                       HTML       -> writeHtmlString defOpts . toPandoc
+                       RST        -> writeRST defOpts . toPandoc
+                       Textile    -> writeTextile defOpts . toPandoc
+                       Org        -> writeOrg defOpts . toPandoc
+                       DocBook    -> writeDocbook defOpts . toPandoc
+                       MediaWiki  -> writeMediaWiki defOpts . toPandoc
 
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
     welcomecontents <- liftM converter $ readFileUTF8 welcomepath
