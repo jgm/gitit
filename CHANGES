@@ -1,3 +1,8 @@
+Version 0.11.1 released 23 Jul 2015
+
+  * Allow `commonmark` as a page type.
+  * Handle CommonMark page type on initialization.
+
 Version 0.11 released 02 Jun 2015
 
   * Allow page extensions to be configurable (not just `.page`)
