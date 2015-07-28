@@ -20,7 +20,6 @@ import Data.ByteString.Lazy.UTF8 (fromString)
 -- from the SHA package on HackageDB:
 import Data.Digest.Pure.SHA (sha1, showDigest)
 import System.FilePath ((</>))
-import Control.Monad.Trans (liftIO)
 
 plugin :: Plugin
 plugin = mkPageTransformM transformBlock
