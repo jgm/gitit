@@ -1,3 +1,8 @@
+Version 0.11.1.1 released 14 Aug 2015
+
+  * Fixed Network.Gitit.Initialize so it compiles with older pandoc (#506).
+  * Removed extra import of liftIO in Dot.hs plugin.
+
 Version 0.11.1 released 23 Jul 2015
 
   * Allow `commonmark` as a page type.
