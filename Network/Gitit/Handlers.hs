@@ -267,7 +267,9 @@ goToPage = withData $ \(params :: Params) -> do
 
 searchResults :: Handler
 searchResults = withData $ \(params :: Params) -> do
-  let patterns = pPatterns params `orIfNull` [pGotoPage params]
+  let patterns = if pExactPhrase params
+                    then [unwords (pPatterns params)] 
+                    else pPatterns params `orIfNull` [pGotoPage params] 
   fs <- getFileStore
   matchLines <- if null patterns
                    then return []
