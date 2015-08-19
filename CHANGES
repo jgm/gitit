@@ -1,3 +1,11 @@
+Version 0.12 released 19 Aug 2015
+
+  * Export all modules.
+  * Make executable builds depend on the library in cabal file.
+  * Moved library files to src directory.
+  * Added stack.yaml.
+  * Updated README with stack install instructions.
+
 Version 0.11.1.1 released 14 Aug 2015
 
   * Fixed Network.Gitit.Initialize so it compiles with older pandoc (#506).
