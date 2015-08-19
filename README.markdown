@@ -47,22 +47,21 @@ Getting started
 Compiling and installing gitit
 ------------------------------
 
-You'll need the [GHC] compiler and the [cabal-install] tool. GHC can
-be downloaded [here]. Note that, starting with release 0.5, GHC 6.10
-or higher is required. For [cabal-install] on *nix, follow the [quick
-install] instructions.
+The most reliable way to install gitit from source is to get the
+[stack] tool.  Then clone the gitit repository and use stack
+to install:
 
-[GHC]: http://www.haskell.org/ghc/
-[here]: http://www.haskell.org/ghc/
-[cabal-install]:  https://wiki.haskell.org/Cabal-Install
-[quick install]:  https://wiki.haskell.org/Cabal-Install#Unix
+    git clone https://github.com/jgm/gitit
+    cd gitit
+    stack install
 
-Once you've got cabal-install, installing gitit is trivial:
+Alternatively, instead of using [stack], you can get the
+[Haskell Platform] and do the following:
 
     cabal update
     cabal install gitit
 
-These commands will install the latest released version of gitit.
+This will install the latest released version of gitit.
 To install a version of gitit checked out from the repository,
 change to the gitit directory and type:
 
@@ -79,23 +78,8 @@ If that doesn't work, check to see that `gitit` is in your local
 cabal-install executable directory (usually `~/.cabal/bin`). And make
 sure `~/.cabal/bin` is in your system path.
 
-Optional syntax highlighting support
-------------------------------------
-
-If pandoc was compiled with optional syntax highlighting support,
-this will be available in gitit too.  This feature is recommended
-if you plan to display source code on your wiki.
-
-Highlighting support requires the [pcre] library, so make sure that
-is installed before continuing.
-
-[pcre]:  http://www.pcre.org/ 
-
-To install gitit with highlighting support, first ensure that pandoc
-is compiled with highlighting support, then install gitit as above:
-
-    cabal install pandoc -fhighlighting --reinstall
-    cabal install gitit
+[stack]: https://github.com/commercialhaskell/stack
+[Haskell Platform]: https://www.haskell.org/platform/
 
 Running gitit
 -------------
