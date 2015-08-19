@@ -1,0 +1,16 @@
+flags:
+  gitit:
+    plugins: true
+    network-uri: true
+  pandoc:
+    trypandoc: false
+    https: true
+    embed_data_files: false
+    network-uri: true
+packages:
+- '.'
+extra-deps:
+- filestore-0.6.1
+- recaptcha-0.1.0.3
+- uri-0.1.6.3
+resolver: lts-3.1
