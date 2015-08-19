@@ -1,6 +1,6 @@
 name:                gitit
-version:             0.11.1.1
-Cabal-version:       >= 1.6
+version:             0.12
+Cabal-version:       >= 1.8
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
 description:         Gitit is a wiki backed by a git, darcs, or mercurial
@@ -114,46 +114,33 @@ Flag plugins
   default:           True
 
 Library
-  hs-source-dirs:    .
+  hs-source-dirs:    src
   exposed-modules:   Network.Gitit, Network.Gitit.ContentTransformer,
                      Network.Gitit.Types, Network.Gitit.Framework,
                      Network.Gitit.Initialize, Network.Gitit.Config,
                      Network.Gitit.Layout, Network.Gitit.Authentication,
-                     Network.Gitit.Authentication.Github
-  other-modules:     Network.Gitit.Cache, Network.Gitit.State,
-                     Paths_gitit, Network.Gitit.Server, Network.Gitit.Export,
-                     Network.Gitit.Util, Network.Gitit.Handlers,
+                     Network.Gitit.Authentication.Github,
+                     Network.Gitit.Util, Network.Gitit.Server
+                     Network.Gitit.Cache, Network.Gitit.State,
+                     Paths_gitit, Network.Gitit.Export,
+                     Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
                      Network.Gitit.Page, Network.Gitit.Feed,
                      Network.Gitit.Compat.Except
-  if flag(plugins)
-    exposed-modules: Network.Gitit.Interface
-    build-depends:   ghc, ghc-paths
-    cpp-options:     -D_PLUGINS
-  build-depends:     base >= 3, pandoc >= 1.12.4 && < 1.16,
-                     pandoc-types >= 1.12.3 && < 1.13, filepath, safe
-  extensions:        CPP
-  if impl(ghc >= 6.12)
-    ghc-options:     -Wall -fno-warn-unused-do-bind
-  else
-    ghc-options:     -Wall
-  ghc-prof-options:  -fprof-auto-exported -rtsopts
-
-Executable           gitit
-  hs-source-dirs:    .
-  main-is:           gitit.hs
-  build-depends:     base >=3 && < 5,
+  build-depends:     base >= 3 && < 5,
+                     filepath,
+                     safe,
                      parsec,
                      pretty,
                      xhtml,
                      containers,
-                     pandoc >= 1.12.4 && < 1.16,
-                     pandoc-types >= 1.12.3 && < 1.13,
                      process,
                      filepath,
                      directory,
                      mtl,
                      old-time,
+                     pandoc >= 1.12.4 && < 1.16,
+                     pandoc-types >= 1.12.3 && < 1.13,
                      highlighting-kate >= 0.5.0.1 && < 0.7,
                      bytestring,
                      text,
@@ -192,8 +179,30 @@ Executable           gitit
   else
     build-depends:   network >= 2 && < 2.6
   if flag(plugins)
+    exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
+  extensions:        CPP
+  if impl(ghc >= 6.12)
+    ghc-options:     -Wall -fno-warn-unused-do-bind
+  else
+    ghc-options:     -Wall
+  ghc-prof-options:  -fprof-auto-exported -rtsopts
+
+Executable           gitit
+  hs-source-dirs:    .
+  main-is:           gitit.hs
+  build-depends:     base >=3 && < 5,
+                     gitit,
+                     mtl,
+                     hslogger,
+                     bytestring,
+                     utf8-string,
+                     directory
+  if flag(network-uri)
+    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
+  else
+    build-depends:   network >= 2 && < 2.6
   extensions:        CPP
   if impl(ghc >= 6.12)
     ghc-options:     -Wall -threaded -fno-warn-unused-do-bind
@@ -205,6 +214,10 @@ Executable           expireGititCache
   hs-source-dirs:    .
   main-is:           expireGititCache.hs
   build-depends:     base >=3 && < 5, HTTP, url, filepath
+  if flag(network-uri)
+    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
+  else
+    build-depends:   network >= 2 && < 2.6
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
   ghc-options:       -Wall
