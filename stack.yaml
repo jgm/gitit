@@ -2,11 +2,6 @@ flags:
   gitit:
     plugins: true
     network-uri: true
-  pandoc:
-    trypandoc: false
-    https: true
-    embed_data_files: false
-    network-uri: true
 packages:
 - '.'
 extra-deps:
