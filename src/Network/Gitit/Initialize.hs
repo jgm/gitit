@@ -171,7 +171,7 @@ createDefaultPages conf = do
       $ header ++ welcomecontents
     createIfMissing fs ("Help" <.> defaultExtension conf) auth "Default help page"
       $ header ++ helpcontents
-    createIfMissing fs ("Gitit User's Guide" <.> defaultExtension conf) auth "User's guide (README)"
+    createIfMissing fs ("Gitit User’s Guide" <.> defaultExtension conf) auth "User’s guide (README)"
       $ header ++ usersguidecontents
 
 createIfMissing :: FileStore -> FilePath -> Author -> Description -> String -> IO ()
