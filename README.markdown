@@ -464,6 +464,13 @@ To fix this, one can disable the idle-time GC with the runtime flag
 
     gitit -f my.conf +RTS -I0 -RTS
 
+
+Note:
+
+To enable RTS, cabal needs to pass the compile flag `-rtsopts` to GHC while installing.
+
+    cabal install --reinstall gitit --ghc-options="-rtsopts"
+
 Using gitit with apache
 =======================
 
