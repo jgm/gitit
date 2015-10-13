@@ -5,10 +5,7 @@ flags:
 packages:
 - '.'
 extra-deps:
-- pandoc-1.16.0.2
-- pandoc-types-1.16.0.1
-- cmark-0.5.0
 - filestore-0.6.1
 - recaptcha-0.1.0.3
-- uri-0.1.6.3
-resolver: lts-4.0
+- uri-0.1.6.4
+resolver: lts-5.17
