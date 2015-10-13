@@ -155,3 +155,40 @@ box-shadow: #555 0 0 10px;
 }
 /* Deal with multiple footnotes one after another; Charuru */
 sup + sup { margin-left: 2px; }
+
+/* Make theme responsive */
+@media (max-width: 768px) {
+  #yui-main {
+    float:none!important;
+    margin-left: 0!important;
+  }
+  #maincol {
+    margin-left: 0!important;
+  }
+  #sidebar {
+    width: 100%;
+    float: none;
+  }
+  #logo {
+    float: left;
+    margin-right:5%;
+    margin-top: 12px;
+    width: 30%;
+  }
+  .sitenav {
+    float: left;
+    margin-right: 5%;
+    width: 30%;
+  }
+  .pageTools {
+    float: right;
+    width: 30%
+  }
+}
+@media (max-device-width: 568px) {
+  #logo, .sitenav, .pageTools {
+    float: none;
+    width: 100%;
+  }
+}
+
