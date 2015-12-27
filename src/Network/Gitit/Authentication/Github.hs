@@ -73,7 +73,7 @@ getGithubUser ghConfig githubCallbackPars githubState =
                                        case mbOrg of
                                              Nothing -> return $ Right user
                                              Just githuborg -> ifSuccess
-                                                      ("Membership check of user " ++ unpack gitLogin ++  " to "  ++ unpack githuborg ++ " failed")
+                                                      ("Membership check failed: the user " ++ unpack gitLogin ++  " is required to be a member of the organization "  ++ unpack githuborg ++ ".")
                                                       (orgInfo gitLogin githuborg mgr at)
                                                       (\_ -> return $ Right user))))
               else
