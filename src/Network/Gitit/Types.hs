@@ -159,6 +159,8 @@ data Config = Config {
   noDelete             :: [String],
   -- | Default summary if description left blank
   defaultSummary       :: String,
+  -- | Delete summary
+  deleteSummary        :: String,
   -- | @Nothing@ = anyone can register.
   -- @Just (prompt, answers)@ = a user will
   -- be given the prompt and must give

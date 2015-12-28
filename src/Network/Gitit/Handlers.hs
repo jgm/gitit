@@ -608,7 +608,7 @@ deletePage = withData $ \(params :: Params) -> do
                         Nothing -> return ("Anonymous", "")
                         Just u  -> return (uUsername u, uEmail u)
   let author = Author user email
-  let descrip = "Deleted using web interface."
+  let descrip = deleteSummary cfg
   base' <- getWikiBase
   if pConfirm params && (file == page || file == page <.> (defaultExtension cfg))
      then do
