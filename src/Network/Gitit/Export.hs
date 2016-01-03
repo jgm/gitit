@@ -26,6 +26,7 @@ import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.PDF (makePDF)
 import Text.Pandoc.SelfContained as SelfContained
 import Text.Pandoc.Shared (readDataFileUTF8)
+import qualified Text.Pandoc.UTF8 as UTF8
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage, getWikiBase)
 import Network.Gitit.State (getConfig)
@@ -36,7 +37,6 @@ import Control.Monad (unless)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
-import Data.ByteString.Lazy.UTF8 (fromString, toString)
 import System.FilePath ((</>), takeDirectory)
 import Control.Exception (throwIO)
 import System.Directory (doesFileExist)
@@ -80,7 +80,7 @@ respondX templ mimetype ext fn opts page doc = do
 respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
           -> WriterOptions -> String -> Pandoc -> Handler
 respondS templ mimetype ext fn =
-  respondX templ mimetype ext (\o d -> return $ fromString $ fn o d)
+  respondX templ mimetype ext (\o d -> return $ UTF8.fromStringLazy $ fn o d)
 
 respondSlides :: String -> HTMLSlideVariant -> String -> Pandoc -> Handler
 respondSlides templ slideVariant page doc = do
@@ -139,7 +139,7 @@ respondSlides templ slideVariant page doc = do
 #endif
     ok . setContentType "text/html;charset=UTF-8" .
       -- (setFilename (page ++ ".html")) .
-      toResponseBS B.empty $ fromString h'
+      toResponseBS B.empty $ UTF8.fromStringLazy h'
 
 respondLaTeX :: String -> Pandoc -> Handler
 respondLaTeX = respondS "latex" "application/x-latex" "tex"
@@ -152,7 +152,7 @@ respondConTeXt = respondS "context" "application/x-context" "tex"
 
 respondRTF :: String -> Pandoc -> Handler
 respondRTF = respondX "rtf" "application/rtf" "rtf"
-  (\o d -> fromString `fmap` writeRTFWithEmbeddedImages o d) defaultRespOptions
+  (\o d -> UTF8.fromStringLazy `fmap` writeRTFWithEmbeddedImages o d) defaultRespOptions
 
 respondRST :: String -> Pandoc -> Handler
 respondRST = respondS "rst" "text/plain; charset=utf-8" ""
@@ -188,9 +188,14 @@ respondOrg :: String -> Pandoc -> Handler
 respondOrg = respondS "org" "text/plain; charset=utf-8" ""
   writeOrg defaultRespOptions
 
+#if MIN_VERSION_pandoc(1,16,0)
 respondICML :: String -> Pandoc -> Handler
+respondICML = respondX "icml" "application/xml; charset=utf-8" ""
+              (\o d -> UTF8.fromStringLazy <$> writeICML o d) defaultRespOptions
+#else
 respondICML = respondS "icml" "application/xml; charset=utf-8" ""
-  writeICML defaultRespOptions
+              writeICML defaultRespOptions
+#endif
 
 respondTextile :: String -> Pandoc -> Handler
 respondTextile = respondS "textile" "text/plain; charset=utf-8" ""
@@ -240,7 +245,7 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
               return res
   case pdf' of
        Left logOutput -> simpleErrorHandler ("PDF creation failed:\n"
-                           ++ toString logOutput)
+                           ++ UTF8.toStringLazy logOutput)
        Right pdfBS -> do
               case cached of
                 Nothing ->
@@ -264,9 +269,15 @@ fixURLs page pndc = do
     let static = staticDir cfg
     let repoPath = repositoryPath cfg
 
+#if MIN_VERSION_pandoc(1,16,0)
+    let go (Image attr ils (url, title)) = do
+           fixedURL <- fixURL url
+           return $ Image attr ils (fixedURL, title)
+#else
     let go (Image ils (url, title)) = do
            fixedURL <- fixURL url
            return $ Image ils (fixedURL, title)
+#endif
         go x                        = return x
 
         fixURL ('/':url) = resolve url

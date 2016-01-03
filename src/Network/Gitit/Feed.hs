@@ -140,8 +140,8 @@ diffLines (Both x _) = map enText x
 
 enTag :: String -> [Content] -> Content
 enTag tag content = Elem blank_element{ elName=blank_name{qName=tag}
-				      , elContent=content
-				      }
+                                      , elContent=content
+                                      }
 enTag1 :: String -> Content -> Content
 enTag1 tag content = enTag tag [content]
 enText :: String -> Content
