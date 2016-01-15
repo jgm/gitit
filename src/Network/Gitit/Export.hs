@@ -38,6 +38,7 @@ import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import System.FilePath ((</>), takeDirectory)
+import Control.Applicative ((<$>))
 import Control.Exception (throwIO)
 import System.Directory (doesFileExist)
 import Text.HTML.SanitizeXSS
