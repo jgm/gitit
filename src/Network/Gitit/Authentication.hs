@@ -317,7 +317,7 @@ sharedValidation validationType params = do
   let errors = validate $ optionalTests validationType ++
         [ (not isValidAccessCode, "Incorrect response to access prompt.")
         , (not (isValidUsername uname),
-         "Username must be at least 3 charcaters, all letters or digits.")
+         "Username must be at least 3 characters, all letters or digits.")
         , (not (isValidPassword pword),
          "Password must be at least 6 characters, " ++
          "and must contain at least one non-letter.")
