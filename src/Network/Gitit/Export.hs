@@ -191,7 +191,8 @@ respondOrg = respondS "org" "text/plain; charset=utf-8" ""
 #if MIN_VERSION_pandoc(1,16,0)
 respondICML :: String -> Pandoc -> Handler
 respondICML = respondX "icml" "application/xml; charset=utf-8" ""
-              (\o d -> UTF8.fromStringLazy <$> writeICML o d) defaultRespOptions
+              (\o d -> fmap UTF8.fromStringLazy $ writeICML o d)
+                         defaultRespOptions
 #else
 respondICML = respondS "icml" "application/xml; charset=utf-8" ""
               writeICML defaultRespOptions
