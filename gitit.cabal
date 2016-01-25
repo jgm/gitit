@@ -139,7 +139,7 @@ Library
                      directory,
                      mtl,
                      old-time,
-                     pandoc >= 1.12.4 && < 1.17,
+                     pandoc >= 1.12.4 && < 1.18,
                      pandoc-types >= 1.12.3 && < 1.17,
                      highlighting-kate >= 0.5.0.1 && < 0.7,
                      bytestring,
