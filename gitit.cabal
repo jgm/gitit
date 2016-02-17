@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.12.0.1
+version:             0.12.1
 Cabal-version:       >= 1.8
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.

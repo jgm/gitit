@@ -1,3 +1,31 @@
+Version 0.12.1 released 17 Feb 2016
+
+  * Use fmap instead of <$> so ghc 7.8 won't fail.
+  * Allow latest hoauth2
+  * Fix typo (Chas Leichner).
+  * Allow compiling with pandoc 1.16.x.
+  * Add page for login failure when authorization is required for reading
+    (Phil Ruffwind).  When authorization is required to read the wiki, the
+    error message from a failed GitHub login cannot be displayed.  Instead it
+    will redirect to GitHub for another OAuth authentication, which can lead to
+    a redirect loop.  To avoid this, the user is now redirected to a special
+    landing page to display the login failure.  Note: no changes are made for
+    the case where authorization is not required to read the wiki.
+  * Improve error message of GitHub membership check (Phil Ruffwind).
+  * Add delete-summary config variable (Phil Ruffwind).
+    Used to change the commit message when a page is deleted.
+  * Use primary GitHub email rather than just the first (Phil Ruffwind).
+    The order in which user emails are returned via the GitHub API is not
+    specified, so the first may not be the one that the user prefers,
+    i.e. the so-called "primary" email.  To fix this problem, we eliminate
+    all emails except for the one marked as "primary".
+  * Make default theme responsive (Lincoln Mullen, #450).
+    This commit makes the default theme responsive. For smaller browsers, it
+    will move the sidebar below the main content div and make the sidebar
+    three columns. On phones, it will also collapse the sidebar into a
+    single column.
+  * README: Tell how to enable rtsopts for disabling GC (norpol).
+
 Version 0.12.0.1 released 24 Aug 2015
 
   * Revert change of curly to straight quote for starting
