@@ -1,3 +1,8 @@
+Version 0.12.1.1 released 22 Mar 2016
+
+  * Allow pandoc 1.17 (Phil Ruffwind).
+  * Allow aeson 0.11.
+
 Version 0.12.1 released 17 Feb 2016
 
   * Use fmap instead of <$> so ghc 7.8 won't fail.
