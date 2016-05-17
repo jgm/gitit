@@ -36,7 +36,7 @@ You can see a running demo at <http://gitit.johnmacfarlane.net>.
 [git]: http://git.or.cz
 [darcs]: http://darcs.net
 [mercurial]: http://mercurial.selenic.com/
-[pandoc]: http://johnmacfarlane.net/pandoc
+[pandoc]: http://pandoc.org
 [Happstack]: http://happstack.com
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
 [texmath]: http://github.com/jgm/texmath/tree/master
@@ -193,7 +193,7 @@ To see what languages your pandoc was compiled to highlight:
 
     pandoc -v
 
-[delimited code blocks]: http://johnmacfarlane.net/pandoc/README.html#delimited-code-blocks
+[delimited code blocks]: http://pandoc.org/README.html#delimited-code-blocks
 
 Configuring and customizing gitit
 =================================

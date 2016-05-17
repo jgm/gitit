@@ -2,7 +2,7 @@
   <title>Markdown</title>
   <para>
     This wiki's pages are written in
-    <ulink url="http://johnmacfarlane.net/pandoc">pandoc</ulink>'s
+    <ulink url="http://pandoc.org">pandoc</ulink>'s
     extended form of
     <ulink url="http://daringfireball.net/projects/markdown">markdown</ulink>.
     If you're not familiar with markdown, you should start by looking at
@@ -11,7 +11,7 @@
     &quot;basics&quot; page</ulink> and the
     <ulink url="http://daringfireball.net/projects/markdown/syntax">markdown
     syntax description</ulink>. Consult the
-    <ulink url="http://johnmacfarlane.net/pandoc/README.html">pandoc
+    <ulink url="http://pandoc.org/README.html">pandoc
     User's Guide</ulink> for information about pandoc's syntax for
     footnotes, tables, description lists, and other elements not present
     in standard markdown.

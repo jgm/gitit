@@ -56,5 +56,5 @@ fibs = 1 : 1 : zipWith (+)
 For more: [LaTeX], [pandoc].
 
 [LaTeX]: http://www.latex-project.org/
-[pandoc]: http://johnmacfarlane.net/pandoc/README.html
+[pandoc]: http://pandoc.org/README.html
 

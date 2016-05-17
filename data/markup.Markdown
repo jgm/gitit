@@ -7,8 +7,8 @@ Consult the [pandoc User's Guide] for information about pandoc's syntax
 for footnotes, tables, description lists, and other elements not present
 in standard markdown.
 
-[pandoc]: http://johnmacfarlane.net/pandoc
-[pandoc User's Guide]: http://johnmacfarlane.net/pandoc/README.html
+[pandoc]: http://pandoc.org
+[pandoc User's Guide]: http://pandoc.org/README.html
 [markdown]: http://daringfireball.net/projects/markdown
 [markdown "basics" page]: http://daringfireball.net/projects/markdown/basics
 [markdown syntax description]: http://daringfireball.net/projects/markdown/syntax 

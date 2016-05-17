@@ -1,14 +1,14 @@
 * Markdown
 
 This wiki's pages are written in
-[[http://johnmacfarlane.net/pandoc][pandoc]]'s extended form of
+[[http://pandoc.org][pandoc]]'s extended form of
 [[http://daringfireball.net/projects/markdown][markdown]]. If you're not
 familiar with markdown, you should start by looking at the
 [[http://daringfireball.net/projects/markdown/basics][markdown "basics"
 page]] and the
 [[http://daringfireball.net/projects/markdown/syntax][markdown syntax
 description]]. Consult the
-[[http://johnmacfarlane.net/pandoc/README.html][pandoc User's Guide]]
+[[http://pandoc.org/README.html][pandoc User's Guide]]
 for information about pandoc's syntax for footnotes, tables, description
 lists, and other elements not present in standard markdown.
 
