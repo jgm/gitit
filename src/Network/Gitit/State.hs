@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.State where
 
+import qualified Control.Exception as E
 import qualified Data.Map as M
 import System.Random (randomRIO)
 import Data.Digest.Pure.SHA (sha512, showDigest)
@@ -100,8 +101,12 @@ delUser uname =
 writeUserFile :: Config -> IO ()
 writeUserFile conf = do
   usrs <- queryGititState users
-  writeFile (userFile conf) $
+  E.handle handleWriteError $ writeFile (userFile conf) $
       "[" ++ intercalate "\n," (map show $ M.toList usrs) ++ "\n]"
+    where handleWriteError :: E.SomeException -> IO ()
+          handleWriteError e = logM "gitit" ERROR $
+               "Error writing user file " ++ show (userFile conf) ++
+               "\n" ++ show e
 
 getUser :: String -> GititServerPart (Maybe User)
 getUser uname = liftM (M.lookup uname) $ queryGititState users
