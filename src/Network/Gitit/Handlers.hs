@@ -537,7 +537,7 @@ editPage' params = do
                    , br
                    , label ! [thefor "logMsg"] << "Description of changes:"
                    , br
-                   , textfield "logMsg" ! (readonly ++ [value logMsg])
+                   , textfield "logMsg" ! (readonly ++ [value (logMsg `orIfNull` defaultSummary cfg) ])
                    , submit "update" "Save"
                    , primHtmlChar "nbsp"
                    , submit "cancel" "Discard"
