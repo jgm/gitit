@@ -1,5 +1,22 @@
-Gitit
-=====
+# DTEK wiki, powered by Gitit
+
+## Introduction
+
+This is the source code of the wiki software used on the Computer Science and Engineering Student Division at Chalmers University of Technology.
+
+It is more or less a standard gitit ([gitit's Github page](https://github.com/jgm/gitit)) distribution with a patch to enable LDAP authentication ([github link to commit](https://github.com/avdv/gitit/commit/075892367608ea609506463d2a5ceebbf3330c2f))
+
+A slightly modified version of the `filestore` package is also used to show when pages were updated instead of when they were imported (useful if migrating from an old wiki).
+
+To be able to follow the original gitit readme below the `filestore` submodule must be checked out.
+This is done by the following commands (in the projects directory):
+
+    $ git submodule init
+    $ git submodule update
+
+That's it! For more information on how to set up the gitit software, continue reading!
+
+## Gitit's Readme ##
 
 Gitit is a wiki program written in Haskell. It uses [Happstack] for
 the web server and [pandoc] for markup processing. Pages and uploaded
@@ -41,11 +58,10 @@ You can see a running demo at <http://gitit.johnmacfarlane.net>.
 [highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
 [texmath]: http://github.com/jgm/texmath/tree/master
 
-Getting started
-===============
+## Getting started ##
 
-Compiling and installing gitit
-------------------------------
+
+### Compiling and installing gitit ###
 
 The most reliable way to install gitit from source is to get the
 [stack] tool.  Then clone the gitit repository and use stack
@@ -81,8 +97,7 @@ sure `~/.cabal/bin` is in your system path.
 [stack]: https://github.com/commercialhaskell/stack
 [Haskell Platform]: https://www.haskell.org/platform/
 
-Running gitit
--------------
+### Running gitit ###
 
 To run gitit, you'll need `git` in your system path. (Or `darcs` or
 `hg`, if you're using darcs or mercurial to store the wiki data.)
@@ -115,11 +130,9 @@ You can control the port that gitit runs on using the `-p` option:
 `gitit -p 4000` will start gitit on port 4000. Additional runtime
 options are described by `gitit -h`.
 
-Using gitit
-===========
+## Using gitit ##
 
-Wiki links and formatting
--------------------------
+### Wiki links and formatting ###
 
 For instructions on editing pages and creating links, see the "Help" page.
 
@@ -132,8 +145,7 @@ If you want to link to a directory listing for a subdirectory, use a
 trailing slash:  `[foo/bar/]()` creates a link to the directory for
 `foo/bar`.
 
-Page metadata
--------------
+### Page metadata ###
 
 Pages may optionally begin with a metadata block.  Here is an example:
 
@@ -176,8 +188,7 @@ title
 :   By default the displayed page title is the page name.  This metadata element
     overrides that default.
 
-Highlighted source code
------------------------
+### Highlighted source code ###
 
 If gitit was compiled against a version of pandoc that has highlighting
 support (see above), you can get highlighted source code by using
@@ -186,7 +197,7 @@ support (see above), you can get highlighted source code by using
     ~~~ {.haskell .numberLines}
     qsort []     = []
     qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++
-                   qsort (filter (>= x) xs) 
+                   qsort (filter (>= x) xs)
     ~~~
 
 To see what languages your pandoc was compiled to highlight:
@@ -195,11 +206,10 @@ To see what languages your pandoc was compiled to highlight:
 
 [delimited code blocks]: http://pandoc.org/README.html#delimited-code-blocks
 
-Configuring and customizing gitit
-=================================
+## Configuring and customizing gitit ##
 
-Configuration options
----------------------
+
+### Configuration options ###
 
 Use the option `-f [filename]` to specify a configuration file:
 
@@ -220,8 +230,7 @@ can customize, just type:
 
 The default configuration file is documented with comments throughout.
 
-The `static` directory
-----------------------
+### The `static` directory ###
 
 On receiving a request, gitit always looks first in the `static`
 directory (or in whatever directory is specified for `static-dir` in
@@ -246,8 +255,7 @@ can ensure that others who clone your wiki repository get these files
 as well.  It will not be possible to modify these files using the web
 interface, but they will be modifiable via git.
 
-Using a VCS other than git
---------------------------
+### Using a VCS other than git ###
 
 By default, gitit will store wiki pages in a git repository in the
 `wikidata` directory.  If you'd prefer to use darcs instead of git,
@@ -273,8 +281,7 @@ maxcount flag, before (re)installing gitit:
 Otherwise you will get an error when you attempt to access your
 repository.
 
-Changing the theme
-------------------
+### Changing the theme ###
 
 To change the look of the wiki, you can modify `custom.css` in
 `static/css`.
@@ -289,13 +296,12 @@ To change the footer, modify `templates/footer.st`.
 
 For more radical changes, you can override any of the default
 templates in `$CABALDIR/share/gitit-x.y.z/data/templates` by copying
-the file into `templates`, modifying it, and restarting gitit. The 
-`page.st` template is the master template; it includes the others. 
-Interpolated variables are surrounded by `$`s, so `literal $` must 
+the file into `templates`, modifying it, and restarting gitit. The
+`page.st` template is the master template; it includes the others.
+Interpolated variables are surrounded by `$`s, so `literal $` must
 be backslash-escaped.
 
-Adding support for math
------------------------
+### Adding support for math ###
 
 To write math on a markdown-formatted wiki page, just enclose it
 in dollar signs, as in LaTeX:
@@ -325,8 +331,7 @@ setting of `math` in the configuration file:
 [jsMath]: http://www.math.union.edu/~dpvc/jsmath/
 [jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
 
-Restricting access
-------------------
+### Restricting access ###
 
 If you want to limit account creation on your wiki, the easiest way to do this
 is to provide an `access-question` in your configuration file. (See the commented
@@ -336,8 +341,7 @@ knowing the answer to the access question.
 Another approach is to use HTTP authentication. (See the config file comments on
 `authentication-method`.)
 
-Authentication through github
------------------------------
+### Authentication through github ###
 
 If you want to authenticate the user from github through oauth2, you need to
 register your app with github to obtain a OAuth client secret and add the
@@ -369,8 +373,7 @@ wikidata repository.
 git push origin master 2>> logit
 ```
 
-Plugins
-=======
+## Plugins ##
 
 Plugins are small Haskell programs that transform a wiki page after it
 has been converted from Markdown or another source format. See the example
@@ -389,8 +392,7 @@ support.  To do this, unset the `plugins` Cabal flag:
 Note also that if you compile gitit for executable profiling, attempts
 to load plugins will result in "internal error: PAP object entered!"
 
-Accessing the wiki through git
-==============================
+## Accessing the wiki through git ##
 
 All the pages and uploaded files are stored in a git repository. By
 default, this lives in the `wikidata` directory (though this can be
@@ -410,11 +412,10 @@ If you are using the darcs or mercurial backend, the commands will
 be slightly different.  See the documentation for your VCS for
 details.
 
-Performance
+## Performance ##
 ===========
 
-Caching
--------
+### Caching ###
 
 By default, gitit does not cache content.  If your wiki receives a lot of
 traffic or contains pages that are slow to render, you may want to activate
@@ -451,8 +452,7 @@ and a failure status (> 0) otherwise.
 The cache is persistent through restarts of gitit.  To expire all cached
 pages, simply remove the `cache` directory.
 
-Idle
-----
+### Idle ###
 
 By default, GHC's runtime will repeatedly attempt to collect garbage
 when an executable like Gitit is idle. This means that gitit will, after
@@ -471,16 +471,14 @@ To enable RTS, cabal needs to pass the compile flag `-rtsopts` to GHC while inst
 
     cabal install --reinstall gitit --ghc-options="-rtsopts"
 
-Using gitit with apache
-=======================
+## Using gitit with apache ##
 
 Most users who run a public-facing gitit will want gitit to appear
 at a nice URL like `http://wiki.mysite.com` or
 `http://mysite.com/wiki` rather than `http://mysite.com:5001`.
 This can be achieved using apache's `mod_proxy`.
 
-Proxying to `http://wiki.mysite.com`
-------------------------------------
+### Proxying to `http://wiki.mysite.com` ###
 
 Set up your DNS so that `http://wiki.mysite.com` maps to
 your server's IP address. Make sure that the `mod_proxy`, `mod_proxy_http` and `mod_rewrite` modules are
@@ -492,27 +490,26 @@ loaded, and set up a virtual host with the following configuration:
         RewriteEngine On
         ProxyPreserveHost On
         ProxyRequests Off
-    
+
         <Proxy *>
            Order deny,allow
            Allow from all
         </Proxy>
-    
+
         ProxyPassReverse /    http://127.0.0.1:5001
         RewriteRule ^(.*) http://127.0.0.1:5001$1 [P]
-    
+
         ErrorLog /var/log/apache2/error.log
         LogLevel warn
-    
+
         CustomLog /var/log/apache2/access.log combined
         ServerSignature On
-    
+
     </VirtualHost>
 
 Reload your apache configuration and you should be all set.
 
-Using nginx to achieve the same
--------------------------------
+## Using nginx to achieve the same ##
 
 Drop a file called `wiki.example.com.conf` into `/etc/nginx/conf.d`
 (or where ever your distribution puts it).
@@ -531,8 +528,7 @@ Drop a file called `wiki.example.com.conf` into `/etc/nginx/conf.d`
 Reload your nginx config and you should be all set.
 
 
-Proxying to `http://mysite.com/wiki`
-------------------------------------
+### Proxying to `http://mysite.com/wiki` ###
 
 Make sure the `mod_proxy`, `mod_headers`, `mod_proxy_http`,
 and `mod_proxy_html` modules are loaded. `mod_proxy_html`
@@ -587,15 +583,13 @@ see the [`mod_proxy_html` guide].
 
 [`mod_proxy_html` guide]: http://apache.webthing.com/mod_proxy_html/guide.html
 
-Using gitit as a library
-========================
+## Using gitit as a library ##
 
 By importing the module `Network.Gitit`, you can include a gitit wiki
 (or several of them) in another happstack application. There are some
 simple examples in the haddock documentation for `Network.Gitit`.
 
-Reporting bugs
-==============
+## Reporting bugs ##
 
 Bugs may be reported (and feature requests filed) at
 <https://github.com/jgm/gitit/issues>.
@@ -603,8 +597,7 @@ Bugs may be reported (and feature requests filed) at
 There is a mailing list for users and developers at
 <http://groups.google.com/group/gitit-discuss>.
 
-Acknowledgements
-================
+## Acknowledgements ##
 
 A number of people have contributed patches:
 
@@ -634,4 +627,3 @@ Gitit's default visual layout is shamelessly borrowed from Wikipedia.
 The stylesheets are influenced by Wikipedia's stylesheets and by the
 bluetrip CSS framework (see BLUETRIP-LICENSE). Some of the icons in
 `img/icons` come from bluetrip as well.
-

@@ -4,8 +4,8 @@ flags:
     network-uri: true
 packages:
 - '.'
+- 'filestore'
 extra-deps:
-- filestore-0.6.1
 - recaptcha-0.1.0.3
 - uri-0.1.6.4
 resolver: lts-5.17

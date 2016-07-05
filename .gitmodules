@@ -1,3 +1,6 @@
 [submodule "website"]
 	path = website
 	url = git@github.com:jgm/gitit.git
+[submodule "filestore"]
+	path = filestore
+	url = git@github.com:dtekcth/filestore
