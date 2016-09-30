@@ -159,7 +159,9 @@ data Config = Config {
   -- | Pages that cannot be edited via web
   noEdit               :: [String],
   -- | Pages that cannot be deleted via web
-  noDelete             :: [String],
+  noDelete              :: [String],
+  -- | Pages that must cannot be edited by anonymous users.
+  privatePages          :: [String],
   -- | Default summary if description left blank
   defaultSummary       :: String,
   -- | Delete summary
