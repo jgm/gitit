@@ -162,7 +162,7 @@ Library
                      ConfigFile >= 1 && < 1.2,
                      feed >= 0.3.6 && < 0.4,
                      xss-sanitize >= 0.3 && < 0.4,
-                     tagsoup >= 0.13 && < 0.14,
+                     tagsoup >= 0.13 && < 0.15,
                      blaze-html >= 0.4 && < 0.9,
                      json >= 0.4 && < 0.10,
                      uri >= 0.1 && < 0.2,
