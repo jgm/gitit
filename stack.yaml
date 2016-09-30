@@ -5,7 +5,7 @@ flags:
 packages:
 - '.'
 extra-deps:
-- filestore-0.6.1
+- filestore-0.6.2
 - recaptcha-0.1.0.3
 - uri-0.1.6.4
-resolver: lts-5.17
+resolver: lts-7.0
