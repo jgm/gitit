@@ -172,7 +172,7 @@ readCategories f =
     E.catch (do fl <- B.hGetLine h
                 if dashline fl
                    then do -- get rest of metadata
-                     rest <- hGetLinesTill h dotline
+                     rest <- hGetLinesTill h dotOrDashline
                      let (md,_) = parseMetadata $ unlines $ "---":rest
                      return $ splitCategories $ fromMaybe ""
                             $ lookup "categories" md
@@ -185,9 +185,10 @@ dashline x =
        ('-':'-':'-':xs) | all (==' ') xs -> True
        _ -> False
 
-dotline :: B.ByteString -> Bool
-dotline x =
+dotOrDashline :: B.ByteString -> Bool
+dotOrDashline x =
   case BC.unpack x of
+       ('-':'-':'-':xs) | all (==' ') xs -> True
        ('.':'.':'.':xs) | all (==' ') xs -> True
        _ -> False
 
