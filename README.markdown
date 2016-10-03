@@ -31,8 +31,6 @@ Other features include
 * a library, "Network.Gitit", that makes it simple to include a gitit
   wiki in any happstack application
 
-You can see a running demo at <http://gitit.johnmacfarlane.net>.
-
 [git]: http://git.or.cz
 [darcs]: http://darcs.net
 [mercurial]: http://mercurial.selenic.com/
