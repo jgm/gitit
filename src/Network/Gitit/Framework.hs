@@ -24,9 +24,11 @@ module Network.Gitit.Framework (
                                , authenticateUserThat
                                , authenticate
                                , getLoggedInUser
+                               , redirectToLogin
                                -- * Combinators to exclude certain actions
                                , unlessNoEdit
                                , unlessNoDelete
+                               , unlessPrivatePage
                                -- * Guards for routing
                                , guardCommand
                                , guardPath
@@ -98,6 +100,13 @@ authenticateUserThat predicate level handler = do
                             then handler
                             else error "Not authorized."
      else handler
+
+-- | Redirects a request to login view, used as a failure handler.
+redirectToLogin :: Handler
+redirectToLogin = do
+  rq <- askRq
+  let url = rqUri rq ++ rqQuery rq
+  tempRedirect ("/_login?" ++ urlEncodeVars [("destination", url)]) $ toResponse ()
 
 -- | Run the handler after setting @REMOTE_USER@ with the user from
 -- the session.
