@@ -209,7 +209,7 @@ unlessPrivatePage responder fallback =
     let patterns = privatePages cfg
     let pageMatchingPatterns = ((flip G.match page) . G.compile)
     if ((not . null) patterns) && (any pageMatchingPatterns patterns)
-      then withMessages ("Page is private, you must log in to view." : pMessages params) fallback
+      then fallback
       else responder
 
 -- | Returns the current path (subtracting initial commands like @\/_edit@).
