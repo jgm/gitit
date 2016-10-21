@@ -72,6 +72,7 @@ import Skylighting (syntaxesByFilename, defaultSyntaxMap)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
 import System.FilePath ((<.>), takeExtension, takeFileName)
+import qualified System.FilePath.Glob as G
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Network.URI (isUnescapedInURI)
@@ -205,27 +206,11 @@ unlessPrivatePage responder fallback =
   withData $ \(params :: Params) -> do
     cfg <- getConfig
     page <- getPage
-    let pps = privatePages cfg
-    if pageIsPrivate page pps
+    let patterns = privatePages cfg
+    let pageMatchingPatterns = ((flip G.match page) . G.compile)
+    if ((not . null) patterns) && (any pageMatchingPatterns patterns)
       then withMessages ("Page is private, you must log in to view." : pMessages params) fallback
       else responder
-
-      where pageIsPrivate :: String -> [String] -> Bool
-            pageIsPrivate _ [] = False
-            pageIsPrivate p ps | wildcardExists ps = p `elem` ps || pageMatchWildcards p (filter (elem '*') ps)
-                               | otherwise = p `elem` ps
-
-            wildcardExists :: [String] -> Bool
-            wildcardExists = foldr (\s b -> ('*' `elem` s) || b) False
-
-            pageMatchWildcards :: String -> [String] -> Bool
-            pageMatchWildcards p ps = any (isInfixOfAll p) (patterns ps)
-
-            patterns :: [String] -> [[String]]
-            patterns = map (filter (not . null) . splitOn '*')
-
-            isInfixOfAll :: String -> [String] -> Bool
-            isInfixOfAll p = foldr (\x -> (&&) (x `isInfixOf` p)) True
 
 -- | Returns the current path (subtracting initial commands like @\/_edit@).
 getPath :: ServerMonad m => m String
