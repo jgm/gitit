@@ -1,3 +1,7 @@
+Version 0.12.2 released 09 Nov 2016
+
+  * Allow pandoc 1.18, tagsoup 0.14, aeson, 1.x.
+
 Version 0.12.1.1 released 22 Mar 2016
 
   * Allow pandoc 1.17 (Phil Ruffwind).
