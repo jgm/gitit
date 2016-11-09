@@ -139,8 +139,8 @@ Library
                      directory,
                      mtl,
                      old-time,
-                     pandoc >= 1.12.4 && < 1.18,
-                     pandoc-types >= 1.12.3 && < 1.17,
+                     pandoc >= 1.12.4 && < 1.19,
+                     pandoc-types >= 1.12.3 && < 1.18,
                      highlighting-kate >= 0.5.0.1 && < 0.7,
                      bytestring,
                      text,
@@ -168,9 +168,9 @@ Library
                      uri >= 0.1 && < 0.2,
                      split,
                      hoauth2 >= 0.4.2 && < 0.6,
-                     http-conduit >= 2.1.4 && < 2.2,
-                     http-client-tls >= 0.2.2 && < 0.3,
-                     aeson >= 0.7 && < 0.12,
+                     http-conduit >= 2.1.4 && < 2.3,
+                     http-client-tls >= 0.2.2 && < 0.4,
+                     aeson >= 0.7 && < 1.1,
                      uuid >= 1.3 && < 1.4
   if impl(ghc >= 6.10)
     build-depends:   base >= 4, syb
