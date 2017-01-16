@@ -8,7 +8,8 @@
 
 module Subst (plugin) where
 
-import "MonadCatchIO-mtl" Control.Monad.CatchIO (try)
+--import "MonadCatchIO-mtl" Control.Monad.CatchIO (try)
+import Control.Monad.Catch (try)
 import Data.FileStore (FileStoreError, retrieve)
 import Text.Pandoc (def, readMarkdown)
 import Network.Gitit.ContentTransformer (inlinesToString)
@@ -19,7 +20,7 @@ plugin :: Plugin
 plugin = mkPageTransformM substituteIntoBlock
 
 substituteIntoBlock :: [Block] -> PluginM [Block]
-substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) =
+substituteIntoBlock ((Para [Link attr ref ("!subst", _)]):xs) =
      do let target = inlinesToString ref
         cfg <- askConfig
         let fs = filestoreFromConfig cfg
@@ -27,9 +28,16 @@ substituteIntoBlock ((Para [Link ref ("!subst", _)]):xs) =
         case article :: Either FileStoreError String of
           Left  _    -> let txt = Str ("[" ++ target ++ "](!subst)")
                             alt = "'" ++ target ++ "' doesn't exist. Click here to create it."
-                            lnk = Para [Link [txt] (target,alt)]
+                            lnk = Para [Link attr [txt] (target,alt)]
                         in  (lnk :) `fmap` substituteIntoBlock xs
-          Right a    -> let (Pandoc _ content) = readMarkdown def a
-                        in  (content ++) `fmap` substituteIntoBlock xs
+          -- Right a    -> let (Pandoc _ content) = readMarkdown def a
+          --               in  (content ++) `fmap` substituteIntoBlock xs
+
+          Right a    -> case readMarkdown def a of
+              Left err -> 
+                let content = [Para $ [Str "Error parsing markdown in subst?"]] in
+                (content ++) `fmap` substituteIntoBlock xs
+              Right (Pandoc _ content) -> (content ++) `fmap` substituteIntoBlock xs
+
 substituteIntoBlock (x:xs) = (x:) `fmap` substituteIntoBlock xs
 substituteIntoBlock [] = return []
