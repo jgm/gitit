@@ -326,13 +326,25 @@ setting of `math` in the configuration file:
 Restricting access
 ------------------
 
-If you want to limit account creation on your wiki, the easiest way to do this
-is to provide an `access-question` in your configuration file. (See the commented
-default configuration file.)  Nobody will be able to create an account without
-knowing the answer to the access question.
+If you want to limit account creation or anonymous edits on your wiki, the
+easiest way to do this is to provide an `access-question` in your configuration
+file (see the commented default configuration file).  Nobody will be able to
+create an account or make an anonymous edit without knowing the answer to the
+access question.  Note that anonymous edits are only enabled when
+`require-authentication: none`, otherwise `access-question` only manifests itself
+in account creation.
 
 Another approach is to use HTTP authentication. (See the config file comments on
 `authentication-method`.)
+
+If you only want to restrict bots from creating accounts or editing pages
+anonymously, you can use one or more of the following methods:
+
+1.  Use the reCAPTCHA service to stop bots from creating accounts (see
+    `use-recaptcha` configuraiton variable).  Currently, `use-recaptcha` does not
+    restrict anonymous edits.
+2.  Use the `access-question` configuration variables to frame an access question
+    that only humans can answer.
 
 Authentication through github
 -----------------------------
