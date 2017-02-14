@@ -1,3 +1,11 @@
+Version 0.12.2.1 released 14 Feb 2017
+
+  * Bump version bounds for time, pandoc, blaze-html, aeson.
+  * Added MTable plugin (Simon Heath).
+    Adds simple but easy-to-use variable-width table syntax.
+  * Fixed Subst plugin (Simon Heath, #548).
+  * Fixed Dot plugin (Simon Heath, #568).
+
 Version 0.12.2 released 09 Nov 2016
 
   * Allow pandoc 1.18, tagsoup 0.14, aeson, 1.x.
