@@ -48,7 +48,7 @@ import Text.Highlighting.Kate (styleToCss, pygments)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
-defaultRespOptions = def { writerStandalone = True, writerHighlight = True }
+defaultRespOptions = def { writerHighlight = True }
 
 respond :: String
         -> String
@@ -73,7 +73,13 @@ respondX templ mimetype ext fn opts page doc = do
   doc' <- if ext `elem` ["odt","pdf","beamer","epub","docx","rtf"]
              then fixURLs page doc
              else return doc
-  respond mimetype ext (fn opts{writerTemplate = template
+  respond mimetype ext (fn opts{
+#if MIN_VERSION_pandoc(1,19,0)
+                                writerTemplate = Just template
+#else
+                                writerTemplate = template
+                               ,writerStandalone = True
+#endif
                                ,writerUserDataDir = pandocUserData cfg})
           page doc'
 
@@ -102,8 +108,7 @@ respondSlides templ slideVariant page doc = do
     -- needed for the slides.)  We then pass the body into the
     -- slide template using the 'body' variable.
     Pandoc meta blocks <- fixURLs page doc
-    let body' = writeHtmlString opts'{writerStandalone = False}
-                   (Pandoc meta blocks) -- just body
+    let body' = writeHtmlString opts' (Pandoc meta blocks) -- just body
     let body'' = T.unpack
                $ (if xssSanitize cfg then sanitizeBalance else id)
                $ T.pack body'
@@ -128,7 +133,12 @@ respondSlides templ slideVariant page doc = do
     let opts'' = opts'{
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
+#if MIN_VERSION_pandoc(1,19,0)
+               ,writerTemplate = Just template
+#else
                ,writerTemplate = template
+               ,writerStandalone = True
+#endif
                ,writerUserDataDir = pandocUserData cfg
                }
     let h = writeHtmlString opts'' (Pandoc meta [])
@@ -239,7 +249,13 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
               template  <- liftIO $ either throwIO return template'
               let toc = tableOfContents cfg
               res <- liftIO $ makePDF "pdflatex" writeLaTeX
-                         defaultRespOptions{writerTemplate = template
+                         defaultRespOptions{
+#if MIN_VERSION_pandoc(1,19,0)
+                                            writerTemplate = Just template
+#else
+                                            writerTemplate = template
+                                           ,writerStandalone = True
+#endif
                                            ,writerSourceURL = Just $ baseUrl cfg
                                            ,writerTableOfContents = toc
                                            ,writerBeamer = useBeamer} pndc

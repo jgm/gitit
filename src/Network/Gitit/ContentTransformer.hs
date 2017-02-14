@@ -529,11 +529,16 @@ pandocToHtml pandocContents = do
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
+  let tpl = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
   return $ primHtml $ T.unpack .
            (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
            writeHtmlString def{
+#if MIN_VERSION_pandoc(1,19,0)
+                        writerTemplate = Just tpl
+#else
                         writerStandalone = True
-                      , writerTemplate = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
+                      , writerTemplate = tpl
+#endif
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML Nothing
