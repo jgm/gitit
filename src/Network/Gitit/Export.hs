@@ -44,7 +44,7 @@ import Text.HTML.SanitizeXSS
 import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
 import qualified Data.Text as T
 import Data.List (isPrefixOf)
-import Text.Highlighting.Kate (styleToCss, pygments)
+import Skylighting (styleToCss, pygments)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions

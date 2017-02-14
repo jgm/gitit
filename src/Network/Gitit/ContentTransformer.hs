@@ -89,7 +89,7 @@ import Network.URL (encString)
 import System.FilePath
 import qualified Text.Pandoc.Builder as B
 import Text.HTML.SanitizeXSS (sanitizeBalance)
-import Text.Highlighting.Kate
+import Skylighting hiding (Context)
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict (stringToHtmlString)
@@ -563,11 +563,15 @@ highlightSource Nothing = mzero
 highlightSource (Just source) = do
   file <- getFileName
   let formatOpts = defaultFormatOpts { numberLines = True, lineAnchors = True }
-  case languagesByExtension $ takeExtension file of
+  case syntaxesByFilename defaultSyntaxMap file of
         []    -> mzero
-        (l:_) -> return $ primHtml $ Blaze.renderHtml
-                        $ formatHtmlBlock formatOpts
-                        $! highlightAs l $ filter (/='\r') source
+        (l:_) -> case tokenize TokenizerConfig{
+                              syntaxMap = defaultSyntaxMap
+                            , traceOutput = False} l
+                        $ T.pack $ filter (/='\r') source of
+                    Left e ->  fail (show e)
+                    Right r -> return $ primHtml $ Blaze.renderHtml
+                                      $ formatHtmlBlock formatOpts r
 
 --
 -- Plugin combinators

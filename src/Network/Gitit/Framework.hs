@@ -65,10 +65,10 @@ import Control.Monad (mzero, liftM, unless)
 import qualified Data.Map as M
 import qualified Data.ByteString.UTF8 as UTF8
 import qualified Data.ByteString.Lazy.UTF8 as LazyUTF8
+import Skylighting (syntaxesByFilename, defaultSyntaxMap)
 import Data.Maybe (fromJust, fromMaybe)
 import Data.List (intercalate, isPrefixOf, isInfixOf)
 import System.FilePath ((<.>), takeExtension, takeFileName)
-import Text.Highlighting.Kate
 import Text.ParserCombinators.Parsec
 import Network.URL (decString, encString)
 import Network.URI (isUnescapedInURI)
@@ -277,7 +277,7 @@ isNotDiscussPageFile _ = return True
 
 isSourceCode :: String -> Bool
 isSourceCode path' =
-  let langs = languagesByFilename $ takeFileName path'
+  let langs = syntaxesByFilename defaultSyntaxMap $ takeFileName path'
       ext = takeExtension path'
   in  not (null langs || ext == ".svg" || ext == ".eps")
                          -- allow svg or eps to be served as image
