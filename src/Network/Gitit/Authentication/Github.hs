@@ -10,6 +10,8 @@ module Network.Gitit.Authentication.Github ( loginGithubUser
 import Network.Gitit.Types
 import Network.Gitit.Server
 import Network.Gitit.State
+import Network.Gitit.Util
+import Network.Gitit.Framework
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
 import Network.HTTP.Conduit
@@ -27,10 +29,12 @@ import Data.UUID.V4 (nextRandom)
 import qualified Control.Exception as E
 import Prelude
 
-loginGithubUser :: OAuth2 -> Handler
-loginGithubUser githubKey = do
+loginGithubUser :: OAuth2 -> Params -> Handler
+loginGithubUser githubKey params = do
   state <- liftIO $ fmap toString nextRandom
-  key <- newSession (sessionDataGithubState state)
+  base' <- getWikiBase
+  let destination = pDestination params `orIfNull` (base' ++ "/")
+  key <- newSession $ sessionDataGithubStateUrl state destination
   cfg <- getConfig
   addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
   let usingOrg = isJust $ org $ githubAuth cfg

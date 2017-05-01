@@ -31,10 +31,13 @@ module Network.Gitit.Types (
                            , SessionKey
                            -- we do not export SessionData constructors, in case we need to extend  SessionData with other data in the future
                            , SessionData
+                           , SessionGithubData
                            , sessionData
-                           , sessionDataGithubState
+                           , sessionGithubData
+                           , sessionDataGithubStateUrl
                            , sessionUser
                            , sessionGithubState
+                           , sessionGithubDestination
                            , User(..)
                            , Sessions(..)
                            , Password(..)
@@ -228,14 +231,19 @@ type SessionKey = Integer
 
 data SessionData = SessionData {
   sessionUser :: Maybe String,
-  sessionGithubState :: Maybe String
+  sessionGithubData :: Maybe SessionGithubData
 } deriving (Read,Show,Eq)
+
+data SessionGithubData = SessionGithubData {
+  sessionGithubState :: String,
+  sessionGithubDestination :: String
+} deriving (Read, Show, Eq)
 
 sessionData :: String -> SessionData
 sessionData user = SessionData (Just user) Nothing
 
-sessionDataGithubState  :: String -> SessionData
-sessionDataGithubState  githubState = SessionData Nothing (Just githubState)
+sessionDataGithubStateUrl :: String -> String -> SessionData
+sessionDataGithubStateUrl githubState destination = SessionData Nothing (Just $ SessionGithubData githubState destination)
 
 data Sessions a = Sessions {unsession::M.Map SessionKey a}
   deriving (Read,Show,Eq)
