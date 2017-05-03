@@ -446,13 +446,12 @@ oauthGithubCallback ghConfig githubCallbackPars =
   withData $ \(sk :: Maybe SessionKey) ->
       do
         mbSd <- maybe (return Nothing) getSession sk
-        mbGititState <- case mbSd of
-                          Nothing    -> return Nothing
-                          Just sd    -> return $ sessionGithubState sd
-        let gititState = fromMaybe (error "No Github state found in session (is it the same domain?)") mbGititState
+        let mbGititState = mbSd >>= sessionGithubData
+            githubData = fromMaybe (error "No Github state found in session (is it the same domain?)") mbGititState
+            gititState = sessionGithubState githubData
+            destination = sessionGithubDestination githubData
         mUser <- getGithubUser ghConfig githubCallbackPars gititState
         base' <- getWikiBase
-        let destination = base' ++ "/"
         case mUser of
           Right user -> do
                      let userEmail = uEmail user
@@ -475,7 +474,7 @@ githubAuthHandlers :: GithubConfig
                    -> [Handler]
 githubAuthHandlers ghConfig =
   [ dir "_logout" $ withData logoutUser
-  , dir "_login" $ loginGithubUser $ oAuth2 ghConfig
+  , dir "_login" $ withData $ loginGithubUser $ oAuth2 ghConfig
   , dir "_loginFailure" $ githubLoginFailure
   , dir "_githubCallback" $ withData $ oauthGithubCallback ghConfig
   , dir "_user" currentUser ]
