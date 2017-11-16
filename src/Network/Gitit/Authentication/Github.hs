@@ -14,9 +14,10 @@ import Network.Gitit.Util
 import Network.Gitit.Framework
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
+import qualified URI.ByteString as URI
 import Network.HTTP.Conduit
-import Network.HTTP.Client.TLS
 import Network.OAuth.OAuth2
+import Network.OAuth.OAuth2.TokenRequest as OA
 import Control.Monad (liftM, mplus, mzero)
 import Data.Maybe
 import Data.Aeson
@@ -39,8 +40,8 @@ loginGithubUser githubKey params = do
   addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
   let usingOrg = isJust $ org $ githubAuth cfg
   let scopes = "user:email" ++ if usingOrg then ",read:org" else ""
-  let url = authorizationUrl githubKey `appendQueryParam` [("state", BS.pack state), ("scope", BS.pack scopes)]
-  seeOther (BS.unpack url) $ toResponse ("redirecting to github" :: String)
+  let url = appendQueryParams [("state", BS.pack state), ("scope", BS.pack scopes)] $ authorizationUrl githubKey
+  seeOther (BS.unpack (URI.serializeURIRef' url)) $ toResponse ("redirecting to github" :: String)
 
 data GithubLoginError = GithubLoginError { ghUserMessage :: String
                                          , ghDetails :: Maybe String
@@ -61,13 +62,13 @@ getGithubUser ghConfig githubCallbackPars githubState =
                 let (Just code) = rCode githubCallbackPars
                 ifSuccess
                    "No access token found yet"
-                   (fetchAccessToken mgr (oAuth2 ghConfig) (sToBS code))
+                   (fetchAccessToken mgr (oAuth2 ghConfig) (ExchangeToken $ pack code))
                    (\at -> ifSuccess
                            "User Authentication failed"
-                           (userInfo mgr at)
+                           (userInfo mgr (accessToken at))
                            (\githubUser -> ifSuccess
                             ("No email for user " ++ unpack (gLogin githubUser) ++ " returned by Github")
-                            (mailInfo mgr at)
+                            (mailInfo mgr (accessToken at))
                             (\githubUserMail -> do
                                        let gitLogin = gLogin githubUser
                                        user <- mkUser (unpack gitLogin)
@@ -78,7 +79,7 @@ getGithubUser ghConfig githubCallbackPars githubState =
                                              Nothing -> return $ Right user
                                              Just githuborg -> ifSuccess
                                                       ("Membership check failed: the user " ++ unpack gitLogin ++  " is required to be a member of the organization "  ++ unpack githuborg ++ ".")
-                                                      (orgInfo gitLogin githuborg mgr at)
+                                                      (orgInfo gitLogin githuborg mgr (accessToken at))
                                                       (\_ -> return $ Right user))))
               else
                 return $ Left $
@@ -101,16 +102,25 @@ instance FromData GithubCallbackPars where
          vState <- liftM Just (look "state") `mplus` return Nothing
          return GithubCallbackPars {rCode = vCode, rState = vState}
 
-userInfo :: Manager -> AccessToken -> IO (OAuth2Result GithubUser)
-userInfo mgr token = authGetJSON mgr token "https://api.github.com/user"
+userInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors GithubUser)
+userInfo mgr token = authGetJSON mgr token $ githubUri "/user"
 
-mailInfo :: Manager -> AccessToken -> IO (OAuth2Result [GithubUserMail])
-mailInfo mgr token = authGetJSON mgr token "https://api.github.com/user/emails"
+mailInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors [GithubUserMail])
+mailInfo mgr token = authGetJSON mgr token $ githubUri "/user/emails"
 
-orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (OAuth2Result BSL.ByteString)
+orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (OAuth2Result OA.Errors BSL.ByteString)
 orgInfo gitLogin githubOrg mgr token = do
-  let url  = "https://api.github.com/orgs/" `BS.append` encodeUtf8 githubOrg `BS.append` "/members/" `BS.append` encodeUtf8 gitLogin
+  let url = githubUri $ "/orgs/" `BS.append` encodeUtf8 githubOrg `BS.append` "/members/" `BS.append` encodeUtf8 gitLogin
   authGetBS mgr token url
+
+type UriPath = BS.ByteString
+
+githubUri :: UriPath -> URI.URI
+githubUri p = URI.URI { URI.uriScheme    = URI.Scheme "https"
+                      , URI.uriAuthority = Just $ URI.Authority Nothing (URI.Host "api.github.com") Nothing
+                      , URI.uriPath      = p
+                      , URI.uriQuery     = URI.Query []
+                      , URI.uriFragment  = Nothing }
 
 data GithubUser = GithubUser { gLogin :: Text
                              } deriving (Show, Eq)
@@ -129,6 +139,3 @@ instance FromJSON GithubUserMail where
                            <$> o .: "email"
                            <*> o .: "primary"
     parseJSON _ = mzero
-
-sToBS :: String -> BS.ByteString
-sToBS = encodeUtf8 . pack

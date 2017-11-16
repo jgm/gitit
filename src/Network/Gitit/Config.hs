@@ -40,7 +40,8 @@ import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import qualified Control.Exception as E
-import Network.OAuth.OAuth2
+import Network.OAuth.OAuth2 (OAuth2(..), oauthCallback, oauthOAuthorizeEndpoint, oauthClientId, oauthClientSecret)
+import URI.ByteString (parseURI, laxURIParserOptions)
 import qualified Data.ByteString.Char8 as BS
 import Network.Gitit.Compat.Except
 import Control.Monad
@@ -253,21 +254,28 @@ extractGithubConfig ::  (Functor m, MonadError CPError m) => ConfigParser
 extractGithubConfig cp = do
       cfOauthClientId <- getGithubProp "oauthClientId"
       cfOauthClientSecret <- getGithubProp "oauthClientSecret"
-      cfOauthCallback <- getGithubProp "oauthCallback"
-      cfOauthOAuthorizeEndpoint  <- getGithubProp "oauthOAuthorizeEndpoint"
-      cfOauthAccessTokenEndpoint <- getGithubProp "oauthAccessTokenEndpoint"
+      cfOauthCallback <- getUrlProp "oauthCallback"
+      cfOauthOAuthorizeEndpoint  <- getUrlProp "oauthOAuthorizeEndpoint"
+      cfOauthAccessTokenEndpoint <- getUrlProp "oauthAccessTokenEndpoint"
       cfOrg <- if hasGithubProp "github-org"
                  then fmap Just (getGithubProp "github-org")
                  else return Nothing
-      let cfgOAuth2 = OAuth2 { oauthClientId =  BS.pack cfOauthClientId
-                          , oauthClientSecret =  BS.pack cfOauthClientSecret
-                          , oauthCallback = Just $ BS.pack cfOauthCallback
-                          , oauthOAuthorizeEndpoint = BS.pack cfOauthOAuthorizeEndpoint
-                          , oauthAccessTokenEndpoint = BS.pack cfOauthAccessTokenEndpoint
+      let cfgOAuth2 = OAuth2 { oauthClientId = pack cfOauthClientId
+                          , oauthClientSecret = pack cfOauthClientSecret
+                          , oauthCallback = Just cfOauthCallback
+                          , oauthOAuthorizeEndpoint = cfOauthOAuthorizeEndpoint
+                          , oauthAccessTokenEndpoint = cfOauthAccessTokenEndpoint
                           }
       return $ githubConfig cfgOAuth2 $ fmap pack cfOrg
   where getGithubProp = get cp "Github"
         hasGithubProp = has_option cp "Github"
+        getUrlProp prop = getGithubProp prop >>= \s ->
+                            case parseURI laxURIParserOptions (BS.pack s) of
+                              Left e    -> throwError (ParseError $ "couldn't parse url " ++ s
+                                                                    ++ " from (Github/" ++ prop ++ "): "
+                                                                    ++ (show e)
+                                                      , "getUrlProp")
+                              Right uri -> return uri
 
 fromQuotedMultiline :: String -> String
 fromQuotedMultiline = unlines . map doline . lines . dropWhile (`elem` " \t\n")
