@@ -96,7 +96,7 @@ main = do
   sock <- socket AF_INET Stream defaultProtocol
   setSocketOption sock ReuseAddr 1
   device <- inet_addr (address conf)
-  bindSocket sock (SockAddrInet (toEnum (portNumber conf)) device)
+  bind sock (SockAddrInet (toEnum (portNumber conf)) device)
   listen sock 10
 
   -- start the server

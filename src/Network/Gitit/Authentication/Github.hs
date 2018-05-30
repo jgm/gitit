@@ -51,8 +51,8 @@ getGithubUser :: GithubConfig            -- ^ Oauth2 configuration (client secre
               -> GithubCallbackPars      -- ^ Authentication code gained after authorization
               -> String                  -- ^ Github state, we expect the state we sent in loginGithubUser
               -> GititServerPart (Either GithubLoginError User) -- ^ user email and name (password 'none')
-getGithubUser ghConfig githubCallbackPars githubState =
-       withManagerSettings tlsManagerSettings getUserInternal
+getGithubUser ghConfig githubCallbackPars githubState = liftIO $
+  newManager tlsManagerSettings >>= getUserInternal
     where
     getUserInternal mgr =
         liftIO $ do

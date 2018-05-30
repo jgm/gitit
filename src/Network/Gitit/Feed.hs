@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-
 Copyright (C) 2009 Gwern Branwen <gwern0@gmail.com> and
 John MacFarlane <jgm@berkeley.edu>
@@ -21,6 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import Data.Time (UTCTime, formatTime, getCurrentTime, addUTCTime)
 #if MIN_VERSION_time(1,5,0)
 import Data.Time (defaultTimeLocale)
@@ -40,7 +43,9 @@ import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
          Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
          Person(personName), EntryContent(..), TextContent(TextString))
 import Text.Atom.Feed.Export (xmlFeed)
-import Text.XML.Light (ppTopElement, showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
+import Text.XML.Light as XML (showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
+import Text.XML as Text.XML (renderText, Document(..), Element(..),
+                             Prologue(..), def, fromXMLElement)
 import Data.Version (showVersion)
 import Paths_gitit (version)
 
@@ -52,14 +57,20 @@ data FeedConfig = FeedConfig {
 
 gititGenerator :: Generator
 gititGenerator = Generator {genURI = Just "http://github.com/jgm/gitit"
-                                   , genVersion = Just (showVersion version)
+                                   , genVersion = Just (T.pack (showVersion version))
                                    , genText = "gitit"}
 
 filestoreToXmlFeed :: FeedConfig -> FileStore -> Maybe FilePath -> IO String
 filestoreToXmlFeed cfg f = fmap xmlFeedToString . generateFeed cfg gititGenerator f
 
 xmlFeedToString :: Feed -> String
-xmlFeedToString = ppTopElement . xmlFeed
+xmlFeedToString elt = TL.unpack . renderText def $
+  Document{ documentPrologue = Prologue{ prologueBefore = []
+                                       , prologueDoctype = Nothing
+                                       , prologueAfter = [] }
+          , documentRoot = either (const $ Text.XML.Element "feed" mempty []) id
+                            $ fromXMLElement $ xmlFeed elt
+          , documentEpilogue = [] }
 
 generateFeed :: FeedConfig -> Generator -> FileStore -> Maybe FilePath -> IO Feed
 generateFeed cfg generator fs mbPath = do
@@ -69,7 +80,7 @@ generateFeed cfg generator fs mbPath = do
   let home = fcBaseUrl cfg ++ "/"
   -- TODO: 'nub . sort' `persons` - but no Eq or Ord instances!
       persons = map authorToPerson $ nub $ sortBy (comparing authorName) $ map revAuthor revs
-      basefeed = generateEmptyfeed generator (fcTitle cfg) home mbPath persons (formatFeedTime now)
+      basefeed = generateEmptyfeed generator (fcTitle cfg) home mbPath persons (T.pack (formatFeedTime now))
       revisions = map (revisionToEntry home) (zip revs diffs)
   return basefeed {feedEntries = revisions}
 
@@ -110,21 +121,23 @@ generateEmptyfeed :: Generator -> String ->String ->Maybe String -> [Person] -> 
 generateEmptyfeed generator title home mbPath authors now =
   baseNull {feedAuthors = authors,
             feedGenerator = Just generator,
-            feedLinks = [ (nullLink $ home ++ "_feed/" ++ escape (fromMaybe "" mbPath))
+            feedLinks = [ (nullLink $ T.pack $
+                            home ++ "_feed/" ++ escape (fromMaybe "" mbPath))
                            {linkRel = Just (Left "self")}]
             }
-    where baseNull = nullFeed home (TextString title) now
+    where baseNull = nullFeed (T.pack home) (TextString (T.pack title)) now
 
 revisionToEntry :: String -> (Revision, [(FilePath, [Diff [String]])]) -> Entry
 revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
                                revAuthor = ra, revDescription = rd,
                                revChanges = rv}, diffs) =
-  baseEntry{ entryContent = Just $ HTMLContent $ concat $ map showContent $ map diffFile diffs
+  baseEntry{ entryContent = Just $ HTMLContent $ T.pack $ concat $ map showContent $ map diffFile diffs
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
-   where baseEntry = nullEntry url title (formatFeedTime rdt)
+   where baseEntry = nullEntry (T.pack url) title
+                          (T.pack $ formatFeedTime rdt)
          url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
-         ln = (nullLink url) {linkRel = Just (Left "alternate")}
-         title = TextString $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
+         ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
+         title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
 
 diffFile :: (FilePath, [Diff [String]]) -> Content
 diffFile (fp, d) =
@@ -149,7 +162,7 @@ enText content = Text blank_cdata{cdData=content}
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person
-authorToPerson ra = nullPerson {personName = authorName ra}
+authorToPerson ra = nullPerson {personName = T.pack $ authorName ra}
 
 -- TODO: replace with Network.URI version of shortcut if it ever is added
 escape :: String -> String
