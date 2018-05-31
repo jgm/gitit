@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -74,12 +73,7 @@ respondX templ mimetype ext fn opts page doc = do
              then fixURLs page doc
              else return doc
   respond mimetype ext (fn opts{
-#if MIN_VERSION_pandoc(1,19,0)
                                 writerTemplate = Just template
-#else
-                                writerTemplate = template
-                               ,writerStandalone = True
-#endif
                                ,writerUserDataDir = pandocUserData cfg})
           page doc'
 
@@ -133,20 +127,11 @@ respondSlides templ slideVariant page doc = do
     let opts'' = opts'{
                 writerVariables =
                   ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
-#if MIN_VERSION_pandoc(1,19,0)
                ,writerTemplate = Just template
-#else
-               ,writerTemplate = template
-               ,writerStandalone = True
-#endif
                ,writerUserDataDir = pandocUserData cfg
                }
     let h = writeHtmlString opts'' (Pandoc meta [])
-#if MIN_VERSION_pandoc(1,13,0)
     h' <- liftIO $ makeSelfContained opts'' h
-#else
-    h' <- liftIO $ makeSelfContained (pandocUserData cfg) h
-#endif
     ok . setContentType "text/html;charset=UTF-8" .
       -- (setFilename (page ++ ".html")) .
       toResponseBS B.empty $ UTF8.fromStringLazy h'
@@ -172,11 +157,9 @@ respondMarkdown :: String -> Pandoc -> Handler
 respondMarkdown = respondS "markdown" "text/plain; charset=utf-8" ""
   writeMarkdown defaultRespOptions{writerReferenceLinks = True}
 
-#if MIN_VERSION_pandoc(1,14,0)
 respondCommonMark :: String -> Pandoc -> Handler
 respondCommonMark = respondS "commonmark" "text/plain; charset=utf-8" ""
   writeCommonMark defaultRespOptions{writerReferenceLinks = True}
-#endif
 
 respondPlain :: String -> Pandoc -> Handler
 respondPlain = respondS "plain" "text/plain; charset=utf-8" ""
@@ -198,15 +181,10 @@ respondOrg :: String -> Pandoc -> Handler
 respondOrg = respondS "org" "text/plain; charset=utf-8" ""
   writeOrg defaultRespOptions
 
-#if MIN_VERSION_pandoc(1,16,0)
 respondICML :: String -> Pandoc -> Handler
 respondICML = respondX "icml" "application/xml; charset=utf-8" ""
               (\o d -> fmap UTF8.fromStringLazy $ writeICML o d)
                          defaultRespOptions
-#else
-respondICML = respondS "icml" "application/xml; charset=utf-8" ""
-              writeICML defaultRespOptions
-#endif
 
 respondTextile :: String -> Pandoc -> Handler
 respondTextile = respondS "textile" "text/plain; charset=utf-8" ""
@@ -250,12 +228,7 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
               let toc = tableOfContents cfg
               res <- liftIO $ makePDF "pdflatex" writeLaTeX
                          defaultRespOptions{
-#if MIN_VERSION_pandoc(1,19,0)
                                             writerTemplate = Just template
-#else
-                                            writerTemplate = template
-                                           ,writerStandalone = True
-#endif
                                            ,writerSourceURL = Just $ baseUrl cfg
                                            ,writerTableOfContents = toc
                                            ,writerBeamer = useBeamer} pndc
@@ -286,15 +259,9 @@ fixURLs page pndc = do
     let static = staticDir cfg
     let repoPath = repositoryPath cfg
 
-#if MIN_VERSION_pandoc(1,16,0)
     let go (Image attr ils (url, title)) = do
            fixedURL <- fixURL url
            return $ Image attr ils (fixedURL, title)
-#else
-    let go (Image ils (url, title)) = do
-           fixedURL <- fixURL url
-           return $ Image ils (fixedURL, title)
-#endif
         go x                        = return x
 
         fixURL ('/':url) = resolve url
@@ -319,9 +286,7 @@ exportFormats cfg = if pdfExport cfg
                 , ("Texinfo",   respondTexinfo)
                 , ("reST",      respondRST)
                 , ("Markdown",  respondMarkdown)
-#if MIN_VERSION_pandoc(1,14,0)
                 , ("CommonMark",respondCommonMark)
-#endif
                 , ("Plain text",respondPlain)
                 , ("MediaWiki", respondMediaWiki)
                 , ("Org-mode",  respondOrg)
