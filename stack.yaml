@@ -5,8 +5,9 @@ flags:
 packages:
 - '.'
 extra-deps:
-- filestore-0.6.3.1
+- filestore-0.6.3.3
 - recaptcha-0.1.0.3
 - uri-0.1.6.4
-- feed-1.0.0.0
-resolver: lts-9.13
+- pandoc-2.2.1
+- pandoc-types-1.17.4.2
+resolver: lts-10.10
