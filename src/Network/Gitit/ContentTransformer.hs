@@ -700,10 +700,10 @@ updateLayout f = do
 readerFor :: PageType -> Bool -> String -> Pandoc
 readerFor pt lhs =
   let defPS = def{ readerSmart = True
-                 , readerExtensions = if lhs
+                 , readerExtensions = (if lhs
                                          then Set.insert Ext_literate_haskell
-                                              $ readerExtensions def
-                                         else readerExtensions def
+                                            . Set.insert Ext_emoji
+                                         else id) (readerExtensions def)
                  , readerParseRaw = True
                  }
   in handleError . case pt of
