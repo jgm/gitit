@@ -685,7 +685,8 @@ updateLayout f = do
 
 readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
 readerFor pt lhs =
-  let defPS = def{ readerExtensions = extensionsFromList [Ext_smart, Ext_raw_html, Ext_emoji]
+  let defPS = def{ readerExtensions = extensionsFromList [Ext_smart, Ext_raw_html,
+                                                          Ext_emoji]
                                       <> getPageTypeDefaultExtensions pt lhs
                                       <> readerExtensions def }
   in runPure . (case pt of
