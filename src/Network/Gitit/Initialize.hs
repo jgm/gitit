@@ -127,9 +127,7 @@ createDefaultPages conf = do
     let fs = filestoreFromConfig conf
         pt = defaultPageType conf
         toPandoc = handleError . readMarkdown def{ readerSmart = True }
-        defOpts = def{ writerHTMLMathMethod = JsMath
-                              (Just "/js/jsMath/easy/load.js")
-                     , writerExtensions = if showLHSBirdTracks conf
+        defOpts = def{ writerExtensions = if showLHSBirdTracks conf
                                              then Set.insert
                                                   Ext_literate_haskell
                                                   $ writerExtensions def
