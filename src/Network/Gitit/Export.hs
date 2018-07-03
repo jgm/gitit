@@ -89,8 +89,6 @@ respondSlides templ slideVariant page doc = do
     let math = case mathMethod cfg of
                    MathML       -> Pandoc.MathML Nothing
                    WebTeX u     -> Pandoc.WebTeX u
-                   JsMathScript -> Pandoc.JsMath
-                                    (Just $ base' ++ "/js/jsMath/easy/load.js")
                    _            -> Pandoc.PlainMath
     let opts' = defaultRespOptions {
                      writerSlideVariant = slideVariant
