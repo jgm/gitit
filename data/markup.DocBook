@@ -112,7 +112,7 @@
   <td>
   $x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$<footnote>
     <para>
-      If this looks like code, it's because jsMath is not installed on
+      If this looks like code, it's because MathJax is not installed on
       your system. Contact your administrator to request it.
     </para>
   </footnote>

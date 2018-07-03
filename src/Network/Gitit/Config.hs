@@ -167,7 +167,6 @@ extractConfig cp = do
         , defaultPageType      = pt
         , defaultExtension     = cfDefaultExtension
         , mathMethod           = case map toLower cfMathMethod of
-                                      "jsmath"   -> JsMathScript
                                       "mathml"   -> MathML
                                       "mathjax"  -> MathJax cfMathjaxScript
                                       "google"   -> WebTeX "http://chart.apis.google.com/chart?cht=tx&chl="

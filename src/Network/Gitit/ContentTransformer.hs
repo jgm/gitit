@@ -544,8 +544,7 @@ pandocToHtml pandocContents = do
                                  MathML -> Pandoc.MathML Nothing
                                  WebTeX u -> Pandoc.WebTeX u
                                  MathJax u -> Pandoc.MathJax u
-                                 _      -> JsMath (Just $ base' ++
-                                                      "/js/jsMath/easy/load.js")
+                                 RawTeX -> Pandoc.PlainMath
                       , writerTableOfContents = toc
                       , writerHighlight = True
                       , writerExtensions = if bird
@@ -655,7 +654,6 @@ addMathSupport c = do
   conf <- lift getConfig
   updateLayout $ \l ->
     case mathMethod conf of
-         JsMathScript -> addScripts l ["jsMath/easy/load.js"]
          MathML       -> addScripts l ["MathMLinHTML.js"]
          WebTeX _     -> l
          MathJax u    -> addScripts l [u]

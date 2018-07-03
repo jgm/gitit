@@ -245,7 +245,7 @@ Note that a wiki link @[Burgundy]()@ that occurs inside the @Wine@ directory wil
 To link to a directory listing for a subdirectory, use a trailing slash: @[Wine/]()@ will link to a listing of the @Wine@ subdirectory.
 
 
-fn1. If this looks like code, it's because jsMath is not installed on your system. Contact your administrator to request it.
+fn1. If this looks like code, it's because MathJax is not installed on your system. Contact your administrator to request it.
 
 
 fn2. Or is it so simple?

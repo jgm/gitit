@@ -551,7 +551,6 @@ editPage' params = do
                    ]
   let pgScripts' = ["preview.js"]
   let pgScripts'' = case mathMethod cfg of
-       JsMathScript -> "jsMath/easy/load.js" : pgScripts'
        MathML       -> "MathMLinHTML.js" : pgScripts'
        MathJax url  -> url : pgScripts'
        _            -> pgScripts'

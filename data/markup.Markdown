@@ -63,7 +63,7 @@ Here are some examples to get you started:
 </td>
 <td>
 $x = \frac{{ - b \pm \sqrt {b^2 - 4ac} }}{{2a}}$^[If this looks like
-code, it's because jsMath is
+code, it's because MathJax is
 not installed on your system.  Contact your administrator to request it.]
 </td>
 </tr>

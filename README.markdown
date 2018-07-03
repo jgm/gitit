@@ -307,21 +307,15 @@ You can write display math by enclosing it in double dollar signs:
 Gitit can display TeX math in three different ways, depending on the
 setting of `math` in the configuration file:
 
-1.  `mathml` (default): Math will be converted to MathML using
+1.  `mathjax` (default): Math will be rendered using the [MathJax] javascript.
+
+2.  `mathml`: Math will be converted to MathML using
     [texmath]. This method works with IE+mathplayer, Firefox, and
     Opera, but not Safari.
 
-2.  `jsMath`: Math will be rendered using the [jsMath] javascript.
-    If you want to use this method, download `jsMath` and `jsMath
-    Image Fonts` from the [jsMath download page]. You'll have two
-    `.zip` archives. Unzip them both in the `static/js` directory (a new
-    subdirectory, `jsMath`, will be created).  This works with all
-    browsers, but is slower and not as nice looking as MathML.
-
 3.  `raw`: Math will be rendered as raw LaTeX codes.
 
-[jsMath]: http://www.math.union.edu/~dpvc/jsmath/
-[jsMath download page]: http://sourceforge.net/project/showfiles.php?group_id=172663
+[MathJax]: https://www.mathjax.org/
 
 Restricting access
 ------------------
