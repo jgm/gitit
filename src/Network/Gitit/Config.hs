@@ -46,13 +46,8 @@ import qualified Data.ByteString.Char8 as BS
 import Network.Gitit.Compat.Except
 import Control.Monad
 import Control.Monad.Trans
-
-#if MIN_VERSION_pandoc(1,14,0)
 import Text.Pandoc.Error (handleError)
-#else
-handleError :: Pandoc -> Pandoc
-handleError = id
-#endif
+
 
 forceEither :: Show e => Either e a -> a
 forceEither = either (error . show) id

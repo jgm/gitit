@@ -107,12 +107,8 @@ import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
 import Text.URI (parseURI, URI(..), uriQueryItems)
 
-#if MIN_VERSION_pandoc(1,14,0)
 import Text.Pandoc.Error (handleError)
-#else
-handleError :: Pandoc -> Pandoc
-handleError = id
-#endif
+
 --
 -- ContentTransformer runners
 --
@@ -533,12 +529,7 @@ pandocToHtml pandocContents = do
   return $ primHtml $ T.unpack .
            (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
            writeHtmlString def{
-#if MIN_VERSION_pandoc(1,19,0)
                         writerTemplate = Just tpl
-#else
-                        writerStandalone = True
-                      , writerTemplate = tpl
-#endif
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML Nothing
@@ -708,11 +699,7 @@ readerFor pt lhs =
   in handleError . case pt of
        RST        -> readRST defPS
        Markdown   -> readMarkdown defPS
-#if MIN_VERSION_pandoc(1,14,0)
        CommonMark -> readCommonMark defPS
-#else
-       CommonMark -> error "CommonMark input requires pandoc 1.14"
-#endif
        LaTeX      -> readLaTeX defPS
        HTML       -> readHtml defPS
        Textile    -> readTextile defPS
@@ -727,17 +714,10 @@ wikiLinksTransform pandoc
 
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Config -> Inline -> Inline
-#if MIN_VERSION_pandoc(1,16,0)
 convertWikiLinks cfg (Link attr ref ("", "")) | useAbsoluteUrls cfg =
   Link attr ref ("/" </> baseUrl cfg </> inlinesToURL ref, "Go to wiki page")
 convertWikiLinks _cfg (Link attr ref ("", "")) =
   Link attr ref (inlinesToURL ref, "Go to wiki page")
-#else
-convertWikiLinks cfg (Link ref ("", "")) | useAbsoluteUrls cfg =
-  Link ref ("/" </> baseUrl cfg </> inlinesToURL ref, "Go to wiki page")
-convertWikiLinks _cfg (Link ref ("", "")) =
-  Link ref (inlinesToURL ref, "Go to wiki page")
-#endif
 convertWikiLinks _cfg x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
@@ -760,21 +740,14 @@ inlinesToString = concatMap go
                Cite _ xs               -> concatMap go xs
                Code _ s                -> s
                Space                   -> " "
-#if MIN_VERSION_pandoc(1,16,0)
                SoftBreak               -> " "
-#endif
                LineBreak               -> " "
                Math DisplayMath s      -> "$$" ++ s ++ "$$"
                Math InlineMath s       -> "$" ++ s ++ "$"
                RawInline (Format "tex") s -> s
                RawInline _ _           -> ""
-#if MIN_VERSION_pandoc(1,16,0)
                Link _ xs _             -> concatMap go xs
                Image _ xs _            -> concatMap go xs
-#else
-               Link xs _               -> concatMap go xs
-               Image xs _              -> concatMap go xs
-#endif
                Note _                  -> ""
                Span _ xs               -> concatMap go xs
 
