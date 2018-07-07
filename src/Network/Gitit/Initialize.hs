@@ -42,13 +42,8 @@ import Control.Monad (unless, forM_, liftM)
 import Text.Pandoc
 import System.Log.Logger (logM, Priority(..))
 import qualified Text.StringTemplate as T
-
-#if MIN_VERSION_pandoc(1,14,0)
 import Text.Pandoc.Error (handleError)
-#else
-handleError :: Pandoc -> Pandoc
-handleError = id
-#endif
+
 
 -- | Initialize Gitit State.
 initializeGititState :: Config -> IO ()
@@ -143,11 +138,7 @@ createDefaultPages conf = do
                        Org        -> writeOrg defOpts . toPandoc
                        DocBook    -> writeDocbook defOpts . toPandoc
                        MediaWiki  -> writeMediaWiki defOpts . toPandoc
-#if MIN_VERSION_pandoc(1,14,0)
                        CommonMark -> writeCommonMark defOpts . toPandoc
-#else
-                       CommonMark -> error "CommonMark support requires pandoc >= 1.14"
-#endif
 
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
     welcomecontents <- liftM converter $ readFileUTF8 welcomepath

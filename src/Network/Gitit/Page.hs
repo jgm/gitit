@@ -61,10 +61,7 @@ import qualified Data.ByteString.Char8 as BC
 import System.IO (withFile, Handle, IOMode(..))
 import qualified Control.Exception as E
 import System.IO.Error (isEOFError)
-#if MIN_VERSION_base(4,5,0)
-#else
-import Codec.Binary.UTF8.String (encodeString)
-#endif
+
 
 parseMetadata :: String -> ([(String, String)], String)
 parseMetadata raw =
@@ -164,11 +161,7 @@ pageToString conf page' =
 -- | Read categories from metadata strictly.
 readCategories :: FilePath -> IO [String]
 readCategories f =
-#if MIN_VERSION_base(4,5,0)
   withFile f ReadMode $ \h ->
-#else
-  withFile (encodeString f) ReadMode $ \h ->
-#endif
     E.catch (do fl <- B.hGetLine h
                 if dashline fl
                    then do -- get rest of metadata
