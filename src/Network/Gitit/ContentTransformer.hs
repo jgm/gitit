@@ -75,6 +75,7 @@ import Control.Monad.Reader (ask)
 import Data.Foldable (traverse_)
 import Data.List (stripPrefix)
 import Data.Maybe (isNothing, mapMaybe)
+import Data.Semigroup ((<>))
 import Network.Gitit.Cache (lookupCache, cacheContents)
 import Network.Gitit.Export (exportFormats)
 import Network.Gitit.Framework hiding (uriPath)
@@ -83,6 +84,7 @@ import Network.Gitit.Page (stringToPage)
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
+import Network.Gitit.Util (getPageTypeDefaultExtensions)
 import Network.HTTP (urlDecode)
 import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
@@ -99,15 +101,12 @@ import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 import Text.Blaze.Renderer.String as Blaze ( renderHtml )
 #endif
 import qualified Data.Text as T
-import qualified Data.Set as Set
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Char8 as SC (unpack)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
 import Text.URI (parseURI, URI(..), uriQueryItems)
-
-import Text.Pandoc.Error (handleError)
 
 --
 -- ContentTransformer runners
@@ -358,7 +357,7 @@ pageToPandoc page' = do
   modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
                              , ctxCategories = pageCategories page'
                              , ctxMeta = pageMeta page' }
-  return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
+  either (liftIO . E.throwIO) return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
 -- | Detects if the page is a redirect page and handles accordingly. The exact
 -- behaviour is as follows:
@@ -521,26 +520,24 @@ contentsToPage s = do
 -- | Converts pandoc document to HTML.
 pandocToHtml :: Pandoc -> ContentTransformer Html
 pandocToHtml pandocContents = do
-  base' <- lift getWikiBase
   toc <- liftM ctxTOC get
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
   let tpl = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
   return $ primHtml $ T.unpack .
-           (if xssSanitize cfg then sanitizeBalance else id) . T.pack $
-           writeHtmlString def{
+           (if xssSanitize cfg then sanitizeBalance else id) $
+           either E.throw id . runPure $ writeHtml5String def{
                         writerTemplate = Just tpl
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
-                                 MathML -> Pandoc.MathML Nothing
+                                 MathML -> Pandoc.MathML
                                  WebTeX u -> Pandoc.WebTeX u
                                  MathJax u -> Pandoc.MathJax u
                                  RawTeX -> Pandoc.PlainMath
                       , writerTableOfContents = toc
-                      , writerHighlight = True
+                      , writerHighlightStyle = Just pygments
                       , writerExtensions = if bird
-                                              then Set.insert
-                                                   Ext_literate_haskell
+                                              then enableExtension Ext_literate_haskell
                                                    $ writerExtensions def
                                               else writerExtensions def
                       -- note: javascript obfuscation gives problems on preview
@@ -686,16 +683,12 @@ updateLayout f = do
 -- Pandoc and wiki content conversion support
 --
 
-readerFor :: PageType -> Bool -> String -> Pandoc
+readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
 readerFor pt lhs =
-  let defPS = def{ readerSmart = True
-                 , readerExtensions = if lhs
-                                         then Set.insert Ext_literate_haskell
-                                              $ readerExtensions def
-                                         else readerExtensions def
-                 , readerParseRaw = True
-                 }
-  in handleError . case pt of
+  let defPS = def{ readerExtensions = extensionsFromList [Ext_smart, Ext_raw_html]
+                                      <> getPageTypeDefaultExtensions pt lhs
+                                      <> readerExtensions def }
+  in runPure . (case pt of
        RST        -> readRST defPS
        Markdown   -> readMarkdown defPS
        CommonMark -> readCommonMark defPS
@@ -704,7 +697,7 @@ readerFor pt lhs =
        Textile    -> readTextile defPS
        Org        -> readOrg defPS
        DocBook    -> readDocBook defPS
-       MediaWiki  -> readMediaWiki defPS
+       MediaWiki  -> readMediaWiki defPS) . T.pack
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform pandoc

@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -}
 
 module Network.Gitit.Export ( exportFormats ) where
-import Text.Pandoc hiding (HTMLMathMethod(..))
+import Control.Exception (throwIO)
+import Text.Pandoc hiding (HTMLMathMethod(..), getDataFileName)
 import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.PDF (makePDF)
 import Text.Pandoc.SelfContained as SelfContained
-import Text.Pandoc.Shared (readDataFileUTF8)
 import qualified Text.Pandoc.UTF8 as UTF8
 import Network.Gitit.Server
-import Network.Gitit.Framework (pathForPage, getWikiBase)
+import Network.Gitit.Framework (pathForPage)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Network.Gitit.Cache (cacheContents, lookupCache)
@@ -37,102 +37,87 @@ import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import System.FilePath ((</>), takeDirectory)
-import Control.Exception (throwIO)
 import System.Directory (doesFileExist)
 import Text.HTML.SanitizeXSS
-import Text.Pandoc.Writers.RTF (writeRTFWithEmbeddedImages)
+import Text.Pandoc.Writers.RTF (writeRTF)
+import Data.ByteString.Lazy (fromStrict)
+import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
 import Data.List (isPrefixOf)
 import Skylighting (styleToCss, pygments)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
-defaultRespOptions = def { writerHighlight = True }
-
-respond :: String
-        -> String
-        -> (Pandoc -> IO L.ByteString)
-        -> String
-        -> Pandoc
-        -> Handler
-respond mimetype ext fn page doc = liftIO (fn doc) >>=
-  ok . setContentType mimetype .
-  (if null ext then id else setFilename (page ++ "." ++ ext)) .
-  toResponseBS B.empty
+defaultRespOptions = def { writerHighlightStyle = Just pygments }
 
 respondX :: String -> String -> String
-          -> (WriterOptions -> Pandoc -> IO L.ByteString)
+          -> (WriterOptions -> Pandoc -> PandocIO L.ByteString)
           -> WriterOptions -> String -> Pandoc -> Handler
 respondX templ mimetype ext fn opts page doc = do
   cfg <- getConfig
-  template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) templ
-  template <- case template' of
-                  Right t  -> return t
-                  Left e   -> liftIO $ throwIO e
   doc' <- if ext `elem` ["odt","pdf","beamer","epub","docx","rtf"]
              then fixURLs page doc
              else return doc
-  respond mimetype ext (fn opts{
-                                writerTemplate = Just template
-                               ,writerUserDataDir = pandocUserData cfg})
-          page doc'
+  doc'' <- liftIO $ runIO $ do
+        setUserDataDir $ pandocUserData cfg
+        template <- getDefaultTemplate templ
+        fn opts{ writerTemplate = Just template } doc'
+  either (liftIO . throwIO)
+         (ok . setContentType mimetype .
+           (if null ext then id else setFilename (page ++ "." ++ ext)) .
+            toResponseBS B.empty)
+         doc''
 
-respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> String)
+respondS :: String -> String -> String -> (WriterOptions -> Pandoc -> PandocIO Text)
           -> WriterOptions -> String -> Pandoc -> Handler
 respondS templ mimetype ext fn =
-  respondX templ mimetype ext (\o d -> return $ UTF8.fromStringLazy $ fn o d)
+  respondX templ mimetype ext (\o d -> fromStrict . encodeUtf8 <$> fn o d)
 
-respondSlides :: String -> HTMLSlideVariant -> String -> Pandoc -> Handler
-respondSlides templ slideVariant page doc = do
+respondSlides :: String -> (WriterOptions -> Pandoc -> PandocIO Text) -> String -> Pandoc -> Handler
+respondSlides templ fn page doc = do
     cfg <- getConfig
-    base' <- getWikiBase
     let math = case mathMethod cfg of
-                   MathML       -> Pandoc.MathML Nothing
+                   MathML       -> Pandoc.MathML
                    WebTeX u     -> Pandoc.WebTeX u
                    _            -> Pandoc.PlainMath
-    let opts' = defaultRespOptions {
-                     writerSlideVariant = slideVariant
-                    ,writerIncremental = True
-                    ,writerHtml5 = templ == "dzslides"
-                    ,writerHTMLMathMethod = math}
+    let opts' = defaultRespOptions { writerIncremental = True
+                                   , writerHTMLMathMethod = math}
     -- We sanitize the body only, to protect against XSS attacks.
     -- (Sanitizing the whole HTML page would strip out javascript
     -- needed for the slides.)  We then pass the body into the
     -- slide template using the 'body' variable.
     Pandoc meta blocks <- fixURLs page doc
-    let body' = writeHtmlString opts' (Pandoc meta blocks) -- just body
-    let body'' = T.unpack
-               $ (if xssSanitize cfg then sanitizeBalance else id)
-               $ T.pack body'
-    variables' <- if mathMethod cfg == MathML
-                     then do
-                        s <- liftIO $ readDataFileUTF8 (pandocUserData cfg)
-                                  "MathMLinHTML.js"
-                        return [("mathml-script", s)]
-                     else return []
-    template' <- liftIO $ getDefaultTemplate (pandocUserData cfg) templ
-    template <- case template' of
-                     Right t  -> return t
-                     Left e   -> liftIO $ throwIO e
-    dzcore <- if templ == "dzslides"
-                  then do
-                    dztempl <- liftIO $ readDataFileUTF8 (pandocUserData cfg)
-                           $ "dzslides" </> "template.html"
-                    return $ unlines
-                        $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
-                        $ lines dztempl
-                  else return ""
-    let opts'' = opts'{
-                writerVariables =
-                  ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
-               ,writerTemplate = Just template
-               ,writerUserDataDir = pandocUserData cfg
-               }
-    let h = writeHtmlString opts'' (Pandoc meta [])
-    h' <- liftIO $ makeSelfContained opts'' h
-    ok . setContentType "text/html;charset=UTF-8" .
-      -- (setFilename (page ++ ".html")) .
-      toResponseBS B.empty $ UTF8.fromStringLazy h'
+    docOrError <- liftIO $ runIO $ do          
+          setUserDataDir $ pandocUserData cfg
+          body' <- writeHtml5String opts' (Pandoc meta blocks) -- just body
+          let body'' = T.unpack
+                       $ (if xssSanitize cfg then sanitizeBalance else id)
+                       $ body'
+          variables' <- if mathMethod cfg == MathML
+                          then do
+                              s <- readDataFile "MathMLinHTML.js"
+                              return [("mathml-script", UTF8.toString s)]
+                          else return []
+          template <- getDefaultTemplate templ
+          dzcore <- if templ == "dzslides"
+                      then do
+                        dztempl <- readDataFile $ "dzslides" </> "template.html"
+                        return $ unlines
+                            $ dropWhile (not . isPrefixOf "<!-- {{{{ dzslides core")
+                            $ lines $ UTF8.toString dztempl
+                      else return ""
+          let opts'' = opts'{
+                             writerVariables =
+                               ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
+                            ,writerTemplate = Just template }
+          h <- fn opts'' (Pandoc meta [])
+          makeSelfContained (T.unpack h)
+    either (liftIO . throwIO)
+           (ok . setContentType "text/html;charset=UTF-8" .
+             (setFilename (page ++ ".html")) .
+             toResponseBS B.empty . UTF8.fromStringLazy)
+           docOrError
 
 respondLaTeX :: String -> Pandoc -> Handler
 respondLaTeX = respondS "latex" "application/x-latex" "tex"
@@ -145,7 +130,7 @@ respondConTeXt = respondS "context" "application/x-context" "tex"
 
 respondRTF :: String -> Pandoc -> Handler
 respondRTF = respondX "rtf" "application/rtf" "rtf"
-  (\o d -> UTF8.fromStringLazy `fmap` writeRTFWithEmbeddedImages o d) defaultRespOptions
+  (\o d -> L.fromStrict . UTF8.fromText <$> writeRTF o d) defaultRespOptions
 
 respondRST :: String -> Pandoc -> Handler
 respondRST = respondS "rst" "text/plain; charset=utf-8" ""
@@ -173,7 +158,7 @@ respondTexinfo = respondS "texinfo" "application/x-texinfo" "texi"
 
 respondDocbook :: String -> Pandoc -> Handler
 respondDocbook = respondS "docbook" "application/docbook+xml" "xml"
-  writeDocbook defaultRespOptions
+  writeDocbook5 defaultRespOptions
 
 respondOrg :: String -> Pandoc -> Handler
 respondOrg = respondS "org" "text/plain; charset=utf-8" ""
@@ -181,7 +166,7 @@ respondOrg = respondS "org" "text/plain; charset=utf-8" ""
 
 respondICML :: String -> Pandoc -> Handler
 respondICML = respondX "icml" "application/xml; charset=utf-8" ""
-              (\o d -> fmap UTF8.fromStringLazy $ writeICML o d)
+              (\o d -> L.fromStrict . UTF8.fromText <$> writeICML o d)
                          defaultRespOptions
 
 respondTextile :: String -> Pandoc -> Handler
@@ -201,7 +186,7 @@ respondODT = respondX "opendocument" "application/vnd.oasis.opendocument.text"
               "odt" writeODT defaultRespOptions
 
 respondEPUB :: String -> Pandoc -> Handler
-respondEPUB = respondX "html" "application/epub+zip" "epub" writeEPUB
+respondEPUB = respondX "html" "application/epub+zip" "epub" writeEPUB3
                defaultRespOptions
 
 respondDocx :: String -> Pandoc -> Handler
@@ -220,20 +205,19 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
   pdf' <- case cached of
             Just (_modtime, bs) -> return $ Right $ L.fromChunks [bs]
             Nothing -> do
-              template' <- liftIO $ getDefaultTemplate (pandocUserData cfg)
-                                  $ if useBeamer then "beamer" else "latex"
-              template  <- liftIO $ either throwIO return template'
               let toc = tableOfContents cfg
-              res <- liftIO $ makePDF "pdflatex" writeLaTeX
-                         defaultRespOptions{
-                                            writerTemplate = Just template
-                                           ,writerSourceURL = Just $ baseUrl cfg
-                                           ,writerTableOfContents = toc
-                                           ,writerBeamer = useBeamer} pndc
-              return res
+              res <- liftIO $ runIO $ do
+                setUserDataDir $ pandocUserData cfg
+                setInputFiles [baseUrl cfg]
+                template <- getDefaultTemplate $ if useBeamer then "beamer" else "latex"
+                makePDF "xelatex" [] (if useBeamer then writeBeamer else writeLaTeX)
+                  defaultRespOptions{ writerTemplate = Just template
+                                    , writerTableOfContents = toc } pndc
+              either (liftIO . throwIO) return res
+
   case pdf' of
-       Left logOutput -> simpleErrorHandler ("PDF creation failed:\n"
-                           ++ UTF8.toStringLazy logOutput)
+       Left logOutput' -> simpleErrorHandler ("PDF creation failed:\n"
+                           ++ UTF8.toStringLazy logOutput')
        Right pdfBS -> do
               case cached of
                 Nothing ->
@@ -293,9 +277,9 @@ exportFormats cfg = if pdfExport cfg
                 , ("AsciiDoc",  respondAsciiDoc)
                 , ("Man page",  respondMan)
                 , ("DocBook",   respondDocbook)
-                , ("DZSlides",  respondSlides "dzslides" DZSlides)
-                , ("Slidy",     respondSlides "slidy" SlidySlides)
-                , ("S5",        respondSlides "s5" S5Slides)
+                , ("DZSlides",  respondSlides "dzslides" writeDZSlides)
+                , ("Slidy",     respondSlides "slidy" writeSlidy)
+                , ("S5",        respondSlides "s5" writeS5)
                 , ("EPUB",      respondEPUB)
                 , ("ODT",       respondODT)
                 , ("DOCX",      respondDocx)

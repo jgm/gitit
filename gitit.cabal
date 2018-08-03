@@ -195,6 +195,7 @@ Executable           gitit
                      mtl,
                      hslogger,
                      bytestring,
+                     text,
                      utf8-string,
                      directory
   if flag(network-uri)

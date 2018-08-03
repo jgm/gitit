@@ -26,6 +26,7 @@ module Network.Gitit.Util ( readFileUTF8
                           , yesOrNo
                           , parsePageType
                           , encUrl
+                          , getPageTypeDefaultExtensions
                           )
 where
 import System.Directory
@@ -34,14 +35,17 @@ import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower, isAscii)
+import Data.Text (Text)
+import qualified Data.Text as T
 import Network.Gitit.Types
 import qualified Control.Exception as E
 import qualified Text.Pandoc.UTF8 as UTF8
+import Text.Pandoc (Extension(..), Extensions, getDefaultExtensions, enableExtension)
 import Network.URL (encString)
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
-readFileUTF8 :: FilePath -> IO String
-readFileUTF8 = UTF8.readFile
+readFileUTF8 :: FilePath -> IO Text
+readFileUTF8 = fmap T.pack . UTF8.readFile
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a
@@ -96,6 +100,7 @@ parsePageType s =
        "markdown"     -> (Markdown,False)
        "markdown+lhs" -> (Markdown,True)
        "commonmark"   -> (CommonMark,False)
+       "docbook"      -> (DocBook,False)
        "rst"          -> (RST,False)
        "rst+lhs"      -> (RST,True)
        "html"         -> (HTML,False)
@@ -105,6 +110,23 @@ parsePageType s =
        "org"          -> (Org,False)
        "mediawiki"    -> (MediaWiki,False)
        x              -> error $ "Unknown page type: " ++ x
+
+getPageTypeDefaultExtensions :: PageType -> Bool -> Extensions
+getPageTypeDefaultExtensions pt lhs =
+  if lhs
+     then enableExtension Ext_literate_haskell defaults
+     else defaults
+  where defaults = getDefaultExtensions $
+          case pt of
+            CommonMark -> "commonmark"
+            DocBook    -> "docbook"
+            HTML       -> "html"
+            LaTeX      -> "latex"
+            Markdown   -> "markdown"
+            MediaWiki  -> "mediawiki"
+            Org        -> "org"
+            RST        -> "rst"
+            Textile    -> "textile"
 
 encUrl :: String -> String
 encUrl = encString True isAscii
