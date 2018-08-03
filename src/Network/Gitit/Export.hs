@@ -210,7 +210,7 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
                 setUserDataDir $ pandocUserData cfg
                 setInputFiles [baseUrl cfg]
                 template <- getDefaultTemplate $ if useBeamer then "beamer" else "latex"
-                makePDF "xelatex" [] (if useBeamer then writeBeamer else writeLaTeX)
+                makePDF "pdflatex" [] (if useBeamer then writeBeamer else writeLaTeX)
                   defaultRespOptions{ writerTemplate = Just template
                                     , writerTableOfContents = toc } pndc
               either (liftIO . throwIO) return res
