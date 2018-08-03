@@ -8,6 +8,4 @@ extra-deps:
 - filestore-0.6.3.3
 - recaptcha-0.1.0.3
 - uri-0.1.6.4
-- pandoc-2.2.1
-- pandoc-types-1.17.4.2
-resolver: lts-10.10
+resolver: lts-12.4
