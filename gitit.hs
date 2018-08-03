@@ -24,6 +24,7 @@ import Network.Gitit.Server
 import Network.Gitit.Util (readFileUTF8)
 import System.Directory
 import Data.Maybe (isNothing)
+import Data.Text.Encoding (encodeUtf8)
 import Network.Gitit.Compat.Except()
 import Control.Monad.Reader
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
@@ -54,7 +55,7 @@ main = do
         putErr ExitSuccess (progname ++ " version " ++
             showVersion version ++ compileInfo ++ copyrightMessage)
     Left PrintDefaultConfig -> getDataFileName "data/default.conf" >>=
-        readFileUTF8 >>= B.putStrLn . fromString >> exitSuccess
+        readFileUTF8 >>= B.putStrLn . encodeUtf8 >> exitSuccess
     Right xs -> return xs
 
   conf' <- case [f | ConfigFile f <- opts] of

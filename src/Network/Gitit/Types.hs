@@ -74,7 +74,7 @@ import Text.XHtml (Html)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Data.List (intersect)
-import Data.Time (parseTime)
+import Data.Time (parseTimeM)
 #if MIN_VERSION_time(1,5,0)
 import Data.Time (defaultTimeLocale)
 #else
@@ -189,7 +189,7 @@ data Config = Config {
   -- | Text of password reset email
   resetPasswordMessage :: String,
   -- | Markup syntax help for edit sidebar
-  markupHelp           :: String,
+  markupHelp           :: Text,
   -- | Provide an atom feed?
   useFeed              :: Bool,
   -- | Base URL of wiki, for use in feed
@@ -315,7 +315,7 @@ data PageLayout = PageLayout
   , pgScripts        :: [String]
   , pgShowPageTools  :: Bool
   , pgShowSiteNav    :: Bool
-  , pgMarkupHelp     :: Maybe String
+  , pgMarkupHelp     :: Maybe Text
   , pgTabs           :: [Tab]
   , pgSelectedTab    :: Tab
   , pgLinkToFeed     :: Bool
@@ -388,7 +388,7 @@ instance FromData Params where
                  return (if null s then Nothing else Just s))
                  `mplus` return Nothing
          fu <- liftM Just (look' "forUser") `mplus` return Nothing
-         si <- liftM (parseTime defaultTimeLocale "%Y-%m-%d") (look' "since")
+         si <- liftM (parseTimeM True defaultTimeLocale "%Y-%m-%d") (look' "since")
                  `mplus` return Nothing  -- YYYY-mm-dd format
          ds <- look' "destination" `mplus` return ""
          ra <- look' "raw"            `mplus` return ""
