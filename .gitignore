@@ -3,7 +3,7 @@ TAGS
 dist
 wikidata
 templates
-static/
+./static/
 gitit.log
 my.conf
 gitit-users
