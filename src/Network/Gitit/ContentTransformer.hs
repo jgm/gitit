@@ -73,6 +73,7 @@ import qualified Control.Exception as E
 import Control.Monad.State
 import Control.Monad.Reader (ask)
 import Data.Foldable (traverse_)
+import Data.Char (toLower)
 import Data.List (stripPrefix)
 import Data.Maybe (isNothing, mapMaybe)
 import Data.Semigroup ((<>))
@@ -90,6 +91,7 @@ import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
 import System.FilePath
 import qualified Text.Pandoc.Builder as B
+import Text.Pandoc.Extensions (getDefaultExtensions)
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Skylighting hiding (Context)
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
@@ -685,8 +687,9 @@ updateLayout f = do
 
 readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
 readerFor pt lhs =
-  let defPS = def{ readerExtensions = extensionsFromList [Ext_smart, Ext_raw_html,
-                                                          Ext_emoji]
+  let defExts = getDefaultExtensions $ map toLower $ show pt
+      defPS = def{ readerExtensions = defExts
+                                      <> extensionsFromList [Ext_emoji]
                                       <> getPageTypeDefaultExtensions pt lhs
                                       <> readerExtensions def }
   in runPure . (case pt of
