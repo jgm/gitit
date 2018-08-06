@@ -49,7 +49,7 @@ extra-source-files:  data/static/js/jquery-1.2.6.js
                      data/static/js/jquery-ui.draggable-1.6rc2.js
                      data/static/js/jquery-ui.tabs-1.6rc2.js
 data-files:          data/static/css/screen.css, data/static/css/print.css,
-                     data/static/css/ie.css, data/static/css/hk-pyg.css,
+                     data/static/css/ie.css, data/static/css/highlighting.css,
                      data/static/css/reset-fonts-grids.css,
                      data/static/css/custom.css,
                      data/static/img/logo.png, data/static/img/icons/feed.png,
@@ -122,11 +122,12 @@ Library
                      Network.Gitit.Authentication.Github,
                      Network.Gitit.Util, Network.Gitit.Server
                      Network.Gitit.Cache, Network.Gitit.State,
-                     Paths_gitit, Network.Gitit.Export,
+                     Network.Gitit.Export,
                      Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
                      Network.Gitit.Page, Network.Gitit.Feed,
-                     Network.Gitit.Compat.Except
+                     Network.Gitit.Compat.Except,
+                     Paths_gitit
   build-depends:     base >= 4.9 && < 5,
                      syb,
                      filepath,
