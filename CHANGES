@@ -1,3 +1,28 @@
+Version 0.12.3 released 09 Oct 2018
+
+  * Ensure that the proper extensions are used for each format.
+  * Add Ext_emoji to readerExtensions (#616).
+  * Add Paths_gitit to other-modules to avoid warning.
+  * screen.css: remove special padding and border and color for code.
+    This interferes with pandoc's new highlighting.
+  * Change hk-pyg.css to highlighting.css with new CSS for pandoc 2
+    and skylighting 0.7.4.
+  * Fixed static in gitignore
+  * Update stack.yaml, use latest lts-12.
+  * Updates for pandoc 2.x (Myron Wu).
+  * Require skylighting >= 0.7.4.
+  * Remove jsMath as it was dropped from pandoc >= 2 (#617, Myron Wu).
+  * Add Ext_emoji to readerExtensions (#616, Conal Elliott).
+  * Changes to use recent versions of dependencies.
+    Especially feed 1.0, which uses a different xml type
+    and requires a new dependency on xml-conduit to render it.
+  * Remove support for ghc versions < 8 (Myron Wu).
+  * Bump hoauth2 to 1.3.0 && < 1.6 to catch up with nix and other
+    curated package sets (Myron Wu).
+  * Updated mathjax cdn to cloudflare.
+  * Redirect to requested wiki page after github oauth callback (Myron Wu).
+  * Use skylighting instead of deprecated highlighting-kate.
+
 Version 0.12.2.1 released 14 Feb 2017
 
   * Bump version bounds for time, pandoc, blaze-html, aeson.
