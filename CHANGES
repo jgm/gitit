@@ -1,12 +1,14 @@
 Version 0.12.3 released 09 Oct 2018
 
+  * Change hk-pyg.css to highlighting.css with new CSS for pandoc 2
+    and skylighting 0.7.4. NOTE:  You must change your existing
+    custom.css to refer to highlighting.css instead of
+    hk-pyg.css, or highlighted code will not display properly.
   * Ensure that the proper extensions are used for each format.
   * Add Ext_emoji to readerExtensions (#616).
   * Add Paths_gitit to other-modules to avoid warning.
   * screen.css: remove special padding and border and color for code.
     This interferes with pandoc's new highlighting.
-  * Change hk-pyg.css to highlighting.css with new CSS for pandoc 2
-    and skylighting 0.7.4.
   * Fixed static in gitignore
   * Update stack.yaml, use latest lts-12.
   * Updates for pandoc 2.x (Myron Wu).
