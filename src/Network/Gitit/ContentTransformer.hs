@@ -102,13 +102,14 @@ import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 #else
 import Text.Blaze.Renderer.String as Blaze ( renderHtml )
 #endif
+import URI.ByteString (Query(Query), URIRef(uriPath), laxURIParserOptions,
+                       parseURI, uriQuery)
 import qualified Data.Text as T
 import qualified Data.ByteString as S (concat)
-import qualified Data.ByteString.Char8 as SC (unpack)
+import qualified Data.ByteString.Char8 as SC (pack, unpack)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
-import Text.URI (parseURI, URI(..), uriQueryItems)
 
 --
 -- ContentTransformer runners
@@ -459,11 +460,14 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
         base' <- getWikiBase
         request <- askRq
         return $ do
-            uri <- getHeader "referer" request >>= parseURI . SC.unpack
-            let params = uriQueryItems uri
-            redirect' <- lookup "redirect" params
-            guard $ redirect' == "yes"
-            path' <- stripPrefix (base' ++ "/") (uriPath uri)
+            referer <- getHeader "referer" request
+            uri <- case parseURI laxURIParserOptions referer of
+                Left _ -> Nothing
+                Right uri -> Just uri
+            let Query params = uriQuery uri
+            redirect' <- lookup (SC.pack "redirect") params
+            guard $ redirect' == SC.pack "yes"
+            path' <- stripPrefix (base' ++ "/") (SC.unpack (uriPath uri))
             let path'' = if null path' then frontPage cfg else urlDecode path'
             guard $ isPage path''
             return path''
