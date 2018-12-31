@@ -1,3 +1,11 @@
+Version 0.12.3.1 released 31 Dec 2018
+
+  * Improve compatibility with GHC 8.6 (Phil Ruffwind, #625).
+
+    + Replaced uses of uri (out of date package) with uri-bytestring, which
+      gitit already uses in other places.
+    + Bumped hoauth2 version bounds to support 1.8.*.
+
 Version 0.12.3 released 09 Oct 2018
 
   * Change hk-pyg.css to highlighting.css with new CSS for pandoc 2
