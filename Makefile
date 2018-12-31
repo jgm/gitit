@@ -1,8 +1,8 @@
 all:
-	cabal configure -fplugins --prefix=/usr/local
-	cabal build
+	cabal new-configure -fplugins --prefix=/usr/local
+	cabal new-build
 
 install:
-	cabal copy
+	cabal new-copy
 
 .PHONY: all clean install
