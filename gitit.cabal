@@ -30,8 +30,6 @@ description:         Gitit is a wiki backed by a git, darcs, or mercurial
                      * a library, "Network.Gitit", that makes it simple
                        to include a gitit wiki in any happstack application
                      .
-                     You can see a running demo at <http://gitit.net>.
-                     .
                      For usage information:  @gitit --help@
 
 category:            Network
@@ -40,7 +38,6 @@ license-file:        LICENSE
 author:              John MacFarlane
 maintainer:          jgm@berkeley.edu
 bug-reports:         http://github.com/jgm/gitit/issues
-homepage:            http://gitit.net
 stability:           experimental
 extra-source-files:  data/static/js/jquery-1.2.6.js
                      data/static/js/jquery.hotkeys-0.7.9.js
