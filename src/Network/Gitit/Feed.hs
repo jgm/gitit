@@ -36,7 +36,7 @@ import Data.Maybe (fromMaybe)
 import Data.Ord (comparing)
 import Network.URI (isUnescapedInURI, escapeURIString)
 import System.FilePath (dropExtension, takeExtension, (<.>))
-import Data.FileStore.Generic (Diff(..), diff)
+import Data.FileStore.Generic (PolyDiff(..), diff)
 import Data.FileStore.Types (history, retrieve, Author(authorName), Change(..),
          FileStore, Revision(..), TimeRange(..), RevisionId)
 import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
@@ -93,7 +93,7 @@ changeLog days a mbPath now' = do
           (Just 200) -- hard limit of 200 to conserve resources
   return $ sortBy (flip $ comparing revDateTime) rs
 
-getDiffs :: FileStore -> Revision -> IO [(FilePath, [Diff [String]])]
+getDiffs :: FileStore -> Revision -> IO [(FilePath, [PolyDiff [String]])]
 getDiffs fs Revision{ revId = to, revDateTime = rd, revChanges = rv } = do
   revPair <- history fs [] (TimeRange Nothing $ Just rd) (Just 2)
   let from = if length revPair >= 2
@@ -108,7 +108,7 @@ getDiffs fs Revision{ revId = to, revDateTime = rd, revChanges = rv } = do
                                    'e':'g':'a':'p':'.':x -> (reverse x, d)
                                    _ -> (fp, [])
 
-getDiff :: FileStore -> Maybe RevisionId -> Maybe RevisionId -> Change -> IO [Diff [String]]
+getDiff :: FileStore -> Maybe RevisionId -> Maybe RevisionId -> Change -> IO [PolyDiff [String]]
 getDiff fs from _ (Deleted fp) = do
   contents <- retrieve fs fp from
   return [First $ lines contents]
@@ -127,7 +127,7 @@ generateEmptyfeed generator title home mbPath authors now =
             }
     where baseNull = nullFeed (T.pack home) (TextString (T.pack title)) now
 
-revisionToEntry :: String -> (Revision, [(FilePath, [Diff [String]])]) -> Entry
+revisionToEntry :: String -> (Revision, [(FilePath, [PolyDiff [String]])]) -> Entry
 revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
                                revAuthor = ra, revDescription = rd,
                                revChanges = rv}, diffs) =
@@ -139,14 +139,14 @@ revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
          ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
          title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
 
-diffFile :: (FilePath, [Diff [String]]) -> Content
+diffFile :: (FilePath, [PolyDiff [String]]) -> Content
 diffFile (fp, d) =
     enTag "div" $ header : text
   where
     header = enTag1 "h1" $ enText fp
     text = map (enTag1 "p") $ concat $ map diffLines d
 
-diffLines :: Diff [String] -> [Content]
+diffLines :: PolyDiff [String] -> [Content]
 diffLines (First x) = map (enTag1 "s" . enText) x
 diffLines (Second x) = map (enTag1 "b" . enText) x
 diffLines (Both x _) = map enText x
