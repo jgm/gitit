@@ -6,6 +6,7 @@ packages:
 - '.'
 extra-deps:
 - filestore-0.6.4
+- Diff-0.4.0
 - recaptcha-0.1.0.3
 - uri-0.1.6.4
 - ConfigFile-1.1.4
