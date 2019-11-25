@@ -1,0 +1,52 @@
+name: CI tests
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        versions:
+          - ghc: '8.0.2'
+            cabal: '2.4'
+          - ghc: '8.2.2'
+            cabal: '2.4'
+          - ghc: '8.4.4'
+            cabal: '2.4'
+          - ghc: '8.6.5'
+            cabal: '2.4'
+          - ghc: '8.8.1'
+            cabal: '3.0'
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: |
+          export PATH=/opt/cabal/${{ matrix.versions.cabal }}/bin:/opt/ghc/${{ matrix.versions.ghc }}/bin:$PATH
+          cabal v2-update
+          cabal v2-build --dependencies-only --enable-tests --disable-optimization -fexecutable all
+    - name: Build and test
+      run: |
+          export PATH=/opt/cabal/${{ matrix.versions.cabal }}/bin:/opt/ghc/${{ matrix.versions.ghc }}/bin:$PATH
+          cabal v2-build --enable-tests --disable-optimization -fexecutable all
+          cabal v2-test --disable-optimization all
+
+  macos:
+
+    runs-on: macOS-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install stack
+      run: |
+          curl -L https://get.haskellstack.org/stable/osx-x86_64.tar.gz -o stack.tar.gz
+          tar xzvf stack.tar.gz --strip-components=1 'stack*/stack'
+    - name: Install dependencies
+      run: |
+          ./stack update
+          ./stack test --dependencies-only --fast
+    - name: Build and test
+      run: |
+          ./stack install --fast --test --haddock --no-haddock-deps
