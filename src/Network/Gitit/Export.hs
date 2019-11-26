@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -26,13 +28,16 @@ import qualified Text.Pandoc as Pandoc
 import Text.Pandoc.PDF (makePDF)
 import Text.Pandoc.SelfContained as SelfContained
 import qualified Text.Pandoc.UTF8 as UTF8
+import qualified Data.Map as M
 import Network.Gitit.Server
 import Network.Gitit.Framework (pathForPage)
 import Network.Gitit.State (getConfig)
 import Network.Gitit.Types
 import Network.Gitit.Cache (cacheContents, lookupCache)
+import Text.DocTemplates as DT
 import Control.Monad.Trans (liftIO)
 import Control.Monad (unless)
+import Control.Monad.Except (throwError)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
@@ -61,8 +66,11 @@ respondX templ mimetype ext fn opts page doc = do
              else return doc
   doc'' <- liftIO $ runIO $ do
         setUserDataDir $ pandocUserData cfg
-        template <- getDefaultTemplate templ
-        fn opts{ writerTemplate = Just template } doc'
+        template <- getDefaultTemplate (T.pack templ)
+        compiledTemplate <- compileTemplate templ template
+        case compiledTemplate of
+          Right t -> fn opts{ writerTemplate = Just t } doc'
+          Left e  -> throwError $ PandocTemplateError $ T.pack e
   either (liftIO . throwIO)
          (ok . setContentType mimetype .
            (if null ext then id else setFilename (page ++ "." ++ ext)) .
@@ -79,7 +87,7 @@ respondSlides templ fn page doc = do
     cfg <- getConfig
     let math = case mathMethod cfg of
                    MathML       -> Pandoc.MathML
-                   WebTeX u     -> Pandoc.WebTeX u
+                   WebTeX u     -> Pandoc.WebTeX $ T.pack u
                    _            -> Pandoc.PlainMath
     let opts' = defaultRespOptions { writerIncremental = True
                                    , writerHTMLMathMethod = math}
@@ -88,18 +96,26 @@ respondSlides templ fn page doc = do
     -- needed for the slides.)  We then pass the body into the
     -- slide template using the 'body' variable.
     Pandoc meta blocks <- fixURLs page doc
-    docOrError <- liftIO $ runIO $ do          
+    docOrError <- liftIO $ runIO $ do
           setUserDataDir $ pandocUserData cfg
           body' <- writeHtml5String opts' (Pandoc meta blocks) -- just body
           let body'' = T.unpack
                        $ (if xssSanitize cfg then sanitizeBalance else id)
                        $ body'
+          let setVariable key val (DT.Context ctx) =
+                DT.Context $ M.insert (T.pack key) (toVal (T.pack val)) ctx
           variables' <- if mathMethod cfg == MathML
                           then do
                               s <- readDataFile "MathMLinHTML.js"
-                              return [("mathml-script", UTF8.toString s)]
-                          else return []
-          template <- getDefaultTemplate templ
+                              return $ setVariable "mathml-script"
+                                         (UTF8.toString s) mempty
+                          else return mempty
+          template <- getDefaultTemplate (T.pack templ)
+          compiledTemplate <- do
+            res <- compileTemplate templ template
+            case res of
+              Right t  -> return t
+              Left e   -> throwError $ PandocTemplateError $ T.pack e
           dzcore <- if templ == "dzslides"
                       then do
                         dztempl <- readDataFile $ "dzslides" </> "template.html"
@@ -109,14 +125,17 @@ respondSlides templ fn page doc = do
                       else return ""
           let opts'' = opts'{
                              writerVariables =
-                               ("body",body''):("dzslides-core",dzcore):("highlighting-css",pygmentsCss):variables'
-                            ,writerTemplate = Just template }
+                               setVariable "body" body'' $
+                               setVariable "dzslides-core" dzcore $
+                               setVariable "highlighting-css" pygmentsCss
+                               $ variables'
+                            ,writerTemplate = Just compiledTemplate }
           h <- fn opts'' (Pandoc meta [])
-          makeSelfContained (T.unpack h)
+          makeSelfContained h
     either (liftIO . throwIO)
            (ok . setContentType "text/html;charset=UTF-8" .
              (setFilename (page ++ ".html")) .
-             toResponseBS B.empty . UTF8.fromStringLazy)
+             toResponseBS B.empty . L.fromStrict . UTF8.fromText)
            docOrError
 
 respondLaTeX :: String -> Pandoc -> Handler
@@ -209,9 +228,15 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
               res <- liftIO $ runIO $ do
                 setUserDataDir $ pandocUserData cfg
                 setInputFiles [baseUrl cfg]
-                template <- getDefaultTemplate $ if useBeamer then "beamer" else "latex"
+                let templ = if useBeamer then "beamer" else "latex"
+                template <- getDefaultTemplate templ
+                compiledTemplate <- do
+                  res <- compileTemplate (T.unpack templ) template
+                  case res of
+                    Right t  -> return t
+                    Left e   -> throwError $ PandocTemplateError $ T.pack e
                 makePDF "pdflatex" [] (if useBeamer then writeBeamer else writeLaTeX)
-                  defaultRespOptions{ writerTemplate = Just template
+                  defaultRespOptions{ writerTemplate = Just compiledTemplate
                                     , writerTableOfContents = toc } pndc
               either (liftIO . throwIO) return res
 
@@ -242,8 +267,8 @@ fixURLs page pndc = do
     let repoPath = repositoryPath cfg
 
     let go (Image attr ils (url, title)) = do
-           fixedURL <- fixURL url
-           return $ Image attr ils (fixedURL, title)
+           fixedURL <- fixURL $ T.unpack url
+           return $ Image attr ils (T.pack fixedURL, title)
         go x                        = return x
 
         fixURL ('/':url) = resolve url

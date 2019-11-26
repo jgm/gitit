@@ -100,10 +100,6 @@ Source-repository head
   type:          git
   location:      git://github.com/jgm/gitit.git
 
-Flag network-uri
-  Description: Get Network.URI from the network-uri package
-  Default: True
-
 Flag plugins
   description:       Compile in support for plugins.  This will increase the size of
                      the executable and the memory it uses, so those who will not need
@@ -138,44 +134,44 @@ Library
                      directory,
                      mtl,
                      old-time,
-                     pandoc >= 2.2,
-                     pandoc-types >= 1.17.4.2 && < 1.18,
-                     skylighting >= 0.7.4 && < 0.8,
+                     pandoc >= 2.8 && < 2.9,
+                     pandoc-types >= 1.20 && < 1.21,
+                     skylighting >= 0.8.2.3 && < 0.9,
                      bytestring,
                      text,
                      random,
                      utf8-string >= 0.3 && < 1.1,
-                     SHA > 1 && < 1.7,
-                     HTTP >= 4000.0 && < 4000.4,
+                     SHA > 1,
+                     HTTP >= 4000.0,
                      HStringTemplate >= 0.6 && < 0.9,
-                     old-locale >= 1,
-                     time >= 1.1 && < 1.10,
+                     old-locale,
+                     time,
                      recaptcha >= 0.1,
                      filestore >= 0.6.4 && < 0.7,
                      zlib >= 0.5 && < 0.7,
-                     url >= 2.1 && < 2.2,
-                     happstack-server >= 7.0 && < 7.6,
-                     base64-bytestring >= 0.1 && < 1.1,
+                     url >= 2.1,
+                     happstack-server >= 7.5 && < 7.7,
+                     base64-bytestring >= 0.1,
                      xml >= 1.3.5,
-                     hslogger >= 1 && < 1.3,
-                     ConfigFile >= 1 && < 1.2,
-                     feed >= 1.0 && < 1.1,
+                     hslogger >= 1,
+                     ConfigFile >= 1,
+                     feed >= 1.0 && < 1.3,
+                     xml-types >= 0.3,
                      xss-sanitize >= 0.3 && < 0.4,
                      tagsoup >= 0.13 && < 0.15,
                      blaze-html >= 0.4 && < 0.10,
                      json >= 0.4 && < 0.10,
-                     uri-bytestring >= 0.2.3.3 && <= 0.4,
+                     uri-bytestring >= 0.2.3.3,
                      split,
-                     hoauth2 >= 1.3.0 && < 1.9,
-                     xml-conduit >= 1.5 && < 1.9,
+                     hoauth2 >= 1.3.0 && < 1.10,
+                     xml-conduit >= 1.5 && < 1.10,
                      http-conduit >= 2.1.6 && < 2.4,
                      http-client-tls >= 0.2.2 && < 0.4,
                      aeson >= 0.7 && < 1.5,
-                     uuid >= 1.3 && < 1.4
-  if flag(network-uri)
-    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
-  else
-    build-depends:   network >= 2 && < 2.6
+                     uuid >= 1.3 && < 1.4,
+                     network-uri >= 2.6,
+                     network >= 2.6,
+                     doctemplates >= 0.7.1
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
@@ -194,12 +190,10 @@ Executable           gitit
                      bytestring,
                      text,
                      utf8-string,
-                     directory
+                     directory,
+                     network-uri >= 2.6,
+                     network >= 2.6
   other-modules:     Paths_gitit
-  if flag(network-uri)
-    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
-  else
-    build-depends:   network >= 2 && < 2.6
   extensions:        CPP
   ghc-options:       -Wall -threaded -fno-warn-unused-do-bind
   ghc-prof-options:  -fprof-auto-exported -rtsopts
@@ -207,10 +201,8 @@ Executable           gitit
 Executable           expireGititCache
   hs-source-dirs:    .
   main-is:           expireGititCache.hs
-  build-depends:     base >= 4.9 && < 5, HTTP, url, filepath, syb
-  if flag(network-uri)
-    build-depends:   network-uri >= 2.6 && < 2.7, network >= 2.6
-  else
-    build-depends:   network >= 2 && < 2.6
+  build-depends:     base >= 4.9 && < 5, HTTP, url, filepath, syb,
+                     network-uri >= 2.6,
+                     network >= 2.6
   ghc-options:       -Wall
 

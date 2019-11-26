@@ -43,9 +43,9 @@ import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
          Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
          Person(personName), EntryContent(..), TextContent(TextString))
 import Text.Atom.Feed.Export (xmlFeed)
-import Text.XML.Light as XML (showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
 import Text.XML as Text.XML (renderText, Document(..), Element(..),
                              Prologue(..), def, fromXMLElement)
+import qualified Data.XML.Types as XMLTypes
 import Data.Version (showVersion)
 import Paths_gitit (version)
 
@@ -131,7 +131,8 @@ revisionToEntry :: String -> (Revision, [(FilePath, [Diff [String]])]) -> Entry
 revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
                                revAuthor = ra, revDescription = rd,
                                revChanges = rv}, diffs) =
-  baseEntry{ entryContent = Just $ HTMLContent $ T.pack $ concat $ map showContent $ map diffFile diffs
+  baseEntry{ entryContent = Just $ HTMLContent $ XMLTypes.Element
+              (XMLTypes.Name "div" Nothing Nothing) [] $ map diffFile diffs
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
    where baseEntry = nullEntry (T.pack url) title
                           (T.pack $ formatFeedTime rdt)
@@ -139,26 +140,29 @@ revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
          ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
          title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
 
-diffFile :: (FilePath, [Diff [String]]) -> Content
+diffFile :: (FilePath, [Diff [String]]) -> XMLTypes.Node
 diffFile (fp, d) =
     enTag "div" $ header : text
   where
-    header = enTag1 "h1" $ enText fp
+    header = enTag1 "h1" $ enText $ T.pack fp
     text = map (enTag1 "p") $ concat $ map diffLines d
 
-diffLines :: Diff [String] -> [Content]
-diffLines (First x) = map (enTag1 "s" . enText) x
-diffLines (Second x) = map (enTag1 "b" . enText) x
-diffLines (Both x _) = map enText x
+diffLines :: Diff [String] -> [XMLTypes.Node]
+diffLines (First x) = map (enTag1 "s" . enText . T.pack) x
+diffLines (Second x) = map (enTag1 "b" . enText . T.pack) x
+diffLines (Both x _) = map (enText . T.pack) x
 
-enTag :: String -> [Content] -> Content
-enTag tag content = Elem blank_element{ elName=blank_name{qName=tag}
-                                      , elContent=content
-                                      }
-enTag1 :: String -> Content -> Content
+enTag :: T.Text -> [XMLTypes.Node] -> XMLTypes.Node
+enTag tag content = XMLTypes.NodeElement $
+  XMLTypes.Element
+  (XMLTypes.Name tag Nothing Nothing)
+  [] content
+
+enTag1 :: T.Text -> XMLTypes.Node -> XMLTypes.Node
 enTag1 tag content = enTag tag [content]
-enText :: String -> Content
-enText content = Text blank_cdata{cdData=content}
+
+enText :: T.Text -> XMLTypes.Node
+enText content = XMLTypes.NodeContent (XMLTypes.ContentText content)
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person

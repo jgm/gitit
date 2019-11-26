@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, ScopedTypeVariables, OverloadedStrings #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 This program is free software; you can redistribute it and/or modify
@@ -81,13 +81,13 @@ orIfNull lst backup = if null lst then backup else lst
 -- | Split a string containing a list of categories.
 splitCategories :: String -> [String]
 splitCategories = words . map puncToSpace . trim
-     where puncToSpace x | x `elem` ".,;:" = ' '
+     where puncToSpace x | x `elem` ['.',',',';',':'] = ' '
            puncToSpace x = x
 
 -- | Trim leading and trailing spaces.
 trim :: String -> String
 trim = reverse . trimLeft . reverse . trimLeft
-  where trimLeft = dropWhile (`elem` " \t")
+  where trimLeft = dropWhile (`elem` [' ','\t'])
 
 -- | Show Bool as "yes" or "no".
 yesOrNo :: Bool -> String

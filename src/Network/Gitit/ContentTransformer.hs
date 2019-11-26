@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
 Anton van Straaten <anton@appsolutions.com>
@@ -72,8 +73,8 @@ where
 import qualified Control.Exception as E
 import Control.Monad.State
 import Control.Monad.Reader (ask)
+import Control.Monad.Except (throwError)
 import Data.Foldable (traverse_)
-import Data.Char (toLower)
 import Data.List (stripPrefix)
 import Data.Maybe (isNothing, mapMaybe)
 import Data.Semigroup ((<>))
@@ -530,15 +531,20 @@ pandocToHtml pandocContents = do
   bird <- liftM ctxBirdTracks get
   cfg <- lift getConfig
   let tpl = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
+  compiledTemplate <- liftIO $ runIOorExplode $ do
+    res <- compileTemplate "toc" tpl
+    case res of
+      Right t -> return t
+      Left e  -> throwError $ PandocTemplateError $ T.pack e
   return $ primHtml $ T.unpack .
            (if xssSanitize cfg then sanitizeBalance else id) $
            either E.throw id . runPure $ writeHtml5String def{
-                        writerTemplate = Just tpl
+                        writerTemplate = Just compiledTemplate
                       , writerHTMLMathMethod =
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML
-                                 WebTeX u -> Pandoc.WebTeX u
-                                 MathJax u -> Pandoc.MathJax u
+                                 WebTeX u -> Pandoc.WebTeX $ T.pack u
+                                 MathJax u -> Pandoc.MathJax $ T.pack u
                                  RawTeX -> Pandoc.PlainMath
                       , writerTableOfContents = toc
                       , writerHighlightStyle = Just pygments
@@ -640,7 +646,9 @@ addPageTitleToPandoc title' (Pandoc _ blocks) = do
   updateLayout $ \layout -> layout{ pgTitle = title' }
   return $ if null title'
               then Pandoc nullMeta blocks
-              else Pandoc (B.setMeta "title" (B.str title') nullMeta) blocks
+              else Pandoc
+                    (B.setMeta "title" (B.str (T.pack title')) nullMeta)
+                    blocks
 
 -- | Adds javascript links for math support.
 addMathSupport :: a -> ContentTransformer a
@@ -691,7 +699,7 @@ updateLayout f = do
 
 readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
 readerFor pt lhs =
-  let defExts = getDefaultExtensions $ map toLower $ show pt
+  let defExts = getDefaultExtensions $ T.toLower $ T.pack $ show pt
       defPS = def{ readerExtensions = defExts
                                       <> extensionsFromList [Ext_emoji]
                                       <> getPageTypeDefaultExtensions pt lhs
@@ -715,9 +723,10 @@ wikiLinksTransform pandoc
 -- | Convert links with no URL to wikilinks.
 convertWikiLinks :: Config -> Inline -> Inline
 convertWikiLinks cfg (Link attr ref ("", "")) | useAbsoluteUrls cfg =
-  Link attr ref ("/" </> baseUrl cfg </> inlinesToURL ref, "Go to wiki page")
+  Link attr ref (T.pack ("/" </> baseUrl cfg </> inlinesToURL ref),
+                 "Go to wiki page")
 convertWikiLinks _cfg (Link attr ref ("", "")) =
-  Link attr ref (inlinesToURL ref, "Go to wiki page")
+  Link attr ref (T.pack (inlinesToURL ref), "Go to wiki page")
 convertWikiLinks _cfg x = x
 
 -- | Derives a URL from a list of Pandoc Inline elements.
@@ -726,28 +735,29 @@ inlinesToURL = encString False isUnescapedInURI . inlinesToString
 
 -- | Convert a list of inlines into a string.
 inlinesToString :: [Inline] -> String
-inlinesToString = concatMap go
-  where go x = case x of
+inlinesToString = T.unpack . mconcat . map go
+  where go :: Inline -> T.Text
+        go x = case x of
                Str s                   -> s
-               Emph xs                 -> concatMap go xs
-               Strong xs               -> concatMap go xs
-               Strikeout xs            -> concatMap go xs
-               Superscript xs          -> concatMap go xs
-               Subscript xs            -> concatMap go xs
-               SmallCaps xs            -> concatMap go xs
-               Quoted DoubleQuote xs   -> '"' : (concatMap go xs ++ "\"")
-               Quoted SingleQuote xs   -> '\'' : (concatMap go xs ++ "'")
-               Cite _ xs               -> concatMap go xs
+               Emph xs                 -> mconcat $ map go xs
+               Strong xs               -> mconcat $ map go xs
+               Strikeout xs            -> mconcat $ map go xs
+               Superscript xs          -> mconcat $ map go xs
+               Subscript xs            -> mconcat $ map go xs
+               SmallCaps xs            -> mconcat $ map go xs
+               Quoted DoubleQuote xs   -> "\"" <> mconcat (map go xs) <> "\""
+               Quoted SingleQuote xs   -> "'" <> mconcat (map go xs) <> "'"
+               Cite _ xs               -> mconcat $ map go xs
                Code _ s                -> s
                Space                   -> " "
                SoftBreak               -> " "
                LineBreak               -> " "
-               Math DisplayMath s      -> "$$" ++ s ++ "$$"
-               Math InlineMath s       -> "$" ++ s ++ "$"
+               Math DisplayMath s      -> "$$" <> s <> "$$"
+               Math InlineMath s       -> "$" <> s <> "$"
                RawInline (Format "tex") s -> s
                RawInline _ _           -> ""
-               Link _ xs _             -> concatMap go xs
-               Image _ xs _            -> concatMap go xs
+               Link _ xs _             -> mconcat $ map go xs
+               Image _ xs _            -> mconcat $ map go xs
                Note _                  -> ""
-               Span _ xs               -> concatMap go xs
+               Span _ xs               -> mconcat $ map go xs
 
