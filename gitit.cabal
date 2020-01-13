@@ -134,7 +134,7 @@ Library
                      directory,
                      mtl,
                      old-time,
-                     pandoc >= 2.8 && < 2.10,
+                     pandoc >= 2.8 && < 2.9,
                      pandoc-types >= 1.20 && < 1.21,
                      skylighting >= 0.8.2.3 && < 0.9,
                      bytestring,
