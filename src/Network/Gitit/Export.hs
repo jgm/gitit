@@ -37,7 +37,6 @@ import Network.Gitit.Cache (cacheContents, lookupCache)
 import Text.DocTemplates as DT
 import Control.Monad.Trans (liftIO)
 import Control.Monad (unless)
-import Control.Monad.Except (throwError)
 import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
@@ -66,11 +65,8 @@ respondX templ mimetype ext fn opts page doc = do
              else return doc
   doc'' <- liftIO $ runIO $ do
         setUserDataDir $ pandocUserData cfg
-        template <- getDefaultTemplate (T.pack templ)
-        compiledTemplate <- compileTemplate templ template
-        case compiledTemplate of
-          Right t -> fn opts{ writerTemplate = Just t } doc'
-          Left e  -> throwError $ PandocTemplateError $ T.pack e
+        compiledTemplate <- compileDefaultTemplate (T.pack templ)
+        fn opts{ writerTemplate = Just compiledTemplate } doc'
   either (liftIO . throwIO)
          (ok . setContentType mimetype .
            (if null ext then id else setFilename (page ++ "." ++ ext)) .
@@ -110,12 +106,7 @@ respondSlides templ fn page doc = do
                               return $ setVariable "mathml-script"
                                          (UTF8.toString s) mempty
                           else return mempty
-          template <- getDefaultTemplate (T.pack templ)
-          compiledTemplate <- do
-            res <- compileTemplate templ template
-            case res of
-              Right t  -> return t
-              Left e   -> throwError $ PandocTemplateError $ T.pack e
+          compiledTemplate <- compileDefaultTemplate (T.pack templ)
           dzcore <- if templ == "dzslides"
                       then do
                         dztempl <- readDataFile $ "dzslides" </> "template.html"
@@ -229,12 +220,7 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
                 setUserDataDir $ pandocUserData cfg
                 setInputFiles [baseUrl cfg]
                 let templ = if useBeamer then "beamer" else "latex"
-                template <- getDefaultTemplate templ
-                compiledTemplate <- do
-                  res <- compileTemplate (T.unpack templ) template
-                  case res of
-                    Right t  -> return t
-                    Left e   -> throwError $ PandocTemplateError $ T.pack e
+                compiledTemplate <- compileDefaultTemplate templ
                 makePDF "pdflatex" [] (if useBeamer then writeBeamer else writeLaTeX)
                   defaultRespOptions{ writerTemplate = Just compiledTemplate
                                     , writerTableOfContents = toc } pndc

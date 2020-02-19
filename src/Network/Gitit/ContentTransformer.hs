@@ -532,7 +532,7 @@ pandocToHtml pandocContents = do
   cfg <- lift getConfig
   let tpl = "$if(toc)$<div id=\"TOC\">\n$toc$\n</div>\n$endif$\n$body$"
   compiledTemplate <- liftIO $ runIOorExplode $ do
-    res <- compileTemplate "toc" tpl
+    res <- runWithDefaultPartials $ compileTemplate "toc" tpl
     case res of
       Right t -> return t
       Left e  -> throwError $ PandocTemplateError $ T.pack e
