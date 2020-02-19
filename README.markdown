@@ -1,4 +1,4 @@
-Gitit
+Gitit [![Publicly running instances](https://img.shields.io/badge/Public%20instances%20running-10.7k-brightgreen)](https://www.google.com/search?q=%22powered+by+gitit%22)
 =====
 
 Gitit is a wiki program written in Haskell. It uses [Happstack] for
