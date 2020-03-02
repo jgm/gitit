@@ -1,5 +1,5 @@
 name:                gitit
-version:             0.12.3.2
+version:             0.13.0.0
 Cabal-version:       >= 1.8
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
@@ -160,7 +160,7 @@ Library
                      xss-sanitize >= 0.3 && < 0.4,
                      tagsoup >= 0.13 && < 0.15,
                      blaze-html >= 0.4 && < 0.10,
-                     json >= 0.4 && < 0.10,
+                     json >= 0.4 && < 0.11,
                      uri-bytestring >= 0.2.3.3,
                      split,
                      hoauth2 >= 1.3.0 && < 1.10,

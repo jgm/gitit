@@ -1,3 +1,10 @@
+Version 0.13.0.0 WIP
+
+  * Allow building with GHC 8.8
+
+    + Network.Gitit.Rpxnow: change return type of `authenticate` to
+      avoid using removed instances of `Monad.fail`
+
 Version 0.12.3.2 released 31 Dec 2018
 
   * Remove references to gitit.net in cabal file.
