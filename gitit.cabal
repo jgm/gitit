@@ -155,7 +155,7 @@ Library
                      xml >= 1.3.5,
                      hslogger >= 1,
                      ConfigFile >= 1,
-                     feed >= 1.0 && < 1.3,
+                     feed >= 1.0 && < 1.4,
                      xml-types >= 0.3,
                      xss-sanitize >= 0.3 && < 0.4,
                      tagsoup >= 0.13 && < 0.15,
