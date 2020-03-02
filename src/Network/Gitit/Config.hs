@@ -256,7 +256,11 @@ extractGithubConfig cp = do
                  then fmap Just (getGithubProp "github-org")
                  else return Nothing
       let cfgOAuth2 = OAuth2 { oauthClientId = T.pack cfOauthClientId
+#if MIN_VERSION_hoauth2(1, 11, 0)
+                          , oauthClientSecret = Just $ T.pack cfOauthClientSecret
+#else
                           , oauthClientSecret = T.pack cfOauthClientSecret
+#endif
                           , oauthCallback = Just cfOauthCallback
                           , oauthOAuthorizeEndpoint = cfOauthOAuthorizeEndpoint
                           , oauthAccessTokenEndpoint = cfOauthAccessTokenEndpoint

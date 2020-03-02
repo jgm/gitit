@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
+{-# LANGUAGE CPP, OverloadedStrings, ScopedTypeVariables #-}
 
 module Network.Gitit.Authentication.Github ( loginGithubUser
                                            , getGithubUser
@@ -102,13 +102,25 @@ instance FromData GithubCallbackPars where
          vState <- liftM Just (look "state") `mplus` return Nothing
          return GithubCallbackPars {rCode = vCode, rState = vState}
 
+#if MIN_VERSION_hoauth2(1, 9, 0)
+userInfo :: Manager -> AccessToken -> IO (Either BSL.ByteString GithubUser)
+#else
 userInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors GithubUser)
+#endif
 userInfo mgr token = authGetJSON mgr token $ githubUri "/user"
 
+#if MIN_VERSION_hoauth2(1, 9, 0)
+mailInfo :: Manager -> AccessToken -> IO (Either BSL.ByteString [GithubUserMail])
+#else
 mailInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors [GithubUserMail])
+#endif
 mailInfo mgr token = authGetJSON mgr token $ githubUri "/user/emails"
 
+#if MIN_VERSION_hoauth2(1, 9, 0)
+orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (Either BSL.ByteString BSL.ByteString)
+#else
 orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (OAuth2Result OA.Errors BSL.ByteString)
+#endif
 orgInfo gitLogin githubOrg mgr token = do
   let url = githubUri $ "/orgs/" `BS.append` encodeUtf8 githubOrg `BS.append` "/members/" `BS.append` encodeUtf8 gitLogin
   authGetBS mgr token url
