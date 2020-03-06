@@ -43,6 +43,7 @@ import Text.Atom.Feed (nullEntry, nullFeed, nullLink, nullPerson,
          Date, Entry(..), Feed(..), Link(linkRel), Generator(..),
          Person(personName), EntryContent(..), TextContent(TextString))
 import Text.Atom.Feed.Export (xmlFeed)
+import Text.XML.Light as XML (showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
 import Text.XML as Text.XML (renderText, Document(..), Element(..),
                              Prologue(..), def, fromXMLElement)
 import qualified Data.XML.Types as XMLTypes
@@ -127,42 +128,91 @@ generateEmptyfeed generator title home mbPath authors now =
             }
     where baseNull = nullFeed (T.pack home) (TextString (T.pack title)) now
 
+-- Several of the following functions have been given an alternate
+-- version patched in using CPP specifically when the `feed` library
+-- used is version 1.2.x
+--
+-- The 1.2.0.0 release of `feed` introduced an API change that was
+-- reverted in 1.3.0.0.  When feed-1.2.x is sufficiently out of use,
+-- the dependency lower-bound for feed should be updated to >= 1.3 and
+-- the second alternative (#else condition) in each of the CPP
+-- invocations below can be removed.
+--
+-- https://github.com/bergmark/feed/issues/35
+
 revisionToEntry :: String -> (Revision, [(FilePath, [Diff [String]])]) -> Entry
 revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
                                revAuthor = ra, revDescription = rd,
                                revChanges = rv}, diffs) =
-  baseEntry{ entryContent = Just $ HTMLContent $ XMLTypes.Element
-              (XMLTypes.Name "div" Nothing Nothing) [] $ map diffFile diffs
+  baseEntry{ entryContent = Just $ HTMLContent content
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
    where baseEntry = nullEntry (T.pack url) title
                           (T.pack $ formatFeedTime rdt)
          url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
          ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
          title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
+         df = map diffFile diffs
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+         content = T.pack $ concat $ map showContent df
+#else
+         content = XMLTypes.Element (XMLTypes.Name "div" Nothing Nothing) [] df
+#endif
 
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+diffFile :: (FilePath, [Diff [String]]) -> Content
+diffFile (fp, d) =
+    enTag "div" $ header : text
+  where
+    header = enTag1 "h1" $ enText fp
+    text = map (enTag1 "p") $ concat $ map diffLines d
+#else
 diffFile :: (FilePath, [Diff [String]]) -> XMLTypes.Node
 diffFile (fp, d) =
     enTag "div" $ header : text
   where
     header = enTag1 "h1" $ enText $ T.pack fp
     text = map (enTag1 "p") $ concat $ map diffLines d
+#endif
 
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+diffLines :: Diff [String] -> [Content]
+diffLines (First x) = map (enTag1 "s" . enText) x
+diffLines (Second x) = map (enTag1 "b" . enText) x
+diffLines (Both x _) = map enText x
+#else
 diffLines :: Diff [String] -> [XMLTypes.Node]
 diffLines (First x) = map (enTag1 "s" . enText . T.pack) x
 diffLines (Second x) = map (enTag1 "b" . enText . T.pack) x
 diffLines (Both x _) = map (enText . T.pack) x
+#endif
 
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+enTag :: String -> [Content] -> Content
+enTag tag content = Elem blank_element{ elName=blank_name{qName=tag}
+                                      , elContent=content
+                                      }
+#else
 enTag :: T.Text -> [XMLTypes.Node] -> XMLTypes.Node
 enTag tag content = XMLTypes.NodeElement $
   XMLTypes.Element
   (XMLTypes.Name tag Nothing Nothing)
   [] content
+#endif
 
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+enTag1 :: String -> Content -> Content
+#else
 enTag1 :: T.Text -> XMLTypes.Node -> XMLTypes.Node
+#endif
 enTag1 tag content = enTag tag [content]
 
+#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
+enText :: String -> Content
+enText content = Text blank_cdata{cdData=content}
+#else
 enText :: T.Text -> XMLTypes.Node
 enText content = XMLTypes.NodeContent (XMLTypes.ContentText content)
+#endif
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person

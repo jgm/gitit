@@ -96,8 +96,11 @@ main = do
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
   setSocketOption sock ReuseAddr 1
-  device <- inet_addr (address conf)
-  bind sock (SockAddrInet (toEnum (portNumber conf)) device)
+  let portNum = show (portNumber conf)
+  addrs <- getAddrInfo Nothing (Just $ address conf) (Just portNum)
+  case addrs of
+    addr:_ -> bind sock $ addrAddress addr
+    [] -> error $ "Could not resolve " ++ address conf ++ ":" ++ portNum
   listen sock 10
 
   -- start the server
