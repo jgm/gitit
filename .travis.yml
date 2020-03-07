@@ -37,14 +37,14 @@ matrix:
 
   # The Stack builds. We can pass in arbitrary Stack arguments via the ARGS
   # variable, such as using --stack-yaml to point to a different file.
-  - env: BUILD=stack ARGS="--resolver lts-12"
+  - env: BUILD=stack
     compiler: ": #stack 8.4.3"
     addons: {apt: {packages: [ghc-8.4.3], sources: [hvr-ghc]}}
 
   # Nightly builds are allowed to fail
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly"
-    addons: {apt: {packages: [libgmp-dev]}}
+  # - env: BUILD=stack ARGS="--resolver nightly"
+  #   compiler: ": #stack nightly"
+  #   addons: {apt: {packages: [libgmp-dev]}}
 
   # - env: BUILD=stack ARGS="--resolver lts-8"
   # compiler: ": #stack 8.0.1 osx"
@@ -56,7 +56,6 @@ matrix:
 
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head
-  - env: BUILD=stack ARGS="--resolver nightly"
 
   fast_finish: true
 
@@ -86,7 +85,7 @@ install:
   case "$BUILD" in
     stack)
       ulimit -n 4096
-      stack --no-terminal --install-ghc $ARGS install
+      stack --no-terminal --install-ghc install --only-dependencies
       ;;
     cabal)
       cabal --version
@@ -101,7 +100,7 @@ script:
   case "$BUILD" in
     stack)
       ulimit -n 4096
-      stack --no-terminal $ARGS install
+      stack --no-terminal install
       ;;
     cabal)
       cabal configure -fplugins -v2 -ffast --ghc-options="-O0 -Wall -fno-warn-unused-do-bind -Werror"
