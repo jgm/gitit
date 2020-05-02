@@ -1,26 +1,25 @@
+nix:
+  enable: false
+  packages: [zlib zlib.dev]
+
 flags:
   gitit:
     plugins: true
 packages:
 - '.'
 extra-deps:
+- base-noprelude-4.13.0.0
 - ConfigFile-1.1.4
-- Diff-0.4.0
-- HsYAML-0.2.1.0
-- HsYAML-aeson-0.2.0.0
 - doclayout-0.3
-- doctemplates-0.8.1
-- emojis-0.1
+- doctemplates-0.8.2
 - filestore-0.6.4
-- haddock-library-1.8.0
 - happstack-server-7.6.0
-- jira-wiki-markup-1.0.0
-- pandoc-2.9.2
+- jira-wiki-markup-1.1.4
+- json-0.10
+- MissingH-1.4.3.0
+- pandoc-2.9.2.1
 - pandoc-types-1.20
-- recaptcha-0.1.0.3
-- regex-pcre-builtin-0.95.0.8.8.35
-- skylighting-0.8.3.2
-- skylighting-core-0.8.3.2
-- texmath-0.12.0.1
+- recaptcha-0.1.0.4
+
 allow-newer: true
-resolver: lts-14.14
+resolver: lts-15.10
