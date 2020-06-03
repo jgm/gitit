@@ -178,6 +178,7 @@ Library
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
   default-extensions: CPP
+  default-language:  Haskell2010
   ghc-options:       -Wall -fno-warn-unused-do-bind
   ghc-prof-options:  -fprof-auto-exported
 
@@ -196,6 +197,7 @@ Executable           gitit
                      network >= 2.6
   other-modules:     Paths_gitit
   default-extensions: CPP
+  default-language:  Haskell2010
   ghc-options:       -Wall -threaded -fno-warn-unused-do-bind
   ghc-prof-options:  -fprof-auto-exported -rtsopts
 
@@ -206,4 +208,4 @@ Executable           expireGititCache
                      network-uri >= 2.6,
                      network >= 2.6
   ghc-options:       -Wall
-
+  default-language:  Haskell2010
