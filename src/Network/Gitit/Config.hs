@@ -46,7 +46,6 @@ import qualified Data.ByteString.Char8 as BS
 import Network.Gitit.Compat.Except
 import Control.Monad
 import Control.Monad.Trans
-import Text.Pandoc.Error (handleError)
 
 
 forceEither :: Show e => Either e a -> a

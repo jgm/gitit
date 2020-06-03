@@ -43,7 +43,6 @@ import qualified Data.ByteString.Lazy as L
 import System.FilePath ((</>), takeDirectory)
 import System.Directory (doesFileExist)
 import Text.HTML.SanitizeXSS
-import Text.Pandoc.Writers.RTF (writeRTF)
 import Data.ByteString.Lazy (fromStrict)
 import Data.Text (Text)
 import qualified Data.Text as T

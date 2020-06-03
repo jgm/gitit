@@ -92,7 +92,6 @@ import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
 import System.FilePath
 import qualified Text.Pandoc.Builder as B
-import Text.Pandoc.Extensions (getDefaultExtensions)
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Skylighting hiding (Context)
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
