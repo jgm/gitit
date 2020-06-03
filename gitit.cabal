@@ -177,7 +177,7 @@ Library
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths
     cpp-options:     -D_PLUGINS
-  extensions:        CPP
+  default-extensions: CPP
   ghc-options:       -Wall -fno-warn-unused-do-bind
   ghc-prof-options:  -fprof-auto-exported
 
@@ -195,7 +195,7 @@ Executable           gitit
                      network-uri >= 2.6,
                      network >= 2.6
   other-modules:     Paths_gitit
-  extensions:        CPP
+  default-extensions: CPP
   ghc-options:       -Wall -threaded -fno-warn-unused-do-bind
   ghc-prof-options:  -fprof-auto-exported -rtsopts
 
