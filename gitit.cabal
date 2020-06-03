@@ -121,6 +121,7 @@ Library
                      Network.Gitit.Page, Network.Gitit.Feed,
                      Network.Gitit.Compat.Except,
                      Paths_gitit
+  autogen-modules:   Paths_gitit
   build-depends:     base >= 4.9 && < 5,
                      syb,
                      filepath,
