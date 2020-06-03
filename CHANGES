@@ -1,9 +1,41 @@
-Version 0.13.0.0 WIP
+Version 0.13.0.0 released 03 June 2020
 
   * Allow building with GHC 8.8
 
     + Network.Gitit.Rpxnow: change return type of `authenticate` to
       avoid using removed instances of `Monad.fail`
+
+  * Upgrade dependencies and add nix section to stack.yaml
+    (Fabián Heredia Montiel).
+
+  * Fixes to compile with feed-1.3.x (octalsrc).
+    The changes to EntryContent in feed-1.2.0.0 were reverted
+    in 1.3.0.0
+
+  * Fixes to compile with network-3.x (octalsrc).
+    network-3.0.0.0 moves the Network.BSD module into its own
+    "network-bsd" package and removes deprecated API elements.  This
+    requires a new dependency on "network-bsd" and a code change to stop
+    using the removed inet_addr function.
+    This change also adds < 3.2 as an upper bound for network (there was
+    previously no upper bound).
+
+  * Fixes to compile with hoauth2-1.11.x (octalsrc).
+    This also fixes type mismatches that prevent compiling with
+    hoauth-1.9.x
+
+  * Fixes to compile with GHC 8.8.x, API change in Network.Gitit.Rpxnow
+    (octalsrc).  GHC 8.8's base-4.13.0.0 removes `fail` from Monad,
+    requiring a few uses of `fail` to be removed and the json dependency
+    to be updated.  Because arbitrary `Monad` instances no longer
+    support failure, the `Monad m` used in the return type of
+    Network.Gitit.Rpxnow.authenticate has been fixed as `Either String`.
+
+  * Allow pandoc 2.9.x.
+
+  * Diff fixes in Feed.
+
+  * Changes to use filestore 0.6.4.
 
 Version 0.12.3.2 released 31 Dec 2018
 
