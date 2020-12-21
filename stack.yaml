@@ -25,7 +25,7 @@ extra-deps:
 - HsYAML-aeson-0.2.0.0
 - doctemplates-0.8.2
 - ConfigFile-1.1.4
-- filestore-0.6.4
+- filestore-0.6.5
 - happstack-server-7.6.0
 - json-0.10
 - MissingH-1.4.3.0
