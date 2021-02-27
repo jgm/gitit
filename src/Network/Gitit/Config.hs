@@ -110,6 +110,7 @@ extractConfig cp = do
       cfNoDelete <- get cp "DEFAULT" "no-delete"
       cfDefaultSummary <- get cp "DEFAULT" "default-summary"
       cfDeleteSummary <- get cp "DEFAULT" "delete-summary"
+      cfDisableRegistration <- get cp "DEFAULT" "disable-registration"
       cfAccessQuestion <- get cp "DEFAULT" "access-question"
       cfAccessQuestionAnswers <- get cp "DEFAULT" "access-question-answers"
       cfUseRecaptcha <- get cp "DEFAULT" "use-recaptcha"
@@ -181,7 +182,7 @@ extractConfig cp = do
                                        _         -> ForModify
 
         , authHandler          = case authMethod of
-                                      "form"     -> msum formAuthHandlers
+                                      "form"     -> msum $ formAuthHandlers cfDisableRegistration
                                       "github"   -> msum $ githubAuthHandlers ghConfig
                                       "http"     -> msum httpAuthHandlers
                                       "rpx"      -> msum rpxAuthHandlers
@@ -209,6 +210,7 @@ extractConfig cp = do
         , noDelete             = splitCommaList cfNoDelete
         , defaultSummary       = cfDefaultSummary
         , deleteSummary        = cfDeleteSummary
+        , disableRegistration  = cfDisableRegistration
         , accessQuestion       = if null cfAccessQuestion
                                     then Nothing
                                     else Just (cfAccessQuestion, splitCommaList cfAccessQuestionAnswers)

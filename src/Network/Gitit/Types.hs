@@ -169,6 +169,8 @@ data Config = Config {
   -- be given the prompt and must give
   -- one of the answers to register.
   accessQuestion       :: Maybe (String, [String]),
+  -- | Disable Registration?
+  disableRegistration  :: Bool,
   -- | Use ReCAPTCHA for user registration.
   useRecaptcha         :: Bool,
   recaptchaPublicKey   :: String,
