@@ -350,18 +350,18 @@ loginForm dest = do
       , textfield "destination" ! [thestyle "display: none;", value dest]
       , submit "login" "Login" ! [intAttr "tabindex" 3]
       ] +++
-    if not (disableRegistration cfg)
+    (if disableRegistration cfg
        then noHtml
        else p << [ stringToHtml "If you do not have an account, "
                  , anchor ! [href $ base' ++ "/_register?" ++
                      urlEncodeVars [("destination", encodeString dest)]] << "click here to get one."
-                 ] +++
-    if null (mailCommand cfg)
+                 ]) +++
+    (if null (mailCommand cfg)
        then noHtml
        else p << [ stringToHtml "If you forgot your password, "
                  , anchor ! [href $ base' ++ "/_resetPassword"] <<
                      "click here to get a new one."
-                 ]
+                 ])
 
 loginUserForm :: Handler
 loginUserForm = withData $ \params -> do
