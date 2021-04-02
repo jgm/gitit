@@ -45,7 +45,11 @@ import Network.URL (encString)
 
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO Text
+#if MIN_VERSION_pandoc(2,12,0)
+readFileUTF8 = UTF8.readFile
+#else
 readFileUTF8 = fmap T.pack . UTF8.readFile
+#endif
 
 -- | Perform a function a directory and return to working directory.
 inDir :: FilePath -> IO a -> IO a

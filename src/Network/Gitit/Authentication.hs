@@ -44,7 +44,7 @@ import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha)
 import qualified Data.Map as M
-import Text.Pandoc.Shared (substitute)
+import Data.List (stripPrefix)
 import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
 import Network.URL (exportURL, add_param, importURL)
 import Network.BSD (getHostName)
@@ -53,6 +53,16 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
+
+-- | Replace each occurrence of one sublist in a list with another.
+--   Vendored in from pandoc 2.11.4 as 2.12 removed this function.
+substitute :: (Eq a) => [a] -> [a] -> [a] -> [a]
+substitute _ _ [] = []
+substitute [] _ xs = xs
+substitute target replacement lst@(x:xs) =
+    case stripPrefix target lst of
+      Just lst' -> replacement ++ substitute target replacement lst'
+      Nothing   -> x : substitute target replacement xs
 
 data ValidationType = Register
                     | ResetPassword
