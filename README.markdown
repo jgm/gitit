@@ -42,6 +42,29 @@ Other features include
 Getting started
 ===============
 
+Using a prebuilt binary
+-----------------------------
+
+We use GitHub Actions to build pre-packaged binaries + assets of gitit. They are
+built on the latest MacOS and Ubuntu available on GitHub. This installation
+method is the easiest one, however it may not work on your machine if you have a
+different OS or OS version.
+
+We recommend trying a prebuilt package first, and should you encounter issues,
+try compiling it yourself.
+
+On Debain and Ubuntu you'll need to first install the `libtinfo5` package with
+`sudo apt install libtinfo5`.
+
+You can download the package for your platform [on the releases
+page](/releases). Simply unpack the archive (`tar -xf gitit-<platform>.tar.gz`)
+and run the `gitit` executable inside.
+
+*Note*: gitit will automatically create and use a `wikidata` folder in whatever
+directory is run. To configure this you can run the `gitit` executable from
+anywhere, but you **may not** move the executable from the folder unpacked from
+the archive.
+
 Compiling and installing gitit
 ------------------------------
 
