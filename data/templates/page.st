@@ -43,5 +43,6 @@
     $javascripts$
     $expire()$
     $getuser()$
+    $autolink()$
   </body>
 </html>
