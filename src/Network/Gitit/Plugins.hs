@@ -29,6 +29,7 @@ import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
+import DynFlags (gopt_set, GeneralFlag(..))
 import GHC.Paths
 import Unsafe.Coerce
 
@@ -37,7 +38,7 @@ loadPlugin pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
-    setSessionDynFlags dflags
+    setSessionDynFlags (gopt_set dflags Opt_BuildDynamicToo)
     defaultCleanupHandler dflags $ do
       -- initDynFlags
       unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
