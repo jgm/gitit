@@ -1,3 +1,7 @@
+[![license](https://img.shields.io/badge/license-GPLv2-brightgreen.svg)](https://www.gnu.org/licenses/gpl.html)
+[![hackage release](https://img.shields.io/hackage/v/gitit.svg?label=current+release)](http://hackage.haskell.org/package/gitit)
+[![travis build status](https://img.shields.io/travis/jgm/gitit.svg)](https://travis-ci.org/jgm/gitit)
+
 Gitit
 =====
 
