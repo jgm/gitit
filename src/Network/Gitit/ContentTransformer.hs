@@ -744,6 +744,7 @@ inlinesToString = T.unpack . mconcat . map go
                Superscript xs          -> mconcat $ map go xs
                Subscript xs            -> mconcat $ map go xs
                SmallCaps xs            -> mconcat $ map go xs
+               Underline xs            -> mconcat $ map go xs
                Quoted DoubleQuote xs   -> "\"" <> mconcat (map go xs) <> "\""
                Quoted SingleQuote xs   -> "'" <> mconcat (map go xs) <> "'"
                Cite _ xs               -> mconcat $ map go xs
