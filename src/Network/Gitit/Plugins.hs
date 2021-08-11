@@ -38,28 +38,27 @@ loadPlugin pluginName = do
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
     setSessionDynFlags dflags
-    defaultCleanupHandler dflags $ do
-      -- initDynFlags
-      unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
-        $ do
-            addTarget =<< guessTarget pluginName Nothing
-            r <- load LoadAllTargets
-            case r of
-              Failed -> error $ "Error loading plugin: " ++ pluginName
-              Succeeded -> return ()
-      let modName =
-            if "Network.Gitit.Plugin" `isPrefixOf` pluginName
-               then pluginName
-               else if "Network/Gitit/Plugin/" `isInfixOf` pluginName
-                       then "Network.Gitit.Plugin." ++ takeBaseName pluginName
-                       else takeBaseName pluginName
-      pr <- parseImportDecl "import Prelude"
-      i <- parseImportDecl "import Network.Gitit.Interface"
-      m <- parseImportDecl ("import " ++ modName)
-      setContext [IIDecl m, IIDecl  i, IIDecl pr]
-      value <- compileExpr (modName ++ ".plugin :: Plugin")
-      let value' = (unsafeCoerce value) :: Plugin
-      return value'
+    -- initDynFlags
+    unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
+      $ do
+          addTarget =<< guessTarget pluginName Nothing
+          r <- load LoadAllTargets
+          case r of
+            Failed -> error $ "Error loading plugin: " ++ pluginName
+            Succeeded -> return ()
+    let modName =
+          if "Network.Gitit.Plugin" `isPrefixOf` pluginName
+             then pluginName
+             else if "Network/Gitit/Plugin/" `isInfixOf` pluginName
+                     then "Network.Gitit.Plugin." ++ takeBaseName pluginName
+                     else takeBaseName pluginName
+    pr <- parseImportDecl "import Prelude"
+    i <- parseImportDecl "import Network.Gitit.Interface"
+    m <- parseImportDecl ("import " ++ modName)
+    setContext [IIDecl m, IIDecl  i, IIDecl pr]
+    value <- compileExpr (modName ++ ".plugin :: Plugin")
+    let value' = (unsafeCoerce value) :: Plugin
+    return value'
 
 #else
 
