@@ -59,10 +59,10 @@ import Network.Gitit.Rpxnow as R
 substitute :: (Eq a) => [a] -> [a] -> [a] -> [a]
 substitute _ _ [] = []
 substitute [] _ xs = xs
-substitute target replacement lst@(x:xs) =
-    case stripPrefix target lst of
-      Just lst' -> replacement ++ substitute target replacement lst'
-      Nothing   -> x : substitute target replacement xs
+substitute target' replacement lst@(x:xs) =
+    case stripPrefix target' lst of
+      Just lst' -> replacement ++ substitute target' replacement lst'
+      Nothing   -> x : substitute target' replacement xs
 
 data ValidationType = Register
                     | ResetPassword
