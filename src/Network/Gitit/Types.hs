@@ -28,7 +28,7 @@ module Network.Gitit.Types (
                            , AuthenticationLevel(..)
                            , Config(..)
                            , Page(..)
-                           , SessionKey
+                           , SessionKey(..)
                            -- we do not export SessionData constructors, in case we need to extend  SessionData with other data in the future
                            , SessionData
                            , SessionGithubData
@@ -229,7 +229,8 @@ data Page = Page {
   , pageMeta        :: [(String, String)]
 } deriving (Read, Show)
 
-type SessionKey = Integer
+newtype SessionKey = SessionKey Integer
+  deriving (Read, Show, Eq, Ord)
 
 data SessionData = SessionData {
   sessionUser :: Maybe String,
@@ -247,7 +248,7 @@ sessionData user = SessionData (Just user) Nothing
 sessionDataGithubStateUrl :: String -> String -> SessionData
 sessionDataGithubStateUrl githubState destination = SessionData Nothing (Just $ SessionGithubData githubState destination)
 
-data Sessions a = Sessions {unsession::M.Map SessionKey a}
+data Sessions a = Sessions {unsession :: M.Map SessionKey a}
   deriving (Read,Show,Eq)
 
 -- Password salt hashedPassword
@@ -372,13 +373,10 @@ data Params = Params { pUsername     :: String
                      , pRedirect     :: Maybe Bool
                      }  deriving Show
 
-instance FromReqURI [String] where
-  fromReqURI s = case fromReqURI s of
-                      Just (s' :: String) ->
-                                   case reads s' of
-                                        ((xs,""):_) -> xs
-                                        _           -> Nothing
-                      Nothing             -> Nothing
+instance FromReqURI SessionKey where
+ fromReqURI s = case fromReqURI s of
+                       Just i -> Just $ SessionKey i
+                       Nothing -> Nothing
 
 instance FromData Params where
      fromData = do

@@ -120,7 +120,7 @@ setSession key u = updateGititState $ \s ->
 
 newSession :: MonadIO m => SessionData -> m SessionKey
 newSession u = do
-  key <- liftIO $ randomRIO (0, 1000000000)
+  key <- liftIO $ SessionKey <$> randomRIO (0, 1000000000)
   setSession key u
   return key
 
