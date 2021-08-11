@@ -46,7 +46,6 @@ import Text.Atom.Feed.Export (xmlFeed)
 import Text.XML.Light as XML (showContent, Content(..), Element(..), blank_element, QName(..), blank_name, CData(..), blank_cdata)
 import Text.XML as Text.XML (renderText, Document(..), Element(..),
                              Prologue(..), def, fromXMLElement)
-import qualified Data.XML.Types as XMLTypes
 import Data.Version (showVersion)
 import Paths_gitit (version)
 

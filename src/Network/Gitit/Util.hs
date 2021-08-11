@@ -36,7 +36,6 @@ import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
 import Data.Char (toLower, isAscii)
 import Data.Text (Text)
-import qualified Data.Text as T
 import Network.Gitit.Types
 import qualified Control.Exception as E
 import qualified Text.Pandoc.UTF8 as UTF8

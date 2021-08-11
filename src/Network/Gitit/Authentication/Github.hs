@@ -17,7 +17,6 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified URI.ByteString as URI
 import Network.HTTP.Conduit
 import Network.OAuth.OAuth2
-import Network.OAuth.OAuth2.TokenRequest as OA
 import Control.Monad (liftM, mplus, mzero)
 import Data.Maybe
 import Data.Aeson
