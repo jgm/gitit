@@ -1,6 +1,6 @@
 cabal-version:       2.0
 name:                gitit
-version:             0.14.0.0
+version:             0.15.0.0
 build-type:          Simple
 synopsis:            Wiki using happstack, git or darcs, and pandoc.
 description:         Gitit is a wiki backed by a git, darcs, or mercurial
