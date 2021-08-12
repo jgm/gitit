@@ -5,4 +5,4 @@ flags: +embed_data_files
 source-repository-package
   type: git
   location: https://github.com/jgm/pandoc
-  tag: ec34497bc1b858e5bd56a09c5919238c5ea97de1
+  tag: 3cfcfacd728fec948d72e04bfcd64bbf97979280
