@@ -122,7 +122,7 @@ Library
                      Network.Gitit.Compat.Except,
                      Paths_gitit
   autogen-modules:   Paths_gitit
-  build-depends:     base >= 4.9 && < 5,
+  build-depends:     base >= 4.9 && < 4.15,
                      syb,
                      filepath,
                      safe,
