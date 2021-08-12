@@ -187,7 +187,7 @@ Library
 Executable           gitit
   hs-source-dirs:    .
   main-is:           gitit.hs
-  build-depends:     base >=3 && < 5,
+  build-depends:     base >= 4.9 && < 5,
                      gitit,
                      mtl,
                      hslogger,
