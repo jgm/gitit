@@ -41,6 +41,7 @@ import Text.XHtml (noHtml)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
 import System.FilePath ((</>), takeDirectory)
+import System.Environment (setEnv)
 import System.Directory (doesFileExist)
 import Text.HTML.SanitizeXSS
 import Data.ByteString.Lazy (fromStrict)
@@ -49,6 +50,7 @@ import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import Data.List (isPrefixOf)
 import Skylighting (styleToCss, pygments)
+import System.IO.Temp (withSystemTempDirectory)
 import Paths_gitit (getDataFileName)
 
 defaultRespOptions :: WriterOptions
@@ -213,9 +215,15 @@ respondPDF useBeamer page old_pndc = fixURLs page old_pndc >>= \pndc -> do
                else return Nothing
   pdf' <- case cached of
             Just (_modtime, bs) -> return $ Right $ L.fromChunks [bs]
-            Nothing -> do
+            Nothing -> liftIO $
+                withSystemTempDirectory "gitit" $ \tmpdir -> do
               let toc = tableOfContents cfg
-              res <- liftIO $ runIO $ do
+              -- ensure that LaTeX \include commands can't include
+              -- files outside the working directory, e.g. /etc/passwd:
+              writeFile (tmpdir </> "texmf.cnf")
+                "openout_any = p\nopenin_any = p\n"
+              setEnv "TEXMFCNF" (tmpdir ++ ":")
+              res <- runIO $ do
                 setUserDataDir $ pandocUserData cfg
                 setInputFiles [baseUrl cfg]
                 let templ = if useBeamer then "beamer" else "latex"
