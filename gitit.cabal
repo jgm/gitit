@@ -115,7 +115,6 @@ Library
                      Network.Gitit.Authentication.Github,
                      Network.Gitit.Util, Network.Gitit.Server
                      Network.Gitit.Cache, Network.Gitit.State,
-                     Network.Gitit.Export,
                      Network.Gitit.Handlers,
                      Network.Gitit.Plugins, Network.Gitit.Rpxnow,
                      Network.Gitit.Page, Network.Gitit.Feed,

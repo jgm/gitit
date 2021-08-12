@@ -199,7 +199,6 @@ wikiHandlers =
           authenticate ForModify (unlessNoDelete deletePage showPage) ]
   , dir "_preview" preview
   , guardIndex >> indexPage
-  , guardCommand "export" >> exportPage
   , method POST >> guardCommand "cancel" >> showPage
   , method POST >> guardCommand "update" >>
       authenticate ForModify (unlessNoEdit updatePage showPage)

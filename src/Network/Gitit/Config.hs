@@ -130,7 +130,6 @@ extractConfig cp = do
       cfWikiTitle <- get cp "DEFAULT" "wiki-title"
       cfFeedDays <- get cp "DEFAULT" "feed-days"
       cfFeedRefreshTime <- get cp "DEFAULT" "feed-refresh-time"
-      cfPDFExport <- get cp "DEFAULT" "pdf-export"
       cfPandocUserData <- get cp "DEFAULT" "pandoc-user-data"
       cfXssSanitize <- get cp "DEFAULT" "xss-sanitize"
       cfRecentActivityDays <- get cp "DEFAULT" "recent-activity-days"
@@ -232,7 +231,6 @@ extractConfig cp = do
         , wikiTitle            = cfWikiTitle
         , feedDays             = readNumber "feed-days" cfFeedDays
         , feedRefreshTime      = readNumber "feed-refresh-time" cfFeedRefreshTime
-        , pdfExport            = cfPDFExport
         , pandocUserData       = if null cfPandocUserData
                                     then Nothing
                                     else Just cfPandocUserData

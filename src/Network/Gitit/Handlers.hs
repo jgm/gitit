@@ -42,7 +42,6 @@ module Network.Gitit.Handlers (
                       , showPage
                       , showPageDiff
                       , showFileDiff
-                      , exportPage
                       , updatePage
                       , editPage
                       , deletePage
@@ -61,7 +60,7 @@ import Network.Gitit.Feed (filestoreToXmlFeed, FeedConfig(..))
 import Network.Gitit.Util (orIfNull)
 import Network.Gitit.Cache (expireCachedFile, lookupCache, cacheContents)
 import Network.Gitit.ContentTransformer (showRawPage, showFileAsText, showPage,
-        exportPage, showHighlightedSource, preview, applyPreCommitPlugins)
+        showHighlightedSource, preview, applyPreCommitPlugins)
 import Network.Gitit.Page (readCategories)
 import qualified Control.Exception as E
 import System.FilePath

@@ -9,6 +9,5 @@
       <li><a href="$base$/_feed$pageUrl$" type="application/atom+xml" rel="alternate" title="This page's ATOM Feed">Atom feed</a> <img alt="feed icon" src="$base$/img/icons/feed.png"/></li>
       $endif$
     </ul>
-    $exportbox$
   </fieldset>
 </div>

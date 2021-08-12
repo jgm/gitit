@@ -204,8 +204,6 @@ data Config = Config {
   feedDays             :: Integer,
   -- | Number of minutes to cache feeds before refreshing
   feedRefreshTime      :: Integer,
-  -- | Allow PDF export?
-  pdfExport            :: Bool,
   -- | Directory to search for pandoc customizations
   pandocUserData       :: Maybe FilePath,
   -- | Filter HTML through xss-sanitize
@@ -467,7 +465,7 @@ instance FromData Command where
        return $ case map fst pairs `intersect` commandList of
                  []          -> Command Nothing
                  (c:_)       -> Command $ Just c
-               where commandList = ["update", "cancel", "export"]
+               where commandList = ["update", "cancel"]
 
 -- | State for a single wiki.
 data WikiState = WikiState {

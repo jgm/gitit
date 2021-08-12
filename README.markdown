@@ -7,10 +7,9 @@ files are stored in a [git], [darcs], or [mercurial] repository
 and may be modified either by using the VCS's command-line tools or
 through the wiki's web interface. By default, pandoc's extended version
 of markdown is used as a markup language, but reStructuredText, LaTeX, HTML,
-DocBook, or Emacs Org-mode markup can also be used. Pages can be exported in a
-number of different formats, including LaTeX, RTF, OpenOffice ODT, and
-MediaWiki markup.  Gitit can be configured to display TeX math (using
-[texmath]) and highlighted source code (using [highlighting-kate]).
+DocBook, or Emacs Org-mode markup can also be used.  Gitit can
+be configured to display TeX math (using [texmath]) and
+highlighted source code (using [highlighting-kate]).
 
 Other features include
 
@@ -411,7 +410,7 @@ Caching
 By default, gitit does not cache content.  If your wiki receives a lot of
 traffic or contains pages that are slow to render, you may want to activate
 caching.  To do this, set the configuration option `use-cache` to `yes`.
-By default, rendered pages, highlighted source files, and exported PDFs
+By default, rendered pages, and highlighted source files
 will be cached in the `cache` directory. (Another directory can be
 specified by setting the `cache-dir` configuration option.)
 

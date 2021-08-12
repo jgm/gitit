@@ -41,23 +41,13 @@ import Control.Monad.Trans (liftIO)
 import Text.Pandoc.UTF8 (encodePath)
 
 -- | Expire a cached file, identified by its filename in the filestore.
--- If there is an associated exported PDF, expire it too.
 -- Returns () after deleting a file from the cache, fails if no cached file.
 expireCachedFile :: String -> GititServerPart ()
 expireCachedFile file = do
   cfg <- getConfig
   let target = encodePath $ cacheDir cfg </> file
   exists <- liftIO $ doesFileExist target
-  when exists $ liftIO $ do
-    liftIO $ removeFile target
-    expireCachedPDF target (defaultExtension cfg)
-
-expireCachedPDF :: String -> String -> IO ()
-expireCachedPDF file ext = 
-  when (takeExtension file == "." ++ ext) $ do
-    let pdfname = file ++ ".export.pdf"
-    exists <- doesFileExist pdfname
-    when exists $ removeFile pdfname
+  when exists $ liftIO $ liftIO $ removeFile target
 
 lookupCache :: String -> GititServerPart (Maybe (UTCTime, B.ByteString))
 lookupCache file = do
@@ -84,4 +74,3 @@ cacheContents file contents = do
   liftIO $ do
     createDirectoryIfMissing True targetDir
     B.writeFile target contents
-    expireCachedPDF target (defaultExtension cfg)

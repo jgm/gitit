@@ -31,12 +31,11 @@ import Network.Gitit.Server
 import Network.Gitit.Framework
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Export (exportFormats)
 import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict ( stringToHtmlString )
-import Data.Maybe (isNothing, isJust, fromJust)
+import Data.Maybe (isNothing)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -111,8 +110,6 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    maybe id (T.setAttribute "markuphelp") (pgMarkupHelp layout) .
                    setBoolAttr "printable" (pgPrintable layout) .
                    maybe id (T.setAttribute "revision") rev .
-                   T.setAttribute "exportbox"
-                       (renderHtmlFragment $  exportBox base' cfg page rev) .
                    (if null (pgTabs layout) then id else T.setAttribute "tabs"
                        (renderHtmlFragment tabs)) .
                    (\f x xs -> if null xs then x else f xs) (T.setAttribute "messages") id (pgMessages layout) .
@@ -121,17 +118,6 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
                    templ
 
-
-exportBox :: String -> Config -> String -> Maybe String -> Html
-exportBox base' cfg page rev | not (isSourceCode page) =
-  gui (base' ++ urlForPage page) ! [identifier "exportbox"] <<
-    ([ textfield "revision" ! [thestyle "display: none;",
-         value (fromJust rev)] | isJust rev ] ++
-     [ select ! [name "format"] <<
-         map ((\f -> option ! [value f] << f) . fst) (exportFormats cfg)
-     , primHtmlChar "nbsp"
-     , submit "export" "Export" ])
-exportBox _ _ _ _ = noHtml
 
 -- auxiliary functions:
 
