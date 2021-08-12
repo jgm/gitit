@@ -122,7 +122,7 @@ Library
                      Network.Gitit.Compat.Except,
                      Paths_gitit
   autogen-modules:   Paths_gitit
-  build-depends:     base >= 4.9 && < 4.15,
+  build-depends:     base >= 4.9 && < 5,
                      syb,
                      filepath,
                      safe,
@@ -145,7 +145,7 @@ Library
                      utf8-string >= 0.3 && < 1.1,
                      SHA > 1,
                      HTTP >= 4000.0,
-                     HStringTemplate >= 0.6 && < 0.9,
+                     HStringTemplate >= 0.8.8 && < 0.9,
                      old-locale,
                      time,
                      recaptcha >= 0.1,
