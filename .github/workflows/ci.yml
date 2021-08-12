@@ -10,18 +10,14 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - ghc: '8.0.2'
-            cabal: '2.4'
-          - ghc: '8.2.2'
-            cabal: '2.4'
-          - ghc: '8.4.4'
-            cabal: '2.4'
           - ghc: '8.6.5'
             cabal: '3.2'
           - ghc: '8.8.3'
             cabal: '3.2'
-          - ghc: '8.10.1'
+          - ghc: '8.10.4'
             cabal: '3.2'
+          - ghc: '9.0.1'
+            cabal: '3.4'
     steps:
     - uses: actions/checkout@v1
     # need to install older cabal/ghc versions from ppa repository
