@@ -22,5 +22,6 @@ extra-deps:
 - MissingH-1.4.3.0
 - json-0.10
 - pandoc-2.14.1
+- HStringTemplate-0.8.8
 allow-newer: true
 resolver: lts-18.0
