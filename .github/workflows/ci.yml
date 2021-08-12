@@ -38,7 +38,6 @@ jobs:
           cabal v2-build --dependencies-only --enable-tests --disable-optimization -fexecutable all
     - name: Build and test
       run: |
-          export PATH=/opt/cabal/${{ matrix.versions.cabal }}/bin:/opt/ghc/${{ matrix.versions.ghc }}/bin:$PATH
           cabal v2-build --enable-tests --disable-optimization -fexecutable all
 
   macos:
