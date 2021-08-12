@@ -1,3 +1,12 @@
+Version 0.15.0.0 released 12 Aug 2021
+
+  * Remove the Export feature entirely.
+    There were too many security problems associated with exports.
+    Given limitations on developer time, removing the feature entirely
+    seemed the best solution.  API change: removed Network.Gitit.Export.
+
+  * Fix dependencies to compile with ghc 9.
+
 Version 0.14.0.0 released 12 Aug 2021
 
   * PDF export: fix vulnerability.  Augustin Laville pointed
