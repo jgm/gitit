@@ -1,6 +1,6 @@
 packages: gitit.cabal
 tests: True
-flags: +embed_data_files
+flags: +embed_data_files +plugins
 
 source-repository-package
   type: git
