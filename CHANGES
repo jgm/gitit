@@ -1,4 +1,4 @@
-Version 0.14.0.0 released 11 Aug 2021
+Version 0.14.0.0 released 12 Aug 2021
 
   * PDF export: fix vulnerability.  Augustin Laville pointed
     out that it is possible to leak content from files on the
@@ -41,9 +41,6 @@ Version 0.14.0.0 released 11 Aug 2021
     (#665, sternenseemann).
 
   * Allow building with hoauth-1.14 (Jens Petersen).
-
-  * stack.yaml - use recent lts, latest pandoc, and set
-    `embed_data_files` flag.
 
 Version 0.13.0.0 released 03 June 2020
 
