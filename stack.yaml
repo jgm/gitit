@@ -3,6 +3,8 @@ nix:
   packages: [zlib zlib.dev]
 
 flags:
+  pandoc:
+    embed_data_files: true
   gitit:
     plugins: true
 packages:
@@ -19,5 +21,6 @@ extra-deps:
 - recaptcha-0.1.0.4
 - MissingH-1.4.3.0
 - json-0.10
+- pandoc-2.14.1
 allow-newer: true
 resolver: lts-18.0
