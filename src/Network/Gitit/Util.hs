@@ -42,6 +42,10 @@ import qualified Text.Pandoc.UTF8 as UTF8
 import Text.Pandoc (Extension(..), Extensions, getDefaultExtensions, enableExtension)
 import Network.URL (encString)
 
+#if !MIN_VERSION_pandoc(2,12,0)
+import qualified Data.Text as T
+#endif
+
 -- | Read file as UTF-8 string.  Encode filename as UTF-8.
 readFileUTF8 :: FilePath -> IO Text
 #if MIN_VERSION_pandoc(2,12,0)
