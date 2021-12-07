@@ -83,7 +83,6 @@ import Network.Gitit.Page (stringToPage)
 import Network.Gitit.Server
 import Network.Gitit.State
 import Network.Gitit.Types
-import Network.Gitit.Util (getPageTypeDefaultExtensions)
 import Network.HTTP (urlDecode)
 import Network.URI (isUnescapedInURI)
 import Network.URL (encString)
@@ -333,7 +332,7 @@ pageToPandoc page' = do
   modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
                              , ctxCategories = pageCategories page'
                              , ctxMeta = pageMeta page' }
-  either (liftIO . E.throwIO) return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
+  either (liftIO . E.throwIO) return $ readerFor (pageFormat page') (pageText page')
 
 -- | Detects if the page is a redirect page and handles accordingly. The exact
 -- behaviour is as follows:
@@ -669,23 +668,16 @@ updateLayout f = do
 -- Pandoc and wiki content conversion support
 --
 
-readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
-readerFor pt lhs =
-  let defExts = getDefaultExtensions $ T.toLower $ T.pack $ show pt
-      defPS = def{ readerExtensions = defExts
+readerFor :: PageType -> String -> Either PandocError Pandoc
+readerFor (PageType {
+  pageTypeReader = TextReader reader,
+  pageTypeExtensions = ext
+}) =
+  let defPS = def{ readerExtensions = ext
                                       <> extensionsFromList [Ext_emoji]
-                                      <> getPageTypeDefaultExtensions pt lhs
                                       <> readerExtensions def }
-  in runPure . (case pt of
-       RST        -> readRST defPS
-       Markdown   -> readMarkdown defPS
-       CommonMark -> readCommonMark defPS
-       LaTeX      -> readLaTeX defPS
-       HTML       -> readHtml defPS
-       Textile    -> readTextile defPS
-       Org        -> readOrg defPS
-       DocBook    -> readDocBook defPS
-       MediaWiki  -> readMediaWiki defPS) . T.pack
+  in runPure . reader defPS . T.pack
+readerFor pt = const $ Left $ PandocAppError $ "Binary PageType unsupported: " <> T.pack (show pt)
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform pandoc

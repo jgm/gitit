@@ -27,7 +27,6 @@ module Network.Gitit.Initialize ( initializeGititState
                                 , createTemplateIfMissing )
 where
 import System.FilePath ((</>), (<.>))
-import Data.Semigroup ((<>))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.FileStore
@@ -40,8 +39,9 @@ import Network.Gitit.Plugins
 import Network.Gitit.Layout (defaultRenderPage)
 import Paths_gitit (getDataFileName)
 import Control.Exception (throwIO, try)
+import Control.Monad.Except (throwError)
 import System.Directory (copyFile, createDirectoryIfMissing, doesDirectoryExist, doesFileExist)
-import Control.Monad ((<=<), unless, forM_, liftM)
+import Control.Monad (unless, forM_, liftM)
 import Text.Pandoc hiding (getDataFileName, WARNING)
 import System.Log.Logger (logM, Priority(..))
 import qualified Text.StringTemplate as ST
@@ -131,29 +131,28 @@ createDefaultPages conf = do
                                              else writerExtensions def
                      }
         -- note: we convert this (markdown) to the default page format
-        converter = handleError . runPure . case pt of
-                       Markdown   -> return
-                       LaTeX      -> writeLaTeX defOpts <=< toPandoc
-                       HTML       -> writeHtml5String defOpts <=< toPandoc
-                       RST        -> writeRST defOpts <=< toPandoc
-                       Textile    -> writeTextile defOpts <=< toPandoc
-                       Org        -> writeOrg defOpts <=< toPandoc
-                       DocBook    -> writeDocbook5 defOpts <=< toPandoc
-                       MediaWiki  -> writeMediaWiki defOpts <=< toPandoc
-                       CommonMark -> writeCommonMark defOpts <=< toPandoc
+        converter input = handleError $ runPure $ do
+          (writer, exts) <- getWriter (T.pack $ pageTypeSpec pt)
+          pandoc <- toPandoc input
+          case writer of
+            TextWriter w -> w (defOpts { writerExtensions = exts <> writerExtensions defOpts }) pandoc
+            _ -> throwError $ PandocAppError $ "Binary PageType unsupported: " <> T.pack (show pt)
 
     welcomepath <- getDataFileName $ "data" </> "FrontPage" <.> "page"
     welcomecontents <- converter =<< readFileUTF8 welcomepath
     helppath <- getDataFileName $ "data" </> "Help" <.> "page"
     helpcontentsInitial <- converter =<< readFileUTF8 helppath
     markuppath <- getDataFileName $ "data" </> "markup" <.> show pt
-    helpcontentsMarkup <- converter =<< readFileUTF8 markuppath
+    markupExists <- doesFileExist markuppath
+    helpcontentsMarkup <- if markupExists then
+      converter =<< readFileUTF8 markuppath
+    else return T.empty
     let helpcontents = helpcontentsInitial <> "\n\n" <> helpcontentsMarkup
     usersguidepath <- getDataFileName "README.markdown"
     usersguidecontents <- converter =<< readFileUTF8 usersguidepath
     -- include header in case user changes default format:
     let header = "---\nformat: " <>
-          T.pack (show pt) <> (if defaultLHS conf then "+lhs" else "") <>
+          T.pack (show pt) <>
           "\n...\n\n"
     -- add front page, help page, and user's guide
     let auth = Author "Gitit" ""
