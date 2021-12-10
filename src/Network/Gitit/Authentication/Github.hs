@@ -36,7 +36,7 @@ loginGithubUser githubKey params = do
   let destination = pDestination params `orIfNull` (base' ++ "/")
   key <- newSession $ sessionDataGithubStateUrl state destination
   cfg <- getConfig
-  addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+  addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
   let usingOrg = isJust $ org $ githubAuth cfg
   let scopes = "user:email" ++ if usingOrg then ",read:org" else ""
   let url = appendQueryParams [("state", BS.pack state), ("scope", BS.pack scopes)] $ authorizationUrl githubKey

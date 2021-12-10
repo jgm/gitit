@@ -395,7 +395,7 @@ loginUser params = do
   if allowed
     then do
       key <- newSession (sessionData uname)
-      addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+      addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
       seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++
         renderHtmlFragment (stringToHtml uname))
     else
@@ -478,7 +478,7 @@ oauthGithubCallback ghConfig githubCallbackPars =
                      addUser (uUsername user) user
                      key <- newSession (sessionData userEmail)
                      cfg <- getConfig
-                     addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+                     addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
                      seeOther (encUrl destination) $ toResponse ()
           Left err -> do
               liftIO $ logM "gitit" WARNING $ "Login Failed: " ++ ghUserMessage err ++ maybe "" (". Github response" ++) (ghDetails err)
@@ -543,7 +543,7 @@ loginRPXUser params = do
        user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
        updateGititState $ \s -> s { users = M.insert userId user (users s) }
        key <- newSession (sessionData userId)
-       addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show key))
+       addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
        see $ fromJust $ rDestination params
       where
         prop pname info = lookup pname $ R.userData info

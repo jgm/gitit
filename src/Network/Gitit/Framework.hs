@@ -82,6 +82,7 @@ import Network.HTTP (urlEncodeVars)
 authenticate :: AuthenticationLevel -> Handler -> Handler
 authenticate = authenticateUserThat (const True)
 
+
 -- | Like 'authenticate', but with a predicate that the user must satisfy.
 authenticateUserThat :: (User -> Bool) -> AuthenticationLevel -> Handler -> Handler
 authenticateUserThat predicate level handler = do
@@ -101,13 +102,17 @@ authenticateUserThat predicate level handler = do
 -- | Run the handler after setting @REMOTE_USER@ with the user from
 -- the session.
 withUserFromSession :: Handler -> Handler
-withUserFromSession handler = withData $ \(sk :: Maybe SessionKey) -> do
-  mbSd <- maybe (return Nothing) getSession sk
+withUserFromSession handler = withData $ \(mbsk :: Maybe SessionKey) -> do
+  mbSd <- maybe (return Nothing) getSession mbsk
   cfg <- getConfig
   mbUser <- case mbSd of
             Nothing    -> return Nothing
             Just sd    -> do
-              addCookie (MaxAge $ sessionTimeout cfg) (mkCookie "sid" (show $ fromJust sk))  -- refresh timeout
+              case mbsk of
+                Nothing -> return ()
+                Just sk ->
+                  addCookie (MaxAge $ sessionTimeout cfg) -- refresh timeout
+                            (mkSessionCookie sk)
               case sessionUser sd of
                 Nothing -> return Nothing
                 Just user -> getUser user
