@@ -10,18 +10,16 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - ghc: '8.6.5'
-            cabal: '3.2'
           - ghc: '8.8.3'
-            cabal: '3.2'
-          - ghc: '8.10.4'
-            cabal: '3.2'
+            cabal: '3.0'
+          - ghc: '8.10.7'
+            cabal: '3.0'
+          - ghc: '9.0.1'
+            cabal: '3.4'
     steps:
     - uses: actions/checkout@v1
-    # need to install older cabal/ghc versions from ppa repository
-
     - name: Install recent cabal/ghc
-      uses: actions/setup-haskell@v1.1.3
+      uses: haskell/actions/setup@v1
       with:
         ghc-version: ${{ matrix.versions.ghc }}
         cabal-version: ${{ matrix.versions.cabal }}
