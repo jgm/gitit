@@ -10,18 +10,38 @@ flags:
 packages:
 - '.'
 extra-deps:
-- commonmark-0.2.1
-- commonmark-pandoc-0.2.1.1
-- skylighting-core-0.11
-- skylighting-0.11
+- skylighting-core-0.12.1
+- skylighting-0.12.1
 - doctemplates-0.10
-- citeproc-0.4.1
 - ConfigFile-1.1.4
 - filestore-0.6.5
 - recaptcha-0.1.0.4
 - MissingH-1.4.3.0
 - json-0.10
-- pandoc-2.14.1
+- pandoc-2.16.2
 - HStringTemplate-0.8.8
-allow-newer: true
-resolver: lts-18.0
+- lpeg-1.0.1
+- hslua-2.0.1
+- hslua-classes-2.0.0
+- hslua-core-2.0.0.2
+- hslua-marshalling-2.0.1
+- hslua-module-path-1.0.0
+- hslua-module-system-1.0.0
+- hslua-module-text-1.0.0
+- hslua-module-version-1.0.0
+- hslua-objectorientation-2.0.1
+- hslua-packaging-2.0.0
+- lua-2.0.1
+- tasty-hslua-1.0.0
+- tasty-lua-1.0.0
+- pandoc-types-1.22.1
+- commonmark-0.2.1.1
+- commonmark-extensions-0.2.2.1
+- citeproc-0.6
+- aeson-pretty-0.8.9
+- ipynb-0.1.0.2
+- texmath-0.12.3.3
+
+resolver: lts-18.18
+nix:
+  packages: [zlib]
