@@ -53,6 +53,7 @@ module Network.Gitit.Framework (
                                , getMimeTypeForExtension
                                , validate
                                , filestoreFromConfig
+                               , mkSessionCookie
                                )
 where
 import Safe
@@ -356,3 +357,7 @@ filestoreFromConfig conf =
          Git       -> gitFileStore       $ repositoryPath conf
          Darcs     -> darcsFileStore     $ repositoryPath conf
          Mercurial -> mercurialFileStore $ repositoryPath conf
+
+-- Create a cookie with the session key.
+mkSessionCookie :: SessionKey -> Cookie
+mkSessionCookie (SessionKey key) = mkCookie "sid" (show key)
