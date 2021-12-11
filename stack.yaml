@@ -7,6 +7,9 @@ flags:
     embed_data_files: true
   gitit:
     plugins: true
+  mintty:
+    Win32-2-13-1: false
+
 packages:
 - '.'
 extra-deps:
