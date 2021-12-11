@@ -9,6 +9,8 @@ flags:
     plugins: true
   mintty:
     Win32-2-13-1: false
+  sendfile:
+    portable: true
 
 packages:
 - '.'
