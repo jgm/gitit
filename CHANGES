@@ -1,3 +1,23 @@
+Version 0.15.1.0 released 10 Dec 2021
+
+  * Set the portable flag on sendfile to avoid an error
+    on Windows builds (#651).
+
+  * Fix Windows stack build (mintty issue).
+
+  * Update dependencies to use latest released pandoc.
+
+  * Update CI and add a Windows build.
+
+  * Use `mkSessionCookie` to fix a regression introduced in
+    0.15.0.0 which made user sessions unreadable, breaking
+    user authentication (#674).
+
+  * Network.Gitit.Framework: export `mkSessionCookie` [API change].
+
+  * Fix build for pandoc <= 2.12.0 (#676, Stephen Paul Weber).
+
+
 Version 0.15.0.0 released 12 Aug 2021
 
   * Remove the Export feature entirely.
