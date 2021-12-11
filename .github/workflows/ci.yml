@@ -68,5 +68,4 @@ jobs:
       shell: cmd
       run: |
           chcp 65001
-          stack install --ghc-options=-Werror --fast --test --haddock --no-haddock-deps --bench --no-run-benchmarks
-
+          stack install --test --fast
