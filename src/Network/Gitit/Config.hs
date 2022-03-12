@@ -40,7 +40,7 @@ import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (ERROR, WARNING, MathJax, MathML, WebTeX, getDataFileName)
 import qualified Control.Exception as E
-import Network.OAuth.OAuth2 (OAuth2(..), oauthCallback, oauthOAuthorizeEndpoint, oauthClientId, oauthClientSecret)
+import Network.OAuth.OAuth2 (OAuth2(..))
 import URI.ByteString (parseURI, laxURIParserOptions)
 import qualified Data.ByteString.Char8 as BS
 import Network.Gitit.Compat.Except
@@ -254,15 +254,11 @@ extractGithubConfig cp = do
       cfOrg <- if hasGithubProp "github-org"
                  then fmap Just (getGithubProp "github-org")
                  else return Nothing
-      let cfgOAuth2 = OAuth2 { oauthClientId = T.pack cfOauthClientId
-#if MIN_VERSION_hoauth2(1, 11, 0)
-                          , oauthClientSecret = Just $ T.pack cfOauthClientSecret
-#else
-                          , oauthClientSecret = T.pack cfOauthClientSecret
-#endif
-                          , oauthCallback = Just cfOauthCallback
-                          , oauthOAuthorizeEndpoint = cfOauthOAuthorizeEndpoint
-                          , oauthAccessTokenEndpoint = cfOauthAccessTokenEndpoint
+      let cfgOAuth2 = OAuth2 { oauth2ClientId = T.pack cfOauthClientId
+                          , oauth2ClientSecret = T.pack cfOauthClientSecret
+                          , oauth2RedirectUri = cfOauthCallback
+                          , oauth2AuthorizeEndpoint = cfOauthOAuthorizeEndpoint
+                          , oauth2TokenEndpoint = cfOauthAccessTokenEndpoint
                           }
       return $ githubConfig cfgOAuth2 $ fmap T.pack cfOrg
   where getGithubProp = get cp "Github"

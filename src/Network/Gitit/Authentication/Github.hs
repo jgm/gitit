@@ -27,6 +27,7 @@ import Control.Monad.Trans (liftIO)
 import Data.UUID (toString)
 import Data.UUID.V4 (nextRandom)
 import qualified Control.Exception as E
+import Control.Monad.Except
 import Prelude
 
 loginGithubUser :: OAuth2 -> Params -> Handler
@@ -54,16 +55,14 @@ getGithubUser ghConfig githubCallbackPars githubState = liftIO $
   newManager tlsManagerSettings >>= getUserInternal
     where
     getUserInternal mgr =
-        liftIO $ do
+        liftIO $ runExceptT $ do
             let (Just state) = rState githubCallbackPars
             if state == githubState
               then do
                 let (Just code) = rCode githubCallbackPars
-                ifSuccess
-                   "No access token found yet"
-                   (fetchAccessToken mgr (oAuth2 ghConfig) (ExchangeToken $ pack code))
-                   (\at -> ifSuccess
-                           "User Authentication failed"
+                at <- withExceptT (oauthToGithubError "No access token found yet")
+                      $ fetchAccessToken mgr (oAuth2 ghConfig) (ExchangeToken $ pack code)
+                liftIO >=> liftEither $ ifSuccess "User Authentication failed"
                            (userInfo mgr (accessToken at))
                            (\githubUser -> ifSuccess
                             ("No email for user " ++ unpack (gLogin githubUser) ++ " returned by Github")
@@ -79,9 +78,9 @@ getGithubUser ghConfig githubCallbackPars githubState = liftIO $
                                              Just githuborg -> ifSuccess
                                                       ("Membership check failed: the user " ++ unpack gitLogin ++  " is required to be a member of the organization "  ++ unpack githuborg ++ ".")
                                                       (orgInfo gitLogin githuborg mgr (accessToken at))
-                                                      (\_ -> return $ Right user))))
+                                                      (\_ -> return $ Right user)))
               else
-                return $ Left $
+                throwError $
                        GithubLoginError ("The state sent to github is not the same as the state received: " ++ state ++ ", but expected sent state: " ++  githubState)
                                         Nothing
     ifSuccess errMsg failableAction successAction  = E.catch
@@ -90,6 +89,7 @@ getGithubUser ghConfig githubCallbackPars githubState = liftIO $
                                                  (\exception -> liftIO $ return $ Left $
                                                                 GithubLoginError errMsg
                                                                                  (Just $ show (exception :: E.SomeException)))
+    oauthToGithubError errMsg e = GithubLoginError errMsg (Just $ show e)
 
 data GithubCallbackPars = GithubCallbackPars { rCode :: Maybe String
                                              , rState :: Maybe String }
@@ -106,14 +106,14 @@ userInfo :: Manager -> AccessToken -> IO (Either BSL.ByteString GithubUser)
 #else
 userInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors GithubUser)
 #endif
-userInfo mgr token = authGetJSON mgr token $ githubUri "/user"
+userInfo mgr token = runExceptT $ authGetJSON mgr token $ githubUri "/user"
 
 #if MIN_VERSION_hoauth2(1, 9, 0)
 mailInfo :: Manager -> AccessToken -> IO (Either BSL.ByteString [GithubUserMail])
 #else
 mailInfo :: Manager -> AccessToken -> IO (OAuth2Result OA.Errors [GithubUserMail])
 #endif
-mailInfo mgr token = authGetJSON mgr token $ githubUri "/user/emails"
+mailInfo mgr token = runExceptT $ authGetJSON mgr token $ githubUri "/user/emails"
 
 #if MIN_VERSION_hoauth2(1, 9, 0)
 orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (Either BSL.ByteString BSL.ByteString)
@@ -122,7 +122,7 @@ orgInfo  :: Text -> Text -> Manager -> AccessToken -> IO (OAuth2Result OA.Errors
 #endif
 orgInfo gitLogin githubOrg mgr token = do
   let url = githubUri $ "/orgs/" `BS.append` encodeUtf8 githubOrg `BS.append` "/members/" `BS.append` encodeUtf8 gitLogin
-  authGetBS mgr token url
+  runExceptT $ authGetBS mgr token url
 
 type UriPath = BS.ByteString
 
