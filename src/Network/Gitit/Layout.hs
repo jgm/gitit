@@ -121,9 +121,12 @@ filledPageTemplate base' cfg layout htmlContents templ =
 
 -- auxiliary functions:
 
+accesskey :: Char -> HtmlAttr
+accesskey c = strAttr "accesskey" [c]
+
 linkForTab :: (Tab -> Html -> Html) -> String -> String -> Maybe String -> Tab -> Html
 linkForTab tabli base' page _ HistoryTab =
-  tabli HistoryTab << anchor ! [href $ base' ++ "/_history" ++ urlForPage page] << "history"
+  tabli HistoryTab << anchor ! [href $ base' ++ "/_history" ++ urlForPage page, accesskey 'h'] << "history"
 linkForTab tabli _ _ _ DiffTab =
   tabli DiffTab << anchor ! [href ""] << "diff"
 linkForTab tabli base' page rev ViewTab =
@@ -132,23 +135,24 @@ linkForTab tabli base' page rev ViewTab =
                       else s
   in if isDiscussPage page
         then tabli DiscussTab << anchor !
-              [href $ base' ++ urlForPage (origPage page)] << "page"
+              [href $ base' ++ urlForPage (origPage page), accesskey 'c'] << "page"
         else tabli ViewTab << anchor !
               [href $ base' ++ urlForPage page ++
                       case rev of
                            Just r  -> "?revision=" ++ r
-                           Nothing -> ""] << "view"
+                           Nothing -> "", accesskey 'c'] << "view"
 linkForTab tabli base' page _ DiscussTab =
   tabli (if isDiscussPage page then ViewTab else DiscussTab) <<
   anchor ! [href $ base' ++ if isDiscussPage page then "" else "/_discuss" ++
-                   urlForPage page] << "discuss"
+                   urlForPage page, accesskey 't'] << "discuss"
 linkForTab tabli base' page rev EditTab =
   tabli EditTab << anchor !
     [href $ base' ++ "/_edit" ++ urlForPage page ++
             case rev of
                   Just r   -> "?revision=" ++ r ++ "&" ++
                                urlEncodeVars [("logMsg", "Revert to " ++ r)]
-                  Nothing  -> ""] << if isNothing rev
+                  Nothing  -> "",
+        accesskey 'e'] << if isNothing rev
                                          then "edit"
                                          else "revert"
 
