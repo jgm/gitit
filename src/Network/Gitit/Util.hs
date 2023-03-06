@@ -26,7 +26,6 @@ module Network.Gitit.Util ( readFileUTF8
                           , yesOrNo
                           , parsePageType
                           , encUrl
-                          , getPageTypeDefaultExtensions
                           )
 where
 import System.Directory
@@ -34,12 +33,12 @@ import Control.Exception (bracket)
 import System.FilePath ((</>), (<.>))
 import System.IO.Error (isAlreadyExistsError)
 import Control.Monad.Trans (liftIO)
-import Data.Char (toLower, isAscii)
+import Data.Char (isAscii)
 import Data.Text (Text)
 import Network.Gitit.Types
 import qualified Control.Exception as E
 import qualified Text.Pandoc.UTF8 as UTF8
-import Text.Pandoc (Extension(..), Extensions, getDefaultExtensions, enableExtension)
+import Text.Pandoc (getReader, runPure)
 import Network.URL (encString)
 
 #if !MIN_VERSION_pandoc(2,12,0)
@@ -101,39 +100,12 @@ yesOrNo :: Bool -> String
 yesOrNo True  = "yes"
 yesOrNo False = "no"
 
-parsePageType :: String -> (PageType, Bool)
-parsePageType s =
-  case map toLower s of
-       "markdown"     -> (Markdown,False)
-       "markdown+lhs" -> (Markdown,True)
-       "commonmark"   -> (CommonMark,False)
-       "docbook"      -> (DocBook,False)
-       "rst"          -> (RST,False)
-       "rst+lhs"      -> (RST,True)
-       "html"         -> (HTML,False)
-       "textile"      -> (Textile,False)
-       "latex"        -> (LaTeX,False)
-       "latex+lhs"    -> (LaTeX,True)
-       "org"          -> (Org,False)
-       "mediawiki"    -> (MediaWiki,False)
-       x              -> error $ "Unknown page type: " ++ x
-
-getPageTypeDefaultExtensions :: PageType -> Bool -> Extensions
-getPageTypeDefaultExtensions pt lhs =
-  if lhs
-     then enableExtension Ext_literate_haskell defaults
-     else defaults
-  where defaults = getDefaultExtensions $
-          case pt of
-            CommonMark -> "commonmark"
-            DocBook    -> "docbook"
-            HTML       -> "html"
-            LaTeX      -> "latex"
-            Markdown   -> "markdown"
-            MediaWiki  -> "mediawiki"
-            Org        -> "org"
-            RST        -> "rst"
-            Textile    -> "textile"
+parsePageType :: String -> PageType
+parsePageType s = case runPure $ getReader spec of
+  Right (r, e) -> PageType (T.unpack spec) r e
+  Left err -> error $ "Bad page type: " ++ show err
+  where
+  spec = T.toLower $ T.pack s
 
 encUrl :: String -> String
 encUrl = encString True isAscii

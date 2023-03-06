@@ -106,7 +106,6 @@ stringToPage conf pagename raw =
   let (ls, rest) = parseMetadata raw
       page' = Page { pageName        = pagename
                    , pageFormat      = defaultPageType conf
-                   , pageLHS         = defaultLHS conf
                    , pageTOC         = tableOfContents conf
                    , pageTitle       = pagename
                    , pageCategories  = []
@@ -116,8 +115,8 @@ stringToPage conf pagename raw =
 
 adjustPage :: (String, String) -> Page -> Page
 adjustPage ("title", val) page' = page' { pageTitle = val }
-adjustPage ("format", val) page' = page' { pageFormat = pt, pageLHS = lhs }
-    where (pt, lhs) = parsePageType val
+adjustPage ("format", val) page' = page' { pageFormat = pt }
+    where pt = parsePageType val
 adjustPage ("toc", val) page' = page' {
   pageTOC = map toLower val `elem` ["yes","true"] }
 adjustPage ("categories", val) page' =
@@ -131,7 +130,6 @@ pageToString conf page' =
   let pagename   = pageName page'
       pagetitle  = pageTitle page'
       pageformat = pageFormat page'
-      pagelhs    = pageLHS page'
       pagetoc    = pageTOC page'
       pagecats   = pageCategories page'
       metadata   = filter
@@ -141,11 +139,9 @@ pageToString conf page' =
       metadata'  = (if pagename /= pagetitle
                        then "title: " ++ pagetitle ++ "\n"
                        else "") ++
-                   (if pageformat /= defaultPageType conf ||
-                          pagelhs /= defaultLHS conf
+                   (if pageformat /= defaultPageType conf
                        then "format: " ++
-                            map toLower (show pageformat) ++
-                            if pagelhs then "+lhs\n" else "\n"
+                            map toLower (show pageformat)
                        else "") ++
                    (if pagetoc /= tableOfContents conf
                        then "toc: " ++

@@ -139,6 +139,3 @@ getFileStore = liftM wikiFileStore ask
 
 getDefaultPageType :: GititServerPart PageType
 getDefaultPageType = liftM defaultPageType getConfig
-
-getDefaultLHS :: GititServerPart Bool
-getDefaultLHS = liftM defaultLHS getConfig

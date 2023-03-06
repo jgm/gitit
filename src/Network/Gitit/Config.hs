@@ -30,6 +30,7 @@ import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
 import Network.Gitit.Authentication (formAuthHandlers, rpxAuthHandlers, httpAuthHandlers, githubAuthHandlers)
 import Network.Gitit.Util (parsePageType, readFileUTF8)
+import System.Directory (doesFileExist)
 import System.Log.Logger (logM, Priority(..))
 import qualified Data.Map as M
 import Data.ConfigFile hiding (readfile)
@@ -133,13 +134,16 @@ extractConfig cp = do
       cfPandocUserData <- get cp "DEFAULT" "pandoc-user-data"
       cfXssSanitize <- get cp "DEFAULT" "xss-sanitize"
       cfRecentActivityDays <- get cp "DEFAULT" "recent-activity-days"
-      let (pt, lhs) = parsePageType cfDefaultPageType
-      let markupHelpFile = show pt ++ if lhs then "+LHS" else ""
+      let pt = parsePageType cfDefaultPageType
+      let markupHelpFile = show pt
       markupHelpPath <- liftIO $ getDataFileName $ "data" </> "markupHelp" </> markupHelpFile
-      markupHelp' <- liftIO $ readFileUTF8 markupHelpPath
-      markupHelpText <- liftIO $ handleError $ runPure $ do
-        helpDoc <- readMarkdown def{ readerExtensions = getDefaultExtensions "markdown" } markupHelp'
-        writeHtml5String def helpDoc
+      helpFileExists <- liftIO $ doesFileExist markupHelpPath
+      markupHelpText <- if helpFileExists then do
+        markupHelp' <- liftIO $ readFileUTF8 markupHelpPath
+        liftIO $ handleError $ runPure $ do
+          helpDoc <- readMarkdown def{ readerExtensions = getDefaultExtensions "markdown" } markupHelp'
+          writeHtml5String def helpDoc
+      else return T.empty
 
       mimeMap' <- liftIO $ readMimeTypesFile cfMimeTypesFile
       let authMethod = map toLower cfAuthenticationMethod
@@ -166,7 +170,6 @@ extractConfig cp = do
                                       "mathjax"  -> MathJax cfMathjaxScript
                                       "google"   -> WebTeX "http://chart.apis.google.com/chart?cht=tx&chl="
                                       _          -> RawTeX
-        , defaultLHS           = lhs
         , showLHSBirdTracks    = cfShowLHSBirdTracks
         , withUser             = case authMethod of
                                       "form"     -> withUserFromSession

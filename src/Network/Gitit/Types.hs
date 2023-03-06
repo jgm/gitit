@@ -69,7 +69,7 @@ import Control.Monad.Reader (ReaderT, runReaderT, mplus)
 import Control.Monad.State (StateT, runStateT, get, modify)
 import Control.Monad (liftM)
 import System.Log.Logger (Priority(..))
-import Text.Pandoc.Definition (Pandoc)
+import Text.Pandoc (Pandoc, Reader, PandocPure, Extensions)
 import Text.XHtml (Html)
 import qualified Data.Map as M
 import Data.Text (Text)
@@ -86,16 +86,17 @@ import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 import Network.OAuth.OAuth2
 
-data PageType = Markdown
-              | CommonMark
-              | RST
-              | LaTeX
-              | HTML
-              | Textile
-              | Org
-              | DocBook
-              | MediaWiki
-                deriving (Read, Show, Eq)
+data PageType = PageType {
+  pageTypeSpec       :: String,
+  pageTypeReader     :: Reader PandocPure,
+  pageTypeExtensions :: Extensions
+}
+
+instance Show PageType where
+  show = pageTypeSpec
+
+instance Eq PageType where
+  (PageType spec1 _ _) == (PageType spec2 _ _) = spec1 == spec2
 
 data FileStoreType = Git | Darcs | Mercurial deriving Show
 
@@ -117,8 +118,6 @@ data Config = Config {
   defaultExtension     :: String,
   -- | How to handle LaTeX math in pages?
   mathMethod           :: MathMethod,
-  -- | Treat as literate haskell by default?
-  defaultLHS           :: Bool,
   -- | Show Haskell code with bird tracks
   showLHSBirdTracks    :: Bool,
   -- | Combinator to set @REMOTE_USER@ request header
@@ -219,13 +218,12 @@ data Config = Config {
 data Page = Page {
     pageName        :: String
   , pageFormat      :: PageType
-  , pageLHS         :: Bool
   , pageTOC         :: Bool
   , pageTitle       :: String
   , pageCategories  :: [String]
   , pageText        :: String
   , pageMeta        :: [(String, String)]
-} deriving (Read, Show)
+} deriving (Show, Eq)
 
 newtype SessionKey = SessionKey Integer
   deriving (Read, Show, Eq, Ord)
