@@ -138,7 +138,11 @@ createDefaultPages conf = do
                        RST        -> writeRST defOpts <=< toPandoc
                        Textile    -> writeTextile defOpts <=< toPandoc
                        Org        -> writeOrg defOpts <=< toPandoc
+#if MIN_VERSION_pandoc(3,0,0)
+                       DocBook    -> writeDocBook5 defOpts <=< toPandoc
+#else
                        DocBook    -> writeDocbook5 defOpts <=< toPandoc
+#endif
                        MediaWiki  -> writeMediaWiki defOpts <=< toPandoc
                        CommonMark -> writeCommonMark defOpts <=< toPandoc
 
