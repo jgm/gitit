@@ -41,7 +41,11 @@ loadPlugin pluginName = do
     -- initDynFlags
     unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
       $ do
+#if __GLASGOW_HASKELL__ >= 904
+          addTarget =<< guessTarget pluginName Nothing Nothing
+#else
           addTarget =<< guessTarget pluginName Nothing
+#endif
           r <- load LoadAllTargets
           case r of
             Failed -> error $ "Error loading plugin: " ++ pluginName
