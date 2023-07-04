@@ -1,3 +1,14 @@
+Version 0.15.1.1 released 03 Jul 2023
+
+  * Allow latest aeson.
+
+  * Allow building with Stackage lts-21 (sternenseemann).
+
+  * Allow building with lts-20 (#685, Jens Petersen).
+
+  * Adjust for hoauth2 >= 2.3.0 (sternenseemann).
+
+
 Version 0.15.1.0 released 10 Dec 2021
 
   * Set the portable flag on sendfile to avoid an error
