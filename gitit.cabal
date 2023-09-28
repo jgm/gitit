@@ -43,6 +43,7 @@ extra-source-files:  data/static/js/jquery-1.2.6.js
                      data/static/js/jquery-ui.droppable-1.6rc2.js
                      data/static/js/jquery-ui.draggable-1.6rc2.js
                      data/static/js/jquery-ui.tabs-1.6rc2.js
+extra-doc-files:     CHANGES, YUI-LICENSE, BLUETRIP-LICENSE, TANGOICONS
 data-files:          data/static/css/screen.css, data/static/css/print.css,
                      data/static/css/ie.css, data/static/css/highlighting.css,
                      data/static/css/reset-fonts-grids.css,
@@ -92,7 +93,7 @@ data-files:          data/static/css/screen.css, data/static/css/print.css,
                      plugins/ShowUser.hs,
                      plugins/Signature.hs,
                      plugins/Subst.hs,
-                     CHANGES, README.markdown, YUI-LICENSE, BLUETRIP-LICENSE, TANGOICONS
+                     README.markdown
 
 Source-repository head
   type:          git
