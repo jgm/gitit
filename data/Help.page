@@ -93,7 +93,7 @@ highlighted in yellow, and deletions will be crossed out with a horizontal
 line.  Clicking on the description of changes will take you to the page
 as it existed after those changes.  To revert the page to the revision
 you're currently looking at, just click the "revert" button at the bottom
-of the page, then "Save". 
+of the page, then "Save".
 
 ## Deleting a page
 
@@ -122,4 +122,12 @@ For example, if you uploaded a picture `fido.jpg`, you can insert the
 picture into a (markdown-formatted) page as follows: `![fido](fido.jpg)`.
 If you uploaded a PDF `projection.pdf`, you can insert a link to it
 using:  `[projection](projection.pdf)`.
+
+# Private content
+
+By default, wiki content is accessible to all users, whether authenticated
+or not. However, it is possible to define pages or directories as private.
+In this case, you'll need to be authenticated to access them. Only the
+**content** of files will be inaccessible, the name of these files will
+remain visible in "All pages" or in "Recent activity".
 
