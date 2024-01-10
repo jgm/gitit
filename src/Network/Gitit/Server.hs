@@ -37,7 +37,7 @@ where
 import Happstack.Server
 import Happstack.Server.Compression (compressedResponseFilter)
 import Network.Socket (getAddrInfo, defaultHints, addrAddress)
-import Control.Monad.Reader
+import Control.Monad (liftM)
 import Data.ByteString.UTF8 as U hiding (lines)
 
 withExpiresHeaders :: ServerMonad m => m Response -> m Response

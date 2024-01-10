@@ -69,6 +69,7 @@ module Network.Gitit.ContentTransformer
 where
 
 import qualified Control.Exception as E
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Reader (ask)
 import Control.Monad.Except (throwError)

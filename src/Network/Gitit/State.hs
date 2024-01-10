@@ -28,6 +28,8 @@ import Data.Digest.Pure.SHA (sha512, showDigest)
 import qualified Data.ByteString.Lazy.UTF8 as L (fromString)
 import Data.IORef
 import System.IO.Unsafe (unsafePerformIO)
+import Control.Monad (liftM, replicateM)
+import Control.Monad.IO.Class
 import Control.Monad.Reader
 import Data.FileStore
 import Data.List (intercalate)

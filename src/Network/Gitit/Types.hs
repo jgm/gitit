@@ -65,9 +65,9 @@ module Network.Gitit.Types (
                            , org
                            , githubConfig) where
 
-import Control.Monad.Reader (ReaderT, runReaderT, mplus)
+import Control.Monad.Reader (ReaderT, runReaderT)
 import Control.Monad.State (StateT, runStateT, get, modify)
-import Control.Monad (liftM)
+import Control.Monad (liftM, mplus)
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
 import Text.XHtml (Html)
