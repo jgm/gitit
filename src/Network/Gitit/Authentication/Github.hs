@@ -23,6 +23,7 @@ import Data.Aeson
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding (encodeUtf8)
 import Control.Applicative
+import Control.Monad ((>=>))
 import Control.Monad.Trans (liftIO)
 import Data.UUID (toString)
 import Data.UUID.V4 (nextRandom)

@@ -26,7 +26,7 @@ import System.Directory
 import Data.Maybe (isNothing)
 import Data.Text.Encoding (encodeUtf8)
 import Network.Gitit.Compat.Except()
-import Control.Monad.Reader
+import Control.Monad
 import System.Log.Logger (Priority(..), setLevel, setHandlers,
         getLogger, saveGlobalLogger)
 import System.Log.Handler.Simple (fileHandler)
