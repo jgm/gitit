@@ -172,7 +172,8 @@ Library
                      network-uri >= 2.6,
                      network >= 2.6 && < 3.2,
                      network-bsd >= 2.8.1 && < 2.9,
-                     doctemplates >= 0.7.1
+                     doctemplates >= 0.7.1,
+                     Glob >= 0.7.9
   if flag(plugins)
     exposed-modules: Network.Gitit.Interface
     build-depends:   ghc, ghc-paths

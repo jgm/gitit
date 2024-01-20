@@ -108,6 +108,7 @@ extractConfig cp = do
       cfFrontPage <- get cp "DEFAULT" "front-page"
       cfNoEdit <- get cp "DEFAULT" "no-edit"
       cfNoDelete <- get cp "DEFAULT" "no-delete"
+      cfPrivatePages <- get cp "DEFAULT" "private-pages"
       cfDefaultSummary <- get cp "DEFAULT" "default-summary"
       cfDeleteSummary <- get cp "DEFAULT" "delete-summary"
       cfDisableRegistration <- get cp "DEFAULT" "disable-registration"
@@ -207,6 +208,7 @@ extractConfig cp = do
         , frontPage            = cfFrontPage
         , noEdit               = splitCommaList cfNoEdit
         , noDelete             = splitCommaList cfNoDelete
+        , privatePages         = splitCommaList cfPrivatePages
         , defaultSummary       = cfDefaultSummary
         , deleteSummary        = cfDeleteSummary
         , disableRegistration  = cfDisableRegistration
