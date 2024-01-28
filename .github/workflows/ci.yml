@@ -10,8 +10,6 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - ghc: '8.8'
-            cabal: '3.0'
           - ghc: '8.10'
             cabal: '3.0'
           - ghc: '9.0'
@@ -20,6 +18,8 @@ jobs:
             cabal: '3.8'
           - ghc: '9.4'
             cabal: '3.10'
+          - ghc: '9.6'
+            cabal: 'latest'
     steps:
     - uses: actions/checkout@v1
     - name: Install cabal/ghc
