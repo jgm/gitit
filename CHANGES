@@ -1,3 +1,20 @@
+Version 0.15.1.2 released 27 Jan 2024
+
+  * Allow happstack-server 7.9.
+
+  * Test on ghc 9.6, remove testing for 8.8.
+
+  * Remove dependency on the unmaintained Config package (#696).
+    Instead, we implement a simple config file parser in
+    parsec. The format of the config file is identical, and there should
+    not be major differences in the behavior of the parser.
+
+  * Allow building with Stackage LTS-22 (sternenseemann).
+
+  * .cabal: move doc files to extra-doc-files (Jens Petersen).
+    Only README.markdown is needed at runtime, so move CHANGES
+    and extra license files to extra-doc-files
+
 Version 0.15.1.1 released 03 Jul 2023
 
   * Allow latest aeson.
