@@ -123,3 +123,27 @@ picture into a (markdown-formatted) page as follows: `![fido](fido.jpg)`.
 If you uploaded a PDF `projection.pdf`, you can insert a link to it
 using:  `[projection](projection.pdf)`.
 
+# Keyboard shortcuts
+
+Gitit supports keyboard shortcuts similar to
+[MediaWiki's](https://www.mediawiki.org/wiki/Manual:Access_keys).
+
+Key   Action
+----  -------
+f     Move cursor to search box
+r     Recent activity
+x     Random page
+z     Front page
+o     Log in
+e     Edit current page
+h     View history
+p     Printable version
+t     Switch to discussion page
+c     Switch to content page
+,     Move cursor to edit box
+b     Move cursor to description of changes
+p     Preview
+s     Save
+d     Delete current page
+
+Table: Access keys

@@ -492,6 +492,9 @@ getDiff fs file from to = do
               " to " ++ fromMaybe "current" to) +++
            pre ! [theclass "diff"] << map diffLineToHtml rawDiff
 
+accesskey :: Char -> HtmlAttr
+accesskey c = strAttr "accesskey" [c]
+
 editPage :: Handler
 editPage = withData editPage'
 
@@ -533,12 +536,12 @@ editPage' params = do
   let editForm = gui (base' ++ urlForPage page) ! [identifier "editform"] <<
                    [ sha1Box
                    , textarea ! (readonly ++ [cols "80", name "editedText",
-                                  identifier "editedText"]) << raw
+                                  identifier "editedText", accesskey ',']) << raw
                    , br
                    , label ! [thefor "logMsg"] << "Description of changes:"
                    , br
-                   , textfield "logMsg" ! (readonly ++ [value (logMsg `orIfNull` defaultSummary cfg) ])
-                   , submit "update" "Save"
+                   , textfield "logMsg" ! (readonly ++ [value (logMsg `orIfNull` defaultSummary cfg), accesskey 'b' ])
+                   , submit "update" "Save" ! [ accesskey 's' ]
                    , primHtmlChar "nbsp"
                    , submit "cancel" "Discard"
                    , primHtmlChar "nbsp"
@@ -546,6 +549,7 @@ editPage' params = do
                               identifier "previewButton",
                               strAttr "onClick" "updatePreviewPane();",
                               strAttr "style" "display: none;",
+                              accesskey 'p',
                               value "Preview" ]
                    , thediv ! [ identifier "previewpane" ] << noHtml
                    ]
