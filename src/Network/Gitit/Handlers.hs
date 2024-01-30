@@ -66,7 +66,7 @@ import qualified Control.Exception as E
 import System.FilePath
 import Network.Gitit.State
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import qualified Text.XHtml as X ( method )
+import qualified Text.XHtml as X ( method, password )
 import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixOf, inits, sort, (\\))
 import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
@@ -501,6 +501,7 @@ editPage' params = do
   fs <- getFileStore
   page <- getPage
   cfg <- getConfig
+  mbUser <- getLoggedInUser
   let getRevisionAndText = E.catch
         (do c <- liftIO $ retrieve fs (pathForPage page $ defaultExtension cfg) rev
             -- even if pRevision is set, we return revId of latest
@@ -529,12 +530,19 @@ editPage' params = do
                     then [strAttr "readonly" "yes",
                           strAttr "style" "color: gray"]
                     else []
+  let accessQ = case mbUser of
+                     Just _ -> noHtml
+                     Nothing -> case accessQuestion cfg of
+                                     Nothing          -> noHtml
+                                     Just (prompt, _) -> label ! [thefor "accessCode"] << prompt +++ br +++
+                                                         X.password "accessCode" +++ br
   base' <- getWikiBase
   let editForm = gui (base' ++ urlForPage page) ! [identifier "editform"] <<
                    [ sha1Box
                    , textarea ! (readonly ++ [cols "80", name "editedText",
                                   identifier "editedText"]) << raw
                    , br
+                   , accessQ
                    , label ! [thefor "logMsg"] << "Description of changes:"
                    , br
                    , textfield "logMsg" ! (readonly ++ [value (logMsg `orIfNull` defaultSummary cfg) ])
@@ -629,39 +637,47 @@ updatePage = withData $ \(params :: Params) -> do
                      Just b  -> applyPreCommitPlugins b
   let logMsg = pLogMsg params `orIfNull` defaultSummary cfg
   let oldSHA1 = pSHA1 params
+  let accessCode = pAccessCode params
+  let isValidAccessCode = case mbUser of
+                               Just _  -> True
+                               Nothing -> case accessQuestion cfg of
+                                               Nothing           -> True
+                                               Just (_, answers) -> accessCode `elem` answers
   fs <- getFileStore
   base' <- getWikiBase
   if null . filter (not . isSpace) $ logMsg
      then withMessages ["Description cannot be empty."] editPage
-     else do
-       when (length editedText > fromIntegral (maxPageSize cfg)) $
-          error "Page exceeds maximum size."
-       -- check SHA1 in case page has been modified, merge
-       modifyRes <- if null oldSHA1
-                       then liftIO $ create fs (pathForPage page $ defaultExtension cfg)
-                                       (Author user email) logMsg editedText >>
-                                     return (Right ())
-                       else do
-                         expireCachedFile (pathForPage page $ defaultExtension cfg) `mplus` return ()
-                         liftIO $ E.catch (modify fs (pathForPage page $ defaultExtension cfg)
-                                            oldSHA1 (Author user email) logMsg
-                                            editedText)
-                                     (\e -> if e == Unchanged
-                                               then return (Right ())
-                                               else E.throwIO e)
-       case modifyRes of
-            Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p << "Page updated"
-            Left (MergeInfo mergedWithRev conflicts mergedText) -> do
-               let mergeMsg = "The page has been edited since you checked it out. " ++
-                      "Changes from revision " ++ revId mergedWithRev ++
-                      " have been merged into your edits below. " ++
-                      if conflicts
-                         then "Please resolve conflicts and Save."
-                         else "Please review and Save."
-               editPage' $
-                 params{ pEditedText = Just mergedText,
-                         pSHA1       = revId mergedWithRev,
-                         pMessages   = [mergeMsg] }
+     else if not isValidAccessCode
+             then withMessages ["Access code is invalid."] editPage
+             else do
+               when (length editedText > fromIntegral (maxPageSize cfg)) $
+                  error "Page exceeds maximum size."
+               -- check SHA1 in case page has been modified, merge
+               modifyRes <- if null oldSHA1
+                               then liftIO $ create fs (pathForPage page $ defaultExtension cfg)
+                                               (Author user email) logMsg editedText >>
+                                             return (Right ())
+                               else do
+                                 expireCachedFile (pathForPage page $ defaultExtension cfg) `mplus` return ()
+                                 liftIO $ E.catch (modify fs (pathForPage page $ defaultExtension cfg)
+                                                    oldSHA1 (Author user email) logMsg
+                                                    editedText)
+                                             (\e -> if e == Unchanged
+                                                       then return (Right ())
+                                                       else E.throwIO e)
+               case modifyRes of
+                    Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p << "Page updated"
+                    Left (MergeInfo mergedWithRev conflicts mergedText) -> do
+                       let mergeMsg = "The page has been edited since you checked it out. " ++
+                              "Changes from revision " ++ revId mergedWithRev ++
+                              " have been merged into your edits below. " ++
+                              if conflicts
+                                 then "Please resolve conflicts and Save."
+                                 else "Please review and Save."
+                       editPage' $
+                         params{ pEditedText = Just mergedText,
+                                 pSHA1       = revId mergedWithRev,
+                                 pMessages   = [mergeMsg] }
 
 indexPage :: Handler
 indexPage = do
