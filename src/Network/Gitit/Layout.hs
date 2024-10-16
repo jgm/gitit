@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>
 
@@ -33,9 +35,11 @@ import Network.Gitit.State
 import Network.Gitit.Types
 import Network.HTTP (urlEncodeVars)
 import qualified Text.StringTemplate as T
-import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import Text.XHtml.Strict ( stringToHtmlString )
 import Data.Maybe (isNothing)
+import Text.Blaze.Html5 hiding (s, article, map)
+import Text.Blaze.Html5.Attributes hiding (id)
+import Data.String (IsString(fromString))
+import Text.Blaze.Html.Renderer.String (renderHtml)
 
 defaultPageLayout :: PageLayout
 defaultPageLayout = PageLayout
@@ -78,19 +82,19 @@ filledPageTemplate base' cfg layout htmlContents templ =
                            _                  -> base' ++ "/js/" ++ x
 
       scripts  = ["jquery-1.2.6.min.js", "jquery-ui-combined-1.6rc2.min.js", "footnotes.js"] ++ pgScripts layout
-      scriptLink x = script ! [src (prefixedScript x),
-        thetype "text/javascript"] << noHtml
-      javascriptlinks = renderHtmlFragment $ concatHtml $ map scriptLink scripts
+      scriptLink x = script ! src (fromString $  prefixedScript x) !
+        type_ "text/javascript" $ mempty
+      javascriptlinks = renderHtml $ mconcat $ map scriptLink scripts
       article = if isDiscussPage page then drop 1 page else page
       discussion = '@':article
       tabli tab = if tab == pgSelectedTab layout
-                     then li ! [theclass "selected"]
+                     then li ! class_ "selected"
                      else li
       tabs' = [x | x <- pgTabs layout,
                 not (x == EditTab && page `elem` noEdit cfg)]
-      tabs = ulist ! [theclass "tabs"] << map (linkForTab tabli base' page rev) tabs'
-      setStrAttr  attr = T.setAttribute attr . stringToHtmlString
-      setBoolAttr attr test = if test then T.setAttribute attr "true" else id
+      tabs = (ul ! class_ "tabs") $ foldMap (linkForTab tabli base' page rev) tabs'
+      setStrAttr  attr = T.setAttribute attr . renderHtml . fromString @Html
+      setBoolAttr attr test = if test then T.setAttribute attr ("true"::[Char]) else id
   in               T.setAttribute "base" base' .
                    T.setAttribute "feed" (pgLinkToFeed layout) .
                    setStrAttr "wikititle" (wikiTitle cfg) .
@@ -111,10 +115,10 @@ filledPageTemplate base' cfg layout htmlContents templ =
                    setBoolAttr "printable" (pgPrintable layout) .
                    maybe id (T.setAttribute "revision") rev .
                    (if null (pgTabs layout) then id else T.setAttribute "tabs"
-                       (renderHtmlFragment tabs)) .
+                       (renderHtml tabs)) .
                    (\f x xs -> if null xs then x else f xs) (T.setAttribute "messages") id (pgMessages layout) .
                    T.setAttribute "usecache" (useCache cfg) .
-                   T.setAttribute "content" (renderHtmlFragment htmlContents) .
+                   T.setAttribute "content" (renderHtml htmlContents) .
                    setBoolAttr "wikiupload" ( uploadsAllowed cfg) $
                    templ
 
@@ -123,32 +127,32 @@ filledPageTemplate base' cfg layout htmlContents templ =
 
 linkForTab :: (Tab -> Html -> Html) -> String -> String -> Maybe String -> Tab -> Html
 linkForTab tabli base' page _ HistoryTab =
-  tabli HistoryTab << anchor ! [href $ base' ++ "/_history" ++ urlForPage page] << "history"
+  tabli HistoryTab $ a ! href (fromString $ base' ++ "/_history" ++ urlForPage page) $ "history"
 linkForTab tabli _ _ _ DiffTab =
-  tabli DiffTab << anchor ! [href ""] << "diff"
+  tabli DiffTab $ a ! href "" $ "diff"
 linkForTab tabli base' page rev ViewTab =
   let origPage s = if isDiscussPage s
                       then drop 1 s
                       else s
   in if isDiscussPage page
-        then tabli DiscussTab << anchor !
-              [href $ base' ++ urlForPage (origPage page)] << "page"
-        else tabli ViewTab << anchor !
-              [href $ base' ++ urlForPage page ++
+        then tabli DiscussTab $ a !
+              href (fromString $ base' ++ urlForPage (origPage page)) $ "page"
+        else tabli ViewTab $  a !
+              href (fromString $ base' ++ urlForPage page ++
                       case rev of
                            Just r  -> "?revision=" ++ r
-                           Nothing -> ""] << "view"
+                           Nothing -> "") $ "view"
 linkForTab tabli base' page _ DiscussTab =
-  tabli (if isDiscussPage page then ViewTab else DiscussTab) <<
-  anchor ! [href $ base' ++ if isDiscussPage page then "" else "/_discuss" ++
-                   urlForPage page] << "discuss"
+  tabli (if isDiscussPage page then ViewTab else DiscussTab) $
+  a ! href (fromString $ base' ++ if isDiscussPage page then "" else "/_discuss" ++
+                   urlForPage page) $ "discuss"
 linkForTab tabli base' page rev EditTab =
-  tabli EditTab << anchor !
-    [href $ base' ++ "/_edit" ++ urlForPage page ++
+  tabli EditTab $ a !
+    href (fromString $ base' ++ "/_edit" ++ urlForPage page ++
             case rev of
                   Just r   -> "?revision=" ++ r ++ "&" ++
                                urlEncodeVars [("logMsg", "Revert to " ++ r)]
-                  Nothing  -> ""] << if isNothing rev
+                  Nothing  -> "") $ if isNothing rev
                                          then "edit"
                                          else "revert"
 

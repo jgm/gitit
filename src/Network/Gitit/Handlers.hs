@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-
 Copyright (C) 2008-9 John MacFarlane <jgm@berkeley.edu>
 
@@ -65,8 +66,6 @@ import Network.Gitit.Page (readCategories)
 import qualified Control.Exception as E
 import System.FilePath
 import Network.Gitit.State
-import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import qualified Text.XHtml as X ( method )
 import Data.List (intercalate, intersperse, delete, nub, sortBy, find, isPrefixOf, inits, sort, (\\))
 import Data.List.Split (wordsBy)
 import Data.Maybe (fromMaybe, mapMaybe, isJust, catMaybes)
@@ -81,6 +80,13 @@ import Data.Time (getCurrentTime, addUTCTime)
 import Data.Time.Clock (diffUTCTime, UTCTime(..))
 import Data.FileStore
 import System.Log.Logger (logM, Priority(..))
+import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
+import Text.Blaze.Html5 hiding (b, search, u, s, contents, source, html, title, map)
+import Text.Blaze.Html5.Attributes hiding (span, id)
+import qualified Text.Blaze.Html5 as Html5 hiding (search)
+import qualified Text.Blaze.Html5.Attributes as Html5.Attr hiding (span)
+import Data.String (IsString(fromString))
+import Prelude hiding (span)
 
 handleAny :: Handler
 handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
@@ -94,7 +100,7 @@ handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
          case res of
                 Right contents -> ignoreFilters >>  -- don't compress
                                   (ok $ setContentType mimetype $
-                                    (toResponse noHtml) {rsBody = contents})
+                                    (toResponse (renderHtml mempty)) {rsBody = contents})
                                     -- ugly hack
                 Left NotFound  -> mzero
                 Left e         -> error (show e)
@@ -121,14 +127,14 @@ randomPage = do
        let newPage = pages !!
                      (truncate (secs * 1000000) `mod` length pages)
        seeOther (base' ++ urlForPage newPage) $ toResponse $
-         p << "Redirecting to a random page"
+         renderHtml $ p $ "Redirecting to a random page"
 
 discussPage :: Handler
 discussPage = do
   page <- getPage
   base' <- getWikiBase
   seeOther (base' ++ urlForPage (if isDiscussPage page then page else ('@':page))) $
-                     toResponse "Redirecting to discussion page"
+                     toResponse ("Redirecting to discussion page" :: String)
 
 createPage :: Handler
 createPage = do
@@ -140,42 +146,56 @@ createPage = do
                                       pgPageName = page
                                     , pgTabs = []
                                     , pgTitle = "Create " ++ page ++ "?"
-                                    } $
-                    (p << stringToHtml
-                        ("There is no page named '" ++ page ++ "'. You can:"))
-                        +++
-                    (unordList $
-                      [ anchor !
-                            [href $ base' ++ "/_edit" ++ urlForPage page] <<
-                              ("Create the page '" ++ page ++ "'")
-                      , anchor !
-                            [href $ base' ++ "/_search?" ++
-                                (urlEncodeVars [("patterns", page)])] <<
-                              ("Search for pages containing the text '" ++
-                                page ++ "'")])
+                                    }
+                    $ p $ mconcat
+                      [ fromString
+                          $ "There is no page named '" ++ page ++ "'. You can:"
+                      , (ul $ mconcat
+                          [ li $ a !
+                                href (fromString $ base' ++ "/_edit" ++ urlForPage page)
+                                  $ fromString ("Create the page '" ++ page ++ "'")
+                          , li $ a !
+                                href (fromString $ base' ++ "/_search?" ++
+                                    (urlEncodeVars [("patterns", page)]))
+                                  $ fromString ("Search for pages containing the text '" ++
+                                    page ++ "'")])
+                      ]
+
+fileInput :: AttributeValue -> AttributeValue -> Html
+fileInput nameAndId val =  input ! type_ "file" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
+textfieldInput :: AttributeValue -> AttributeValue -> Html
+textfieldInput nameAndId val = input ! type_ "text" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
+checkboxInput :: AttributeValue -> AttributeValue -> Html
+checkboxInput nameAndId val = input ! type_ "checkbox" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
+submitInput :: AttributeValue -> AttributeValue -> Html
+submitInput nameAndId val = input ! type_ "submit" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
 
 uploadForm :: Handler
 uploadForm = withData $ \(params :: Params) -> do
   let origPath = pFilename params
   let wikiname = pWikiname params `orIfNull` takeFileName origPath
   let logMsg = pLogMsg params
-  let upForm = form ! [X.method "post", enctype "multipart/form-data"] <<
-       fieldset <<
-       [ p << [label ! [thefor "file"] << "File to upload:"
+  let upForm = Html5.form ! Html5.Attr.method "post" ! enctype "multipart/form-data"
+       $ fieldset $ mconcat
+       [ p $ mconcat
+              [ Html5.label ! for "file" $ "File to upload:"
               , br
-              , afile "file" ! [value origPath] ]
-       , p << [ label ! [thefor "wikiname"] << "Name on wiki, including extension"
-              , noscript << " (leave blank to use the same filename)"
-              , stringToHtml ":"
+              , fileInput "file" (fromString origPath) ]
+       , p $ mconcat
+              [ Html5.label ! for "wikiname" $ "Name on wiki, including extension"
+              , noscript $ " (leave blank to use the same filename)"
+              , ":"
               , br
-              , textfield "wikiname" ! [value wikiname]
-              , primHtmlChar "nbsp"
-              , checkbox "overwrite" "yes"
-              , label ! [thefor "overwrite"] << "Overwrite existing file" ]
-       , p << [ label ! [thefor "logMsg"] << "Description of content or changes:"
+              , textfieldInput "wikiname" (fromString wikiname)
+              , preEscapedString "&nbsp;"
+              , checkboxInput "overwrite" "yes"
+              , Html5.label ! for "overwrite" $ "Overwrite existing file"
+              ]
+       , p $ mconcat
+              [ Html5.label ! for "logMsg" $ "Description of content or changes:"
               , br
-              , textfield "logMsg" ! [size "60", value logMsg]
-              , submit "upload" "Upload" ]
+              , textfieldInput "logMsg" (fromString logMsg) ! size "60"
+              , submitInput "upload" "Upload" ]
        ]
   formattedPage defaultPageLayout{
                    pgMessages = pMessages params,
@@ -227,13 +247,13 @@ uploadFile = withData $ \(params :: Params) -> do
        fileContents <- liftIO $ B.readFile filePath
        let len = B.length fileContents
        liftIO $ save fs wikiname (Author user email) logMsg fileContents
-       let contents = thediv <<
-             [ h2 << ("Uploaded " ++ show len ++ " bytes")
+       let contents = Html5.div $ mconcat
+             [ h2 $ fromString ("Uploaded " ++ show len ++ " bytes")
              , if takeExtension wikiname `elem` imageExtensions
-                  then p << "To add this image to a page, use:" +++
-                       pre << ("![alt text](/" ++ wikiname ++ ")")
-                  else p << "To link to this resource from a page, use:" +++
-                       pre << ("[link label](/" ++ wikiname ++ ")") ]
+                  then (p $ "To add this image to a page, use:") <>
+                       (pre $ fromString ("![alt text](/" ++ wikiname ++ ")"))
+                  else (p $ "To link to this resource from a page, use:") <>
+                       (pre $ fromString ("[link label](/" ++ wikiname ++ ")")) ]
        formattedPage defaultPageLayout{
                        pgMessages = pMessages params,
                        pgShowPageTools = False,
@@ -255,10 +275,10 @@ goToPage = withData $ \(params :: Params) -> do
   base' <- getWikiBase
   case findPage exactMatch of
        Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
-                     "Redirecting to exact match"
+                     ("Redirecting to exact match" :: String)
        Nothing -> case findPage insensitiveMatch of
                        Just m  -> seeOther (base' ++ urlForPage m) $ toResponse
-                                    "Redirecting to case-insensitive match"
+                                    ("Redirecting to case-insensitive match" :: String)
                        Nothing -> case findPage prefixMatch of
                                        Just m  -> seeOther (base' ++ urlForPage m) $
                                                   toResponse $ "Redirecting" ++
@@ -297,22 +317,23 @@ searchResults = withData $ \(params :: Params) -> do
                                          then 100
                                          else 0
   let preamble = if null patterns
-                    then h3 << ["Please enter a search term."]
-                    else h3 << [ stringToHtml (show (length matches) ++ " matches found for ")
-                               , thespan ! [identifier "pattern"] << unwords patterns]
+                    then h3 $ "Please enter a search term."
+                    else h3 $ mconcat
+                            [ fromString (show (length matches) ++ " matches found for ")
+                            , Html5.span ! Html5.Attr.id "pattern" $ fromString $ unwords patterns ]
   base' <- getWikiBase
-  let toMatchListItem (file, contents) = li <<
-        [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file
-        , stringToHtml (" (" ++ show (length contents) ++ " matching lines)")
-        , stringToHtml " "
-        , anchor ! [href "#", theclass "showmatch",
-                    thestyle "display: none;"] << if length contents > 0
+  let toMatchListItem (file, contents) = li $ mconcat
+        [ a ! href (fromString $ base' ++ urlForPage (dropExtension file)) $ fromString $ dropExtension file
+        , fromString (" (" ++ show (length contents) ++ " matching lines)")
+        , " "
+        , a ! href "#" ! class_ "showmatch" !
+                    Html5.Attr.style "display: none;" $ if length contents > 0
                                                      then "[show matches]"
                                                      else ""
-        , pre ! [theclass "matches"] << unlines contents]
-  let htmlMatches = preamble +++
-                    olist << map toMatchListItem
-                             (reverse $ sortBy (comparing relevance) matches)
+        , pre ! class_ "matches" $ fromString $ unlines contents]
+  let htmlMatches = preamble <>
+                    (ol $ foldMap toMatchListItem
+                             (reverse $ sortBy (comparing relevance) matches))
   formattedPage defaultPageLayout{
                   pgMessages = pMessages params,
                   pgShowPageTools = False,
@@ -332,47 +353,51 @@ showFileHistory = withData $ \(params :: Params) -> do
   file <- getPage
   showHistory file file params
 
+intDataAttribute :: Tag -> Int -> Attribute
+intDataAttribute tag = dataAttribute tag . fromString . show
+
 showHistory :: String -> String -> Params -> Handler
 showHistory file page params =  do
   fs <- getFileStore
   hist <- liftIO $ history fs [file] (TimeRange Nothing Nothing)
             (Just $ pLimit params)
   base' <- getWikiBase
-  let versionToHtml rev pos = li ! [theclass "difflink", intAttr "order" pos,
-                                    strAttr "revision" (revId rev),
-                                    strAttr "diffurl" (base' ++ "/_diff/" ++ page)] <<
-        [ thespan ! [theclass "date"] << (show $ revDateTime rev)
-        , stringToHtml " ("
-        , thespan ! [theclass "author"] << anchor ! [href $ base' ++ "/_activity?" ++
-            urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
-              (authorName $ revAuthor rev)
-        , stringToHtml "): "
-        , anchor ! [href (base' ++ urlForPage page ++ "?revision=" ++ revId rev)] <<
-           thespan ! [theclass "subject"] <<  revDescription rev
-        , noscript <<
-            ([ stringToHtml " [compare with "
-             , anchor ! [href $ base' ++ "/_diff" ++ urlForPage page ++ "?to=" ++ revId rev] <<
+  let versionToHtml rev pos = li ! class_ "difflink" ! intDataAttribute "order" pos !
+                                    dataAttribute "revision" (fromString $ revId rev) !
+                                    dataAttribute "diffurl" (fromString $ base' ++ "/_diff/" ++ page)
+        $ mconcat
+        [ span ! class_ "date" $ (fromString $ show $ revDateTime rev)
+        , " ("
+        , span ! class_ "author" $ a ! href (fromString $ base' ++ "/_activity?" ++
+            urlEncodeVars [("forUser", authorName $ revAuthor rev)]) $
+              fromString (authorName $ revAuthor rev)
+        , "): "
+        , a ! href (fromString $ base' ++ urlForPage page ++ "?revision=" ++ revId rev) $
+           span ! class_ "subject" $ fromString $ revDescription rev
+        , noscript $ mconcat
+            ([ " [compare with "
+             , a ! href (fromString $ base' ++ "/_diff" ++ urlForPage page ++ "?to=" ++ revId rev) $
                   "previous" ] ++
              (if pos /= 1
-                  then [ primHtmlChar "nbsp"
-                       , primHtmlChar "bull"
-                       , primHtmlChar "nbsp"
-                       , anchor ! [href $ base' ++ "/_diff" ++ urlForPage page ++ "?from=" ++
-                                  revId rev] << "current"
+                  then [ preEscapedString "&nbsp;"
+                       , preEscapedString "&bull;"
+                       , preEscapedString "&nbsp;"
+                       , a ! href (fromString $ base' ++ "/_diff" ++ urlForPage page ++ "?from=" ++
+                                  revId rev) $ "current"
                        ]
                   else []) ++
-             [stringToHtml "]"])
+             ["]"])
         ]
   let contents = if null hist
-                    then noHtml
-                    else ulist ! [theclass "history"] <<
+                    then mempty
+                    else ul ! class_ "history" $ mconcat $
                            zipWith versionToHtml hist
                            [length hist, (length hist - 1)..1]
   let more = if length hist == pLimit params
-                then anchor ! [href $ base' ++ "/_history" ++ urlForPage page
-                                 ++ "?limit=" ++ show (pLimit params + 100)] <<
+                then a ! href (fromString $ base' ++ "/_history" ++ urlForPage page
+                                 ++ "?limit=" ++ show (pLimit params + 100)) $
                                  "Show more..."
-                else noHtml
+                else mempty
   let tabs = if file == page  -- source file, not wiki page
                 then [ViewTab,HistoryTab]
                 else pgTabs defaultPageLayout
@@ -383,7 +408,7 @@ showHistory file page params =  do
                    pgTabs = tabs,
                    pgSelectedTab = HistoryTab,
                    pgTitle = ("Changes to " ++ page)
-                   } $ contents +++ more
+                   } $ contents <> more
 
 showActivity :: Handler
 showActivity = withData $ \(params :: Params) -> do
@@ -406,31 +431,31 @@ showActivity = withData $ \(params :: Params) -> do
       fileFromChange (Deleted f)  = f
   base' <- getWikiBase
   let fileAnchor revis file = if takeExtension file == "." ++ (defaultExtension cfg)
-        then anchor ! [href $ base' ++ "/_diff" ++ urlForPage (dropExtension file) ++ "?to=" ++ revis] << dropExtension file
-        else anchor ! [href $ base' ++ urlForPage file ++ "?revision=" ++ revis] << file
-  let filesFor changes revis = intersperse (stringToHtml " ") $
+        then a ! href (fromString $ base' ++ "/_diff" ++ urlForPage (dropExtension file) ++ "?to=" ++ revis) $ fromString $ dropExtension file
+        else a ! href (fromString $ base' ++ urlForPage file ++ "?revision=" ++ revis) $ fromString file
+  let filesFor changes revis = intersperse " " $
         map (fileAnchor revis . fileFromChange) changes
-  let heading = h1 << ("Recent changes by " ++ fromMaybe "all users" forUser)
-  let revToListItem rev = li <<
-        [ thespan ! [theclass "date"] << (show $ revDateTime rev)
-        , stringToHtml " ("
-        , thespan ! [theclass "author"] <<
-            anchor ! [href $ base' ++ "/_activity?" ++
-              urlEncodeVars [("forUser", authorName $ revAuthor rev)]] <<
-                (authorName $ revAuthor rev)
-        , stringToHtml "): "
-        , thespan ! [theclass "subject"] << revDescription rev
-        , stringToHtml " ("
-        , thespan ! [theclass "files"] << filesFor (revChanges rev) (revId rev)
-        , stringToHtml ")"
+  let heading = h1 $ fromString ("Recent changes by " ++ fromMaybe "all users" forUser)
+  let revToListItem rev = li $ mconcat
+        [ span ! class_ "date" $ fromString $ (show $ revDateTime rev)
+        , " ("
+        , span ! class_ "author" $
+            a ! href (fromString $ base' ++ "/_activity?" ++
+              urlEncodeVars [("forUser", authorName $ revAuthor rev)]) $
+                fromString (authorName $ revAuthor rev)
+        , "): "
+        , span ! class_ "subject" $ fromString $ revDescription rev
+        , " ("
+        , span ! class_ "files" $ mconcat $ filesFor (revChanges rev) (revId rev)
+        , ")"
         ]
-  let contents = ulist ! [theclass "history"] << map revToListItem hist'
+  let contents = ul ! class_ "history" $ foldMap revToListItem hist'
   formattedPage defaultPageLayout{
                   pgMessages = pMessages params,
                   pgShowPageTools = False,
                   pgTabs = [],
                   pgTitle = "Recent changes"
-                  } (heading +++ contents)
+                  } (heading <> contents)
 
 showPageDiff :: Handler
 showPageDiff = withData $ \(params :: Params) -> do
@@ -484,16 +509,19 @@ getDiff :: FileStore -> FilePath -> Maybe RevisionId -> Maybe RevisionId
         -> IO Html
 getDiff fs file from to = do
   rawDiff <- diff fs file from to
-  let diffLineToHtml (Both xs _) = thespan << unlines xs
-      diffLineToHtml (First xs) = thespan ! [theclass "deleted"] << unlines xs
-      diffLineToHtml (Second xs) = thespan ! [theclass "added"]  << unlines xs
-  return $ h2 ! [theclass "revision"] <<
-             ("Changes from " ++ fromMaybe "beginning" from ++
-              " to " ++ fromMaybe "current" to) +++
-           pre ! [theclass "diff"] << map diffLineToHtml rawDiff
+  let diffLineToHtml (Both xs _) = span $ fromString $ unlines xs
+      diffLineToHtml (First xs) = span ! class_ "deleted" $ fromString $ unlines xs
+      diffLineToHtml (Second xs) = span ! class_ "added"  $ fromString $ unlines xs
+  return $ h2 ! class_ "revision" $
+            (fromString $ "Changes from " ++ fromMaybe "beginning" from ++
+              " to " ++ fromMaybe "current" to) <>
+           (pre ! class_ "diff" $ foldMap diffLineToHtml rawDiff)
 
 editPage :: Handler
 editPage = withData editPage'
+
+gui :: AttributeValue -> Html -> Html
+gui act = Html5.form ! action act ! Html5.Attr.method "post"
 
 editPage' :: Params -> Handler
 editPage' params = do
@@ -521,33 +549,33 @@ editPage' params = do
   let messages = pMessages params
   let logMsg = pLogMsg params
   let sha1Box = case mbRev of
-                 Just r  -> textfield "sha1" ! [thestyle "display: none",
-                                                value r]
-                 Nothing -> noHtml
-  let readonly = if isJust (pRevision params)
+                 Just r  -> textfieldInput "sha1" (fromString r) ! Html5.Attr.style "display: none"
+                 Nothing -> mempty
+  let readonly' = if isJust (pRevision params)
                     -- disable editing of text box if it's a revert
-                    then [strAttr "readonly" "yes",
-                          strAttr "style" "color: gray"]
-                    else []
+                    then (Html5.Attr.readonly "readonly")
+                          <> Html5.Attr.style "color: gray"
+                    else mempty
   base' <- getWikiBase
-  let editForm = gui (base' ++ urlForPage page) ! [identifier "editform"] <<
+  let editForm = gui (fromString $ base' ++ urlForPage page) ! Html5.Attr.id "editform"
+                   $ mconcat
                    [ sha1Box
-                   , textarea ! (readonly ++ [cols "80", name "editedText",
-                                  identifier "editedText"]) << raw
+                   , textarea ! readonly' ! cols "80" ! name "editedText" !
+                                  Html5.Attr.id "editedText" $ fromString raw
                    , br
-                   , label ! [thefor "logMsg"] << "Description of changes:"
+                   , Html5.label ! for "logMsg" $ "Description of changes:"
                    , br
-                   , textfield "logMsg" ! (readonly ++ [value (logMsg `orIfNull` defaultSummary cfg) ])
-                   , submit "update" "Save"
-                   , primHtmlChar "nbsp"
-                   , submit "cancel" "Discard"
-                   , primHtmlChar "nbsp"
-                   , input ! [thetype "button", theclass "editButton",
-                              identifier "previewButton",
-                              strAttr "onClick" "updatePreviewPane();",
-                              strAttr "style" "display: none;",
-                              value "Preview" ]
-                   , thediv ! [ identifier "previewpane" ] << noHtml
+                   , textfieldInput "logMsg"  (fromString $ logMsg `orIfNull` defaultSummary cfg) ! readonly'
+                   , submitInput "update" "Save"
+                   , preEscapedString "&nbsp;"
+                   , submitInput "cancel" "Discard"
+                   , preEscapedString "&nbsp;"
+                   , input ! type_ "button" ! class_ "editButton"
+                           ! Html5.Attr.id "previewButton"
+                           ! onclick "updatePreviewPane();"
+                           ! Html5.Attr.style "display: none;"
+                           ! value "Preview"
+                   , Html5.div ! Html5.Attr.id "previewpane" $ mempty
                    ]
   let pgScripts' = ["preview.js"]
   let pgScripts'' = case mathMethod cfg of
@@ -583,17 +611,17 @@ confirmDelete = do
                               Left NotFound -> return ""
                               Left e        -> fail (show e)
                        Left e        -> fail (show e)
-  let confirmForm = gui "" <<
-        [ p << "Are you sure you want to delete this page?"
-        , input ! [thetype "text", name "filetodelete",
-                   strAttr "style" "display: none;", value fileToDelete]
-        , submit "confirm" "Yes, delete it!"
-        , stringToHtml " "
-        , submit "cancel" "No, keep it!"
+  let confirmForm = gui "" $ mconcat
+        [ p $ "Are you sure you want to delete this page?"
+        , input ! type_ "text" ! name "filetodelete"
+                ! Html5.Attr.style "display: none;" ! value (fromString fileToDelete)
+        , submitInput "confirm" "Yes, delete it!"
+        , " "
+        , submitInput "cancel" "No, keep it!"
         , br ]
   formattedPage defaultPageLayout{ pgTitle = "Delete " ++ page ++ "?" } $
     if null fileToDelete
-       then ulist ! [theclass "messages"] << li <<
+       then ul ! class_ "messages" $ li $
             "There is no file or page by that name."
        else confirmForm
 
@@ -613,8 +641,8 @@ deletePage = withData $ \(params :: Params) -> do
      then do
        fs <- getFileStore
        liftIO $ Data.FileStore.delete fs file author descrip
-       seeOther (base' ++ "/") $ toResponse $ p << "File deleted"
-     else seeOther (base' ++ urlForPage page) $ toResponse $ p << "Not deleted"
+       seeOther (base' ++ "/") $ toResponse $ p $ "File deleted"
+     else seeOther (base' ++ urlForPage page) $ toResponse $ p $ "Not deleted"
 
 updatePage :: Handler
 updatePage = withData $ \(params :: Params) -> do
@@ -650,7 +678,7 @@ updatePage = withData $ \(params :: Params) -> do
                                                then return (Right ())
                                                else E.throwIO e)
        case modifyRes of
-            Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p << "Page updated"
+            Right () -> seeOther (base' ++ urlForPage page) $ toResponse $ p $ "Page updated"
             Left (MergeInfo mergedWithRev conflicts mergedText) -> do
                let mergeMsg = "The page has been edited since you checked it out. " ++
                       "Changes from revision " ++ revId mergedWithRev ++
@@ -686,25 +714,25 @@ indexPage = do
 fileListToHtml :: String -> String -> String -> [Resource] -> Html
 fileListToHtml base' prefix ext files =
   let fileLink (FSFile f) | takeExtension f == "." ++ ext =
-        li ! [theclass "page"  ] <<
-          anchor ! [href $ base' ++ urlForPage (prefix ++ dropExtension f)] <<
-            dropExtension f
-      fileLink (FSFile f) = li ! [theclass "upload"] << concatHtml
-        [ anchor ! [href $ base' ++ urlForPage (prefix ++ f)] << f
-        , anchor ! [href $ base' ++ "_delete" ++ urlForPage (prefix ++ f)] << "(delete)"
+        li ! class_ "page" $
+          a ! href (fromString $ base' ++ urlForPage (prefix ++ dropExtension f)) $
+            fromString $ dropExtension f
+      fileLink (FSFile f) = li ! class_ "upload" $ mconcat
+        [ a ! href (fromString $ base' ++ urlForPage (prefix ++ f)) $ fromString f
+        , a ! href (fromString $ base' ++ "_delete" ++ urlForPage (prefix ++ f)) $ "(delete)"
         ]
       fileLink (FSDirectory f) =
-        li ! [theclass "folder"] <<
-          anchor ! [href $ base' ++ urlForPage (prefix ++ f) ++ "/"] << f
+        li ! class_ "folder" $
+          a ! href (fromString $ base' ++ urlForPage (prefix ++ f) ++ "/") $ fromString f
       updirs = drop 1 $ inits $ splitPath $ '/' : prefix
       uplink = foldr (\d accum ->
-                  concatHtml [ anchor ! [theclass "updir",
-                                         href $ if length d <= 1
+                  mconcat [ a ! class_ "updir" !
+                                         href (fromString $ if length d <= 1
                                                    then base' ++ "/_index"
                                                    else base' ++
-                                                        urlForPage (joinPath $ drop 1 d)] <<
-                  lastNote "fileListToHtml" d, accum]) noHtml updirs
-  in uplink +++ ulist ! [theclass "index"] << map fileLink files
+                                                        urlForPage (joinPath $ drop 1 d)) $
+                  fromString $ lastNote "fileListToHtml" d, accum]) mempty updirs
+  in uplink <> (ul ! class_ "index" $ foldMap fileLink files)
 
 -- NOTE:  The current implementation of categoryPage does not go via the
 -- filestore abstraction.  That is bad, but can only be fixed if we add
@@ -725,22 +753,22 @@ categoryPage = do
                            then Just (f, categories \\ pcategories)
                            else Nothing
   base' <- getWikiBase
-  let toMatchListItem file = li <<
-        [ anchor ! [href $ base' ++ urlForPage (dropExtension file)] << dropExtension file ]
-  let toRemoveListItem cat = li << 
-        [ anchor ! [href $ base' ++
+  let toMatchListItem file = li $
+        a ! href (fromString $ base' ++ urlForPage (dropExtension file)) $ fromString $ dropExtension file
+  let toRemoveListItem cat = li $
+        a ! href (fromString $ base' ++
         (if null (tail pcategories)
          then "/_categories"
-         else "/_category" ++ urlForPage (intercalate "," $ Data.List.delete cat pcategories)) ]
-        << ("-" ++ cat) ]
-  let toAddListItem cat = li <<
-        [ anchor ! [href $ base' ++
-          "/_category" ++ urlForPage (path' ++ "," ++ cat) ]
-        << ("+" ++ cat) ]
-  let matchList = ulist << map toMatchListItem (fst $ unzip matches) +++
-                  thediv ! [ identifier "categoryList" ] <<
-                  ulist << (++) (map toAddListItem (nub $ concat $ snd $ unzip matches)) 
-                                (map toRemoveListItem pcategories) 
+         else "/_category" ++ urlForPage (intercalate "," $ Data.List.delete cat pcategories)))
+        $ fromString ("-" ++ cat)
+  let toAddListItem cat = li $
+        a ! href (fromString $ base' ++
+          "/_category" ++ urlForPage (path' ++ "," ++ cat))
+        $ fromString ("+" ++ cat)
+  let matchList = ul $ foldMap toMatchListItem (fst $ unzip matches) <>
+                  (Html5.div ! Html5.Attr.id "categoryList" $
+                  ul $ mconcat $ (++) (map toAddListItem (nub $ concat $ snd $ unzip matches))
+                                (map toRemoveListItem pcategories))
   formattedPage defaultPageLayout{
                   pgPageName = categoryDescription,
                   pgShowPageTools = False,
@@ -758,9 +786,9 @@ categoryListPage = do
   categories <- liftIO $ liftM (nub . sort . concat) $ forM pages $ \f ->
                   readCategories (repoPath </> f)
   base' <- getWikiBase
-  let toCatLink ctg = li <<
-        [ anchor ! [href $ base' ++ "/_category" ++ urlForPage ctg] << ctg ]
-  let htmlMatches = ulist << map toCatLink categories
+  let toCatLink ctg = li $
+        a ! href (fromString $ base' ++ "/_category" ++ urlForPage ctg) $ (fromString ctg)
+  let htmlMatches = ul $ foldMap toCatLink categories
   formattedPage defaultPageLayout{
                   pgPageName = "Categories",
                   pgShowPageTools = False,

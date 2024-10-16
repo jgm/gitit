@@ -70,7 +70,6 @@ import Control.Monad.State (StateT, runStateT, get, modify)
 import Control.Monad (liftM, mplus)
 import System.Log.Logger (Priority(..))
 import Text.Pandoc.Definition (Pandoc)
-import Text.XHtml (Html)
 import qualified Data.Map as M
 import Data.Text (Text)
 import Data.List (intersect)
@@ -85,6 +84,7 @@ import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
 import Network.OAuth.OAuth2
+import Text.Blaze.Html (Html)
 
 data PageType = Markdown
               | CommonMark

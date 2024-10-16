@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
                    Henry Laxen <nadine.and.henry@pobox.com>
@@ -35,8 +36,6 @@ import Network.Gitit.Server
 import Network.Gitit.Util
 import Network.Gitit.Authentication.Github
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
-import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import qualified Text.XHtml as X ( password )
 import System.Process (readProcessWithExitCode)
 import Control.Monad (unless, liftM, mplus)
 import Control.Monad.Trans (liftIO)
@@ -53,6 +52,13 @@ import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
 import Codec.Binary.UTF8.String (encodeString)
 import Data.ByteString.UTF8 (toString)
 import Network.Gitit.Rpxnow as R
+import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
+import Text.Blaze.Html5 hiding (i, search, u, s, contents, source, html, title, map)
+import qualified Text.Blaze.Html5 as Html5 hiding (search)
+import qualified Text.Blaze.Html5.Attributes as Html5.Attr hiding (dir, span)
+import Text.Blaze.Html5.Attributes
+import Data.String (IsString(fromString))
+import qualified Text.XHtml as XHTML
 
 -- | Replace each occurrence of one sublist in a list with another.
 --   Vendored in from pandoc 2.11.4 as 2.12 removed this function.
@@ -86,15 +92,33 @@ registerUser params = do
                          pPassword = pword,
                          pEmail = email }
 
+
+gui :: AttributeValue -> Html -> Html
+gui act = Html5.form ! Html5.Attr.action act ! Html5.Attr.method "post"
+
+
+textfieldInput :: AttributeValue -> AttributeValue -> Html
+textfieldInput nameAndId val = input ! type_ "text" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
+textfieldInput' :: AttributeValue -> Html
+textfieldInput' nameAndId = input ! type_ "text" ! Html5.Attr.id nameAndId ! name nameAndId
+passwordInput :: AttributeValue -> Html
+passwordInput nameAndId = input ! type_ "password" ! Html5.Attr.id nameAndId ! name nameAndId
+submitInput :: AttributeValue -> AttributeValue -> Html
+submitInput nameAndId val = input ! type_ "submit" ! Html5.Attr.id nameAndId ! name nameAndId ! value val
+
+intTabindex :: Int -> Attribute
+intTabindex i = Html5.Attr.tabindex (fromString $ show i)
+
 resetPasswordRequestForm :: Params -> Handler
 resetPasswordRequestForm _ = do
-  let passwordForm = gui "" ! [identifier "resetPassword"] << fieldset <<
-              [ label ! [thefor "username"] << "Username: "
-              , textfield "username" ! [size "20", intAttr "tabindex" 1], stringToHtml " "
-              , submit "resetPassword" "Reset Password" ! [intAttr "tabindex" 2]]
+  let passwordForm = gui "" ! Html5.Attr.id "resetPassword" $ fieldset $ mconcat
+              [ Html5.label ! Html5.Attr.for "username" $ "Username: "
+              , textfieldInput' "username" ! size "20" ! intTabindex 1
+              , " "
+              , submitInput "resetPassword" "Reset Password" ! intTabindex 2]
   cfg <- getConfig
   let contents = if null (mailCommand cfg)
-                    then p << "Sorry, password reset not available."
+                    then p $ "Sorry, password reset not available."
                     else passwordForm
   formattedPage defaultPageLayout{
                   pgShowPageTools = False,
@@ -115,11 +139,11 @@ resetPasswordRequest params = do
   if null errors
     then do
       let response =
-            p << [ stringToHtml "An email has been sent to "
-                 , bold $ stringToHtml . uEmail $ fromJust mbUser
+            p $ mconcat
+                 [ "An email has been sent to "
+                 , strong $ fromString . uEmail $ fromJust mbUser
                  , br
-                 , stringToHtml
-                   "Please click on the enclosed link to reset your password."
+                 , "Please click on the enclosed link to reset your password."
                  ]
       sendReregisterEmail (fromJust mbUser)
       formattedPage defaultPageLayout{
@@ -175,7 +199,7 @@ validateReset params postValidate = do
                      (True, True)   -> []
                      (True, False)  -> ["Your reset code is invalid"]
                      (False, _)     -> ["User " ++
-                       renderHtmlFragment (stringToHtml uname) ++
+                       renderHtml (fromString uname) ++
                        " is not known"]
   if null errors
      then postValidate (fromJust user)
@@ -230,54 +254,61 @@ sharedForm mbUser = withData $ \params -> do
                 ""  -> getReferer
                 x   -> return x
   let accessQ = case mbUser of
-            Just _ -> noHtml
+            Just _ -> mempty
             Nothing -> case accessQuestion cfg of
-                      Nothing          -> noHtml
-                      Just (prompt, _) -> label ! [thefor "accessCode"] << prompt +++ br +++
-                                          X.password "accessCode" ! [size "15", intAttr "tabindex" 1]
-                                          +++ br
+                      Nothing          -> mempty
+                      Just (prompt, _) -> mconcat
+                        [ Html5.label ! Html5.Attr.for "accessCode" $ fromString prompt
+                        , br
+                        , passwordInput "accessCode" ! size "15" ! intTabindex 1
+                        , br
+                        ]
   let captcha = if useRecaptcha cfg
                    then captchaFields (recaptchaPublicKey cfg) Nothing
-                   else noHtml
+                   else mempty
   let initField field = case mbUser of
                       Nothing    -> ""
                       Just user  -> field user
   let userNameField = case mbUser of
-                      Nothing    -> label ! [thefor "username"] <<
-                                     "Username (at least 3 letters or digits):"
-                                    +++ br +++
-                                    textfield "username" ! [size "20", intAttr "tabindex" 2] +++ br
-                      Just user  -> label ! [thefor "username"] <<
-                                    ("Username (cannot be changed): " ++ uUsername user)
-                                    +++ br
+                      Nothing    -> mconcat
+                        [ Html5.label ! Html5.Attr.for "username" $ "Username (at least 3 letters or digits):"
+                        , br
+                        , textfieldInput' "username" ! size "20" ! intTabindex 2
+                        , br
+                        ]
+                      Just user  -> Html5.label ! Html5.Attr.for "username" $
+                                    (fromString $ "Username (cannot be changed): " ++ uUsername user)
+                                    <> br
   let submitField = case mbUser of
-                      Nothing    -> submit "register" "Register"
-                      Just _     -> submit "resetPassword" "Reset Password"
+                      Nothing    -> submitInput "register" "Register"
+                      Just _     -> submitInput "resetPassword" "Reset Password"
 
-  return $ gui "" ! [identifier "loginForm"] << fieldset <<
+  return $ gui "" ! Html5.Attr.id "loginForm" $ fieldset $ mconcat
             [ accessQ
             , userNameField
-            , label ! [thefor "email"] << "Email (optional, will not be displayed on the Wiki):"
+            , Html5.label ! Html5.Attr.for "email" $ "Email (optional, will not be displayed on the Wiki):"
             , br
-            , textfield "email" ! [size "20", intAttr "tabindex" 3, value (initField uEmail)]
-            , br ! [theclass "req"]
-            , textfield "full_name_1" ! [size "20", theclass "req"]
+            , textfieldInput "email" (fromString $ initField uEmail) ! size "20" ! intTabindex 3
+            , br ! class_ "req"
+            , textfieldInput' "full_name_1" ! size "20" ! class_ "req"
             , br
-            , label ! [thefor "password"]
-                    << ("Password (at least 6 characters," ++
+            , Html5.label ! Html5.Attr.for "password"
+                    $ fromString ("Password (at least 6 characters," ++
                         " including at least one non-letter):")
             , br
-            , X.password "password" ! [size "20", intAttr "tabindex" 4]
-            , stringToHtml " "
+            , passwordInput "password" ! size "20" ! intTabindex 4
+            , " "
             , br
-            , label ! [thefor "password2"] << "Confirm Password:"
+            , Html5.label ! Html5.Attr.for "password2" $ "Confirm Password:"
             , br
-            , X.password "password2" ! [size "20", intAttr "tabindex" 5]
-            , stringToHtml " "
+            , passwordInput "password2" ! size "20" ! intTabindex 5
+            , " "
             , br
-            , captcha
-            , textfield "destination" ! [thestyle "display: none;", value dest]
-            , submitField ! [intAttr "tabindex" 6]]
+            -- Workaround, as ReCaptcha does not work with BlazeHtml
+            , preEscapedToHtml (XHTML.renderHtmlFragment captcha)
+            , textfieldInput "destination" (fromString dest) ! Html5.Attr.style "display: none;"
+            , submitField ! intTabindex 6
+            ]
 
 
 sharedValidation :: ValidationType
@@ -349,27 +380,29 @@ loginForm :: String -> GititServerPart Html
 loginForm dest = do
   cfg <- getConfig
   base' <- getWikiBase
-  return $ gui (base' ++ "/_login") ! [identifier "loginForm"] <<
-    fieldset <<
-      [ label ! [thefor "username"] << "Username "
-      , textfield "username" ! [size "15", intAttr "tabindex" 1]
-      , stringToHtml " "
-      , label ! [thefor "password"] << "Password "
-      , X.password "password" ! [size "15", intAttr "tabindex" 2]
-      , stringToHtml " "
-      , textfield "destination" ! [thestyle "display: none;", value dest]
-      , submit "login" "Login" ! [intAttr "tabindex" 3]
-      ] +++
+  return $ gui (fromString $ base' ++ "/_login") ! Html5.Attr.id "loginForm" $
+    (fieldset $ mconcat
+      [ Html5.label ! Html5.Attr.for "username" $ "Username "
+      , textfieldInput' "username" ! size "15" ! intTabindex 1
+      , " "
+      , Html5.label ! Html5.Attr.for "password" $ "Password "
+      , passwordInput "password" ! size "15" ! intTabindex 2
+      , " "
+      , textfieldInput "destination" (fromString dest) ! Html5.Attr.style "display: none;"
+      , submitInput "login" "Login" ! intTabindex 3
+      ]) <>
     (if disableRegistration cfg
-       then noHtml
-       else p << [ stringToHtml "If you do not have an account, "
-                 , anchor ! [href $ base' ++ "/_register?" ++
-                     urlEncodeVars [("destination", encodeString dest)]] << "click here to get one."
-                 ]) +++
+       then mempty
+       else p $ mconcat
+                 [ "If you do not have an account, "
+                 , a ! href (fromString $ base' ++ "/_register?" ++
+                     urlEncodeVars [("destination", encodeString dest)]) $ "click here to get one."
+                 ]) <>
     (if null (mailCommand cfg)
-       then noHtml
-       else p << [ stringToHtml "If you forgot your password, "
-                 , anchor ! [href $ base' ++ "/_resetPassword"] <<
+       then mempty
+       else p $ mconcat
+                 [ "If you forgot your password, "
+                 , a ! href (fromString $ base' ++ "/_resetPassword") $
                      "click here to get a new one."
                  ])
 
@@ -396,8 +429,7 @@ loginUser params = do
     then do
       key <- newSession (sessionData uname)
       addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
-      seeOther (encUrl destination) $ toResponse $ p << ("Welcome, " ++
-        renderHtmlFragment (stringToHtml uname))
+      seeOther (encUrl destination) $ toResponse $ p $ (fromString $ "Welcome, " ++ uname)
     else
       withMessages ["Invalid username or password."] loginUserForm
 
@@ -412,7 +444,7 @@ logoutUser params = do
          delSession k
          expireCookie "sid"
        Nothing -> return ()
-  seeOther (encUrl dest) $ toResponse "You have been logged out."
+  seeOther (encUrl dest) $ toResponse ("You have been logged out." :: String)
 
 registerUserForm :: Handler
 registerUserForm = registerForm >>=
@@ -424,8 +456,8 @@ registerUserForm = registerForm >>=
 
 regAuthHandlers :: [Handler]
 regAuthHandlers =
-  [ dir "_register"  $ method GET >> registerUserForm
-  , dir "_register"  $ method POST >> withData registerUser
+  [ Network.Gitit.Server.dir "_register"  $ Network.Gitit.Server.method GET >> registerUserForm
+  , Network.Gitit.Server.dir "_register"  $ Network.Gitit.Server.method POST >> withData registerUser
   ]
 
 formAuthHandlers :: Bool -> [Handler]
@@ -433,14 +465,14 @@ formAuthHandlers disableReg =
   (if disableReg
     then []
     else regAuthHandlers) ++
-  [ dir "_login"     $ method GET  >> loginUserForm
-  , dir "_login"     $ method POST >> withData loginUser
-  , dir "_logout"    $ method GET  >> withData logoutUser
-  , dir "_resetPassword"   $ method GET  >> withData resetPasswordRequestForm
-  , dir "_resetPassword"   $ method POST >> withData resetPasswordRequest
-  , dir "_doResetPassword" $ method GET  >> withData resetPassword
-  , dir "_doResetPassword" $ method POST >> withData doResetPassword
-  , dir "_user" currentUser
+  [ Network.Gitit.Server.dir "_login"     $ Network.Gitit.Server.method GET  >> loginUserForm
+  , Network.Gitit.Server.dir "_login"     $ Network.Gitit.Server.method POST >> withData loginUser
+  , Network.Gitit.Server.dir "_logout"    $ Network.Gitit.Server.method GET  >> withData logoutUser
+  , Network.Gitit.Server.dir "_resetPassword"   $ Network.Gitit.Server.method GET  >> withData resetPasswordRequestForm
+  , Network.Gitit.Server.dir "_resetPassword"   $ Network.Gitit.Server.method POST >> withData resetPasswordRequest
+  , Network.Gitit.Server.dir "_doResetPassword" $ Network.Gitit.Server.method GET  >> withData resetPassword
+  , Network.Gitit.Server.dir "_doResetPassword" $ Network.Gitit.Server.method POST >> withData doResetPassword
+  , Network.Gitit.Server.dir "_user" currentUser
   ]
 
 loginUserHTTP :: Params -> Handler
@@ -454,9 +486,9 @@ logoutUserHTTP = unauthorized $ toResponse ()  -- will this work?
 
 httpAuthHandlers :: [Handler]
 httpAuthHandlers =
-  [ dir "_logout" logoutUserHTTP
-  , dir "_login"  $ withData loginUserHTTP
-  , dir "_user" currentUser ]
+  [ Network.Gitit.Server.dir "_logout" logoutUserHTTP
+  , Network.Gitit.Server.dir "_login"  $ withData loginUserHTTP
+  , Network.Gitit.Server.dir "_user" currentUser ]
 
 oauthGithubCallback :: GithubConfig
                    -> GithubCallbackPars                  -- ^ Authentication code gained after authorization
@@ -492,15 +524,15 @@ oauthGithubCallback ghConfig githubCallbackPars =
 githubAuthHandlers :: GithubConfig
                    -> [Handler]
 githubAuthHandlers ghConfig =
-  [ dir "_logout" $ withData logoutUser
-  , dir "_login" $ withData $ loginGithubUser $ oAuth2 ghConfig
-  , dir "_loginFailure" $ githubLoginFailure
-  , dir "_githubCallback" $ withData $ oauthGithubCallback ghConfig
-  , dir "_user" currentUser ]
+  [ Network.Gitit.Server.dir "_logout" $ withData logoutUser
+  , Network.Gitit.Server.dir "_login" $ withData $ loginGithubUser $ oAuth2 ghConfig
+  , Network.Gitit.Server.dir "_loginFailure" $ githubLoginFailure
+  , Network.Gitit.Server.dir "_githubCallback" $ withData $ oauthGithubCallback ghConfig
+  , Network.Gitit.Server.dir "_user" currentUser ]
 
 githubLoginFailure :: Handler
 githubLoginFailure = withData $ \params ->
-  formattedPage (pageLayout (pMessages params)) noHtml >>= forbidden
+  formattedPage (pageLayout (pMessages params)) mempty >>= forbidden
   where
     pageLayout msgs =
       defaultPageLayout{ pgShowPageTools = False,
@@ -534,8 +566,8 @@ loginRPXUser params = do
                    Right u -> return u
                    Left err -> error err
        liftIO $ logM "gitit.loginRPXUser" DEBUG $ "uid:" ++ show uid
-       -- We need to get an unique identifier for the user
-       -- The 'identifier' is always present but can be rather cryptic
+       -- We need to get an unique Html5.Attr.id for the user
+       -- The 'Html5.Attr.id' is always present but can be rather cryptic
        -- The 'verifiedEmail' is also unique and is a more readable choice
        -- so we use it if present.
        let userId = R.userIdentifier uid
@@ -547,7 +579,7 @@ loginRPXUser params = do
        see $ fromJust $ rDestination params
       where
         prop pname info = lookup pname $ R.userData info
-        see url = seeOther (encUrl url) $ toResponse noHtml
+        see url = seeOther (encUrl url) $ toResponse (renderHtml mempty)
 
 -- The parameters passed by the RPX callback call.
 data RPars = RPars { rToken       :: Maybe String
@@ -564,9 +596,9 @@ instance FromData RPars where
 
 rpxAuthHandlers :: [Handler]
 rpxAuthHandlers =
-  [ dir "_logout" $ method GET >> withData logoutUser
-  , dir "_login"  $ withData loginRPXUser
-  , dir "_user" currentUser ]
+  [ Network.Gitit.Server.dir "_logout" $ Network.Gitit.Server.method GET >> withData logoutUser
+  , Network.Gitit.Server.dir "_login"  $ withData loginRPXUser
+  , Network.Gitit.Server.dir "_user" currentUser ]
 
 -- | Returns username of logged in user or null string if nobody logged in.
 currentUser :: Handler
