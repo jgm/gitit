@@ -95,11 +95,7 @@ import Skylighting hiding (Context)
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
 import Text.XHtml hiding ( (</>), dir, method, password, rev )
 import Text.XHtml.Strict (stringToHtmlString)
-#if MIN_VERSION_blaze_html(0,5,0)
 import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
-#else
-import Text.Blaze.Renderer.String as Blaze ( renderHtml )
-#endif
 import URI.ByteString (Query(Query), URIRef(uriPath), laxURIParserOptions,
                        parseURI, uriQuery)
 import qualified Data.Text as T
