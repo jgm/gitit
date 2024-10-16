@@ -476,7 +476,7 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
                 lift $ ok $ withBody $ concat
                     [ "<!doctype html><html><head><title>Redirecting to "
                     , html'
-                    , "</title><meta http-equiv=\"refresh\" contents=\"0; url="
+                    , "</title><meta http-equiv=\"refresh\" content=\"0; url="
                     , url'
                     , "\" /><script type=\"text/javascript\">window.location=\""
                     , url'
