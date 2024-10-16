@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 {-
 Copyright (C) 2009 John MacFarlane <jgm@berkeley.edu>,
 Anton van Straaten <anton@appsolutions.com>
@@ -76,7 +77,6 @@ import Control.Monad.Except (throwError)
 import Data.Foldable (traverse_)
 import Data.List (stripPrefix)
 import Data.Maybe (isNothing, mapMaybe)
-import Data.Semigroup ((<>))
 import Network.Gitit.Cache (lookupCache, cacheContents)
 import Network.Gitit.Framework hiding (uriPath)
 import Network.Gitit.Layout
@@ -93,9 +93,6 @@ import qualified Text.Pandoc.Builder as B
 import Text.HTML.SanitizeXSS (sanitizeBalance)
 import Skylighting hiding (Context)
 import Text.Pandoc hiding (MathML, WebTeX, MathJax)
-import Text.XHtml hiding ( (</>), dir, method, password, rev )
-import Text.XHtml.Strict (stringToHtmlString)
-import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 import URI.ByteString (Query(Query), URIRef(uriPath), laxURIParserOptions,
                        parseURI, uriQuery)
 import qualified Data.Text as T
@@ -104,6 +101,12 @@ import qualified Data.ByteString.Char8 as SC (pack, unpack)
 import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
+import Data.String (IsString(fromString))
+import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
+import Text.Blaze.Html5 hiding (u, s, contents, source, html, title, map)
+import Text.Blaze.Html5.Attributes hiding (id)
+import qualified Text.Blaze.Html5 as Html5
+import qualified Text.Blaze.Html5.Attributes as Html5.Attr
 
 --
 -- ContentTransformer runners
@@ -195,7 +198,7 @@ preview = runPageTransformer $
           contentsToPage >>=
           pageToWikiPandoc >>=
           pandocToHtml >>=
-          return . toResponse . renderHtmlFragment
+          return . toResponse . renderHtml
 
 -- | Applies pre-commit plugins to raw page source, possibly
 -- modifying it.
@@ -332,6 +335,8 @@ pageToPandoc page' = do
                              , ctxMeta = pageMeta page' }
   either (liftIO . E.throwIO) return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
 
+data WasRedirect = WasRedirect | WasNoRedirect
+
 -- | Detects if the page is a redirect page and handles accordingly. The exact
 -- behaviour is as follows:
 --
@@ -374,56 +379,51 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
   where
     addMessage message = modifyContext $ \context -> context
         { ctxLayout = (ctxLayout context)
-            { pgMessages = pgMessages (ctxLayout context) ++ [message]
+            { pgMessages = pgMessages (ctxLayout context) ++ [renderHtml message]
             }
         }
     redirectedFrom source = do
         (url, html) <- processSource source
-        return $ concat
-            [ "Redirected from <a href=\""
-            , url
-            , "?redirect=no\" title=\"Go to original page\">"
-            , html
-            , "</a>"
+        return $ mconcat
+            [ "Redirected from ",
+               a ! href (url WasNoRedirect) ! title "Go to original page" $ html
             ]
     doubleRedirect source destination = do
         (url, html) <- processSource source
         (url', html') <- processDestination destination
-        return $ concat
-            [ "This page normally redirects to <a href=\""
-            , url'
-            , "\" title=\"Continue to destination\">"
-            , html'
-            , "</a>, but as you were already redirected from <a href=\""
-            , url
-            , "?redirect=no\" title=\"Go to original page\">"
-            , html
-            , "</a>"
+        return $ mconcat
+            [ "This page normally redirects to "
+            , a ! href (fromString $ url' WasRedirect) ! title "Continue to destination" $ html'
+            , ", but as you were already redirected from "
+            , a ! href (url WasNoRedirect) ! title "Go to original page" $ html
             , ", this was stopped to prevent a double-redirect."
             ]
     cancelledRedirect destination = do
         (url', html') <- processDestination destination
-        return $ concat
-            [ "This page redirects to <a href=\""
-            , url'
-            , "\" title=\"Continue to destination\">"
-            , html'
-            , "</a>."
+        return $ mconcat
+            [ "This page redirects to "
+            , a ! href (fromString $ url' WasRedirect) ! title "Continue to destination" $ html'
             ]
     processSource source = do
         base' <- getWikiBase
-        let url = stringToHtmlString $ base' ++ urlForPage source
-        let html = stringToHtmlString source
+        let url redir = fromString @AttributeValue $
+              base' ++ urlForPage source ++ case redir of
+                WasNoRedirect -> "?redirect=no"
+                WasRedirect -> ""
+        let html = fromString @Html source
         return (url, html)
     processDestination destination = do
         base' <- getWikiBase
         let (page', fragment) = break (== '#') destination
-        let url = stringToHtmlString $ concat
+        let url redir = concat
              [ base'
              , urlForPage page'
              , fragment
-             ]
-        let html = stringToHtmlString page'
+
+             ] ++ case redir of
+                WasNoRedirect -> "?redirect=no"
+                WasRedirect -> ""
+        let html = fromString @Html page'
         return (url, html)
     getSource = do
         cfg <- lift getConfig
@@ -461,26 +461,25 @@ handleRedirects page = case lookup "redirect" (pageMeta page) of
                              , urlForPage (pageName page)
                              , "?redirect=yes"
                              ]
-                        lift $ seeOther url' $ withBody $ concat
-                            [ "<!doctype html><html><head><title>307 Redirect"
-                            , "</title></head><body><p>You are being <a href=\""
-                            , stringToHtmlString url'
-                            , "\">redirected</a>.</body></p></html>"
+                        lift $ seeOther url' $ withBody $ renderHtml $ docTypeHtml $ mconcat
+                            [ Html5.head $ Html5.title "307 Redirect"
+                            , Html5.body $ p $ mconcat [
+                                "You are being",
+                                a ! href (fromString url') $ "redirected."
+                              ]
                             ]
              Just True -> fmap Left $ do
                 (url', html') <- processDestination destination
-                lift $ ok $ withBody $ concat
-                    [ "<!doctype html><html><head><title>Redirecting to "
-                    , html'
-                    , "</title><meta http-equiv=\"refresh\" content=\"0; url="
-                    , url'
-                    , "\" /><script type=\"text/javascript\">window.location=\""
-                    , url'
-                    , "\"</script></head><body><p>Redirecting to <a href=\""
-                    , url'
-                    , "\">"
-                    , html'
-                    , "</a>...</p></body></html>"
+                lift $ ok $ withBody $ renderHtml $ docTypeHtml $ mconcat
+                    [ Html5.head $ mconcat
+                        [ Html5.title $ "Redirecting to" <> html'
+                        , meta ! httpEquiv "refresh" ! content (fromString $ "0; url=" <> url' WasRedirect)
+                        , script ! type_ "text/javascript" $ fromString $ "window.location=\"" <> url' WasRedirect <> "\""
+                        ],
+                      Html5.body $ p $ mconcat
+                        [ "Redirecting to "
+                        , a ! href (fromString $ url' WasRedirect) $ html'
+                        ]
                     ]
              Just False -> do
                 cancelledRedirect destination >>= addMessage
@@ -505,7 +504,7 @@ pandocToHtml pandocContents = do
     case res of
       Right t -> return t
       Left e  -> throwError $ PandocTemplateError $ T.pack e
-  return $ primHtml $ T.unpack .
+  return $ preEscapedToHtml @T.Text .
            (if xssSanitize cfg then sanitizeBalance else id) $
            either E.throw id . runPure $ writeHtml5String def{
                         writerTemplate = Just compiledTemplate
@@ -538,8 +537,7 @@ highlightSource (Just source) = do
                             , traceOutput = False} l
                         $ T.pack $ filter (/='\r') source of
                     Left e ->  fail (show e)
-                    Right r -> return $ primHtml $ Blaze.renderHtml
-                                      $ formatHtmlBlock formatOpts r
+                    Right r -> return $ formatHtmlBlock formatOpts r
 
 --
 -- Plugin combinators
@@ -603,11 +601,11 @@ wikiDivify :: Html -> ContentTransformer Html
 wikiDivify c = do
   categories <- liftM ctxCategories get
   base' <- lift getWikiBase
-  let categoryLink ctg = li (anchor ! [href $ base' ++ "/_category/" ++ ctg] << ctg)
+  let categoryLink ctg = li (a ! href (fromString $ base' ++ "/_category/" ++ ctg) $ fromString ctg)
   let htmlCategories = if null categories
-                          then noHtml
-                          else thediv ! [identifier "categoryList"] << ulist << map categoryLink categories
-  return $ thediv ! [identifier "wikipage"] << [c, htmlCategories]
+                          then mempty
+                          else Html5.div ! Html5.Attr.id "categoryList" $ ul $ foldMap categoryLink categories
+  return $ Html5.div ! Html5.Attr.id "wikipage" $ c <> htmlCategories
 
 -- | Adds page title to a Pandoc document.
 addPageTitleToPandoc :: String -> Pandoc -> ContentTransformer Pandoc
