@@ -1,8 +1,6 @@
 packages: gitit.cabal
 tests: True
 flags: +plugins
-constraints: hashable < 1.5.0.0
--- hashable 1.5 depends on base >= 4.18
 
 package pandoc
   flags: +embed_data_files
