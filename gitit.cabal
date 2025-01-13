@@ -162,7 +162,7 @@ Library
                      json >= 0.4 && < 0.12,
                      uri-bytestring >= 0.2.3.3,
                      split,
-                     hoauth2 >= 2.3.0 && < 2.11,
+                     hoauth2 >= 2.3.0 && < 2.15,
                      xml-conduit >= 1.5 && < 1.10,
                      http-conduit >= 2.1.6 && < 2.4,
                      http-client-tls >= 0.2.2 && < 0.4,
