@@ -1,7 +1,7 @@
 packages: gitit.cabal
 tests: True
 flags: +plugins
-constraints: bytestring >= 0.11.3
+constraints: bytestring >= 0.12.2.0
 
 package pandoc
   flags: +embed_data_files
