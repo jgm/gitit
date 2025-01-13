@@ -11,14 +11,16 @@ jobs:
       matrix:
         versions:
           - ghc: '8.10'
-            cabal: '3.0'
-          - ghc: '9.0'
             cabal: '3.4'
-          - ghc: '9.2'
+          - ghc: '9.0'
             cabal: '3.8'
+          - ghc: '9.2'
+            cabal: '3.10'
           - ghc: '9.4'
             cabal: '3.10'
           - ghc: '9.6'
+            cabal: 'latest'
+          - ghc: '9.8'
             cabal: 'latest'
     steps:
     - uses: actions/checkout@v1
