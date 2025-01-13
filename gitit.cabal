@@ -148,7 +148,7 @@ Library
                      time,
                      recaptcha >= 0.1,
                      filestore >= 0.6.5 && < 0.7,
-                     zlib >= 0.5 && < 0.7,
+                     zlib >= 0.5 && < 0.8,
                      url >= 2.1,
                      happstack-server >= 7.5 && < 7.10,
                      base64-bytestring >= 0.1,
@@ -169,7 +169,7 @@ Library
                      aeson >= 0.7 && < 2.3,
                      uuid >= 1.3 && < 1.4,
                      network-uri >= 2.6,
-                     network >= 2.6 && < 3.2,
+                     network >= 2.6 && < 3.3,
                      network-bsd >= 2.8.1 && < 2.9,
                      doctemplates >= 0.7.1
   if flag(plugins)
