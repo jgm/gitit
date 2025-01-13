@@ -10,8 +10,6 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - ghc: '8.10'
-            cabal: '3.4'
           - ghc: '9.0'
             cabal: '3.8'
           - ghc: '9.2'
@@ -21,6 +19,8 @@ jobs:
           - ghc: '9.6'
             cabal: 'latest'
           - ghc: '9.8'
+            cabal: 'latest'
+          - ghc: '9.10'
             cabal: 'latest'
     steps:
     - uses: actions/checkout@v1
