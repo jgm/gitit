@@ -157,6 +157,7 @@ Library
                      feed >= 1.0 && < 1.4,
                      xml-types >= 0.3,
                      xss-sanitize >= 0.3 && < 0.4,
+                     scientific >= 0.3 && < 0.4,
                      tagsoup >= 0.13 && < 0.15,
                      blaze-html >= 0.4 && < 0.10,
                      json >= 0.4 && < 0.12,
