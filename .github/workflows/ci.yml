@@ -20,8 +20,6 @@ jobs:
             cabal: 'latest'
           - ghc: '9.8'
             cabal: 'latest'
-          - ghc: '9.10'
-            cabal: 'latest'
     steps:
     - uses: actions/checkout@v1
     - name: Install cabal/ghc
