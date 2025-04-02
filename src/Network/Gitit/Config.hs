@@ -28,7 +28,7 @@ where
 import Network.Gitit.Types
 import Network.Gitit.Server (mimeTypes)
 import Network.Gitit.Framework
-import Network.Gitit.Authentication (formAuthHandlers, rpxAuthHandlers, httpAuthHandlers, githubAuthHandlers)
+import Network.Gitit.Authentication (formAuthHandlers, httpAuthHandlers, githubAuthHandlers)
 import Network.Gitit.Util (parsePageType, readFileUTF8)
 import System.Log.Logger (logM, Priority(..))
 import System.IO (hPutStrLn, stderr)
@@ -162,8 +162,6 @@ extractConfig cfgmap = do
   cfUseRecaptcha <- get "DEFAULT" "use-recaptcha" >>= readBool
   cfRecaptchaPublicKey <- get "DEFAULT" "recaptcha-public-key"
   cfRecaptchaPrivateKey <- get "DEFAULT" "recaptcha-private-key"
-  cfRPXDomain <- get "DEFAULT" "rpx-domain"
-  cfRPXKey <- get "DEFAULT" "rpx-key"
   cfCompressResponses <- get "DEFAULT" "compress-responses" >>= readBool
   cfUseCache <- get "DEFAULT" "use-cache" >>= readBool
   cfCacheDir <- get "DEFAULT" "cache-dir"
@@ -195,8 +193,6 @@ extractConfig cfgmap = do
                     "darcs"     -> pure Darcs
                     "mercurial" -> pure Mercurial
                     x           -> throwError $ "Unknown repository type: " ++ x
-  when (authMethod == "rpx" && cfRPXDomain == "") $
-     liftIO $ logM "gitit" WARNING "rpx-domain is not set"
 
   ghConfig <- extractGithubConfig cfgmap
 
@@ -219,7 +215,6 @@ extractConfig cfgmap = do
                                   "form"     -> withUserFromSession
                                   "github"   -> withUserFromSession
                                   "http"     -> withUserFromHTTPAuth
-                                  "rpx"      -> withUserFromSession
                                   _          -> id
     , requireAuthentication = case map toLower cfRequireAuthentication of
                                    "none"    -> Never
@@ -231,7 +226,6 @@ extractConfig cfgmap = do
                                   "form"     -> msum $ formAuthHandlers cfDisableRegistration
                                   "github"   -> msum $ githubAuthHandlers ghConfig
                                   "http"     -> msum httpAuthHandlers
-                                  "rpx"      -> msum rpxAuthHandlers
                                   _          -> mzero
     , userFile             = cfUserFile
     , sessionTimeout       = cfSessionTimeout * 60  -- convert minutes -> seconds
@@ -264,8 +258,6 @@ extractConfig cfgmap = do
     , useRecaptcha         = cfUseRecaptcha
     , recaptchaPublicKey   = cfRecaptchaPublicKey
     , recaptchaPrivateKey  = cfRecaptchaPrivateKey
-    , rpxDomain            = cfRPXDomain
-    , rpxKey               = cfRPXKey
     , compressResponses    = cfCompressResponses
     , useCache             = cfUseCache
     , cacheDir             = cfCacheDir

@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 module Network.Gitit.Authentication ( loginUserForm
                                     , formAuthHandlers
                                     , httpAuthHandlers
-                                    , rpxAuthHandlers
                                     , githubAuthHandlers) where
 
 import Network.Gitit.State
@@ -37,21 +36,19 @@ import Network.Gitit.Util
 import Network.Gitit.Authentication.Github
 import Network.Captcha.ReCaptcha (captchaFields, validateCaptcha)
 import System.Process (readProcessWithExitCode)
-import Control.Monad (unless, liftM, mplus)
+import Control.Monad (unless, liftM)
 import Control.Monad.Trans (liftIO)
 import System.Exit
 import System.Log.Logger (logM, Priority(..))
 import Data.Char (isAlphaNum, isAlpha)
 import qualified Data.Map as M
 import Data.List (stripPrefix)
-import Data.Maybe (isJust, fromJust, isNothing, fromMaybe)
+import Data.Maybe (isJust, fromJust, fromMaybe)
 import Network.URL (exportURL, add_param, importURL)
 import Network.BSD (getHostName)
 import qualified Text.StringTemplate as T
-import Network.HTTP (urlEncodeVars, urlDecode, urlEncode)
+import Network.HTTP (urlEncodeVars)
 import Codec.Binary.UTF8.String (encodeString)
-import Data.ByteString.UTF8 (toString)
-import Network.Gitit.Rpxnow as R
 import Text.Blaze.Html.Renderer.String as Blaze ( renderHtml )
 import Text.Blaze.Html5 hiding (i, search, u, s, contents, source, html, title, map)
 import qualified Text.Blaze.Html5 as Html5 hiding (search)
@@ -59,6 +56,7 @@ import qualified Text.Blaze.Html5.Attributes as Html5.Attr hiding (dir, span)
 import Text.Blaze.Html5.Attributes
 import Data.String (IsString(fromString))
 import qualified Text.XHtml as XHTML
+import Data.ByteString.UTF8 (toString)
 
 -- | Replace each occurrence of one sublist in a list with another.
 --   Vendored in from pandoc 2.11.4 as 2.12 removed this function.
@@ -540,65 +538,6 @@ githubLoginFailure = withData $ \params ->
                          pgTitle = "Login failure",
                          pgMessages = msgs
                        }
-
--- Login using RPX (see RPX development docs at https://rpxnow.com/docs)
-loginRPXUser :: RPars  -- ^ The parameters passed by the RPX callback call (after authentication has taken place
-             -> Handler
-loginRPXUser params = do
-  cfg <- getConfig
-  ref <- getReferer
-  let mtoken = rToken params
-  if isNothing mtoken
-     then do
-       let url = baseUrl cfg ++ "/_login?destination=" ++
-                  fromMaybe ref (rDestination params)
-       if null (rpxDomain cfg)
-          then error "rpx-domain is not set."
-          else do
-             let rpx = "https://" ++ rpxDomain cfg ++
-                       ".rpxnow.com/openid/v2/signin?token_url=" ++
-                       urlEncode url
-             see rpx
-     else do -- We got an answer from RPX, this might also return an exception.
-       uid' :: Either String R.Identifier <- liftIO $
-                      R.authenticate (rpxKey cfg) $ fromJust mtoken
-       uid <- case uid' of
-                   Right u -> return u
-                   Left err -> error err
-       liftIO $ logM "gitit.loginRPXUser" DEBUG $ "uid:" ++ show uid
-       -- We need to get an unique Html5.Attr.id for the user
-       -- The 'Html5.Attr.id' is always present but can be rather cryptic
-       -- The 'verifiedEmail' is also unique and is a more readable choice
-       -- so we use it if present.
-       let userId = R.userIdentifier uid
-       let email  = prop "verifiedEmail" uid
-       user <- liftIO $ mkUser (fromMaybe userId email) (fromMaybe "" email) "none"
-       updateGititState $ \s -> s { users = M.insert userId user (users s) }
-       key <- newSession (sessionData userId)
-       addCookie (MaxAge $ sessionTimeout cfg) (mkSessionCookie key)
-       see $ fromJust $ rDestination params
-      where
-        prop pname info = lookup pname $ R.userData info
-        see url = seeOther (encUrl url) $ toResponse (renderHtml mempty)
-
--- The parameters passed by the RPX callback call.
-data RPars = RPars { rToken       :: Maybe String
-                   , rDestination :: Maybe String }
-                   deriving Show
-
-instance FromData RPars where
-     fromData = do
-         vtoken <- liftM Just (look "token") `mplus` return Nothing
-         vDestination <- liftM (Just . urlDecode) (look "destination") `mplus`
-                           return Nothing
-         return RPars { rToken = vtoken
-                      , rDestination = vDestination }
-
-rpxAuthHandlers :: [Handler]
-rpxAuthHandlers =
-  [ Network.Gitit.Server.dir "_logout" $ Network.Gitit.Server.method GET >> withData logoutUser
-  , Network.Gitit.Server.dir "_login"  $ withData loginRPXUser
-  , Network.Gitit.Server.dir "_user" currentUser ]
 
 -- | Returns username of logged in user or null string if nobody logged in.
 currentUser :: Handler
