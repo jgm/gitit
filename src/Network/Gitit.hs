@@ -210,9 +210,9 @@ wikiHandlers =
   ]
 
 -- | Recompiles the gitit templates.
-reloadTemplates :: ServerPart Response
-reloadTemplates = do
-  liftIO recompilePageTemplate
+reloadTemplates :: Config -> ServerPart Response
+reloadTemplates cfg = do
+  liftIO $ recompilePageTemplate cfg
   ok $ toResponse "Page templates have been recompiled."
 
 -- | Converts a gitit Handler into a standard happstack ServerPart.

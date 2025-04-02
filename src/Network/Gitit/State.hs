@@ -39,7 +39,6 @@ import Network.Gitit.Types
 gititstate :: IORef GititState
 gititstate = unsafePerformIO $  newIORef  GititState { sessions = undefined
                                                      , users = undefined
-                                                     , templatesPath = undefined
                                                      , renderPage = undefined
                                                      , plugins = undefined }
 
