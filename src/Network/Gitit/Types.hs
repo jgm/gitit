@@ -175,9 +175,6 @@ data Config = Config {
   useRecaptcha         :: Bool,
   recaptchaPublicKey   :: String,
   recaptchaPrivateKey  :: String,
-  -- | RPX domain and key
-  rpxDomain            :: String,
-  rpxKey               :: String,
   -- | Should responses be compressed?
   compressResponses    :: Bool,
   -- | Should responses be cached?
