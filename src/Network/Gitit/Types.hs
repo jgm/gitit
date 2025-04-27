@@ -160,6 +160,8 @@ data Config = Config {
   noEdit               :: [String],
   -- | Pages that cannot be deleted via web
   noDelete             :: [String],
+  -- | Pandoc extensions to enable (don't include the "Ext_" prefix)
+  pandocExts           :: [String],
   -- | Default summary if description left blank
   defaultSummary       :: String,
   -- | Delete summary
