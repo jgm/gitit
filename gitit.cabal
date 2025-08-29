@@ -195,6 +195,7 @@ Executable           gitit
                      network-uri >= 2.6,
                      network >= 2.6
   other-modules:     Paths_gitit
+  autogen-modules:   Paths_gitit
   default-extensions: CPP
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded -fno-warn-unused-do-bind
