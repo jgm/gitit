@@ -97,7 +97,7 @@ data-files:          data/static/css/screen.css, data/static/css/print.css,
 
 Source-repository head
   type:          git
-  location:      git://github.com/jgm/gitit.git
+  location:      https://github.com/jgm/gitit.git
 
 Flag plugins
   description:       Compile in support for plugins.  This will increase the size of
