@@ -163,7 +163,7 @@ Library
                      uri-bytestring >= 0.2.3.3,
                      split,
                      hoauth2 >= 2.3.0 && < 2.15,
-                     xml-conduit >= 1.5 && < 1.10,
+                     xml-conduit >= 1.5 && < 1.11,
                      http-conduit >= 2.1.6 && < 2.4,
                      http-client-tls >= 0.2.2 && < 0.4,
                      aeson >= 0.7 && < 2.3,
