@@ -363,7 +363,7 @@ data WasRedirect = WasRedirect | WasNoRedirect
 --    the redirect parameter set to @\"yes\"@.
 --
 -- 2. If the @redirect@ parameter is set to \"yes\", then redirect to the
---    destination specificed in the metadata. This uses a client-side (meta
+--    destination specified in the metadata. This uses a client-side (meta
 --    refresh + javascript backup) redirect to make sure the referer is set to
 --    this URL.
 --
