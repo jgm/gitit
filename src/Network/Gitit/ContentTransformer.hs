@@ -330,10 +330,13 @@ pageToWikiPandoc' = applyPreParseTransforms >=>
 -- | Converts source text to Pandoc using default page type.
 pageToPandoc :: Page -> ContentTransformer Pandoc
 pageToPandoc page' = do
+  cfg <- lift getConfig
+  let userExts = extensionsFromList . map readExtension $ pandocExts cfg
   modifyContext $ \ctx -> ctx{ ctxTOC = pageTOC page'
                              , ctxCategories = pageCategories page'
                              , ctxMeta = pageMeta page' }
-  either (liftIO . E.throwIO) return $ readerFor (pageFormat page') (pageLHS page') (pageText page')
+  either (liftIO . E.throwIO)
+    return $ readerFor (pageFormat page') (pageLHS page') (pageText page') userExts
 
 data WasRedirect = WasRedirect | WasNoRedirect
 
@@ -664,10 +667,11 @@ updateLayout f = do
 -- Pandoc and wiki content conversion support
 --
 
-readerFor :: PageType -> Bool -> String -> Either PandocError Pandoc
-readerFor pt lhs =
+readerFor :: PageType -> Bool -> String -> Extensions -> Either PandocError Pandoc
+readerFor pt lhs txt userExts =
   let defExts = getDefaultExtensions $ T.toLower $ T.pack $ show pt
       defPS = def{ readerExtensions = defExts
+                                      <> userExts
                                       <> extensionsFromList [Ext_emoji]
                                       <> getPageTypeDefaultExtensions pt lhs
                                       <> readerExtensions def }
@@ -680,7 +684,7 @@ readerFor pt lhs =
        Textile    -> readTextile defPS
        Org        -> readOrg defPS
        DocBook    -> readDocBook defPS
-       MediaWiki  -> readMediaWiki defPS) . T.pack
+       MediaWiki  -> readMediaWiki defPS) . T.pack $ txt
 
 wikiLinksTransform :: Pandoc -> PluginM Pandoc
 wikiLinksTransform pandoc
