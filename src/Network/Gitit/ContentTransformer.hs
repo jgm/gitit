@@ -515,7 +515,7 @@ pandocToHtml pandocContents = do
                                  MathJax u -> Pandoc.MathJax $ T.pack u
                                  RawTeX -> Pandoc.PlainMath
                       , writerTableOfContents = toc
-                      , writerHighlightStyle = Just pygments
+                      , writerHighlightMethod = Skylighting pygments
                       , writerExtensions = if bird
                                               then enableExtension Ext_literate_haskell
                                                    $ writerExtensions def
