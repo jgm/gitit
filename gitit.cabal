@@ -147,7 +147,7 @@ Library
                      old-locale,
                      time,
                      recaptcha >= 0.1,
-                     filestore >= 0.6.5 && < 0.7,
+                     filestore >= 0.6.5.1 && < 0.7,
                      zlib >= 0.5 && < 0.8,
                      url >= 2.1,
                      happstack-server >= 7.5 && < 7.10,
