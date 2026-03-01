@@ -9,7 +9,7 @@ through the wiki's web interface. By default, pandoc's extended version
 of markdown is used as a markup language, but reStructuredText, LaTeX, HTML,
 DocBook, or Emacs Org-mode markup can also be used.  Gitit can
 be configured to display TeX math (using [texmath]) and
-highlighted source code (using [highlighting-kate]).
+highlighted source code (using [skylighting]).
 
 Other features include
 
@@ -20,8 +20,7 @@ Other features include
 
 * TeX math
 
-* syntax highlighting of source code files and code snippets (using
-  highlighting-kate)
+* syntax highlighting of source code files and code snippets.
 
 * caching
 
@@ -35,7 +34,7 @@ Other features include
 [mercurial]: http://mercurial.selenic.com/
 [pandoc]: http://pandoc.org
 [Happstack]: http://happstack.com
-[highlighting-kate]: http://johnmacfarlane.net/highlighting-kate/
+[skylighting]: https://hackage.haskell.org/package/skylighting
 [texmath]: http://github.com/jgm/texmath/tree/master
 
 Getting started
