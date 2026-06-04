@@ -42,7 +42,11 @@ import Paths_gitit (getDataFileName)
 import System.FilePath ((</>))
 import Text.Pandoc hiding (ERROR, WARNING, MathJax, MathML, WebTeX, getDataFileName)
 import qualified Control.Exception as E
+#if MIN_VERSION_hoauth2(2,15,0)
+import Network.OAuth2 (OAuth2(..))
+#else
 import Network.OAuth.OAuth2 (OAuth2(..))
+#endif
 import URI.ByteString (parseURI, laxURIParserOptions)
 import qualified Data.ByteString.Char8 as BS
 import Network.Gitit.Compat.Except

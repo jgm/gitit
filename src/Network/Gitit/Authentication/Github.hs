@@ -16,7 +16,11 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy as BSL
 import qualified URI.ByteString as URI
 import Network.HTTP.Conduit
+#if MIN_VERSION_hoauth2(2,15,0)
+import Network.OAuth2
+#else
 import Network.OAuth.OAuth2
+#endif
 import Control.Monad (liftM, mplus, mzero)
 import Data.Maybe
 import Data.Aeson

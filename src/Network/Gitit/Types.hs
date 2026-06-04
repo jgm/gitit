@@ -83,7 +83,11 @@ import Data.FileStore.Types
 import Network.Gitit.Server
 import Text.HTML.TagSoup.Entity (lookupEntity)
 import Data.Char (isSpace)
+#if MIN_VERSION_hoauth2(2,15,0)
+import Network.OAuth2
+#else
 import Network.OAuth.OAuth2
+#endif
 import Text.Blaze.Html (Html)
 
 data PageType = Markdown
