@@ -15,6 +15,10 @@ Version 0.16 released 10 Jun 2026
 
   * Fix Redirect `<meta>` header (Profpatsch).
 
+  * Remove old MathMLinHTML.hs. Browsers support MathML now.
+
+  * Templates: remove old comment workaround needed for IE6.
+
   * Raise upper bound for zlib, network, aeson, http-client, hoauth2,
     pandoc, xml-conduit.
 
