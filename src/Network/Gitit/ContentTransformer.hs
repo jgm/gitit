@@ -627,7 +627,7 @@ addMathSupport c = do
   conf <- lift getConfig
   updateLayout $ \l ->
     case mathMethod conf of
-         MathML       -> addScripts l ["MathMLinHTML.js"]
+         MathML       -> l
          WebTeX _     -> l
          MathJax u    -> addScripts l [u]
          RawTeX       -> l
