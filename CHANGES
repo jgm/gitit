@@ -1,3 +1,29 @@
+Version 0.16 released 10 Jun 2026
+
+  * Remove unnecessary templatesPath field in GititState (Profpatsch)
+    [API change]. The templates are directly pulled out of the config
+    and then never changed, so no reason to put the field in state.
+
+  * Add Paths_gitit to autogen-modules in executable section.
+
+  * Change Git repository location to HTTPS (Felix Yan).
+    `git://` is no longer supported.
+
+  * Remove RPXnow authentication (Profpatsch).
+
+  * Move everything from xhtml to blaze & HTML5 (Profpatsch).
+
+  * Fix Redirect `<meta>` header (Profpatsch).
+
+  * Raise upper bound for zlib, network, aeson, http-client, hoauth2,
+    pandoc, xml-conduit.
+
+  * Require filestore >= 0.6.5.1 (#710).
+
+  * Correct a typo in src/Network/Gitit/ContentTransformer.hs (Felix Yan).
+
+  * Fix link & mention of highlighting-kate in README (#711).
+
 Version 0.15.1.2 released 27 Jan 2024
 
   * Allow happstack-server 7.9.
