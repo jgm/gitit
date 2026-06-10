@@ -17,7 +17,9 @@ Version 0.16 released 10 Jun 2026
 
   * Remove old MathMLinHTML.hs. Browsers support MathML now.
 
-  * Templates: remove old comment workaround needed for IE6.
+  * Remove deprecated projection media type in template.
+
+  * Remove old comment workaround needed for IE6 in template.
 
   * Raise upper bound for zlib, network, aeson, http-client, hoauth2,
     pandoc, xml-conduit.
