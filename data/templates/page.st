@@ -11,10 +11,10 @@
     $if(printable)$
     <link href="$base$/css/print.css" rel="stylesheet" media="all" type= "text/css" />
     $else$
-    <link href="$base$/css/custom.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/custom.css" rel="stylesheet" media="screen" type="text/css" />
     <link href="$base$/css/print.css" rel="stylesheet" media="print" type= "text/css" />
     $endif$
-    <link href="$base$/css/ie.css" rel="stylesheet" media="screen, projection" type="text/css" />
+    <link href="$base$/css/ie.css" rel="stylesheet" media="screen" type="text/css" />
   </head>
   <body>
     <div id="doc3" class="yui-t1">
