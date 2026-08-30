@@ -10,10 +10,6 @@ jobs:
       fail-fast: false
       matrix:
         versions:
-          - ghc: '9.2'
-            cabal: '3.10'
-          - ghc: '9.4'
-            cabal: '3.10'
           - ghc: '9.6'
             cabal: 'latest'
           - ghc: '9.8'
