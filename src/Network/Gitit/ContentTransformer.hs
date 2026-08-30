@@ -508,7 +508,11 @@ pandocToHtml pandocContents = do
            (if xssSanitize cfg then sanitizeBalance else id) $
            either E.throw id . runPure $ writeHtml5String def{
                         writerTemplate = Just compiledTemplate
+#if MIN_VERSION_pandoc(3,11,0)
+                      , writerMathMethod =
+#else
                       , writerHTMLMathMethod =
+#endif
                             case mathMethod cfg of
                                  MathML -> Pandoc.MathML
                                  WebTeX u -> Pandoc.WebTeX $ T.pack u

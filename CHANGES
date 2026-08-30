@@ -1,3 +1,7 @@
+Version 0.16.0.1 released 30 Aug 2026
+
+  * Support for pandoc 3.11.
+
 Version 0.16 released 10 Jun 2026
 
   * Remove unnecessary templatesPath field in GititState (Profpatsch)
