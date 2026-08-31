@@ -1,0 +1,81 @@
+name: Create Assets
+
+on:
+  release:
+    types: [published]
+
+env:
+  PROGRAM: gitit
+  DIR: gitit
+  EXTRA_ASSETS: data LICENSE YUI-LICENSE README.markdown
+  PROXY: unix-proxy.sh
+  HIDDEN_BIN: gitit-bin
+
+jobs:
+  create-assets:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build the project
+      run: stack build --ghc-options=-rtsopts
+
+      # This also renames the program name and instead injects a proxy shell
+      # script that takes care of overriding the cabal inserted paths before
+      # running the actual program
+
+    - name: Save the binary with plugins
+      run: mv `stack exec -- which $PROGRAM` the-binary
+
+    - name: Build the project without plugins
+      run: stack build --ghc-options=-rtsopts --flag gitit:-plugins
+
+    - name: Save the binary without plugins
+      run: mv `stack exec -- which $PROGRAM` the-binary-noplugins
+
+    - name: Prepare directory (no plugins)
+      run: |
+        mkdir $DIR
+        mv the-binary-noplugins $DIR/$HIDDEN_BIN
+        DIR=$DIR stack runhaskell -- CopyAssets.hs filestore
+        mv $PROXY $DIR/$PROGRAM
+        mv $EXTRA_ASSETS $DIR
+
+    - name: Tar the directory (no plugins)
+      run: |
+        tar -cavf $DIR-noplugins.tar.gz $DIR
+
+
+    - name: Prepare directory (with plugins)
+      run: |
+        mv the-binary $DIR/$HIDDEN_BIN
+        mv plugins $DIR
+
+
+    - name: Tar the directory (with plugins)
+      run: |
+        tar -cavf $DIR.tar.gz $DIR
+
+    - name: Upload artifact with plugins
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ env.DIR }}.tar.gz
+        asset_name: gitit-${{ runner.os }}.tar.gz
+        asset_content_type: application/tar.gz
+
+    - name: Upload artifact without plugins
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ env.DIR }}-noplugins.tar.gz
+        asset_name: gitit-${{ runner.os }}-noplugins.tar.gz
+        asset_content_type: application/tar.gz
