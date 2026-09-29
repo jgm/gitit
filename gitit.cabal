@@ -136,7 +136,7 @@ Library
                      temporary,
                      pandoc >= 2.9 && < 2.20 || >= 3.0 && < 3.13,
                      pandoc-types >= 1.20 && < 1.24,
-                     skylighting >= 0.8.2.3 && < 0.15,
+                     skylighting >= 0.8.2.3 && < 0.16,
                      bytestring,
                      text,
                      random,
