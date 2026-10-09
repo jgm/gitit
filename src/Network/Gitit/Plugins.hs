@@ -29,11 +29,9 @@ import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
-#if __GLASGOW_HASKELL__ >= 904
 import Control.Monad.IO.Class (liftIO)
 import GHC.Driver.Session (PackageFlag(..), PackageArg(..), ModRenaming(..))
 import GHC.Platform.Ways (Way(WayDyn), addWay, hostIsDynamic)
-#endif
 import GHC.Paths
 import Unsafe.Coerce
 
@@ -42,7 +40,6 @@ loadPlugin pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
-#if __GLASGOW_HASKELL__ >= 904
     -- Honour package environment files (GHC_ENVIRONMENT or the default
     -- environment), which only parseDynamicFlags reads otherwise.
     logger <- getLogger
@@ -58,17 +55,10 @@ loadPlugin pluginName = do
       if hostIsDynamic
          then dflags'' { targetWays_ = addWay WayDyn (targetWays_ dflags'') }
          else dflags''
-#else
-    setSessionDynFlags dflags
-#endif
     -- initDynFlags
     unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
       $ do
-#if __GLASGOW_HASKELL__ >= 904
           addTarget =<< guessTarget pluginName Nothing Nothing
-#else
-          addTarget =<< guessTarget pluginName Nothing
-#endif
           r <- load LoadAllTargets
           case r of
             Failed -> error $ "Error loading plugin: " ++ pluginName
