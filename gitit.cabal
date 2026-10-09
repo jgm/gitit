@@ -120,7 +120,7 @@ Library
                      Network.Gitit.Compat.Except,
                      Paths_gitit
   autogen-modules:   Paths_gitit
-  build-depends:     base >= 4.9 && < 5,
+  build-depends:     base >= 4.18 && < 5,
                      syb,
                      filepath,
                      safe,
@@ -184,7 +184,7 @@ Library
 Executable           gitit
   hs-source-dirs:    .
   main-is:           gitit.hs
-  build-depends:     base >= 4.15 && < 5,
+  build-depends:     base >= 4.18 && < 5,
                      gitit,
                      mtl,
                      hslogger,
@@ -204,7 +204,7 @@ Executable           gitit
 Executable           expireGititCache
   hs-source-dirs:    .
   main-is:           expireGititCache.hs
-  build-depends:     base >= 4.9 && < 5, HTTP, url, filepath, syb,
+  build-depends:     base >= 4.18 && < 5, HTTP, url, filepath, syb,
                      network-uri >= 2.6,
                      network >= 2.6
   ghc-options:       -Wall
