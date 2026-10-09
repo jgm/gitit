@@ -19,7 +19,7 @@ jobs:
           - ghc: '9.12'
             cabal: 'latest'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Install cabal/ghc
       run: |
         ghcup install ghc --set ${{ matrix.versions.ghc }}
@@ -27,7 +27,7 @@ jobs:
 
     - name: Cache cabal global package db
       id:   cabal-global
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: |
           ~/.local/state/cabal
@@ -54,17 +54,33 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v6
-    - name: Install stack
-      shell: cmd
+    - uses: actions/checkout@v7
+
+    - name: Install ghc
       run: |
-          choco install haskell-stack
-    - name: Install dependencies
-      run: |
-          stack update
-          stack test --dependencies-only --fast
+        ghcup install ghc --set 9.10
+        ghcup install cabal --set latest
+
+    # declare/restore cached things
+
+    - name: Cache cabal global package db
+      id:   cabal-global
+      uses: actions/cache@v6
+      with:
+        path: |
+          %LOCALAPPDATA%/cabal/store
+        key: ${{ runner.os }}-appdata-cabal-${{ hashFiles('cabal.project') }}-${{ secrets.CACHE_VERSION }}
+
+    - name: Cache cabal work
+      id: cabal-local
+      uses: actions/cache@v6
+      with:
+        path: |
+          dist-newstyle
+        key: ${{ runner.os }}-cabal-work-${{ hashFiles('cabal.project') }}-${{ secrets.CACHE_VERSION }}
+
     - name: Build and test
-      shell: cmd
       run: |
+          cabal update
           chcp 65001
-          stack install --test --fast
+          cabal test --ghc-option=-Werror -fhttp --enable-tests --disable-optimization --ghc-options=-Werror all
