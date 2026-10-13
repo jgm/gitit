@@ -25,11 +25,7 @@ module Network.Gitit.Feed (FeedConfig(..), filestoreToXmlFeed) where
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import Data.Time (UTCTime, formatTime, getCurrentTime, addUTCTime)
-#if MIN_VERSION_time(1,5,0)
 import Data.Time (defaultTimeLocale)
-#else
-import System.Locale (defaultTimeLocale)
-#endif
 import Data.Foldable as F (concatMap)
 import Data.List (intercalate, sortBy, nub)
 import Data.Maybe (fromMaybe)
@@ -151,67 +147,30 @@ revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
          ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
          title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
          df = map diffFile diffs
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
          content = T.pack $ concat $ map showContent df
-#else
-         content = XMLTypes.Element (XMLTypes.Name "div" Nothing Nothing) [] df
-#endif
 
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
 diffFile :: (FilePath, [Diff [String]]) -> Content
 diffFile (fp, d) =
     enTag "div" $ header : text
   where
     header = enTag1 "h1" $ enText fp
     text = map (enTag1 "p") $ concat $ map diffLines d
-#else
-diffFile :: (FilePath, [Diff [String]]) -> XMLTypes.Node
-diffFile (fp, d) =
-    enTag "div" $ header : text
-  where
-    header = enTag1 "h1" $ enText $ T.pack fp
-    text = map (enTag1 "p") $ concat $ map diffLines d
-#endif
 
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
 diffLines :: Diff [String] -> [Content]
 diffLines (First x) = map (enTag1 "s" . enText) x
 diffLines (Second x) = map (enTag1 "b" . enText) x
 diffLines (Both x _) = map enText x
-#else
-diffLines :: Diff [String] -> [XMLTypes.Node]
-diffLines (First x) = map (enTag1 "s" . enText . T.pack) x
-diffLines (Second x) = map (enTag1 "b" . enText . T.pack) x
-diffLines (Both x _) = map (enText . T.pack) x
-#endif
 
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
 enTag :: String -> [Content] -> Content
 enTag tag content = Elem blank_element{ elName=blank_name{qName=tag}
                                       , elContent=content
                                       }
-#else
-enTag :: T.Text -> [XMLTypes.Node] -> XMLTypes.Node
-enTag tag content = XMLTypes.NodeElement $
-  XMLTypes.Element
-  (XMLTypes.Name tag Nothing Nothing)
-  [] content
-#endif
 
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
 enTag1 :: String -> Content -> Content
-#else
-enTag1 :: T.Text -> XMLTypes.Node -> XMLTypes.Node
-#endif
 enTag1 tag content = enTag tag [content]
 
-#if MIN_VERSION_feed(1, 3, 0) || (! MIN_VERSION_feed(1, 2, 0))
 enText :: String -> Content
 enText content = Text blank_cdata{cdData=content}
-#else
-enText :: T.Text -> XMLTypes.Node
-enText content = XMLTypes.NodeContent (XMLTypes.ContentText content)
-#endif
 
 -- gitit is set up not to reveal registration emails
 authorToPerson :: Author -> Person
