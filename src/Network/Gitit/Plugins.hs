@@ -29,6 +29,9 @@ import System.Log.Logger (logM, Priority(..))
 #ifdef _PLUGINS
 import Data.List (isInfixOf, isPrefixOf)
 import GHC
+import Control.Monad.IO.Class (liftIO)
+import GHC.Driver.Session (PackageFlag(..), PackageArg(..), ModRenaming(..))
+import GHC.Platform.Ways (Way(WayDyn), addWay, hostIsDynamic)
 import GHC.Paths
 import Unsafe.Coerce
 
@@ -37,7 +40,21 @@ loadPlugin pluginName = do
   logM "gitit" WARNING ("Loading plugin '" ++ pluginName ++ "'...")
   runGhc (Just libdir) $ do
     dflags <- getSessionDynFlags
-    setSessionDynFlags dflags
+    -- Honour package environment files (GHC_ENVIRONMENT or the default
+    -- environment), which only parseDynamicFlags reads otherwise.
+    logger <- getLogger
+    dflags' <- liftIO $ interpretPackageEnv logger dflags
+    -- Plugins always import Network.Gitit.Interface, so expose gitit even
+    -- when a package environment hides packages it does not list.
+    let exposeGitit = ExposePackage "-package gitit" (PackageArg "gitit")
+                        (ModRenaming True [])
+        dflags'' = dflags' { packageFlags = exposeGitit : packageFlags dflags' }
+    -- A dynamically linked gitit can only load dynamic code, so look for
+    -- dynamic interface files and objects, as GHCi does.
+    setSessionDynFlags $
+      if hostIsDynamic
+         then dflags'' { targetWays_ = addWay WayDyn (targetWays_ dflags'') }
+         else dflags''
     -- initDynFlags
     unless ("Network.Gitit.Plugin." `isPrefixOf` pluginName)
       $ do
