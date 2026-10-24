@@ -1,6 +1,8 @@
-packages: gitit.cabal
-tests: True
-flags: +plugins
+packages: .
+
+package gitit
+  tests: True
+  flags: +plugins
 
 package pandoc
   flags: +embed_data_files
