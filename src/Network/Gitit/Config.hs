@@ -154,6 +154,7 @@ extractConfig cfgmap = do
   cfFrontPage <- get "DEFAULT" "front-page"
   cfNoEdit <- get "DEFAULT" "no-edit"
   cfNoDelete <- get "DEFAULT" "no-delete"
+  cfPandocExtensions <- get "DEFAULT" "pandoc-extensions"
   cfDefaultSummary <- get "DEFAULT" "default-summary"
   cfDeleteSummary <- get "DEFAULT" "delete-summary"
   cfDisableRegistration <- get "DEFAULT" "disable-registration" >>= readBool
@@ -250,6 +251,7 @@ extractConfig cfgmap = do
     , noDelete             = splitCommaList cfNoDelete
     , defaultSummary       = cfDefaultSummary
     , deleteSummary        = cfDeleteSummary
+    , pandocExts           = splitCommaList cfPandocExtensions
     , disableRegistration  = cfDisableRegistration
     , accessQuestion       = if null cfAccessQuestion
                                 then Nothing
