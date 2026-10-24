@@ -207,5 +207,5 @@ Executable           expireGititCache
   build-depends:     base >= 4.18 && < 5, HTTP, url, filepath, syb,
                      network-uri >= 2.6,
                      network >= 2.6
-  ghc-options:       -Wall
+  ghc-options:       -Wall -rtsopts "-with-rtsopts=-I0"
   default-language:  Haskell2010

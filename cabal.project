@@ -1,6 +1,9 @@
-packages: gitit.cabal
-tests: True
-flags: +plugins
+packages: .
+
+package gitit
+  ghc-options: -rtsopts -with-rtsopts=-I0
+  tests: True
+  flags: +plugins
 
 package pandoc
   flags: +embed_data_files
