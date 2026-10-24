@@ -90,8 +90,10 @@ main = do
   -- initialize state
   initializeGititState conf
 
+  -- Requests are logged (in combined log format, to serverLogger) at level INFO and below.
   let serverConf = nullConf { validator = Nothing, port = portNumber conf,
-                             timeout = 20, logAccess = Nothing }
+                             timeout = 20,
+                             logAccess = if level <= INFO then logAccess nullConf else Nothing }
 
   -- open the requested interface
   sock <- socket AF_INET Stream defaultProtocol
