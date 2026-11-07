@@ -1,3 +1,22 @@
+Version 0.16.1 released 06 Nov 2026
+
+  * Add `-I0` to default RTS options (#712). This prevents a wakeup
+    for gc every 1 second and dramatically reduces CPU usage of a
+    gitit server.
+
+  * Log requests at log level INFO (#715, Michał Antkiewicz).
+
+  * Add support for loading dynamic plugins for GHC >= 9.4 (#714,
+    Michał Antkiewicz).
+
+  * Bump pandoc upper bound to allow 3.13
+
+  * Change base lower bound. We only support ghc >= 9.6.
+
+  * Bump some lower bounds and remove unneeded CPP.
+
+  * Remove stack.yaml, use cabal on Windows CI
+
 Version 0.16.0.2 released 29 Sep 2026
 
   * Support for pandoc 3.12.
