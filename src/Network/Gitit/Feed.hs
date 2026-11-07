@@ -143,7 +143,9 @@ revisionToEntry home (Revision{ revId = rid, revDateTime = rdt,
            , entryAuthors = [authorToPerson ra], entryLinks = [ln] }
    where baseEntry = nullEntry (T.pack url) title
                           (T.pack $ formatFeedTime rdt)
-         url = home ++ escape (extract $ head rv) ++ "?revision=" ++ rid
+         url = home ++ (case rv of
+                          x:_ -> extract x
+                          _ -> "") ++ "?revision=" ++ rid
          ln = (nullLink (T.pack url)) {linkRel = Just (Left "alternate")}
          title = TextString $ T.pack $ (takeWhile ('\n' /=) rd) ++ " - " ++ (intercalate ", " $ map show rv)
          df = map diffFile diffs

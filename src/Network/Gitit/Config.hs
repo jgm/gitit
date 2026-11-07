@@ -34,7 +34,10 @@ import System.Log.Logger (logM, Priority(..))
 import System.IO (hPutStrLn, stderr)
 import System.Exit (ExitCode(..), exitWith)
 import qualified Data.Map as M
-import Data.List (intercalate, foldl')
+import Data.List (intercalate)
+#if !MIN_VERSION_base(4,20,0)
+import Data.List (foldl')
+#endif
 import Data.Char (toLower, toUpper, isAlphaNum)
 import qualified Data.Text as T
 import Data.Text (Text)

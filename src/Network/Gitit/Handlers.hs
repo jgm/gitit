@@ -74,7 +74,7 @@ import Data.Char (toLower, isSpace)
 import Control.Monad
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as B
-import qualified Data.ByteString as S
+import qualified Data.ByteString.UTF8 as UTF8
 import Network.HTTP (urlEncodeVars)
 import Data.Time (getCurrentTime, addUTCTime)
 import Data.Time.Clock (diffUTCTime, UTCTime(..))
@@ -99,9 +99,7 @@ handleAny = withData $ \(params :: Params) -> uriRest $ \uri ->
                 (retrieve fs path' rev :: IO B.ByteString)
          case res of
                 Right contents -> ignoreFilters >>  -- don't compress
-                                  (ok $ setContentType mimetype $
-                                    (toResponse (renderHtml mempty)) {rsBody = contents})
-                                    -- ugly hack
+                                  (ok $ toResponseBS (fromString mimetype) contents)
                 Left NotFound  -> mzero
                 Left e         -> error (show e)
 
@@ -756,7 +754,7 @@ categoryPage = do
         a ! href (fromString $ base' ++ urlForPage (dropExtension file)) $ fromString $ dropExtension file
   let toRemoveListItem cat = li $
         a ! href (fromString $ base' ++
-        (if null (tail pcategories)
+        (if null (drop 1 pcategories)
          then "/_categories"
          else "/_category" ++ urlForPage (intercalate "," $ Data.List.delete cat pcategories)))
         $ fromString ("-" ++ cat)
@@ -832,10 +830,9 @@ feedHandler = do
   mbCached <- lookupCache file
   case mbCached of
        Just (modtime, contents) | isRecentEnough modtime -> do
-            let emptyResponse = setContentType "application/atom+xml; charset=utf-8" . toResponse $ ()
-            ok $ emptyResponse{rsBody = B.fromChunks [contents]}
+            ok $ toResponseBS "application/atom+xml; charset=UTF-8" (B.fromStrict contents)
        _ -> do
             fs <- getFileStore
-            resp' <- liftM toResponse $ liftIO (filestoreToXmlFeed fc fs mbPath)
-            cacheContents file $ S.concat $ B.toChunks $ rsBody resp'
-            ok . setContentType "application/atom+xml; charset=UTF-8" $ resp'
+            contents <- UTF8.fromString <$> liftIO (filestoreToXmlFeed fc fs mbPath)
+            cacheContents file contents
+            ok $ toResponseBS "application/atom+xml; charset=UTF-8" (B.fromStrict contents)

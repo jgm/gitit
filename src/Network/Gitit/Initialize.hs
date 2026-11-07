@@ -27,7 +27,6 @@ module Network.Gitit.Initialize ( initializeGititState
                                 , createTemplateIfMissing )
 where
 import System.FilePath ((</>), (<.>))
-import Data.Semigroup ((<>))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.FileStore

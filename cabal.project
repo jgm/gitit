@@ -6,3 +6,15 @@ package gitit
 
 package pandoc
   flags: +embed_data_files
+
+-- hoauth2-2.15.2 uses ram's ByteArray class, so it needs a crypton
+-- that is built on ram (>= 1.1.2), though its cabal file allows older.
+constraints: crypton >= 1.1.2
+
+-- GHC 9.14 ships base 4.22 and containers 0.8, which are newer than
+-- the upper bounds of these packages allow.
+if impl(ghc >= 9.14)
+  allow-newer: serialise:*,
+               cborg:*,
+               feed:*
+

@@ -98,7 +98,7 @@ import URI.ByteString (Query(Query), URIRef(uriPath), laxURIParserOptions,
 import qualified Data.Text as T
 import qualified Data.ByteString as S (concat)
 import qualified Data.ByteString.Char8 as SC (pack, unpack)
-import qualified Data.ByteString.Lazy as L (toChunks, fromChunks)
+import qualified Data.ByteString.Lazy as L (toChunks, fromStrict)
 import qualified Data.FileStore as FS
 import qualified Text.Pandoc as Pandoc
 import Data.String (IsString(fromString))
@@ -254,7 +254,9 @@ cacheHtml resp' = do
   cacheable <- getCacheable
   cfg <- lift getConfig
   when (useCache cfg && cacheable && isNothing (pRevision params) && not (pPrintable params)) $
-    lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp'
+    case resp' of
+      Response{} -> lift $ cacheContents file $ S.concat $ L.toChunks $ rsBody resp'
+      SendFile{} -> pure ()
   return resp'
 
 -- | Returns cached page if available, otherwise mzero.
@@ -265,8 +267,9 @@ cachedHtml = do
   cfg <- lift getConfig
   if useCache cfg && not (pPrintable params) && isNothing (pRevision params)
      then do mbCached <- lift $ lookupCache file
-             let emptyResponse = setContentType "text/html; charset=utf-8" . toResponse $ ()
-             maybe mzero (\(_modtime, contents) -> lift . ok $ emptyResponse{rsBody = L.fromChunks [contents]}) mbCached
+             maybe mzero (\(_modtime, contents) ->
+                            lift . ok $ toResponseBS "text/html; charset=utf-8"
+                                          (L.fromStrict contents)) mbCached
      else mzero
 
 --

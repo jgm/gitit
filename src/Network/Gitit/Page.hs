@@ -162,7 +162,7 @@ pageToString conf page' =
 readCategories :: FilePath -> IO [String]
 readCategories f =
   withFile f ReadMode $ \h ->
-    E.catch (do fl <- B.hGetLine h
+    E.catch (do fl <- BC.hGetLine h
                 if dashline fl
                    then do -- get rest of metadata
                      rest <- hGetLinesTill h dotOrDashline
@@ -187,7 +187,7 @@ dotOrDashline x =
 
 hGetLinesTill :: Handle -> (B.ByteString -> Bool) -> IO [String]
 hGetLinesTill h end = do
-  next <- B.hGetLine h
+  next <- BC.hGetLine h
   if end next
      then return [toString next]
      else do

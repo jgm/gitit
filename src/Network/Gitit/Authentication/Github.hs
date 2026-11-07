@@ -57,10 +57,14 @@ getGithubUser ghConfig githubCallbackPars githubState = liftIO $
     where
     getUserInternal mgr =
         liftIO $ runExceptT $ do
-            let (Just state) = rState githubCallbackPars
+            state <- case rState githubCallbackPars of
+                      Just st -> pure st
+                      Nothing -> fail "rState == Nothing in githubCallbackPars"
             if state == githubState
               then do
-                let (Just code) = rCode githubCallbackPars
+                code <- case rCode githubCallbackPars of
+                          Just co -> pure co
+                          Nothing -> fail "rcode == Nothig in githubCallbackPars"
                 at <- withExceptT (oauthToGithubError "No access token found yet")
                       $ fetchAccessToken mgr (oAuth2 ghConfig) (ExchangeToken $ pack code)
                 liftIO >=> liftEither $ ifSuccess "User Authentication failed"
@@ -71,7 +75,10 @@ getGithubUser ghConfig githubCallbackPars githubState = liftIO $
                             (\githubUserMail -> do
                                        let gitLogin = gLogin githubUser
                                        user <- mkUser (unpack gitLogin)
-                                                   (unpack $ email $ head (filter primary githubUserMail))
+                                                   (unpack $
+                                                      case filter primary githubUserMail of
+                                                        (m:_) -> email m
+                                                        [] -> "")
                                                    "none"
                                        let mbOrg = org ghConfig
                                        case mbOrg of

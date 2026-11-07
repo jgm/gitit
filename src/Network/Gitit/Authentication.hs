@@ -177,8 +177,9 @@ sendReregisterEmail user = do
                        T.setAttribute "port" (show $ portNumber cfg) .
                        T.setAttribute "resetlink" (resetLink base' user) $
                        messageTemplate
-  let (mailcommand:args) = words $ substitute "%s" (uEmail user)
-                                   (mailCommand cfg)
+  (mailcommand, args) <- case words $ substitute "%s" (uEmail user) (mailCommand cfg) of
+                            [] -> fail "No mail command defined in config"
+                            (x:xs) -> pure (x, xs)
   (exitCode, _pOut, pErr) <- liftIO $ readProcessWithExitCode mailcommand args
                                       filledTemplate
   liftIO $ logM "gitit" WARNING $ "Sent reset password email to " ++ uUsername user ++
