@@ -1,86 +1,12 @@
 name: CI tests
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [master]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  linux:
-
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        versions:
-          - ghc: '9.6'
-            cabal: 'latest'
-          - ghc: '9.8'
-            cabal: 'latest'
-          - ghc: '9.10'
-            cabal: 'latest'
-          - ghc: '9.12'
-            cabal: 'latest'
-    steps:
-    - uses: actions/checkout@v7
-    - name: Install cabal/ghc
-      run: |
-        ghcup install ghc --set ${{ matrix.versions.ghc }}
-        ghcup install cabal --set ${{ matrix.versions.cabal }}
-
-    - name: Cache cabal global package db
-      id:   cabal-global
-      uses: actions/cache@v6
-      with:
-        path: |
-          ~/.local/state/cabal
-        key: ${{ runner.os }}-${{ matrix.versions.ghc }}-${{ matrix.versions.cabal }}-cabal-global-${{ secrets.CACHE_VERSION }}
-
-    - name: Cache cabal work
-      id:   cabal-local
-      uses: actions/cache@v5
-      with:
-        path: |
-          dist-newstyle
-        key: ${{ runner.os }}-${{ matrix.versions.ghc }}-${{ matrix.versions.cabal }}-cabal-local-${{ secrets.CACHE_VERSION }}
-
-    - name: Install dependencies
-      run: |
-          cabal v2-update
-          cabal v2-build --dependencies-only --enable-tests --disable-optimization -fexecutable all
-    - name: Build and test
-      run: |
-          cabal v2-build --enable-tests --disable-optimization -fexecutable all
-
-  windows:
-
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - name: Install ghc
-      run: |
-        ghcup install ghc --set 9.10
-        ghcup install cabal --set latest
-
-    # declare/restore cached things
-
-    - name: Cache cabal global package db
-      id:   cabal-global
-      uses: actions/cache@v6
-      with:
-        path: |
-          %LOCALAPPDATA%/cabal/store
-        key: ${{ runner.os }}-appdata-cabal-${{ hashFiles('cabal.project') }}-${{ secrets.CACHE_VERSION }}
-
-    - name: Cache cabal work
-      id: cabal-local
-      uses: actions/cache@v6
-      with:
-        path: |
-          dist-newstyle
-        key: ${{ runner.os }}-cabal-work-${{ hashFiles('cabal.project') }}-${{ secrets.CACHE_VERSION }}
-
-    - name: Build and test
-      run: |
-          cabal update
-          chcp 65001
-          cabal test --ghc-option=-Werror -fhttp --enable-tests --disable-optimization --ghc-options=-Werror all
+  ci:
+    uses: jgm/workflows/.github/workflows/haskell-ci.yml@main
